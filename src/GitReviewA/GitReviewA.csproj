@@ -5,6 +5,9 @@
     <RootNamespace>GitReviewA</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="web/**/*.html;web/**/*.js;web/**/*.css;web/**/*.woff2" LogicalName="web/%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup>
     <InternalsVisibleTo Include="GitReviewA.Tests" />
   </ItemGroup>
 </Project>

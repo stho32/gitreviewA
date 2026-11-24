@@ -1,0 +1,11 @@
+/* gitreviewA — Ansicht der Commit-Auswahl. Werte nur aus kd-tokens.css; Zeilenform nach kanbanD kd-app.css (.rv-commit). */
+body{background:var(--kd-bg);min-block-size:100vh}
+.gr-inhalt{padding:var(--kd-s5)}
+.gr-status{margin:0 0 var(--kd-s3);font-size:12px}
+.gr-status:empty{display:none}
+.gr-status.fehler{color:var(--kd-status-error-ink)}
+.gr-commits{list-style:none;margin:0;padding:0;border:1px solid var(--kd-line);background:var(--kd-surface)}
+.commit-zeile{display:flex;align-items:baseline;gap:var(--kd-s4);min-block-size:var(--kd-row);padding:var(--kd-s2) var(--kd-s3);min-width:0}
+.commit-zeile+.commit-zeile{border-top:1px solid var(--kd-line)}
+.commit-zeile .kurz-hash{flex:none;color:var(--kd-muted)}
+.commit-zeile .betreff{font-size:13px;overflow-wrap:anywhere;min-width:0}
