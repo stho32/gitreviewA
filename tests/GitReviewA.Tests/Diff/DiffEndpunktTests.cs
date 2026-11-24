@@ -468,6 +468,6 @@ public class DiffEndpunktTests
             commits = new Commitzeilen([commitQ]);
         }
         var protokoll = new StderrProtokoll(protokollziel, TimeProvider.System, mindeststufe);
-        return await Webserver.StartenAsync(0, commits, dateien, diffquelle, TestUebersichtsquelle.Leer(), Oberflaeche.AusDemProgramm(), protokoll);
+        return await Webserver.StartenAsync(0, commits, dateien, diffquelle, TestUebersichtsquelle.Leer(), TestZusammenquelle.Leer(), Oberflaeche.AusDemProgramm(), protokoll);
     }
 }

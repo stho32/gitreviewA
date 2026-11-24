@@ -35,7 +35,7 @@ public class HakenUndAnmerkungTeilenEineUebersichtTests
     {
         var commits = new Commitzeilen([new Commitzeile(Hash, "Testperson", "2026-01-01T09:00:00+00:00", "Erster Commit", "")]);
         var protokoll = new StderrProtokoll(new StringWriter(), TimeProvider.System, Protokollstufe.Warnung);
-        return Webserver.StartenAsync(0, commits, TestDateiquelle.Leer(), TestDiffquelle.Leer(), quelle, Oberflaeche.AusDemProgramm(), protokoll);
+        return Webserver.StartenAsync(0, commits, TestDateiquelle.Leer(), TestDiffquelle.Leer(), quelle, TestZusammenquelle.Leer(), Oberflaeche.AusDemProgramm(), protokoll);
     }
 
     private static async Task<HttpStatusCode> Poste(HttpClient client, Webserver server, string pfad, string koerper)

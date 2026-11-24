@@ -188,6 +188,6 @@ public class DiffLesenVersteckterPartnerTests
     {
         var commits = GitLeser.Lesen(new GitReviewA.Aufruf.CommitHashes([repo.Hash("c1")]), repo.Ordner);
         var protokoll = new StderrProtokoll(new StringWriter(), TimeProvider.System, Protokollstufe.Warnung);
-        return await Webserver.StartenAsync(0, commits, new GitDateiquelle(repo.Ordner), new GitDiffquelle(repo.Ordner), TestUebersichtsquelle.Leer(), Oberflaeche.AusDemProgramm(), protokoll);
+        return await Webserver.StartenAsync(0, commits, new GitDateiquelle(repo.Ordner), new GitDiffquelle(repo.Ordner), TestUebersichtsquelle.Leer(), TestZusammenquelle.Leer(), Oberflaeche.AusDemProgramm(), protokoll);
     }
 }

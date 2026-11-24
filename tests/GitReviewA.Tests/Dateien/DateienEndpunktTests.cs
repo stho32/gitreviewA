@@ -149,6 +149,6 @@ public class DateienEndpunktTests
             new Commitzeile(HashQ, "Bernd Beispiel", "2026-03-05T18:30:00+01:00", "Dateien ändern", "Zeile eins\nZeile zwei"),
         ]);
         var protokoll = new StderrProtokoll(protokollziel, TimeProvider.System, mindeststufe);
-        return await Webserver.StartenAsync(0, commits, quelle, TestDiffquelle.Leer(), TestUebersichtsquelle.Leer(), Oberflaeche.AusDemProgramm(), protokoll);
+        return await Webserver.StartenAsync(0, commits, quelle, TestDiffquelle.Leer(), TestUebersichtsquelle.Leer(), TestZusammenquelle.Leer(), Oberflaeche.AusDemProgramm(), protokoll);
     }
 }

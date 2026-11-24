@@ -17,6 +17,14 @@ internal sealed class TestUebersichtsquelle(Dateiuebersicht? uebersicht) : IUebe
         return new TestUebersichtsquelle(Aus(hash, stellen));
     }
 
+    /// <summary>Feste Übersicht aus fertigen per-Commit-Dateilisten (für Netto-Liste und Zusammen-Endpunkt).</summary>
+    public static TestUebersichtsquelle MitDateien(params Commitdateien[] commits)
+    {
+        var stellen = commits.SelectMany(commit => commit.Dateien.AlsArray()
+            .Select(datei => new Uebersichtsstelle(new Stelle(commit.Commit, datei.Pfad), string.Empty)));
+        return new TestUebersichtsquelle(new Dateiuebersicht(commits, stellen));
+    }
+
     /// <summary>Eine gesperrte Stelle mit <paramref name="sperrgrund"/>, danach eine lesbare.</summary>
     public static TestUebersichtsquelle MitSperre(string hash, string gesperrterPfad, string sperrgrund, string lesbarerPfad)
     {

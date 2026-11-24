@@ -7,6 +7,7 @@ using GitReviewA.Diff;
 using GitReviewA.Git;
 using GitReviewA.Haken;
 using GitReviewA.Protokoll;
+using GitReviewA.Zusammen;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 
@@ -38,13 +39,14 @@ internal sealed class Webserver : IAsyncDisposable
 
     public DateiAbhakenInteractor DateiAbhaken { get; }
 
-    public static async Task<Webserver> StartenAsync(int port, Commitzeilen commits, IDateiquelle dateiquelle, IDiffquelle diffquelle, IUebersichtsquelle uebersichtsquelle, Oberflaeche oberflaeche, StderrProtokoll protokoll)
+    public static async Task<Webserver> StartenAsync(int port, Commitzeilen commits, IDateiquelle dateiquelle, IDiffquelle diffquelle, IUebersichtsquelle uebersichtsquelle, IZusammenquelle zusammenquelle, Oberflaeche oberflaeche, StderrProtokoll protokoll)
     {
         var anwendung = BaueAnwendung(port, protokoll);
         var anmerkungen = new Anmerkungsspeicher();
         var haken = new Hakenspeicher();
         var uebersicht = new GemerkteUebersicht(uebersichtsquelle);
         var dateiAbhaken = new DateiAbhakenInteractor(uebersicht, haken, protokoll);
+        var zusammen = new ZusammenLesenInteractor(commits, uebersicht, zusammenquelle, diffquelle, protokoll);
         var lauscherPort = new LauscherPort();
         anwendung.Use(SchuetzeVorFremdemHost(lauscherPort, protokoll));
         anwendung.Use(SetzeSchutzkoepfe);
@@ -53,6 +55,8 @@ internal sealed class Webserver : IAsyncDisposable
         var dateien = new GemerkteDateiquelle(dateiquelle);
         anwendung.MapGet(DateienEndpunkt.Muster, DateienEndpunkt.Fuer(commits, dateien, protokoll));
         anwendung.MapGet(DiffEndpunkt.Muster, DiffEndpunkt.Fuer(new DiffLesenInteractor(commits, dateien, diffquelle, protokoll)));
+        anwendung.MapGet(ZusammenEndpunkt.Listenmuster, ZusammenEndpunkt.Liste(zusammen));
+        anwendung.MapGet(ZusammenEndpunkt.Diffmuster, ZusammenEndpunkt.Diff(zusammen));
         BildeRueckkanal(anwendung, commits, anmerkungen, haken, dateiAbhaken, new Stellensperre(uebersicht, protokoll), protokoll);
         await anwendung.StartAsync();
         lauscherPort.Wert = TatsaechlicherPort(anwendung);
