@@ -6,6 +6,7 @@ const { test: basis, expect } = require('./gitreviewa.js');
 const seite = require('../treiber/oberflaeche.js');
 const diffSeite = require('../treiber/diff-oberflaeche.js');
 const farbe = require('../treiber/farb-oberflaeche.js');
+const anmerkungSeite = require('../treiber/anmerkungen-oberflaeche.js');
 const repos = require('../treiber/farb-repos.js');
 
 const FENSTER = { width: 1280, height: 800 };
@@ -143,6 +144,19 @@ function farbSprache(gr, page) {
     antwortenGehalten: anzahl => farbe.gehalteneAntwortenAbwarten(page, anzahl),
     antwortFreigeben: nummer => farbe.antwortFreigeben(page, nummer),
     farbeLaeuftOhneRolle: () => farbe.pruefeFarbeLaeuftOhneRolle(page),
+    farbeLaeuftMitRolle: () => farbe.pruefeFarbeLaeuftMitRolle(page),
+    /** Lässt `anzahl` Aufgaben des Hauptfadens nacheinander laufen; eine kürzere Kette der Seite ist danach durch. */
+    aufgabenLaufen: anzahl => farbe.aufgabenDurchlaufen(page, anzahl),
+
+    /** Zeilenanmerkung (R00010) in der Oberfläche: Klick auf die Zeile mit Nummer neu `neu`, Text, „Speichern“. */
+    annotieren: async (datei, neu, text) => {
+      const feldname = `Anmerkung zu ${datei}, Zeile ${neu}`;
+      await anmerkungSeite.zeileAnklicken(page, { neu });
+      await anmerkungSeite.textSchreiben(page, feldname, text);
+      await anmerkungSeite.speichern(page, feldname);
+      await anmerkungSeite.pruefeFeldZu(page, feldname);
+    },
+    anmerkungUnter: (datei, neu, text) => anmerkungSeite.pruefeAnmerkungenUnter(page, { neu }, [{ text, stelle: `${datei}:${neu}` }]),
     /** Der Worker der verlassenen Anzeige ist sofort beendet, nicht erst mit der Frist. */
     workerBeendet: anzahl => farbe.pruefeBeendeteWorker(page, anzahl),
   };

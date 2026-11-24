@@ -401,13 +401,34 @@ async function pruefeBeendeteWorker(page, anzahl) {
   expect(await page.evaluate(() => window.beendeteFarbworker)).toBe(anzahl);
 }
 
+/** Die Auflage hat begonnen und ist nicht fertig: `laeuft`, und schon tragen Textstellen eine Rolle. */
+async function pruefeFarbeLaeuftMitRolle(page) {
+  await expect(page.locator(ROLLBEREICH)).toHaveAttribute('data-farbe', 'laeuft');
+  expect(await page.locator(`${ROLLBEREICH} [class*="tk-"]`).count(), 'Elemente mit Rolle').toBeGreaterThan(0);
+}
+
+/** `anzahl` Aufgaben des Hauptfadens nacheinander, je über `setTimeout(0)`: eine Kette solcher Aufgaben, die vorher begann und kürzer
+    ist, ist danach durchgelaufen — ohne Wanduhr. */
+async function aufgabenDurchlaufen(page, anzahl) {
+  await page.evaluate(gesamt => new Promise(fertig => {
+    const weiter = rest => {
+      if (rest === 0) {
+        fertig();
+        return;
+      }
+      setTimeout(() => weiter(rest - 1), 0);
+    };
+    weiter(gesamt);
+  }), anzahl);
+}
+
 async function pruefeFarbeLaeuftOhneRolle(page) {
   await expect(page.locator(ROLLBEREICH)).toHaveAttribute('data-farbe', 'laeuft');
   expect(await page.locator(`${ROLLBEREICH} [class*="tk-"]`).count(), 'Elemente mit Rolle').toBe(0);
 }
 
 module.exports = {
-  workerAntwortenZurueckhalten, gehalteneAntwortenAbwarten, antwortFreigeben, pruefeFarbeLaeuftOhneRolle, pruefeBeendeteWorker,
+  workerAntwortenZurueckhalten, gehalteneAntwortenAbwarten, antwortFreigeben, pruefeFarbeLaeuftOhneRolle, pruefeFarbeLaeuftMitRolle, aufgabenDurchlaufen, pruefeBeendeteWorker,
   mitschriftEinrichten, farbeAbwarten, faerbefensterMessen, rollenDerStelle, pruefeRolle, pruefeUngefaerbt, pruefeRollenNurImText, pruefeKeineMeldung, pruefeTextWieVorDerFarbe,
   zeilentexte, pruefeZeilenanzahl, farbzustaendeLeeren, pruefeFarbeLiefNeu, pruefeKeineLangeAufgabeSeitText, rollenfarbenMessen, pruefeRollenfarben,
   farbschemaSetzen, prismNichtAbrufbar, prismWirft, ohneWorker, pruefeOhneWorker, pruefeKeinPrismAufDerSeite, pruefeKonsoleLeer, anfragenMitschreiben,

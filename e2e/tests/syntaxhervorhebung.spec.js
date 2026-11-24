@@ -119,6 +119,23 @@ test.describe('Farbe', () => {
     await farbe.traegt({ plus: 'var b = 2;' }, 'var', 'Schlüsselwort');
   });
 
+  test('soll eine Zeilenanmerkung (R00010) unter der gefärbten Zeile zeigen, vor und nach der Farbe gesetzt, in beiden Ansichten', async ({ farbe }) => {
+    await farbe.starten();
+    expect(await farbe.waehlen('kommentar.js')).toBe('ja');
+
+    await farbe.annotieren('kommentar.js', 4, 'Name prüfen');
+
+    await farbe.anmerkungUnter('kommentar.js', 4, 'Name prüfen');
+    expect(await farbe.waehlen('seiten.js')).toBe('ja');
+    expect(await farbe.waehlen('kommentar.js')).toBe('ja');
+    await farbe.anmerkungUnter('kommentar.js', 4, 'Name prüfen');
+    await farbe.traegt({ plus: 'function main() {}' }, 'function', 'Schlüsselwort');
+    await farbe.textWieVorDerFarbe();
+    expect(await farbe.ansichtWaehlen(GANZE_DATEI)).toBe('ja');
+    await farbe.anmerkungUnter('kommentar.js', 4, 'Name prüfen');
+    await farbe.traegt({ plus: 'function main() {}' }, 'function', 'Schlüsselwort');
+  });
+
   test('soll die sieben Rollen in hell und dunkel unterscheidbar und mit Kontrast ≥ 4,5 : 1 zeigen, nur den Kommentar kursiv (Kriterium 4)', async ({ farbe }) => {
     await farbe.starten();
     const schluesselwort = {};
@@ -209,12 +226,14 @@ test.describe('Wo nicht gefärbt wird', () => {
 /** Befund B1 der Reviews zu #8: je Zeile bis zu 998 Farbstücke; jede Datei in jeder Ansicht mit und ohne Umbruch (Kriterium 7). */
 const DICHTE_DATEIEN = ['dicht.js', 'dicht.php', 'dicht.toml', 'dicht2.js', 'dicht3.js'];
 const ZELLEN = [NUR_AENDERUNGEN, GANZE_DATEI].flatMap(ansicht => [false, true].map(umbruch => ({ ansicht, umbruch })));
+/** Wenige Tausend neue Knoten je Aufgabe: das Häppchen und seine letzte Zeile (bis zu 998 Stücke und der Text dazwischen). */
+const KNOTEN_JE_AUFGABE_HOECHSTENS = 4000;
 /** Positivkontrolle: diese Datei wird gefärbt und trägt so viele Elemente mit Rolle — der Test misst wirklich das Auflegen. */
 const DICHT_GEFAERBT = { pfad: 'dicht.toml', mindestensRollen: 125000 };
 
 test.describe('Dichte Inhalte', () => {
   for (const pfad of DICHTE_DATEIEN) {
-    test(`soll ${pfad} in jeder Ansicht mit und ohne Umbruch ohne Aufgabe über 150 ms färben, Text gleich, nur der Text trägt Rollen (Kriterium 7)`, async ({ farbe }) => {
+    test(`soll ${pfad} in jeder Ansicht mit und ohne Umbruch ohne Aufgabe über 150 ms und mit höchstens 4000 neuen Knoten je Aufgabe färben, Text gleich, nur der Text trägt Rollen (Kriterium 7)`, async ({ farbe }) => {
       await farbe.starten({ vorbereitung: 'Repo D' });
       const messungen = [];
 
@@ -230,6 +249,7 @@ test.describe('Dichte Inhalte', () => {
         const zelle = `${messung.ansicht}, Umbruch ${messung.umbruch}`;
         expect(['ja', 'nein'], zelle).toContain(messung.zustand);
         expect(messung.langeAufgaben, `Aufgaben über 150 ms in ${zelle}`).toEqual([]);
+        expect(messung.meisteKnoten, `neue Knoten je Aufgabe in ${zelle}`).toBeLessThanOrEqual(KNOTEN_JE_AUFGABE_HOECHSTENS);
         if (pfad === DICHT_GEFAERBT.pfad) {
           expect(messung.zustand, zelle).toBe('ja');
           expect(messung.rollenElemente, `Elemente mit Rolle in ${zelle}`).toBeGreaterThanOrEqual(DICHT_GEFAERBT.mindestensRollen);
@@ -262,15 +282,38 @@ test.describe('Fremder Text', () => {
 });
 
 test.describe('Lastprofil', () => {
-  test('soll 20 000 Zeilen spätestens 1 s nach dem Klick zeigen und danach färben (Kriterium 9)', async ({ farbe }) => {
+  test('soll 20 000 Zeilen spätestens 1 s nach dem Klick zeigen und danach in mindestens 40 Aufgaben, keine über 150 ms, färben (Kriterium 7, 9)', async ({ farbe }) => {
     await farbe.starten({ vorbereitung: 'Repo L' });
 
     const dauerMs = await farbe.zeileRechtzeitigNachKlick('gross.js', { kopf: '@@ -0,0 +1,20000 @@', plus: 'x20000=1;', neu: 20000 });
 
     expect(await farbe.farbeAbgeschlossen()).toBe('ja');
+    const fenster = await farbe.faerbefenster();
+    expect(fenster.langeAufgaben, 'Aufgaben über 150 ms').toEqual([]);
+    expect(fenster.aufgaben, 'Aufgaben mit Auflage').toBeGreaterThanOrEqual(40);
+    test.info().annotations.push({ type: 'Färbefenster gross.js', description: JSON.stringify(fenster) });
     await farbe.traegt({ plus: 'x00001=1;' }, '1', 'Zahl', 2);
     await farbe.traegt({ plus: 'x20000=1;' }, '1', 'Zahl');
     test.info().annotations.push({ type: 'gross.js bis Zeile 20000', description: `${dauerMs} ms` });
+  });
+});
+
+test.describe('Wechsel mitten in der Auflage', () => {
+  test('soll die Auflage von gross.js beim Wechsel zu gut.rs beenden: gut.rs bleibt „läuft“ ohne Rolle bis zu seiner Antwort (Kriterium 13)', async ({ farbe }) => {
+    await farbe.starten({ vorbereitung: 'Repo L', ausfall: 'Worker antwortet verzögert' });
+    await farbe.waehlenOhneWarten('gross.js');
+    await farbe.antwortenGehalten(1);
+    await farbe.antwortFreigeben(1);
+    await farbe.farbeLaeuftMitRolle();
+
+    await farbe.waehlenOhneWarten('gut.rs');
+    await farbe.antwortenGehalten(2);
+    await farbe.aufgabenLaufen(200);
+
+    await farbe.farbeLaeuftOhneRolle();
+    await farbe.antwortFreigeben(2);
+    expect(await farbe.farbeAbgeschlossen()).toBe('ja');
+    await farbe.traegt({ plus: 'fn gut() {}' }, 'fn', 'Schlüsselwort');
   });
 });
 
