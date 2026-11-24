@@ -46,3 +46,23 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .balken{--balken-laenge:44px;flex:none;display:flex;align-items:center;inline-size:var(--balken-laenge);block-size:6px}
 .balken>span{display:block;flex:none;block-size:6px;inline-size:max(1px,calc(var(--balken-laenge) * var(--anteil)))}
 .balken-plus{background:var(--kd-c-green-line)}.balken-minus{background:var(--kd-c-red-line)}
+/* Diff-Bereich nach kanbanD kd-app.css (.df-sc, .dz-b, .dz, .mk-z): Spalten alt | neu | Vorzeichen | Text, Blöcke zu 500 Zeilen */
+.gr-diff{grid-column:1/-1;min-width:0}
+.diff-kopf{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--kd-s2) var(--kd-s4);margin:0 0 var(--kd-s3)}
+.diff-pfad{margin:0;font-size:13px;font-weight:600;overflow-wrap:anywhere;min-width:0}
+.diff-pfad:empty{display:none}
+.df-sc{overflow-x:auto;min-width:0;border:1px solid var(--kd-line);background:var(--kd-surface)}
+.df-sc[hidden]{display:none}
+.df-sc:focus-visible{outline:2px solid var(--kd-accent);outline-offset:-2px}
+.dz-b{content-visibility:auto;min-inline-size:100%;inline-size:max-content;contain-intrinsic-block-size:auto calc(var(--zeilen) * 18px)}
+.dz{border-collapse:collapse;font:12px/1.5 var(--kd-mono);min-inline-size:100%;tab-size:4}
+.dz td{padding:0;vertical-align:top}
+.dz .n{min-inline-size:46px;inline-size:46px;padding:0 6px;text-align:right;color:var(--kd-muted);background:var(--kd-surface);user-select:none;font-size:11px}
+.dz .m{inline-size:18px;text-align:center;color:var(--kd-muted);background:var(--kd-surface);user-select:none}
+.dz .c{padding:0 10px 0 4px;white-space:pre}
+.dz tr.plus>*{background:var(--kd-c-green)}.dz tr.plus .m{color:var(--kd-status-ok-ink);font-weight:600}
+.dz tr.minus>*{background:var(--kd-c-red)}.dz tr.minus .m{color:var(--kd-status-error-ink);font-weight:600}
+.dz tr.hk>td{background:var(--kd-sunken);color:var(--kd-muted);padding:0 10px;border-top:1px solid var(--kd-line);border-bottom:1px solid var(--kd-line);white-space:pre}
+.dz tr.hinweis .c{color:var(--kd-muted);font-style:italic}
+.mk-z{display:inline-flex;align-items:center;margin:0 1px;padding:0 3px;border:1px solid var(--kd-status-warn-ink);background:var(--kd-status-warn-bg);color:var(--kd-status-warn-ink);font:600 11px/1.3 var(--kd-mono);white-space:nowrap}
+.vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
