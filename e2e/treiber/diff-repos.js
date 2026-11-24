@@ -183,7 +183,7 @@ function repoGross(ordner) {
   dateiSchreiben(ordner, 'gross.txt', zeilen(20000, nummer => `zeile ${String(nummer).padStart(5, '0')}`));
   dateiSchreiben(ordner, 'riesig.txt', zeilen(30000, nummer => `zeile ${String(nummer).padStart(5, '0')}`));
   dateiSchreiben(ordner, 'winzig.txt', 'eins\nzwei\ndrei\n');
-  dateiSchreiben(ordner, 'dicht.js', zeilen(200, () => 'a1=1;'.repeat(200)));
+  dateiSchreiben(ordner, 'dicht.js', zeilen(200, () => 'a1=1;'.repeat(199)));
   return { ordner, hashes: { w: commitAnlegen(ordner, { betreff: 'Große Diffs' }) } };
 }
 

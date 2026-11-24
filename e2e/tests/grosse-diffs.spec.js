@@ -89,10 +89,12 @@ test.describe('Flüssiges Zeichnen (Blockgrenze)', () => {
     await diff.starten({ vorbereitung: 'Große Diffs', commits: ['w'] });
 
     await diff.dateiAnsehen('dicht.js');
-    await diff.warteAufFarbe();
-    const langeAufgaben = await diff.langeAufgabenBeimScrollen(24);
+    const zustand = await diff.warteAufFarbe();
+    expect(zustand, 'Positivkontrolle: dicht.js ist dicht gefärbt').toBe('ja');
+    const aufgaben = await diff.langeAufgabenBeimScrollen(24);
 
-    test.info().annotations.push({ type: 'Messwert', description: `Long Tasks beim Scrollen: ${JSON.stringify(langeAufgaben)}` });
-    expect(langeAufgaben.filter(a => a.dauerMs > 150), 'Aufgaben über 150 ms').toEqual([]);
+    test.info().annotations.push({ type: 'Messwert', description: `Aufgaben beim Scrollen über 150 ms: ${JSON.stringify(aufgaben.filter(a => a.dauerMs > 150))}` });
+    expect(aufgaben.length, 'die Scrollprobe war nicht leer').toBeGreaterThan(0);
+    expect(aufgaben.filter(a => a.dauerMs > 150), 'Aufgaben über 150 ms').toEqual([]);
   });
 });

@@ -139,7 +139,7 @@ internal sealed class DiffRepo : IDisposable
         g.Schreibe("gross.txt", Zeilen("zeile ", 20000));
         g.Schreibe("riesig.txt", Zeilen("zeile ", 30000));
         g.Schreibe("winzig.txt", "eins\nzwei\ndrei\n");
-        g.Schreibe("dicht.js", string.Concat(Enumerable.Repeat(string.Concat(Enumerable.Repeat("a1=1;", 200)), 200).Select(zeile => zeile + "\n")));
+        g.Schreibe("dicht.js", string.Concat(Enumerable.Repeat(string.Concat(Enumerable.Repeat("a1=1;", 199)), 200).Select(zeile => zeile + "\n")));
         File.WriteAllBytes(Path.Combine(g.Ordner, "logo.bin"), new byte[5000]);
         g.Committe("w", "Große Diffs");
         return g;

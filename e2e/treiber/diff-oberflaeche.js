@@ -227,28 +227,35 @@ async function blockKnoten(page) {
   return page.evaluate(() => Array.from(document.querySelectorAll('#diff .df-sc .dz-b'), block => block.getElementsByTagName('*').length + 1));
 }
 
-/** Wartet, bis die Färbung fertig ist (`data-farbe` `ja` oder `nein`), damit die Scrollprobe nicht die Farbauflage misst. */
+/** Wartet, bis die Färbung fertig ist (`data-farbe` `ja` oder `nein`), und liefert den Zustand. */
 async function warteAufFarbe(page) {
   await page.waitForFunction(() => ['ja', 'nein'].includes(document.querySelector('#diff .df-sc').dataset.farbe), undefined, { polling: 'raf', timeout: 30000 });
+  return page.evaluate(() => document.querySelector('#diff .df-sc').dataset.farbe);
 }
 
-/** Scrollt in `schritte` Sprüngen durch den Diff-Bereich und liefert die Aufgaben des Hauptfadens über 150 ms (Long Tasks). */
+/** Scrollt in `schritte` Sprüngen durch die Seite über den Diff-Bereich und liefert die Aufgaben des Hauptfadens über 150 ms (Long Tasks)
+    samt der erzwingenden Layoutzeit je Sprung. */
 async function langeAufgabenBeimScrollen(page, schritte = 24) {
   return page.evaluate(async anzahl => {
     const aufgaben = [];
     const beobachter = new PerformanceObserver(liste => {
       for (const eintrag of liste.getEntries()) {
-        aufgaben.push({ dauerMs: eintrag.duration });
+        aufgaben.push({ dauerMs: eintrag.duration, art: 'longtask' });
       }
     });
     beobachter.observe({ type: 'longtask' });
-    const roll = document.querySelector('#diff .df-sc');
-    const spanne = Math.max(0, roll.scrollHeight - roll.clientHeight);
+    const bereich = document.querySelector('#diff');
+    const oben = bereich.getBoundingClientRect().top + window.scrollY;
+    const spanne = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
     for (let i = 1; i <= anzahl; i += 1) {
-      roll.scrollTop = Math.floor(spanne * i / anzahl);
       await new Promise(fertig => requestAnimationFrame(() => requestAnimationFrame(fertig)));
+      const ziel = Math.min(spanne, Math.floor(oben + spanne * i / anzahl));
+      const startUmMs = performance.now();
+      window.scrollTo(0, ziel);
+      void document.documentElement.scrollHeight;
+      aufgaben.push({ dauerMs: performance.now() - startUmMs, art: 'layout' });
     }
-    beobachter.takeRecords().forEach(eintrag => aufgaben.push({ dauerMs: eintrag.duration }));
+    beobachter.takeRecords().forEach(eintrag => aufgaben.push({ dauerMs: eintrag.duration, art: 'longtask' }));
     beobachter.disconnect();
     return aufgaben;
   }, schritte);
