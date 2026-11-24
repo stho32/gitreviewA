@@ -50,20 +50,31 @@ internal sealed class FremdeNamenRepo : IDisposable
 
     public static FremdeNamenRepo N()
     {
+        return AusSkript(Skript, "b", "n", "w");
+    }
+
+    /// <summary>
+    /// Ein Repo aus einem eigenen bash-Skript; <paramref name="commitsAeltesterZuerst"/> benennt die letzten Commits, der letzte ist HEAD.
+    /// Das Skript entfernt Namen aus fremden Bytes am Ende selbst aus dem Arbeitsordner.
+    /// </summary>
+    public static FremdeNamenRepo AusSkript(string skript, params string[] commitsAeltesterZuerst)
+    {
         var ordner = Directory.CreateTempSubdirectory("gitreviewa-test-").FullName;
-        var n = new FremdeNamenRepo(ordner);
+        var repo = new FremdeNamenRepo(ordner);
         try
         {
-            n.Bash("git init -q -b main");
-            n.Bash(Skript);
-            n.hashNachName["b"] = n.Bash("git rev-parse HEAD~2");
-            n.hashNachName["n"] = n.Bash("git rev-parse HEAD~1");
-            n.hashNachName["w"] = n.Bash("git rev-parse HEAD");
-            return n;
+            repo.Bash("git init -q -b main");
+            repo.Bash(skript);
+            for (var stelle = 0; stelle < commitsAeltesterZuerst.Length; stelle++)
+            {
+                var abstandZuHead = commitsAeltesterZuerst.Length - 1 - stelle;
+                repo.hashNachName[commitsAeltesterZuerst[stelle]] = repo.Bash($"git rev-parse HEAD~{abstandZuHead}");
+            }
+            return repo;
         }
         catch
         {
-            n.Dispose();
+            repo.Dispose();
             throw;
         }
     }
