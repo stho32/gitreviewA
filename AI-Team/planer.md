@@ -10,6 +10,8 @@ Ergänzt die Rolle `planer` der Factory für dieses Projekt. Gilt für Projektge
 
 - Kriterien zur Oberfläche am Stil von kanbanD messen (factory.md, „Gestaltung und Vorlage kanbanD“), keine eigenen Gestaltungsvorgaben erfinden.
 
+- **ATDD (Betreiber 2026-11-24)**: Akzeptanzkriterien und Szenarien in Fachsprache schreiben — was der Nutzer erreicht, nicht welche Knöpfe er drückt —, damit sie als ausführbare Spezifikation taugen (factory.md, „ATDD nach Dave Farley“).
+
 ## Spezialisierungen
 
 Keine aus der Factory.

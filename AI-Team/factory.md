@@ -77,6 +77,14 @@ Angriffsfläche: Aufruf von `git` mit Argumenten aus der Befehlszeile, stdin und
 - **Design**: Tokens, Grundstil und Schriften aus kanbanD übernehmen — `~/Projekte/kanbanD/web/kd-tokens.css`, `kd-base.css`, `kd-app.css`, `web/fonts/` (Präfix in gitreviewA frei). Keine Wireframes; der Stil von kanbanD ist der Maßstab.
 - **Review-Code**: kanbanD hat bereits eine Commit-Review-Seite (R00207, ADR-0033) — `web/diff.js` (Diff-Rechnung, im Browser und in Node testbar), `web/review-uebersicht.js` (Dateiarten, Gruppen, `vscodeLink`, `sprungZeile`, `linkErlaubt`), `web/commits.js`, `web/tastatur.js`, `web/markdown.js`. JavaScript direkt übernehmen und anpassen; Server-Teile (Rust, `src/`) nach C# übertragen. Herkunft im Commit nennen.
 
+### ATDD nach Dave Farley (Betreiber 2026-11-24: „attd-Methoden zur Entwicklung verwenden (msec)“)
+
+- **Akzeptanztests zuerst, als ausführbare Spezifikation**: je Akzeptanzkriterium zuerst die Spezifikation in Fachsprache, dann DSL, dann Protokolltreiber, dann das System — ein Kriterium nach dem anderen grün (Skill `msec:atdd-build`, Gegenprobe `msec:atdd-review`; Kursinhalte über die msec-MCP-Werkzeuge, falls in der Sitzung verfügbar).
+- **Vier Schichten** in `e2e/`: `tests/` (Spezifikation: Fälle nach der Fähigkeit benannt, nicht nach dem Oberflächenelement; Testnamen beginnen mit „soll …“), `dsl/` (Fachsprache, benannte Parameter mit Vorgaben, Aliasing für Isolation, je Fachgebiet aufgeteilt), `treiber/` (Protokolltreiber — einzige Schicht, die weiß, wie das System bedient wird: Prozess, HTTP, Browser; Prüfungen sitzen hier), System unter Test. Die vorhandene Struktur wird erweitert, nicht daneben neu gebaut.
+- **Keine lügende Suite**: kein `skip`/`fixme`, kein Wiederholen wackliger Tests, keine verschluckten Fehler in DSL oder Treiber.
+- **Vor dem Fix diagnostizieren**: bei rotem Akzeptanztest erst die Schicht bestimmen, dann ändern.
+- Unit- und Integrationstests (NUnit) bleiben für die Bausteine darunter (Test-Pyramide).
+
 ### Durchsatz (Betreiber 2026-11-24: „kleine schnelle Factory, Ergebnis zügig“)
 
 - Ein volles Gate je Karte: im Worktree nur die betroffenen Tests, das volle Gate einmal in der Merge-Wache auf `main`.

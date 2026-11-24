@@ -12,6 +12,8 @@ Ergänzt die Rolle `entwickler` der Factory für dieses Projekt. Gilt für Proje
 
 - Design und Review-Code aus kanbanD übernehmen: factory.md, „Gestaltung und Vorlage kanbanD“ — erst dort nachsehen, dann neu schreiben.
 
+- **ATDD (Betreiber 2026-11-24)**: vor dem Bau den Skill `msec:atdd-build` laden und danach arbeiten — je Akzeptanzkriterium zuerst die Spezifikation in `e2e/tests/` (Fachsprache, „soll …“), dann DSL in `e2e/dsl/`, dann Protokolltreiber in `e2e/treiber/`, dann Code; jede Schicht ein eigener grüner Commit (factory.md, „ATDD nach Dave Farley“).
+
 ## Spezialisierungen
 
 - csharp — C#-Hausstil und Vorlagen
