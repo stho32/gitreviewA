@@ -8,6 +8,10 @@
 
   const HINWEIS_ZUR_WAHL = 'Datei wählen, um ihren Diff zu sehen';
   const KEINE_ZEILENAENDERUNGEN = 'Keine Zeilenänderungen';
+  const DIFF_NICHT_GELESEN = 'Diff konnte nicht gelesen werden';
+  /** Antwort 422: der Name meint keine Datei eindeutig oder lässt sich nicht an git geben — der Inhalt bleibt ungelesen, nie „keine Änderungen“. */
+  const NAME_NICHT_LESBAR = 'Diff dieser Datei nicht lesbar (Name mit ungültigem Byte)';
+  const STATUS_NAME_NICHT_LESBAR = 422;
   const GRUND_TEXT = { nullbytes: 'enthält Null-Bytes', attribut: 'per Attribut als binär markiert' };
   const LESETEXT = { plus: 'hinzugefügt: ', minus: 'entfernt: ' };
   const VORZEICHEN = { plus: '+', minus: '−', kontext: '' };
@@ -90,9 +94,9 @@
     let antwort;
     try {
       antwort = await diffAbrufen(datei, alsText, diffansicht);
-    } catch {
+    } catch (fehler) {
       if (ladung === zustand.letzteLadung) {
-        zeigeMeldung(ansicht, 'Diff konnte nicht gelesen werden', true);
+        zeigeMeldung(ansicht, fehlertextZu(fehler), true);
       }
       return;
     }
@@ -114,9 +118,24 @@
     const adresse = `api/commits/${encodeURIComponent(datei.commit)}/diff?${abfrage}`;
     const antwort = await fetch(adresse, { headers: { Accept: 'application/json' } });
     if (!antwort.ok) {
-      throw new Error(`Antwort ${antwort.status}`);
+      throw new AntwortFehler(antwort.status);
     }
     return antwort.json();
+  }
+
+  class AntwortFehler extends Error {
+    constructor(status) {
+      super(`Antwort ${status}`);
+      this.status = status;
+    }
+  }
+
+  function fehlertextZu(fehler) {
+    const nameNichtLesbar = fehler instanceof AntwortFehler && fehler.status === STATUS_NAME_NICHT_LESBAR;
+    if (nameNichtLesbar) {
+      return NAME_NICHT_LESBAR;
+    }
+    return DIFF_NICHT_GELESEN;
   }
 
   function zeigeMeldung(ansicht, text, istFehler) {
