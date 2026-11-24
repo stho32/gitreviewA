@@ -24,4 +24,14 @@ internal static class AlsArrayErweiterung
         }
         return liste.ToArray();
     }
+
+    public static Dateiaenderung[] AlsArray(this Dateiaenderungen aenderungen)
+    {
+        var liste = new List<Dateiaenderung>();
+        foreach (var aenderung in aenderungen)
+        {
+            liste.Add(aenderung);
+        }
+        return liste.ToArray();
+    }
 }
