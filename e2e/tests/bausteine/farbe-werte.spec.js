@@ -9,6 +9,7 @@ test.describe('Baustein Sprache und Grenze', () => {
     const tabelle = {
       cs: 'csharp', js: 'javascript', mjs: 'javascript', cjs: 'javascript', json: 'json', css: 'css', html: 'markup', htm: 'markup', xml: 'markup',
       svg: 'markup', md: 'markdown', py: 'python', sh: 'bash', bash: 'bash', yml: 'yaml', yaml: 'yaml', sql: 'sql', rs: 'rust', toml: 'toml', php: 'php',
+      ts: 'typescript', mts: 'typescript', cts: 'typescript',
     };
 
     for (const [endung, grammatik] of Object.entries(tabelle)) {

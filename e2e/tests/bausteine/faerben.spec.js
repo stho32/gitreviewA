@@ -98,6 +98,13 @@ test.describe('Baustein Tokens je Hunk und Seite', () => {
     expect(stellen[7]).toEqual([['var', SCHLUESSELWORT], ['2', ZAHL]]);
   });
 
+  test('soll TypeScript mit der eigenen Grammatik färben: readonly ist dort Schlüsselwort, in JavaScript nicht (Ausbaustufe B0609)', () => {
+    const patch = '@@ -0,0 +1 @@\n+export abstract class Gruss { readonly n = 42; }\n';
+
+    expect(faerben(patch, 'typescript')[1]).toEqual(expect.arrayContaining([['readonly', SCHLUESSELWORT], ['abstract', SCHLUESSELWORT], ['42', ZAHL]]));
+    expect(faerben(patch, 'javascript')[1].map(([text]) => text)).not.toContain('readonly');
+  });
+
   test('soll ohne Zeilen eine leere Antwort geben', () => {
     expect(hunkTokens([], prism.languages.javascript, prism)).toEqual(new Int32Array(0));
   });

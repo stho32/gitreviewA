@@ -22,6 +22,7 @@ const SPRACHEN = [
   { endungen: ['rs'], zeile: 'fn gruss(name: &str) -> String { format!("Hallo {}", 42) }', stelle: 'format!', rolle: 'Makro' },
   { endungen: ['toml'], zeile: 'n = 42', stelle: '42', rolle: 'Zahl' },
   { endungen: ['php'], zeile: 'echo "Hallo" . 42;', stelle: 'echo', rolle: 'Schlüsselwort' },
+  { endungen: ['ts', 'mts', 'cts'], zeile: 'export abstract class Gruss { readonly n = 42; }', stelle: 'readonly', rolle: 'Schlüsselwort' },
 ];
 
 const ROLLEN_RS = [
