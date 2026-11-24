@@ -5,7 +5,8 @@ const net = require('net');
 const os = require('os');
 const path = require('path');
 const base = require('@playwright/test');
-const { repoAnlegen, repoEntfernen } = require('../treiber/wegwerf-repo.js');
+const repos = require('../treiber/wegwerf-repo.js');
+const { repoAnlegen, repoEntfernen } = repos;
 const { imHintergrundStarten, pruefeSigintIgnoriert } = require('../treiber/hintergrund-start.js');
 const { programmStarten, adresseAbwarten, programmBeenden, lauschendeAdressen } = require('../treiber/programm.js');
 const { anfrage, senden, halbSenden } = require('../treiber/http.js');
@@ -23,9 +24,45 @@ function welt() {
   const offeneVerbindungen = [];
 
   function repoMitCommits(betreffe = DREI_COMMITS) {
-    const repo = repoAnlegen(betreffe);
+    return gemerkt(repos.repoAnlegen(betreffe));
+  }
+
+  function gemerkt(repo) {
     ordnerZumAufraeumen.push(repo.ordner);
     return repo;
+  }
+
+  /** Die Vorbereitung der Anforderung: Commits `p` (vier Dateien), `q` (M, D, R, Binärdatei, Rumpf), `r` (leer). */
+  function repoMitVorbereitung() {
+    return gemerkt(repos.repoMitVorbereitungAnlegen());
+  }
+
+  function repoMitDateien(dateien) {
+    return gemerkt(repos.repoMitDateienAnlegen(dateien));
+  }
+
+  function repoMitFremdemText(angaben) {
+    return gemerkt(repos.repoMitFremdemTextAnlegen(angaben));
+  }
+
+  function repoMitVielenCommits(anzahl) {
+    return gemerkt(repos.repoMitVielenCommitsAnlegen(anzahl));
+  }
+
+  /** Commit `p` mit einer Datei, danach `u` mit `anzahl` neuen Dateien zu je einer Zeile. */
+  function repoMitGrossemCommit(anzahl) {
+    const ordner = repos.leeresRepoAnlegen();
+    repos.dateiSchreiben(ordner, 'README.md', 'Start\n');
+    const p = repos.commitAnlegen(ordner, { betreff: 'Start' });
+    for (let nummer = 1; nummer <= anzahl; nummer += 1) {
+      repos.dateiSchreiben(ordner, `viele/datei-${String(nummer).padStart(4, '0')}.txt`, `Zeile ${nummer}\n`);
+    }
+    const u = repos.commitAnlegen(ordner, { betreff: `${anzahl} Dateien` });
+    return gemerkt({ ordner, p, u });
+  }
+
+  function commitObjektEntfernen(repo, hash) {
+    repos.commitObjektEntfernen(repo.ordner, hash);
   }
 
   function eigenerOrdner() {
@@ -35,8 +72,8 @@ function welt() {
   }
 
   /** Startet gitreviewA und wartet auf die Startzeile. Standard: ohne Browser, Standardstufe. */
-  async function gitreviewAStarten(repo, hashes, { mitBrowser = false, browserBefehl, zusatz = [] } = {}) {
-    const lauf = gitreviewAAufrufen(repo, hashes, { mitBrowser, browserBefehl, zusatz });
+  async function gitreviewAStarten(repo, hashes, { mitBrowser = false, browserBefehl, zusatz = [], pfadVorne } = {}) {
+    const lauf = gitreviewAAufrufen(repo, hashes, { mitBrowser, browserBefehl, zusatz, pfadVorne });
     lauf.adresse = await adresseAbwarten(lauf, STARTZEILE_FRIST_MS);
     return lauf;
   }
@@ -233,6 +270,25 @@ function welt() {
     return lauf.stdout;
   }
 
+  /** Ein `git` vorne in PATH, das je Aufruf seine Argumente in eine Datei schreibt und dann das echte git ausführt. */
+  function gitZaehler() {
+    const ordner = eigenerOrdner();
+    const protokoll = path.join(ordner, 'aufrufe.txt');
+    const echtesGit = require('child_process').execFileSync('which', ['git'], { encoding: 'utf8' }).trim();
+    fs.writeFileSync(path.join(ordner, 'git'), `#!/bin/sh\necho "$*" >> '${protokoll}'\nexec '${echtesGit}' "$@"\n`, { mode: 0o755 });
+    const aufrufe = () => {
+      if (!fs.existsSync(protokoll)) {
+        return [];
+      }
+      return fs.readFileSync(protokoll, 'utf8').split('\n').filter(zeile => zeile.length > 0);
+    };
+    return { ordner, aufrufe };
+  }
+
+  function dateienAbfragen(lauf, hashOderText) {
+    return anfrage(lauf.adresse, `/api/commits/${encodeURIComponent(hashOderText)}/dateien`);
+  }
+
   async function aufraeumen() {
     for (const schliessen of offeneVerbindungen) {
       schliessen();
@@ -244,7 +300,7 @@ function welt() {
       await programmBeenden(lauf);
     }
     for (const ordner of ordnerZumAufraeumen) {
-      repoEntfernen(ordner);
+      repos.repoEntfernen(ordner);
     }
   }
 
@@ -258,10 +314,10 @@ function welt() {
     beendetMeldung: oberflaeche.beendetMeldung,
     beendenFehler: oberflaeche.beendenFehler,
     beendenScheitertMit: oberflaeche.beendenScheitertMit,
+    gitZaehler, dateienAbfragen,
+    repoMitVorbereitung, repoMitDateien, repoMitFremdemText, repoMitVielenCommits, repoMitGrossemCommit, commitObjektEntfernen,
     oberflaecheOeffnen: (page, lauf) => page.goto(lauf.adresse),
-    commitZeilenLesen: oberflaeche.commitZeilenLesen,
-    commitZeilen: oberflaeche.commitZeilen,
-    aufZeilenWarten: oberflaeche.aufZeilenWarten,
+    ...oberflaeche,
   };
 }
 
