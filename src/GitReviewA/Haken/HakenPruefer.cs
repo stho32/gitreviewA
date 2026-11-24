@@ -61,7 +61,8 @@ internal static class HakenPruefer
         return true;
     }
 
-    public static bool GehoertZurAuswahl(Stelle stelle, Dateiuebersicht uebersicht, out string grund)    {
+    public static bool GehoertZurAuswahl(Stelle stelle, Dateiuebersicht uebersicht, out string grund)
+    {
         var istCommitDerAuswahl = uebersicht.EnthaeltCommit(stelle.Commit);
         if (!istCommitDerAuswahl)
         {

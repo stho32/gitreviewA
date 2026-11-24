@@ -577,7 +577,8 @@ internal static class GitLeser
     }
 
     /// <summary>Zeilen für `git log --stdin`: der volle Hash, `--`, der Pfad und bei einer Umbenennung der alte Pfad, je als Bytes.</summary>
-    private static byte[] DiffEingabe(string hash, Dateiaenderung datei)    {
+    private static byte[] DiffEingabe(string hash, Dateiaenderung datei)
+    {
         var eingabe = new List<byte>();
         eingabe.AddRange(Encoding.ASCII.GetBytes($"{hash}\n--\n"));
         eingabe.AddRange(NameAlsBytes(datei.Pfad, datei.Rohpfad));

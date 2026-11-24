@@ -36,13 +36,22 @@ internal sealed class ZusammenLesenInteractor : INettoDateiliste
         auswahl = HashesDerAuswahl(commits);
     }
 
-    /// <summary>Einmal gelesen: die Netto-Liste hängt nur an unveränderlichen Commits.</summary>
+    /// <summary>Einmal gelesen: die Netto-Liste hängt nur an unveränderlichen Commits. Ein gescheiterter Versuch wird nicht gemerkt — der nächste Zugriff liest erneut.</summary>
     public Zusammenstand Stand()
     {
         lock (sperre)
         {
-            gemerkt ??= Lesen();
-            return gemerkt;
+            if (gemerkt is not null)
+            {
+                return gemerkt;
+            }
+            var gelesen = Lesen();
+            var istLesbar = gelesen.IstLesbar;
+            if (istLesbar)
+            {
+                gemerkt = gelesen;
+            }
+            return gelesen;
         }
     }
 
