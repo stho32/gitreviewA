@@ -72,6 +72,102 @@ public class AnmerkungsspeicherTests
         Assert.That(speicher.Schnappschuss().AlsArray().Select(anmerkung => anmerkung.Text), Is.EqualTo(new[] { "vorher" }));
     }
 
+    [TestCase(true)]
+    [TestCase(false)]
+    public void Wenn_Nummer_1_geaendert_dann_Geaendert_mit_neuem_Text_und_gleicher_Nummer_Stelle_und_Position(bool mitZeile)
+    {
+        var speicher = new Anmerkungsspeicher();
+        var zeile = mitZeile ? 18 : (int?)null;
+        speicher.VersucheAnzuhaengen(new GepruefteAnmerkung(HashA, "lang.txt", zeile, "Klammer fehlt"), out _);
+        speicher.VersucheAnzuhaengen(new GepruefteAnmerkung(HashB, "src/b.txt", 2, "zweiter"), out _);
+
+        var ausgang = speicher.VersucheZuAendern(1, "Klammer und Typprüfung fehlt", out var geaendert);
+
+        Assert.That((ausgang, geaendert), Is.EqualTo((Aenderungsausgang.Geaendert, new Anmerkung(1, HashA, "lang.txt", zeile, "Klammer und Typprüfung fehlt"))));
+        Assert.That(speicher.Schnappschuss().AlsArray(), Is.EqualTo(new[]
+        {
+            new Anmerkung(1, HashA, "lang.txt", zeile, "Klammer und Typprüfung fehlt"),
+            new Anmerkung(2, HashB, "src/b.txt", 2, "zweiter"),
+        }));
+    }
+
+    [Test]
+    public void Wenn_Nummer_unbekannt_dann_NichtGefunden_und_Schnappschuss_unveraendert()
+    {
+        var speicher = new Anmerkungsspeicher();
+        speicher.VersucheAnzuhaengen(new GepruefteAnmerkung(HashA, "lang.txt", 18, "erster"), out _);
+        var vorher = speicher.Schnappschuss().AlsArray();
+
+        var ausgang = speicher.VersucheZuAendern(7, "neu", out var geaendert);
+
+        Assert.That((ausgang, geaendert), Is.EqualTo((Aenderungsausgang.NichtGefunden, (Anmerkung?)null)));
+        Assert.That(speicher.Schnappschuss().AlsArray(), Is.EqualTo(vorher));
+    }
+
+    [Test]
+    public void Wenn_zweimal_geaendert_dann_steht_genau_eine_Anmerkung_mit_dem_zweiten_Text()
+    {
+        var speicher = new Anmerkungsspeicher();
+        speicher.VersucheAnzuhaengen(new GepruefteAnmerkung(HashA, "lang.txt", 18, "alt"), out _);
+
+        var erster = speicher.VersucheZuAendern(1, "mittig", out _);
+        var zweiter = speicher.VersucheZuAendern(1, "neu", out var geaendert);
+
+        Assert.That((erster, zweiter), Is.EqualTo((Aenderungsausgang.Geaendert, Aenderungsausgang.Geaendert)));
+        Assert.That(geaendert?.Text, Is.EqualTo("neu"));
+        Assert.That(speicher.Schnappschuss().AlsArray().Select(anmerkung => (anmerkung.Nummer, anmerkung.Text)), Is.EqualTo(new[] { (1, "neu") }));
+        Assert.That(speicher.Schnappschuss().Anzahl, Is.EqualTo(1), "die Änderung verbraucht keine Nummer und legt nichts an");
+    }
+
+    [Test]
+    public void Wenn_abgeschlossen_dann_Aendern_abgelehnt_mit_Beendet_und_Text_bleibt()
+    {
+        var speicher = new Anmerkungsspeicher();
+        speicher.VersucheAnzuhaengen(new GepruefteAnmerkung(HashA, "lang.txt", 18, "vorher"), out _);
+        speicher.VersucheAbzuschliessen();
+
+        var ausgang = speicher.VersucheZuAendern(1, "danach", out var geaendert);
+
+        Assert.That((ausgang, geaendert), Is.EqualTo((Aenderungsausgang.Beendet, (Anmerkung?)null)));
+        Assert.That(speicher.Schnappschuss().AlsArray().Select(anmerkung => anmerkung.Text), Is.EqualTo(new[] { "vorher" }));
+    }
+
+    [Test]
+    public void Wenn_Finde_mit_bekannter_und_unbekannter_Nummer_dann_die_Anmerkung_oder_null()
+    {
+        var speicher = new Anmerkungsspeicher();
+        speicher.VersucheAnzuhaengen(new GepruefteAnmerkung(HashA, "lang.txt", 18, "erster"), out _);
+
+        Assert.That(speicher.Finde(1), Is.EqualTo(new Anmerkung(1, HashA, "lang.txt", 18, "erster")));
+        Assert.That(speicher.Finde(2), Is.Null);
+    }
+
+    [Test]
+    public async Task Wenn_200_Anmerkungen_parallel_geaendert_dann_bleiben_Nummern_und_Reihenfolge_und_jeder_Text_steht_an_seiner_Nummer()
+    {
+        var speicher = new Anmerkungsspeicher();
+        for (var nummer = 1; nummer <= 200; nummer++)
+        {
+            speicher.VersucheAnzuhaengen(new GepruefteAnmerkung(HashA, "datei.txt", nummer, $"alt {nummer}"), out _);
+        }
+        using var start = new Barrier(8);
+
+        var aufgaben = Enumerable.Range(0, 8).Select(aufgabe => Task.Run(() =>
+        {
+            start.SignalAndWait();
+            for (var schritt = 0; schritt < 25; schritt++)
+            {
+                var nummer = aufgabe * 25 + schritt + 1;
+                speicher.VersucheZuAendern(nummer, $"neu {nummer}", out _);
+            }
+        }));
+        await Task.WhenAll(aufgaben);
+
+        var geaenderte = speicher.Schnappschuss().AlsArray();
+        Assert.That(geaenderte.Select(anmerkung => anmerkung.Nummer), Is.EqualTo(Enumerable.Range(1, 200)));
+        Assert.That(geaenderte.Select(anmerkung => anmerkung.Text), Is.EqualTo(Enumerable.Range(1, 200).Select(nummer => $"neu {nummer}")));
+    }
+
     [Test]
     public void Wenn_zweimal_abgeschlossen_dann_gewinnt_nur_der_erste_Aufruf()
     {

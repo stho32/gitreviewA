@@ -41,6 +41,38 @@ internal sealed class Anmerkungsspeicher
         }
     }
 
+    /// <summary>Die Anmerkung zu <paramref name="nummer"/> oder <c>null</c>, wenn es sie nicht gibt.</summary>
+    public Anmerkung? Finde(int nummer)
+    {
+        lock (sperre)
+        {
+            return anmerkungen.Find(anmerkung => anmerkung.Nummer == nummer);
+        }
+    }
+
+    /// <summary>Ersetzt allein den Text; Nummer, Stelle und Position in der Liste bleiben. Nach dem Abschluss wird abgelehnt.</summary>
+    public Aenderungsausgang VersucheZuAendern(int nummer, string text, out Anmerkung? geaendert)
+    {
+        lock (sperre)
+        {
+            if (istAbgeschlossen)
+            {
+                geaendert = null;
+                return Aenderungsausgang.Beendet;
+            }
+            var stelle = anmerkungen.FindIndex(anmerkung => anmerkung.Nummer == nummer);
+            var istBekannt = stelle >= 0;
+            if (!istBekannt)
+            {
+                geaendert = null;
+                return Aenderungsausgang.NichtGefunden;
+            }
+            geaendert = anmerkungen[stelle] with { Text = text };
+            anmerkungen[stelle] = geaendert;
+            return Aenderungsausgang.Geaendert;
+        }
+    }
+
     public bool VersucheAbzuschliessen()
     {
         lock (sperre)
