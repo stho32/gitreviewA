@@ -85,7 +85,7 @@ internal sealed class ErgebnisKopierenTreiber : IAsyncDisposable
                 startzeile.TrySetResult(treffer.Value);
             }
         };
-        treiber.ausgabeLesen = prozess.StandardOutput.BaseStream.CopyToAsync(standardausgabe);
+        treiber.ausgabeLesen = treiber.LiesStandardausgabeAsync(prozess);
         prozess.BeginErrorReadLine();
         prozess.EnableRaisingEvents = true;
         prozess.Exited += (_, _) => startzeile.TrySetException(new InvalidOperationException($"gitreviewA endete vor der Startzeile mit {prozess.ExitCode}"));
@@ -149,6 +149,24 @@ internal sealed class ErgebnisKopierenTreiber : IAsyncDisposable
         prozess.Dispose();
     }
 
+    private async Task LiesStandardausgabeAsync(Process lauf)
+    {
+        var puffer = new byte[4096];
+        var quelle = lauf.StandardOutput.BaseStream;
+        while (true)
+        {
+            var gelesen = await quelle.ReadAsync(puffer);
+            if (gelesen == 0)
+            {
+                return;
+            }
+            lock (standardausgabe)
+            {
+                standardausgabe.Write(puffer, 0, gelesen);
+            }
+        }
+    }
+
     private async Task<Kopierantwort> SendeAsync(string methode, string pfad, string? koerper, string? host)
     {
         using var anfrage = new HttpRequestMessage(new HttpMethod(methode), new Uri(new Uri(Adresse), pfad));
@@ -163,7 +181,7 @@ internal sealed class ErgebnisKopierenTreiber : IAsyncDisposable
         using var antwort = await client.SendAsync(anfrage);
         var antwortkoerper = await antwort.Content.ReadAsStringAsync();
         return new Kopierantwort(
-            (int)antwort.StatusCode,
+            antwort.StatusCode,
             ErgebnisAus(antwortkoerper),
             antwort.Headers.Contains("Access-Control-Allow-Origin"),
             antwort.Headers.CacheControl?.NoStore == true);
@@ -194,7 +212,4 @@ internal sealed class ErgebnisKopierenTreiber : IAsyncDisposable
 }
 
 /// <summary>Was der Treiber von einer Antwort behält: Status, Ergebnis-Text, CORS-Kopf, `Cache-Control: no-store`.</summary>
-internal sealed record Kopierantwort(int Statuscode, string Ergebnis, bool HatCorsKopf, bool OhneZwischenspeicher)
-{
-    public HttpStatusCode Status => (HttpStatusCode)Statuscode;
-}
+internal sealed record Kopierantwort(HttpStatusCode Status, string Ergebnis, bool HatCorsKopf, bool OhneZwischenspeicher);

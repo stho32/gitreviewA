@@ -1,4 +1,5 @@
 using System.Runtime.Versioning;
+using GitReviewA.Tests.Hilfen;
 
 namespace GitReviewA.Tests.Akzeptanz;
 
@@ -8,10 +9,10 @@ internal sealed class KopierRepo : IDisposable
 {
     public const string NameMitRichtungUndMarken = "u\u202E\u200B\U000E0041.txt";
 
-    private readonly Hilfen.WegwerfRepo repo;
+    private readonly WegwerfRepo repo;
     private readonly Dictionary<string, string> hashNachName = new(StringComparer.Ordinal);
 
-    private KopierRepo(Hilfen.WegwerfRepo repo)
+    private KopierRepo(WegwerfRepo repo)
     {
         this.repo = repo;
     }
@@ -25,7 +26,7 @@ internal sealed class KopierRepo : IDisposable
 
     public static KopierRepo K()
     {
-        var k = new KopierRepo(Hilfen.WegwerfRepo.MitCommits());
+        var k = new KopierRepo(WegwerfRepo.MitCommits());
         k.repo.SchreibeDatei("a.txt", "eins\nzwei\n");
         k.repo.SchreibeDatei("README.md", "Titel\n");
         k.Committe("k1", "Start", "2026-03-04T09:15:00+01:00");
@@ -36,7 +37,7 @@ internal sealed class KopierRepo : IDisposable
 
     public static KopierRepo W()
     {
-        var w = new KopierRepo(Hilfen.WegwerfRepo.MitCommits());
+        var w = new KopierRepo(WegwerfRepo.MitCommits());
         w.repo.SchreibeDatei(NameMitRichtungUndMarken, "x\n");
         w.Committe("w", "fremder Name", "2026-03-04T09:15:00+01:00");
         return w;
