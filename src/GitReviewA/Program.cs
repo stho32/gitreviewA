@@ -14,7 +14,6 @@ namespace GitReviewA;
 internal static class Program
 {
     private const int ExitLaufGescheitert = 1;
-    private const int ExitUngueltigerAufruf = 2;
     private const string BrowserVariable = "GITREVIEWA_BROWSER";
 
     public static async Task<int> Main(string[] args)
@@ -23,7 +22,7 @@ internal static class Program
         if (!aufruf.IstGueltig)
         {
             NeuesProtokoll(Protokollstufe.Warnung).Melde(Protokollstufe.Fehler, "Aufruf", aufruf.Fehlermeldung);
-            return ExitUngueltigerAufruf;
+            return AufruffehlerMeldungen.ExitCode;
         }
         var startauftrag = aufruf.Startauftrag;
         var protokoll = NeuesProtokoll(startauftrag.Mindeststufe);

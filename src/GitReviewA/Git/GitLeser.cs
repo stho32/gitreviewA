@@ -37,51 +37,51 @@ internal static class GitLeser
 
     /// <summary>
     /// Pfade der Dateiliste sind wurzelrelativ; jeder weitere git-Aufruf läuft deshalb in der Wurzel des Arbeitsbaums.
-    /// Scheitert die Repoprüfung, ist der Aufruf ungültig: kein Repo, nacktes Repo oder fehlendes git — bestimmt an der Prüfstelle, nicht am git-Text.
+    /// Scheitert die Repoprüfung, wirft der Git-Leser einen <see cref="GitFehler"/>; die Zuordnung zum Aufrufgrund
+    /// macht die Aufruf-Schicht (<see cref="GitReviewA.Aufruf.Reposituation"/>), nicht das Git-Layer.
     /// </summary>
     public static string WurzelLesen(string startordner)
     {
         var start = GitStart.Im(startordner);
         start.ArgumentList.Add("rev-parse");
         start.ArgumentList.Add("--show-toplevel");
-        try
-        {
-            return Ausfuehren(start, "git rev-parse --show-toplevel").TrimEnd('\n');
-        }
-        catch (GitNichtGefunden fehler)
-        {
-            throw Aufruffehler.Fuer(Aufrufgrund.GitNichtGefunden, fehler.Message);
-        }
-        catch (GitFehler fehler)
-        {
-            throw Aufruffehler.Fuer(Repogrund(startordner), fehler.Message);
-        }
+        return Ausfuehren(start, "git rev-parse --show-toplevel").TrimEnd('\n');
     }
 
-    /// <summary>Ohne Arbeitsbaum ist es ein nacktes Repository; ein auch dafür scheiternder rev-parse heißt: kein Repository.</summary>
-    private static Aufrufgrund Repogrund(string startordner)
+    /// <summary>Ohne Arbeitsbaum ist es ein nacktes Repository; der Aufrufer entscheidet, was ein scheiternder rev-parse bedeutet.</summary>
+    public static bool IstNacktesRepository(string startordner)
     {
         var start = GitStart.Im(startordner);
         start.ArgumentList.Add("rev-parse");
         start.ArgumentList.Add("--is-bare-repository");
-        try
+        var ausgabe = Ausfuehren(start, "git rev-parse --is-bare-repository").TrimEnd('\n');
+        return string.Equals(ausgabe, "true", StringComparison.Ordinal);
+    }
+
+    /// <summary>Welche der genannten Hashes sich nicht zu einem Commit auflösen lassen — für die Meldung, nicht für den Abbruch.</summary>
+    public static CommitHashes NichtAufloesbareHashes(CommitHashes hashes, string arbeitsordner)
+    {
+        var nichtAufloesbar = new List<string>();
+        foreach (var hash in hashes)
         {
-            var ausgabe = Ausfuehren(start, "git rev-parse --is-bare-repository").TrimEnd('\n');
-            var istNackt = ausgabe == "true";
-            if (istNackt)
+            if (!LoestSichAuf(hash, arbeitsordner))
             {
-                return Aufrufgrund.NacktesRepository;
+                nichtAufloesbar.Add(hash);
             }
-            return Aufrufgrund.KeinRepository;
         }
-        catch (GitNichtGefunden fehler)
-        {
-            throw Aufruffehler.Fuer(Aufrufgrund.GitNichtGefunden, fehler.Message);
-        }
-        catch (GitFehler)
-        {
-            return Aufrufgrund.KeinRepository;
-        }
+        return new CommitHashes(nichtAufloesbar);
+    }
+
+    private static bool LoestSichAuf(string hash, string arbeitsordner)
+    {
+        var start = GitStart.Im(arbeitsordner);
+        start.ArgumentList.Add("rev-parse");
+        start.ArgumentList.Add("--quiet");
+        start.ArgumentList.Add("--verify");
+        start.ArgumentList.Add("--end-of-options");
+        start.ArgumentList.Add($"{hash}^{{commit}}");
+        var lauf = WarteAufEnde(Starte(start));
+        return lauf.ExitCode == 0;
     }
 
     /// <summary>

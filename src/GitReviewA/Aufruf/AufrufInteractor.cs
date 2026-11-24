@@ -1,4 +1,3 @@
-using GitReviewA.Git;
 using GitReviewA.Protokoll;
 
 namespace GitReviewA.Aufruf;
@@ -15,7 +14,7 @@ internal static class AufrufInteractor
         try
         {
             var vorbereiteteAuswahl = await CommitsDerAuswahl.VorbereitenAsync(anfrage.Startauftrag.Auswahl, anfrage.Stdin);
-            var arbeitsbaumwurzel = GitLeser.WurzelLesen(anfrage.Arbeitsordner);
+            var arbeitsbaumwurzel = Reposituation.WurzelOderGrund(anfrage.Arbeitsordner);
             var commits = CommitsDerAuswahl.Lesen(vorbereiteteAuswahl, anfrage.Arbeitsordner, protokoll);
             return Aufruffolge.Erfolg(commits, arbeitsbaumwurzel);
         }

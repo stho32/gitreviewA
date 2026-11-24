@@ -100,7 +100,7 @@ public class GitLeserFremdeAnzeigeTests
         var ordner = Directory.CreateTempSubdirectory("gitreviewa-kein-repo-").FullName;
         try
         {
-            var fehler = Assert.Throws<Aufruffehler>(() => GitLeser.WurzelLesen(ordner));
+            var fehler = Assert.Throws<Aufruffehler>(() => Reposituation.WurzelOderGrund(ordner));
 
             Assert.That(fehler.Grund, Is.EqualTo(Aufrufgrund.KeinRepository));
         }

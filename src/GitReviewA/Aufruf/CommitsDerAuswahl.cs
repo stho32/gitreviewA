@@ -43,8 +43,19 @@ internal static class CommitsDerAuswahl
         }
         catch (GitFehler fehler)
         {
-            throw Aufruffehler.Fuer(Aufrufgrund.AuswahlNichtAufloesbar, fehler.Message);
+            var nichtAufloesbar = NichtAufloesbareHashes(auswahl, arbeitsordner);
+            throw Aufruffehler.FuerAuswahlNichtAufloesbar(nichtAufloesbar, auswahl.Hashes, fehler.Message);
         }
+    }
+
+    private static CommitHashes NichtAufloesbareHashes(Auswahl auswahl, string arbeitsordner)
+    {
+        if (auswahl.Art != Auswahlart.Einzelcommits)
+        {
+            return new CommitHashes([]);
+        }
+
+        return GitLeser.NichtAufloesbareHashes(auswahl.Hashes, arbeitsordner);
     }
 
     private static Commitzeilen LeseRoh(Auswahl auswahl, string arbeitsordner)
@@ -81,6 +92,8 @@ internal static class CommitsDerAuswahl
                 break;
             case Auswahlurteil.Zulaessig:
                 break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(urteil), urteil, "Unbekanntes Auswahlurteil.");
         }
     }
 }

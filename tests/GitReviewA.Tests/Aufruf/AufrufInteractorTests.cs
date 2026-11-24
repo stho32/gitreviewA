@@ -187,6 +187,60 @@ public class AufrufInteractorTests
         Assert.That(File.Exists(marker), Is.True, "Kontrolle: das Marker-Programm ist über git log aufrufbar");
     }
 
+    [Test]
+    public async Task Wenn_Auswahl_teilweise_nicht_aufloesbar_dann_Meldung_nennt_nur_den_unbekannten_Hash()
+    {
+        using var repo = WegwerfRepo.MitCommits("a", "b", "c");
+        var gueltig = repo.Hashes[0];
+        var unbekannt = "deadbeefdeadbeef";
+
+        var folge = await StarteAsync(repo.Ordner, [gueltig, unbekannt]);
+
+        var fehler = Abweisung(folge);
+        Assert.That(fehler.Grund, Is.EqualTo(Aufrufgrund.AuswahlNichtAufloesbar));
+        Assert.That(fehler.Meldung, Does.Contain(unbekannt));
+        Assert.That(fehler.Meldung, Does.Not.Contain("kein genannter Commit"));
+        Assert.That(fehler.Debugtext, Does.Contain("fatal"));
+    }
+
+    [Test]
+    public async Task Wenn_Auswahl_teilweise_nicht_aufloesbar_mit_fremdem_Hash_dann_Meldung_nennt_den_fremden_Hash()
+    {
+        using var repo = WegwerfRepo.MitCommits("a", "b", "c");
+        using var fremd = WegwerfRepo.MitCommits("x");
+        var gueltig = repo.Hashes[0];
+        var fremderHash = fremd.Hashes[0];
+
+        var folge = await StarteAsync(repo.Ordner, [gueltig, fremderHash]);
+
+        var fehler = Abweisung(folge);
+        Assert.That(fehler.Meldung, Does.Contain(fremderHash));
+        Assert.That(fehler.Meldung, Does.Not.Contain("kein genannter Commit"));
+    }
+
+    [Test]
+    public async Task Wenn_alle_Hashes_unbekannt_dann_bleibt_der_Satz_erlaubt()
+    {
+        using var repo = WegwerfRepo.MitCommits("a", "b", "c");
+
+        var folge = await StarteAsync(repo.Ordner, ["deadbeefdeadbeef", "feedfacefeedface"]);
+
+        var fehler = Abweisung(folge);
+        Assert.That(fehler.Grund, Is.EqualTo(Aufrufgrund.AuswahlNichtAufloesbar));
+        Assert.That(fehler.Meldung, Does.Contain("kein genannter Commit"));
+    }
+
+    [Test]
+    public async Task Wenn_zwei_gueltige_Hashes_dann_Erfolg()
+    {
+        using var repo = WegwerfRepo.MitCommits("a", "b", "c");
+
+        var folge = await StarteAsync(repo.Ordner, [repo.Hashes[0], repo.Hashes[1]]);
+
+        var (commits, _) = Erfolg(folge);
+        Assert.That(commits.Anzahl, Is.EqualTo(2));
+    }
+
     private static string MarkerProgrammSetzen(WegwerfRepo repo)
     {
         var marker = Path.Combine(repo.Ordner, ".git", "marker.txt");

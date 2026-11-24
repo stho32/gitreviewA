@@ -202,6 +202,43 @@ test.describe('Ungültiger Aufruf (I0003, R00016)', () => {
     }
   });
 
+  test('Szenario 5: teilweise auflösbare Auswahl nennt den unbekannten Hash', async ({ gr }) => {
+    const repo = gr.repoMitCommits(['a', 'b', 'c']);
+    const lauf = gr.gitreviewAAufrufen(repo, [repo.hashes[0], 'deadbeefdeadbeef']);
+    const exitCode = await laufEnde(lauf);
+
+    expect(exitCode).toBe(2);
+    expect(lauf.stderr).not.toContain('kein genannter Commit');
+    expect(lauf.stderr).toContain('deadbeefdeadbeef');
+    expect(lauf.stderr).toContain('auflösen');
+    expect(lauf.stdout).toBe('');
+    expect(lauf.stderr).not.toContain('http://127.0.0.1');
+    expect(ersteZeile(lauf)).toContain('FEHLER [');
+  });
+
+  test('Szenario 5: Hash aus einem anderen Repo in gemischter Auswahl wird genannt', async ({ gr }) => {
+    const repo = gr.repoMitCommits(['a', 'b', 'c']);
+    const fremd = gr.repoMitCommits(['x']);
+    const lauf = gr.gitreviewAAufrufen(repo, [repo.hashes[0], fremd.hashes[0]]);
+    const exitCode = await laufEnde(lauf);
+
+    expect(exitCode).toBe(2);
+    expect(lauf.stderr).toContain(fremd.hashes[0]);
+    expect(lauf.stderr).not.toContain('kein genannter Commit');
+    expect(lauf.stderr).not.toContain('http://127.0.0.1');
+  });
+
+  test('Szenario 5: zwei gültige Hashes starten den Server', async ({ gr }) => {
+    const repo = gr.repoMitCommits(['a', 'b', 'c']);
+    const lauf = await gr.gitreviewAStarten(repo, [repo.hashes[0], repo.hashes[1]]);
+    try {
+      expect(lauf.adresse).toMatch(/^http:\/\/127\.0\.0\.1:\d+\/$/);
+      expect((await gr.zustandAbfragen(lauf)).status).toBe(200);
+    } finally {
+      await gr.laufAbbrechen(lauf);
+    }
+  });
+
   test('Szenario 8: Positivkontrolle — gültiger Aufruf im Wurzelordner und im Unterordner startet den Server', async ({ gr }) => {
     const repo = gr.repoMitCommits();
     const unterordner = path.join(repo.ordner, 'unten');

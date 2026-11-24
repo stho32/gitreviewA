@@ -25,10 +25,18 @@ internal class Aufruffehler : Exception
 
     public string Debugtext { get; }
 
-    public int ExitCode => AufruffehlerMeldungen.ExitUngueltigerAufruf;
+    public int ExitCode => AufruffehlerMeldungen.ExitCode;
 
     public static Aufruffehler Fuer(Aufrufgrund grund, string debugtext = "")
     {
         return new Aufruffehler(AufruffehlerMeldungen.Meldung(grund), grund, debugtext);
+    }
+
+    public static Aufruffehler FuerAuswahlNichtAufloesbar(CommitHashes nichtAufloesbar, CommitHashes gesamteAuswahl, string debugtext)
+    {
+        return new Aufruffehler(
+            AufruffehlerMeldungen.AuswahlNichtAufloesbar(nichtAufloesbar, gesamteAuswahl),
+            Aufrufgrund.AuswahlNichtAufloesbar,
+            debugtext);
     }
 }

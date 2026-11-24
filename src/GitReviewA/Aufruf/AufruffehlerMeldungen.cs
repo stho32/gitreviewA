@@ -1,12 +1,14 @@
 namespace GitReviewA.Aufruf;
 
 /// <summary>
-/// Eine Stelle für Meldung und Exit-Code jedes ungültigen Aufrufs: deutscher Text, der den Grund und den Ausweg nennt,
-/// ohne rohen git-Text — der steht nur im Debugtext daneben.
+/// Eine Stelle für Meldungen und den Exit-Code eines ungültigen Aufrufs. Die Meldung nennt den Grund und den Ausweg;
+/// der rohe git-Text bleibt im Debug-Text. Bei einer nur teilweise auflösbaren Auswahl nennt sie die nicht auflösbaren Hashes.
 /// </summary>
 internal static class AufruffehlerMeldungen
 {
-    public const int ExitUngueltigerAufruf = 2;
+    public const int ExitCode = 2;
+
+    private const int HoechstensGenannteHashes = 5;
 
     public static string Meldung(Aufrufgrund grund)
     {
@@ -16,13 +18,43 @@ internal static class AufruffehlerMeldungen
             Aufrufgrund.NacktesRepository => "Nacktes Repository: der Arbeitsordner hat keinen Arbeitsbaum — bitte in einem Repository mit Arbeitsbaum starten.",
             Aufrufgrund.GitNichtGefunden => "git wurde nicht gefunden — bitte git installieren und im Suchpfad bereitstellen.",
             Aufrufgrund.LeereAuswahl => Auswahlgrenze.Leermeldung(),
-            Aufrufgrund.AuswahlNichtAufloesbar => "Die Auswahl ließ sich nicht auflösen: kein genannter Commit ist in diesem Repository vorhanden — bitte einen Hash dieses Repositories angeben.",
-            _ => throw new ArgumentOutOfRangeException(nameof(grund), grund, "unbekannter Aufrufgrund"),
+            Aufrufgrund.AuswahlNichtAufloesbar => "Die Auswahl ließ sich nicht auflösen — bitte einen Hash dieses Repositories angeben.",
+            _ => throw new ArgumentOutOfRangeException(nameof(grund), grund, "Unbekannter Aufrufgrund."),
         };
     }
 
-    public static int ExitCode(Aufrufgrund grund)
+    /// <summary>
+    /// Meldung für eine Auswahl, deren Hashes nicht alle zu einem Commit aufgelöst werden konnten.
+    /// <paramref name="nichtAufloesbar"/> ist die Teilmenge der nicht auflösbaren Hashes; <paramref name="gesamteAuswahl"/>
+    /// die ursprüngliche Auswahl. Sind alle Hashes nicht auflösbar, bleibt der bekannte Satz stehen; bei einer Teilmenge
+    /// werden nur die betroffenen Hashes genannt. Die Liste ist gekürzt, damit die Meldung eine Zeile bleibt.
+    /// </summary>
+    public static string AuswahlNichtAufloesbar(CommitHashes nichtAufloesbar, CommitHashes gesamteAuswahl)
     {
-        return ExitUngueltigerAufruf;
+        if (nichtAufloesbar.Anzahl == 0)
+        {
+            return "Die Auswahl ließ sich nicht auflösen — bitte einen Hash dieses Repositories angeben.";
+        }
+
+        if (nichtAufloesbar.Anzahl == gesamteAuswahl.Anzahl)
+        {
+            return "Die Auswahl ließ sich nicht auflösen: kein genannter Commit ist in diesem Repository vorhanden — bitte einen Hash dieses Repositories angeben.";
+        }
+
+        return $"Die Auswahl ließ sich nicht auflösen: nicht auflösbar sind {GenannteHashes(nichtAufloesbar)} — bitte einen Hash dieses Repositories angeben.";
+    }
+
+    private static string GenannteHashes(CommitHashes hashes)
+    {
+        var anzahl = Math.Min(hashes.Anzahl, HoechstensGenannteHashes);
+        var genannt = new List<string>(anzahl);
+        for (var i = 0; i < anzahl; i++)
+        {
+            genannt.Add(hashes[i]);
+        }
+
+        var weitere = hashes.Anzahl - anzahl;
+        var text = string.Join(", ", genannt);
+        return weitere > 0 ? $"{text} und {weitere} weitere" : text;
     }
 }
