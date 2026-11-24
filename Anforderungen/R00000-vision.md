@@ -58,8 +58,9 @@ an die KI zurückzugeben.
 
 ## Leitplanken
 
-- **.NET 10**, Kommandozeilenanwendung mit eingebetteter Weboberfläche; verteilt als
-  `dotnet tool` und als Single-File-Programm je Plattform.
+- **.NET 10**, Kommandozeilenanwendung mit eingebetteter Weboberfläche; ausgeliefert als
+  **genau eine ausführbare Datei** je Plattform (alles darin, kein Ordner; frameworkabhängig,
+  setzt die .NET-10-Runtime voraus).
 - **Nur localhost**, freier Port, der Browser öffnet sich selbst; ein Mensch, ein Tab je Lauf.
 - **Git über die `git`-Kommandozeile**, damit Diffs genau denen von `git` entsprechen.
 - **Nichts wird gespeichert**: Haken und Anmerkungen leben nur im Arbeitsspeicher des
@@ -98,3 +99,4 @@ an die KI zurückzugeben.
 | Datum | Ergänzung |
 |---|---|
 | 2026-11-24 | Vision angelegt (Review-Rückkanal Mensch → KI, .NET 10, nur RAM, stdout = Ergebnis, Lastprofil, MIT) |
+| 2026-11-24 | Leitplanke Auslieferung: eine ausführbare Datei je Plattform statt `dotnet tool` + Single-File (Betreiber: „als 1 executable, nicht als Ordner“, „kann aber frameworkabhängig sein“) |
