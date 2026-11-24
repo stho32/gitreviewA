@@ -4,6 +4,15 @@
     <AssemblyName>gitreviewA</AssemblyName>
     <RootNamespace>GitReviewA</RootNamespace>
   </PropertyGroup>
+  <!-- Nur beim Veröffentlichen: eine frameworkabhängige Einzeldatei, die Oberfläche steckt als Ressource darin (R00009).
+       `_IsPublishing` setzt die SDK für `dotnet publish`; `build` und `test` bleiben unberührt. -->
+  <PropertyGroup Condition="'$(_IsPublishing)' == 'true'">
+    <SelfContained>false</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <DebugType>embedded</DebugType>
+    <StaticWebAssetsEnabled>false</StaticWebAssetsEnabled>
+    <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
+  </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="web/**/*.html;web/**/*.js;web/**/*.css;web/**/*.woff2" LogicalName="web/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
