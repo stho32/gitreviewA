@@ -87,8 +87,13 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .dz tr[data-art]:focus{outline:2px solid var(--kd-accent);outline-offset:-2px}
 .dz .anm-zelle{padding:var(--kd-s2) var(--kd-s3) var(--kd-s2) calc(var(--kd-s3) + 110px);font:13px/1.45 var(--kd-font);background:var(--kd-sunken);border-top:1px solid var(--kd-line);border-bottom:1px solid var(--kd-line)}
 .anm-text{max-inline-size:72ch;white-space:pre-wrap;overflow-wrap:anywhere}
+.anm-kopf{display:flex;align-items:center;gap:var(--kd-s3);margin-block-end:var(--kd-s1);font-size:12px;color:var(--kd-muted)}
+.anm-kopf:focus-visible{outline:2px solid var(--kd-accent);outline-offset:2px}
+.anm-nummer{font-weight:600;color:var(--kd-text)}
+.anm-rechts{margin-inline-start:auto;display:flex;gap:var(--kd-s1)}
+.anm-kopf .btn{height:24px;padding:0 var(--kd-s2);font-size:12px}
 .anm-stelle{margin-block-start:var(--kd-s1);font:11px/1.4 var(--kd-mono);color:var(--kd-muted);overflow-wrap:anywhere}
-.dz tr.anm-feld .anm-zelle{background:var(--kd-surface)}
+.dz tr.anm-feld .anm-zelle,.dz tr.anm-aendern .anm-zelle{background:var(--kd-surface)}
 .anm-eingabe{display:block;inline-size:min(72ch,calc(100vw - 220px));height:auto;min-block-size:72px;padding:var(--kd-s2) var(--kd-s3);resize:vertical;font:13px/1.45 var(--kd-font)}
 .anm-fehler{margin:var(--kd-s1) 0 0;font-size:12px;color:var(--kd-status-error-ink)}
 .anm-fehler:empty{display:none}

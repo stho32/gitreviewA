@@ -108,10 +108,27 @@ function annotierSprache(gr, page) {
     serverAntwortetBeimAnlegen: antwort => anmerkungSeite.anlegenAntwortetEinmal(page, antwort),
     anlegenVerzoegern: () => anmerkungSeite.anlegenVerzoegern(page),
 
+    /** „Ändern“ am Anmerkungskopf der Anmerkung mit dieser stabilen Nummer. */
+    aendern: nummer => anmerkungSeite.aenderungOeffnen(page, nummer),
+    kopfNenntNummer: nummer => anmerkungSeite.pruefeKopfNenntNummer(page, nummer),
+    fokusAufKopf: nummer => anmerkungSeite.pruefeFokusAufKopf(page, nummer),
+    anzahlAenderungsfelder: anzahl => anmerkungSeite.pruefeAnzahlAenderungsfelder(page, anzahl),
+    anmerkungszeileEnthaelt: (nummer, text) => anmerkungSeite.pruefeAnmerkungszeileEnthaelt(page, nummer, text),
+    abbrechen: (datei, neu) => anmerkungSeite.abbrechen(page, feldname(datei, neu)),
+    speichernIstGesperrt: (datei, neu) => anmerkungSeite.pruefeSpeichernGesperrt(page, feldname(datei, neu)),
+    serverAntwortetBeimAendern: antwort => anmerkungSeite.aenderungAntwortetEinmal(page, antwort),
+    aendernVerzoegern: () => anmerkungSeite.aenderungVerzoegern(page),
+
     /** Anmerkung über die Schnittstelle (wie `curl`), am Commit `commit` mit vollem Hash. */
     ueberDieSchnittstelleAnlegen: async (commit, datei, zeile, text) => {
       const antwort = await gr.anmerkungAnlegen(lauf, { commit: hash(commit), datei, zeile, text });
       expect(antwort.status, `Anlegen ${datei}:${zeile}`).toBe(201);
+    },
+    /** Text der Anmerkung mit dieser stabilen Nummer über die Schnittstelle ändern. */
+    ueberDieSchnittstelleAendern: async (nummer, text) => {
+      const antwort = await gr.anmerkungAendern(lauf, nummer, text);
+      expect(antwort.status, `Ändern von Anmerkung ${nummer}`).toBe(200);
+      return antwort;
     },
     seiteOeffnen: oeffneSeite,
     anmerkungenRechtzeitigNachKlick: (datei, erwartet) => anmerkungSeite.pruefeAnmerkungenBinnen(page, () => seite.dateiWaehlen(page, datei), erwartet, LADEFRIST_MS),

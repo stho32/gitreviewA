@@ -5,10 +5,11 @@ const { expect } = require('@playwright/test');
 const ROLLBEREICH = '#diff .df-sc';
 const DIFFZEILE = '#diff .dz tr[data-art]';
 const ANMERKUNGSZEILE = '#diff .dz tr.anm';
-const FELDZEILE = '#diff .dz tr.anm-feld';
+const FELDZEILE = '#diff .dz tr.anm-feld, #diff .dz tr.anm-aendern';
 const HINWEIS_ENTFERNT = '#diff .anmerkung-hinweis';
 const HINWEIS_AUSSERHALB = '#diff .anmerkungen-ausserhalb';
 const ANLEGEN = '**/api/anmerkungen';
+const AENDERUNG = /\/api\/anmerkungen\/\d+$/;
 const VERZOEGERUNG_MS = 1500;
 
 /** `ziel`: `{ neu }`, `{ alt }` (entfernte Zeile), `'kopf'` oder `'hinweis'` (`\ No newline at end of file`). */
@@ -75,7 +76,7 @@ async function pruefeFeldZu(page, name) {
 }
 
 async function pruefeKeinFeld(page) {
-  await expect(page.locator(FELDZEILE)).toHaveCount(0);
+  await expect(page.locator('#diff .dz tr.anm-feld')).toHaveCount(0);
 }
 
 async function pruefeFeldmeldung(page, name, meldung, text) {
@@ -192,6 +193,74 @@ async function anlegenVerzoegern(page) {
   return { eingetroffen: () => antwort };
 }
 
+/** Anmerkungszeile über ihre stabile Nummer im Kopf („Anmerkung n“), nicht über ihre Stelle. */
+function anmerkungszeile(page, nummer) {
+  return page.locator(`${ANMERKUNGSZEILE}[data-anmerkung="${nummer}"]`);
+}
+
+/** Klick auf „Ändern“ im Anmerkungskopf; ein zweiter Klick auf dieselbe Nummer ist erlaubt und darf kein zweites Feld öffnen. */
+async function aenderungOeffnen(page, nummer) {
+  await anmerkungszeile(page, nummer).getByRole('button', { name: 'Ändern', exact: true }).click();
+}
+
+async function pruefeKopfNenntNummer(page, nummer) {
+  await expect(anmerkungszeile(page, nummer).locator('.anm-kopf .anm-nummer')).toHaveText(`Anmerkung ${nummer}`);
+}
+
+async function pruefeFokusAufKopf(page, nummer) {
+  await expect(anmerkungszeile(page, nummer).locator('.anm-kopf')).toBeFocused();
+}
+
+async function pruefeAnzahlAenderungsfelder(page, anzahl) {
+  await expect(page.locator('#diff .dz tr.anm-aendern')).toHaveCount(anzahl);
+}
+
+/** Der alte Text steht während der Änderung weiter unter seiner Zeile in der Anmerkungszeile. */
+async function pruefeAnmerkungszeileEnthaelt(page, nummer, text) {
+  await expect(anmerkungszeile(page, nummer).locator('.anm-text')).toHaveText(text);
+}
+
+async function abbrechen(page, name) {
+  await feldzeile(page, name).getByRole('button', { name: 'Abbrechen', exact: true }).click();
+}
+
+async function pruefeSpeichernGesperrt(page, name) {
+  await expect(feldzeile(page, name).getByRole('button', { name: 'Speichern', exact: true })).toBeDisabled();
+}
+
+/** Je Antwort auf das Ändern: `{ status, meldung }` erfüllt sie ohne Server, `'netz'` bricht ab; danach wieder der echte Server. */
+async function aenderungAntwortetEinmal(page, antwort) {
+  let istBeantwortet = false;
+  await page.route(AENDERUNG, async route => {
+    const istErsteAenderung = route.request().method() === 'POST' && !istBeantwortet;
+    if (!istErsteAenderung) {
+      await route.fallback();
+      return;
+    }
+    istBeantwortet = true;
+    if (antwort === 'netz') {
+      await route.abort('failed');
+      return;
+    }
+    await route.fulfill({ status: antwort.status, contentType: 'application/json', body: JSON.stringify({ meldung: antwort.meldung }) });
+  });
+}
+
+/** Hält jede Änderung 1,5 s zurück; `eingetroffen` wartet auf die erste Antwort, `anzahl` zählt die Anfragen des Browsers. */
+async function aenderungVerzoegern(page) {
+  let anzahl = 0;
+  await page.route(AENDERUNG, async route => {
+    const istAenderung = route.request().method() === 'POST';
+    if (istAenderung) {
+      anzahl += 1;
+      await new Promise(weiter => setTimeout(weiter, VERZOEGERUNG_MS));
+    }
+    await route.fallback();
+  });
+  const antwort = page.waitForResponse(response => AENDERUNG.test(response.url()) && response.request().method() === 'POST');
+  return { eingetroffen: () => antwort, anzahl: () => anzahl };
+}
+
 /** Führt `waehlen` aus und misst bis zu dem Bild, in dem Zeile `letzteNeu`, die Anmerkung an `anmerkungNeu` und genau `anzahl` Anmerkungszeilen stehen. */
 async function pruefeAnmerkungenBinnen(page, waehlen, { letzteNeu, anmerkungNeu, anzahl }, fristMs) {
   const klickUmMs = Date.now();
@@ -224,4 +293,6 @@ module.exports = {
   pruefeHinweisEntfernt, pruefeKeinHinweisEntfernt, pruefeHinweisAusserhalb, pruefeKeinHinweisAusserhalb,
   inDenDiffTabben, pfeilAbBis, taste, pruefeFokusAufZeile, anlegenAntwortetEinmal, anlegenVerzoegern, pruefeAnmerkungenBinnen,
   pruefeAnmerkungOhneHtml, sichtbarerAnmerkungstext,
+  aenderungOeffnen, pruefeKopfNenntNummer, pruefeFokusAufKopf, pruefeAnzahlAenderungsfelder, pruefeAnmerkungszeileEnthaelt, abbrechen, pruefeSpeichernGesperrt,
+  aenderungAntwortetEinmal, aenderungVerzoegern,
 };

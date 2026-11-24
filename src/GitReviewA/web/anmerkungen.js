@@ -1,15 +1,17 @@
-/* gitreviewA — Zeile annotieren (R00010): Klick oder Enter auf eine Diff-Zeile öffnet unter ihr ein Notizfeld, „Speichern“ legt die Anmerkung
-   über `POST /api/anmerkungen` an, und nach jedem Zeichnen eines Diffs (`diff-gezeichnet`) stehen die Anmerkungen unter ihren Zeilen.
+/* gitreviewA — Anmerkungen (R00010, R00018): Klick oder Enter auf eine Diff-Zeile öffnet unter ihr ein Notizfeld, „Speichern“ legt die Anmerkung
+   über `POST /api/anmerkungen` an; „Ändern“ im Anmerkungskopf öffnet ein Feld mit dem vorhandenen Text und schickt den neuen an
+   `POST /api/anmerkungen/<nummer>`. Nach jedem Zeichnen eines Diffs (`diff-gezeichnet`) stehen die Anmerkungen unter ihren Zeilen.
    Quelle der Wahrheit ist der Server (`GET /api/anmerkungen`). Anmerkungstext und Pfade sind fremder Text: nur textContent und Attributwerte. */
 (function () {
   'use strict';
 
   const SPEICHERN_GESCHEITERT = 'Anmerkung konnte nicht gespeichert werden';
+  const AENDERN_GESCHEITERT = 'Anmerkung konnte nicht geändert werden';
   const DIFFZEILE = 'tr[data-art]';
 
   /** `anmerkungen`: Stand des Servers in Anlegereihenfolge; `ladung`: nur die jüngste Liste zählt; `gezeichnet`: Detail des letzten
-      `diff-gezeichnet`; `fokusZeileElement`: die Diff-Zeile mit dem wandernden tabindex. */
-  const zustand = { anmerkungen: [], ladung: 0, gezeichnet: null, fokusZeileElement: null };
+      `diff-gezeichnet`; `fokusZeileElement`: die Diff-Zeile mit dem wandernden tabindex; `aenderungen`: offene Änderungsfelder. */
+  const zustand = { anmerkungen: [], ladung: 0, gezeichnet: null, fokusZeileElement: null, aenderungen: [] };
 
   function init() {
     const wurzelElement = document.getElementById('diff');
@@ -27,7 +29,8 @@
 
   /* ── Stand vom Server und Anzeige am Diff ── */
 
-  async function ladeAnmerkungen(ansicht) {
+  /** Lädt den Stand vom Server und zeichnet neu; mit `fokusNummer` nimmt dieser Anmerkungskopf danach den Fokus (er wird beim Zeichnen ersetzt). */
+  async function ladeAnmerkungen(ansicht, fokusNummer = null) {
     const ladung = zustand.ladung + 1;
     zustand.ladung = ladung;
     let anmerkungen;
@@ -41,7 +44,10 @@
       return;
     }
     zustand.anmerkungen = anmerkungen;
-    zeigeAnmerkungen();
+    zeigeAnmerkungen(ansicht);
+    if (fokusNummer !== null) {
+      fokussiereKopf(ansicht, fokusNummer);
+    }
   }
 
   async function anmerkungenAbrufen() {
@@ -55,25 +61,26 @@
   function merkeUndZeigeAn(ansicht, gezeichnet) {
     zustand.gezeichnet = gezeichnet;
     zustand.fokusZeileElement = null;
-    zeigeAnmerkungen();
+    zeigeAnmerkungen(ansicht);
   }
 
-  /** Zeichnet die Anmerkungen des gezeigten Diffs neu: je Anmerkung eine Anmerkungszeile unter ihrer Diff-Zeile, darüber der Hinweis
-      auf Anmerkungen an Zeilen, die die Ansicht nicht zeigt. Offene Notizfelder bleiben stehen. */
-  function zeigeAnmerkungen() {
+  /** Zeichnet die Anmerkungen des gezeigten Diffs neu: je Anmerkung eine Anmerkungszeile mit Kopf unter ihrer Diff-Zeile, darüber der Hinweis
+      auf Anmerkungen an Zeilen, die die Ansicht nicht zeigt. Offene Notizfelder bleiben stehen, offene Änderungsfelder nicht (ihre Zeile wird neu gezeichnet). */
+  function zeigeAnmerkungen(ansicht) {
     const gezeichnet = zustand.gezeichnet;
     const diffIstVerworfen = !gezeichnet || !gezeichnet.ersterBlockElement.isConnected;
     if (diffIstVerworfen) {
       return;
     }
     const bereichElement = gezeichnet.bereichElement;
-    for (const altesElement of bereichElement.querySelectorAll('tr.anm, .anmerkungen-ausserhalb')) {
+    for (const altesElement of bereichElement.querySelectorAll('tr.anm, tr.anm-aendern, .anmerkungen-ausserhalb')) {
       altesElement.remove();
     }
+    zustand.aenderungen = [];
     const zeileNachNummerNeu = zeilenMitNummerNeu(bereichElement);
     const stand = anmerkungsstand(zustand.anmerkungen, gezeichnet.commit, gezeichnet.pfad, new Set(zeileNachNummerNeu.keys()));
     for (const [nummerNeu, anmerkungen] of stand.jeZeile) {
-      zeileNachNummerNeu.get(nummerNeu).after(...anmerkungen.map(anmerkungszeileElement));
+      zeileNachNummerNeu.get(nummerNeu).after(...anmerkungen.map(anmerkung => anmerkungszeileElement(ansicht, anmerkung)));
     }
     const hinweis = hinweisAusserhalb(stand.ausserhalb);
     if (hinweis) {
@@ -92,9 +99,10 @@
   }
 
   /** Keine Diff-Zeile: ohne `data-art`, `data-alt`, `data-neu` und ohne die Zellklassen der Färbung (`.c`, `.n`, `.m`). */
-  function anmerkungszeileElement(anmerkung) {
+  function anmerkungszeileElement(ansicht, anmerkung) {
     const zeileElement = document.createElement('tr');
     zeileElement.className = 'anm';
+    zeileElement.dataset.anmerkung = String(anmerkung.nummer);
     const zelleElement = document.createElement('td');
     zelleElement.colSpan = 4;
     zelleElement.className = 'anm-zelle';
@@ -103,10 +111,36 @@
     textElement.textContent = anmerkung.text;
     const stelleElement = document.createElement('div');
     stelleElement.className = 'anm-stelle';
-    stelleElement.textContent = `${sichtbarerPfad(anmerkung.datei)}:${anmerkung.zeile}`;
-    zelleElement.append(textElement, stelleElement);
+    stelleElement.textContent = stelleDer(anmerkung);
+    zelleElement.append(anmerkungskopfElement(ansicht, anmerkung), textElement, stelleElement);
     zeileElement.append(zelleElement);
     return zeileElement;
+  }
+
+  /** Der Kopf nennt die stabile Nummer der Anmerkung (nicht ihre Position im Ergebnis) und trägt „Ändern“; er nimmt nach Speichern und
+      Abbrechen den Fokus wieder auf. */
+  function anmerkungskopfElement(ansicht, anmerkung) {
+    const kopfElement = document.createElement('div');
+    kopfElement.className = 'anm-kopf';
+    kopfElement.tabIndex = -1;
+    kopfElement.setAttribute('aria-label', `Anmerkung ${anmerkung.nummer}`);
+    const nummerElement = document.createElement('span');
+    nummerElement.className = 'anm-nummer';
+    nummerElement.textContent = `Anmerkung ${anmerkung.nummer}`;
+    const rechtsElement = document.createElement('span');
+    rechtsElement.className = 'anm-rechts';
+    rechtsElement.append(knopfElement('btn', 'Ändern', () => oeffneOderFokussiereAenderung(ansicht, anmerkung)));
+    kopfElement.append(nummerElement, rechtsElement);
+    return kopfElement;
+  }
+
+  /** Stelle der Anmerkung wie im Ergebnis: `<Datei>:<Zeile>` oder `<Datei> (ganze Datei)`. */
+  function stelleDer(anmerkung) {
+    const pfad = sichtbarerPfad(anmerkung.datei);
+    if (anmerkung.zeile === null) {
+      return `${pfad} (ganze Datei)`;
+    }
+    return `${pfad}:${anmerkung.zeile}`;
   }
 
   function ausserhalbElement(hinweis) {
@@ -231,13 +265,19 @@
 
   function oeffneFeld(ansicht, zeileElement, nummerNeu) {
     const gezeichnet = zustand.gezeichnet;
+    const ziel = { commit: gezeichnet.commit, datei: gezeichnet.pfad, zeile: nummerNeu };
     const feld = {
       ansicht,
       zeileElement,
-      ziel: { commit: gezeichnet.commit, datei: gezeichnet.pfad, zeile: nummerNeu },
+      ziel,
+      feldname: `Anmerkung zu ${sichtbarerPfad(ziel.datei)}, Zeile ${ziel.zeile}`,
+      zeilenklasse: 'anm-feld',
+      vorbelegung: '',
       speichertGerade: false,
     };
-    feld.feldzeileElement = feldzeileElement(feld);
+    feld.speichern = () => speichere(feld);
+    feld.abbrechen = () => schliesseFeld(feld);
+    feld.feldzeileElement = notizfeldzeileElement(feld);
     letzteAnmerkungszeile(zeileElement).after(feld.feldzeileElement);
     feld.eingabeElement.focus();
   }
@@ -251,22 +291,24 @@
     return letzteElement;
   }
 
-  function feldzeileElement(feld) {
+  /** Zeile eines Notizfelds (Anlegen wie Ändern): Feld, Meldung und Knöpfe; Name, Vorbelegung und Zeilenklasse kommen vom Feld. */
+  function notizfeldzeileElement(feld) {
     const zeileElement = document.createElement('tr');
-    zeileElement.className = 'anm-feld';
+    zeileElement.className = feld.zeilenklasse;
     const zelleElement = document.createElement('td');
     zelleElement.colSpan = 4;
     zelleElement.className = 'anm-zelle';
     feld.eingabeElement = document.createElement('textarea');
     feld.eingabeElement.className = 'inp anm-eingabe';
     feld.eingabeElement.rows = 3;
-    feld.eingabeElement.setAttribute('aria-label', `Anmerkung zu ${sichtbarerPfad(feld.ziel.datei)}, Zeile ${feld.ziel.zeile}`);
+    feld.eingabeElement.setAttribute('aria-label', feld.feldname);
+    feld.eingabeElement.value = feld.vorbelegung;
     feld.eingabeElement.addEventListener('keydown', ereignis => bedieneFeldPerTastatur(feld, ereignis));
     feld.fehlerElement = document.createElement('p');
     feld.fehlerElement.className = 'anm-fehler';
     feld.fehlerElement.setAttribute('role', 'alert');
-    feld.speichernElement = knopfElement('btn btn-haupt', 'Speichern', () => speichere(feld));
-    const abbrechenElement = knopfElement('btn', 'Abbrechen', () => schliesseFeld(feld));
+    feld.speichernElement = knopfElement('btn btn-haupt', 'Speichern', () => feld.speichern());
+    const abbrechenElement = knopfElement('btn', 'Abbrechen', () => feld.abbrechen());
     const knoepfeElement = document.createElement('div');
     knoepfeElement.className = 'anm-knoepfe';
     knoepfeElement.append(feld.speichernElement, abbrechenElement);
@@ -288,12 +330,12 @@
     const istSpeichern = ereignis.key === 'Enter' && (ereignis.ctrlKey || ereignis.metaKey);
     if (istSpeichern) {
       ereignis.preventDefault();
-      speichere(feld);
+      feld.speichern();
       return;
     }
     if (ereignis.key === 'Escape') {
       ereignis.preventDefault();
-      schliesseFeld(feld);
+      feld.abbrechen();
     }
   }
 
@@ -316,7 +358,7 @@
     }
     zustand.anmerkungen = [...zustand.anmerkungen, { nummer: ausgang.nummer, ...feld.ziel, text }];
     schliesseFeld(feld);
-    zeigeAnmerkungen();
+    zeigeAnmerkungen(feld.ansicht);
     ladeAnmerkungen(feld.ansicht);
   }
 
@@ -349,6 +391,116 @@
     if (feld.zeileElement.isConnected) {
       setzeZeilenfokus(feld.zeileElement, true);
     }
+  }
+
+  /* ── Änderung: Feld unter der Anmerkung, eine Anfrage je Feld ── */
+
+  /** Je Anmerkung höchstens ein Feld: ein zweiter Druck auf „Ändern“ fokussiert das offene, es öffnet kein zweites. Das Feld steht
+      unter der Anmerkungszeile, damit der alte Text sichtbar bleibt, bis der neue angenommen ist. */
+  function oeffneOderFokussiereAenderung(ansicht, anmerkung) {
+    const offenes = zustand.aenderungen.find(feld => feld.anmerkung.nummer === anmerkung.nummer);
+    if (offenes) {
+      offenes.eingabeElement.focus();
+      return;
+    }
+    const zeileElement = anmerkungszeile(ansicht, anmerkung.nummer);
+    if (!zeileElement) {
+      return;
+    }
+    const feld = {
+      ansicht,
+      anmerkung,
+      zeileElement,
+      feldname: feldnameDerAnmerkung(anmerkung),
+      zeilenklasse: 'anm-aendern',
+      vorbelegung: anmerkung.text,
+      speichertGerade: false,
+    };
+    feld.speichern = () => speichereAenderung(feld);
+    feld.abbrechen = () => schliesseAenderung(feld);
+    feld.feldzeileElement = notizfeldzeileElement(feld);
+    zeileElement.after(feld.feldzeileElement);
+    zustand.aenderungen.push(feld);
+    feld.eingabeElement.focus();
+  }
+
+  function anmerkungszeile(ansicht, nummer) {
+    return ansicht.rollElement.querySelector(`tr.anm[data-anmerkung="${nummer}"]`);
+  }
+
+  /** Name des Änderungsfelds wie beim Anlegen: „Anmerkung zu <Datei>, Zeile <n>“; ohne Zeile nur „Anmerkung zu <Datei>“. */
+  function feldnameDerAnmerkung(anmerkung) {
+    const pfad = sichtbarerPfad(anmerkung.datei);
+    if (anmerkung.zeile === null) {
+      return `Anmerkung zu ${pfad}`;
+    }
+    return `Anmerkung zu ${pfad}, Zeile ${anmerkung.zeile}`;
+  }
+
+  /** Genau eine Anfrage je Feld zur Zeit. Die Antwort ersetzt den Text an ihrer stabilen Nummer — auch wenn währenddessen eine andere
+      Datei gewählt wurde; nur gezeichnet wird, was zur Nummer gehört. */
+  async function speichereAenderung(feld) {
+    if (feld.speichertGerade) {
+      return;
+    }
+    feld.speichertGerade = true;
+    feld.speichernElement.disabled = true;
+    feld.fehlerElement.textContent = '';
+    const ausgang = await anmerkungAendern(feld.anmerkung.nummer, feld.eingabeElement.value);
+    feld.speichertGerade = false;
+    feld.speichernElement.disabled = false;
+    if (ausgang.meldung) {
+      feld.fehlerElement.textContent = ausgang.meldung;
+      return;
+    }
+    entferneAenderung(feld);
+    zustand.anmerkungen = mitGeaendertemText(zustand.anmerkungen, ausgang.nummer, ausgang.text);
+    zeigeAnmerkungen(feld.ansicht);
+    fokussiereKopf(feld.ansicht, ausgang.nummer);
+    ladeAnmerkungen(feld.ansicht, ausgang.nummer);
+  }
+
+  /** `{nummer, text}` bei Erfolg; sonst `{meldung}`: der Satz des Servers bei 4xx, bei 5xx und ohne Antwort der allgemeine Satz. */
+  async function anmerkungAendern(nummer, text) {
+    let antwort;
+    try {
+      antwort = await fetch(`api/anmerkungen/${nummer}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+    } catch {
+      return { meldung: AENDERN_GESCHEITERT };
+    }
+    const inhalt = await antwort.json().catch(() => ({}));
+    const istGeaendert = antwort.ok && Number.isInteger(inhalt.nummer) && typeof inhalt.text === 'string';
+    if (istGeaendert) {
+      return { nummer: inhalt.nummer, text: inhalt.text };
+    }
+    const istSatzDesServers = antwort.status >= 400 && antwort.status < 500 && typeof inhalt.meldung === 'string' && inhalt.meldung !== '';
+    if (istSatzDesServers) {
+      return { meldung: inhalt.meldung };
+    }
+    return { meldung: AENDERN_GESCHEITERT };
+  }
+
+  /** Abbrechen lässt die Anmerkung, wie sie war; der Anmerkungskopf nimmt den Fokus wieder auf. */
+  function schliesseAenderung(feld) {
+    entferneAenderung(feld);
+    fokussiereKopf(feld.ansicht, feld.anmerkung.nummer);
+  }
+
+  function entferneAenderung(feld) {
+    feld.feldzeileElement.remove();
+    zustand.aenderungen = zustand.aenderungen.filter(offenes => offenes !== feld);
+  }
+
+  function fokussiereKopf(ansicht, nummer) {
+    const zeileElement = anmerkungszeile(ansicht, nummer);
+    if (!zeileElement) {
+      return;
+    }
+    zeileElement.querySelector('.anm-kopf').focus();
   }
 
   document.addEventListener('DOMContentLoaded', init);
