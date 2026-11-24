@@ -55,8 +55,8 @@ Wie die Dienste des Projekts starten und geprüft werden. Gilt für den Director
 ## Rechnerlast
 
 - Höchstens etwa 75 % Systemlast, immer; vor jedem Start einer Rolle, eines Builds oder des Gates prüfen.
-- Tagbetrieb 8–21 Uhr: 3 bauende Rollen (entwickler an voneinander unabhängigen Karten, je eigener Worktree und eigenes Build-Ziel; Betreiber 2026-11-24, erst 2, dann 3), 2 prüfende Rollen gleichzeitig.
-- Nachtbetrieb 21–8 Uhr: 1 bauende Rolle, 1 prüfende Rolle; Builds mit `nice`.
+- **Höchstens 3 Karten gleichzeitig in Arbeit** (Betreiber 2026-11-24, statt Grenzen je Rolle): gezählt werden alle Karten in den Team-Spalten von „Detailplanung“ bis „Entwicklertest“ einschließlich „Nacharbeit“; eine neue Karte zieht erst nach „Detailplanung“, wenn eine andere nach „Erledigt“ (oder „Ohne Mensch nicht lösbar“) gegangen ist. Innerhalb einer Karte laufen Rollen parallel, soweit der Ablauf es erlaubt. Zuerst fertig machen, dann neu beginnen.
+- Tag- und Nachtbetrieb: keine feste Zahl je Rolle mehr; es gilt nur die Lastgrenze oben (Nacht zusätzlich Builds mit `nice`).
 - Last- und Dauerproben nur auf ausdrücklichen Auftrag des Betreibers, nie nachts.
 
 ## Wissen
