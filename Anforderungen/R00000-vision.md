@@ -49,7 +49,8 @@ an die KI zurückzugeben.
   geschlossener Tab beendet nichts, ein Zeitlimit gibt es nicht.
 - **Ergebnis als Rückkanal**: „Beenden“ schließt den Lauf; das Ergebnis manueller Review
   mit allen Anmerkungen und Stellenangaben (Commit, Datei, Zeile) steht auf stdout, so
-  geformt, dass eine KI es direkt als Arbeitsauftrag lesen kann.
+  geformt, dass eine KI es direkt als Arbeitsauftrag lesen kann — als Markdown; ein zweites
+  Format (JSON) erst bei konkretem Bedarf.
 
 ## Nutzer und Nutzen
 
@@ -90,8 +91,6 @@ an die KI zurückzugeben.
 
 ## Offene Richtungsfragen
 
-- **Format des Ergebnisses**: Markdown für Mensch und KI zugleich, oder wahlweise
-  zusätzlich JSON?
 - **Anbindung an kanbanD**: die Commits einer Karte direkt laden (`--karte <nr>`) —
   wann und wie eng?
 
@@ -103,3 +102,4 @@ an die KI zurückzugeben.
 | 2026-11-24 | Leitplanke Auslieferung: eine ausführbare Datei je Plattform statt `dotnet tool` + Single-File (Betreiber: „als 1 executable, nicht als Ordner“, „kann aber frameworkabhängig sein“) |
 | 2026-11-24 | Richtungsfrage „Urteil neben den Anmerkungen“ entschieden: kein Gesamturteil, Exit 0 bei „Beenden“ (Betreiber, Empfehlung des product-owner) |
 | 2026-11-24 | Richtungsfrage „Lauf ohne Beenden“ entschieden: Tab zu wartet weiter, Abbruch ohne Ergebnis mit „Review abgebrochen“ auf stderr und Exit 130, kein Zeitlimit (Betreiber, Empfehlung des product-owner) |
+| 2026-11-24 | Richtungsfrage „Format des Ergebnisses“ entschieden: nur Markdown, JSON erst bei konkretem Bedarf (Empfehlung des product-owner; Betreiber: „Nimm einfach immer die Empfehlung vom Product Owner“) |

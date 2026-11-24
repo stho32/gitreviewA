@@ -127,8 +127,11 @@ In der Reihenfolge des Boards. In Spalten der Art Mensch bewegt die Fabrik nie e
 Je Team-Spalte: was ausgelöst wird, wenn eine Karte sie betritt, und wie danach entschieden wird. Für alle Spalten
 gilt, ohne dass es je Spalte wiederholt wird:
 
-- **Frage einer Rolle** → product-owner entscheidet (höchstens 2 Runden); nur Richtungsweisendes und danach noch
-  Offenes → „Ohne Mensch nicht lösbar“ mit Signal `frage`.
+- **Frage einer Rolle** → product-owner entscheidet (höchstens 2 Runden). **Auch richtungsweisende Fragen setzt der
+  Director nach der Empfehlung des product-owner um** (Betreiber 2026-11-24: „Nimm einfach immer die Empfehlung vom
+  Product Owner, die sind gut“) und nennt sie dem Betreiber gesammelt in der nächsten Meldung; Fragen der Vision
+  schreibt er als entschieden in die Vision (mit Historienzeile). Nur was der product-owner ohne Empfehlung
+  zurückgibt → „Ohne Mensch nicht lösbar“ mit Signal `frage`.
 - **Schleifenbremse**: steht bei einer Entscheidung „höchstens n×“, geht die Karte danach nach „Ohne Mensch nicht
   lösbar“ — vorher ein Vorschlag des realist-consultant auf die Karte.
 - **Ein Worktree je Karte** für alle Phasen (`board.py beginne` legt ihn an und nennt ihn im Auftragskopf).
