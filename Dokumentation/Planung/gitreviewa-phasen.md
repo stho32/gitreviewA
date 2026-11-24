@@ -24,3 +24,5 @@ zuletzt: 2026-11-24
 | I0005 | Entwicklertest | 2026-11-24 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | 14 Szenarien (R00003), Karte #5 |
 | I0004 | Entwicklertest | 2026-11-24 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | US-1 bis US-6 (R00009), Karte #4 |
 | I0002 | Entwicklertest | 2026-11-24 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | 11 Szenarien (R00006), Karte #2 |
+| I0006 | Entwicklertest | 2026-11-24 | befund | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | Muss: Einfrieren bei großer Binärdatei als Text, Karte #6 |
+| I0006 | Entwicklertest | 2026-11-24 | bestanden | Claude (autonom, Director nach Nacharbeit, Auftrag Stefan Hoffmann) | 16 Szenarien (R00004), Muss nachgeprüft, Karte #6 |
