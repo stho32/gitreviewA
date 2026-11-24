@@ -22,6 +22,21 @@ internal sealed class DiffLesenInteractor(Commitzeilen commits, GemerkteDateique
         {
             return Differgebnis.NichtGefunden;
         }
+        return LeseDateiDesCommits(hash, anfrage);
+    }
+
+    private static Dictionary<string, string> HashesDerAuswahl(Commitzeilen commits)
+    {
+        var auswahl = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var commit in commits)
+        {
+            auswahl[commit.Hash] = commit.Hash;
+        }
+        return auswahl;
+    }
+
+    private Differgebnis LeseDateiDesCommits(string hash, Diffanfrage anfrage)
+    {
         Dateiaenderungen dateienDesCommits;
         try
         {
@@ -50,16 +65,6 @@ internal sealed class DiffLesenInteractor(Commitzeilen commits, GemerkteDateique
         }
     }
 
-    private static Dictionary<string, string> HashesDerAuswahl(Commitzeilen commits)
-    {
-        var auswahl = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var commit in commits)
-        {
-            auswahl[commit.Hash] = commit.Hash;
-        }
-        return auswahl;
-    }
-
     /// <summary>Genau gleich, Groß- und Kleinschreibung beachtet: ein Ordner, ein Muster oder eine andere Schreibweise ist keine Datei der Liste.</summary>
     private static Dateiaenderung? DateiMitPfad(Dateiaenderungen dateienDesCommits, string pfad)
     {
@@ -74,13 +79,19 @@ internal sealed class DiffLesenInteractor(Commitzeilen commits, GemerkteDateique
         return null;
     }
 
+    /// <summary>Die Debug-Zeile nennt die Wahl des Menschen: „als Text“ bei einer Binärdatei, „ganze Datei“ für die Ansicht.</summary>
     private static string WahlText(Diffanfrage anfrage)
     {
+        var wahl = "";
         if (anfrage.AlsText)
         {
-            return " als Text";
+            wahl += " als Text";
         }
-        return "";
+        if (anfrage.Umfang == Diffumfang.Ganz)
+        {
+            wahl += " ganze Datei";
+        }
+        return wahl;
     }
 
     /// <summary>Eine Binärdatei kommt mit Grund und ohne Byte-Inhalt — ihren Text liest erst die ausdrückliche Wahl (Entscheidung des PO).</summary>
@@ -91,7 +102,7 @@ internal sealed class DiffLesenInteractor(Commitzeilen commits, GemerkteDateique
         string? grund = null;
         if (art == Diffaufbereitung.ArtText)
         {
-            patch = diffquelle.Lesen(hash, datei);
+            patch = diffquelle.Lesen(hash, datei, anfrage.Umfang);
         }
         if (art == Diffaufbereitung.ArtBinaer)
         {
@@ -100,7 +111,7 @@ internal sealed class DiffLesenInteractor(Commitzeilen commits, GemerkteDateique
         var binaerAlsTextGewaehlt = art == Diffaufbereitung.ArtBinaer && anfrage.AlsText;
         if (binaerAlsTextGewaehlt)
         {
-            patch = diffquelle.AlsTextLesen(hash, datei);
+            patch = diffquelle.AlsTextLesen(hash, datei, anfrage.Umfang);
         }
         return new DiffAntwort(datei.Pfad, datei.Status, datei.AlterPfad, art, grund, patch);
     }

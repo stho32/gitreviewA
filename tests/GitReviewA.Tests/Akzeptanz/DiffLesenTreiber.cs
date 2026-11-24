@@ -74,12 +74,14 @@ internal sealed record Dateiansicht(string Ausgang, string? Pfad, string? Art, s
     /// <summary>Die Texte der Zeilen mit Nummer neu (Kontext und hinzugefügt) in ihrer Reihenfolge: die n-te trägt Nummer neu n.</summary>
     public string[] TexteMitNummerNeu()
     {
-        return Zeilen.Where(zeile => zeile.StartsWith(' ') || zeile.StartsWith('+')).Select(zeile => zeile[1..]).ToArray();
+        var zeilenMitNummerNeu = Zeilen.Where(zeile => zeile.StartsWith(' ') || zeile.StartsWith('+'));
+        return zeilenMitNummerNeu.Select(zeile => zeile[1..]).ToArray();
     }
 
     /// <summary>Die Texte der Zeilen mit Nummer alt (Kontext und entfernt) in ihrer Reihenfolge: die m-te trägt Nummer alt m.</summary>
     public string[] TexteMitNummerAlt()
     {
-        return Zeilen.Where(zeile => zeile.StartsWith(' ') || zeile.StartsWith('-')).Select(zeile => zeile[1..]).ToArray();
+        var zeilenMitNummerAlt = Zeilen.Where(zeile => zeile.StartsWith(' ') || zeile.StartsWith('-'));
+        return zeilenMitNummerAlt.Select(zeile => zeile[1..]).ToArray();
     }
 }

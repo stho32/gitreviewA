@@ -168,7 +168,7 @@ public class GitLeserDiffTests
         repo.Git("config", "diff.relative", pfadeRelativ.ToString().ToLowerInvariant());
         var arbeitsordner = GitLeser.WurzelLesen(Path.Combine(repo.Ordner, "src"));
 
-        var ausgabe = GitLeser.DiffLesen(q, new Dateiaenderung("M", pfad, null, 1, 1), arbeitsordner);
+        var ausgabe = GitLeser.DiffLesen(q, new Dateiaenderung("M", pfad, null, 1, 1), Diffumfang.Aenderungen, arbeitsordner);
 
         Assert.That(Diffaufbereitung.PatchAbErstemHunk(ausgabe), Is.EqualTo(erwartet));
     }
@@ -202,7 +202,7 @@ public class GitLeserDiffTests
         var datei = new Dateiaenderung("A", "x.js", null, null, null);
         Assert.That(PatchLesen(repo, p, datei), Is.Empty, "Kontrolle: ohne Wahl zeigt git keinen Inhalt");
 
-        var patch = Diffaufbereitung.PatchAbErstemHunk(GitLeser.DiffAlsTextLesen(p, datei, repo.Ordner));
+        var patch = Diffaufbereitung.PatchAbErstemHunk(GitLeser.DiffAlsTextLesen(p, datei, Diffumfang.Aenderungen, repo.Ordner));
 
         Assert.That(patch, Is.EqualTo("@@ -0,0 +1,2 @@\n+a\0b\n+steal();\n"));
     }
@@ -220,7 +220,7 @@ public class GitLeserDiffTests
         var datei = new Dateiaenderung("M", "y.txt", null, null, null);
         Assert.That(PatchLesen(repo, q, datei), Is.Empty, "Kontrolle: info/attributes verbirgt die Änderung");
 
-        var patch = Diffaufbereitung.PatchAbErstemHunk(GitLeser.DiffAlsTextLesen(q, datei, repo.Ordner));
+        var patch = Diffaufbereitung.PatchAbErstemHunk(GitLeser.DiffAlsTextLesen(q, datei, Diffumfang.Aenderungen, repo.Ordner));
 
         Assert.That(patch, Is.EqualTo("@@ -1 +1,2 @@\n eins\n+steal();\n"));
     }
@@ -263,7 +263,7 @@ public class GitLeserDiffTests
         var p = repo.Committe("p", "A", Zeitpunkt, "");
         File.Delete(Path.Combine(repo.Ordner, ".git", "objects", p[..2], p[2..]));
 
-        var fehler = Assert.Throws<GitFehler>(() => GitLeser.DiffLesen(p, new Dateiaenderung("A", "src/b.txt", null, 1, 0), repo.Ordner));
+        var fehler = Assert.Throws<GitFehler>(() => GitLeser.DiffLesen(p, new Dateiaenderung("A", "src/b.txt", null, 1, 0), Diffumfang.Aenderungen, repo.Ordner));
 
         Assert.That(fehler.Message, Does.Contain(p).And.Contain("src/b.txt"));
     }
@@ -285,7 +285,50 @@ public class GitLeserDiffTests
     [UnsupportedOSPlatform("windows")]
     public void Wenn_das_Repo_ein_Diff_Programm_verlangt_dann_startet_das_Lesen_als_Text_das_Programm_nicht(string schluessel)
     {
-        DiffProgrammBleibtAus(schluessel, (repo, hash, datei) => Diffaufbereitung.PatchAbErstemHunk(GitLeser.DiffAlsTextLesen(hash, datei, repo.Ordner)));
+        DiffProgrammBleibtAus(schluessel, (repo, hash, datei) => Diffaufbereitung.PatchAbErstemHunk(GitLeser.DiffAlsTextLesen(hash, datei, Diffumfang.Aenderungen, repo.Ordner)));
+    }
+
+    [TestCase("diff.marker.textconv")]
+    [TestCase("diff.marker.command")]
+    [TestCase("diff.external")]
+    [Platform(Exclude = "Win", Reason = "Marker-Programm ist ein Shell-Skript")]
+    [UnsupportedOSPlatform("windows")]
+    public void Wenn_das_Repo_ein_Diff_Programm_verlangt_dann_startet_das_Lesen_der_ganzen_Datei_das_Programm_nicht(string schluessel)
+    {
+        DiffProgrammBleibtAus(schluessel, (repo, hash, datei) => Diffaufbereitung.PatchAbErstemHunk(GitLeser.DiffLesen(hash, datei, Diffumfang.Ganz, repo.Ordner)));
+        DiffProgrammBleibtAus(schluessel, (repo, hash, datei) => Diffaufbereitung.PatchAbErstemHunk(GitLeser.DiffAlsTextLesen(hash, datei, Diffumfang.Ganz, repo.Ordner)));
+    }
+
+    [Test]
+    public void Wenn_ganze_Datei_dann_ein_Abschnitt_ueber_alle_Zeilen_auch_wenn_das_Repo_den_Kontext_auf_null_setzt()
+    {
+        using var repo = WegwerfRepo.MitCommits();
+        repo.SchreibeDatei("lang.txt", Zeilen(1, 20));
+        repo.Committe("p", "A", Zeitpunkt, "");
+        repo.SchreibeDatei("lang.txt", Zeilen(1, 20).Replace("z03\n", "Z03\n").Replace("z18\n", ""));
+        var q = repo.Committe("q", "A", Zeitpunkt, "");
+        repo.Git("config", "diff.context", "0");
+        var datei = new Dateiaenderung("M", "lang.txt", null, 1, 2);
+
+        var patch = Diffaufbereitung.PatchAbErstemHunk(GitLeser.DiffLesen(q, datei, Diffumfang.Ganz, repo.Ordner));
+        var alsText = Diffaufbereitung.PatchAbErstemHunk(GitLeser.DiffAlsTextLesen(q, datei, Diffumfang.Ganz, repo.Ordner));
+
+        Assert.That(patch, Is.EqualTo(
+            "@@ -1,20 +1,19 @@\n z01\n z02\n-z03\n+Z03\n z04\n z05\n z06\n z07\n z08\n z09\n z10\n z11\n z12\n z13\n z14\n z15\n z16\n z17\n-z18\n z19\n z20\n"));
+        Assert.That(alsText, Is.EqualTo(patch));
+    }
+
+    [Test]
+    public void Wenn_ganze_Datei_nicht_lesbar_dann_Fehler_mit_Hash_und_Pfad()
+    {
+        using var repo = WegwerfRepo.MitCommits();
+        repo.SchreibeDatei("src/b.txt", "eins\n");
+        var p = repo.Committe("p", "A", Zeitpunkt, "");
+        File.Delete(Path.Combine(repo.Ordner, ".git", "objects", p[..2], p[2..]));
+
+        var fehler = Assert.Throws<GitFehler>(() => GitLeser.DiffLesen(p, new Dateiaenderung("A", "src/b.txt", null, 1, 0), Diffumfang.Ganz, repo.Ordner));
+
+        Assert.That(fehler.Message, Does.Contain(p).And.Contain("src/b.txt"));
     }
 
     [UnsupportedOSPlatform("windows")]
@@ -310,7 +353,7 @@ public class GitLeserDiffTests
 
     private static string PatchLesen(WegwerfRepo repo, string hash, Dateiaenderung datei)
     {
-        return Diffaufbereitung.PatchAbErstemHunk(GitLeser.DiffLesen(hash, datei, repo.Ordner));
+        return Diffaufbereitung.PatchAbErstemHunk(GitLeser.DiffLesen(hash, datei, Diffumfang.Aenderungen, repo.Ordner));
     }
 
     private static string Zeilen(int von, int bis)

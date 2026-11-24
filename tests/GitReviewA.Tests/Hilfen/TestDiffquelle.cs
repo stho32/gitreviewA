@@ -10,6 +10,7 @@ namespace GitReviewA.Tests.Hilfen;
 internal sealed class TestDiffquelle(string patch, string? scheitertFuer = null, string textPatch = "", string binaerGrund = Diffaufbereitung.GrundNullbytes) : IDiffquelle
 {
     private readonly List<Dateiaenderung> gelesen = [];
+    private readonly List<Diffumfang> gelesenMitUmfang = [];
     private readonly List<Dateiaenderung> alsTextGelesen = [];
     private readonly Lock sperre = new();
 
@@ -35,6 +36,21 @@ internal sealed class TestDiffquelle(string patch, string? scheitertFuer = null,
         }
     }
 
+    public Diffumfang? ZuletztGelesenMitUmfang
+    {
+        get
+        {
+            lock (sperre)
+            {
+                if (gelesenMitUmfang.Count == 0)
+                {
+                    return null;
+                }
+                return gelesenMitUmfang[^1];
+            }
+        }
+    }
+
     public Dateiaenderung? ZuletztGelesen
     {
         get
@@ -51,11 +67,12 @@ internal sealed class TestDiffquelle(string patch, string? scheitertFuer = null,
         return new TestDiffquelle("");
     }
 
-    public string Lesen(string hash, Dateiaenderung datei)
+    public string Lesen(string hash, Dateiaenderung datei, Diffumfang umfang)
     {
         lock (sperre)
         {
             gelesen.Add(datei);
+            gelesenMitUmfang.Add(umfang);
         }
         var scheitert = hash == scheitertFuer;
         if (scheitert)
@@ -65,7 +82,7 @@ internal sealed class TestDiffquelle(string patch, string? scheitertFuer = null,
         return patch;
     }
 
-    public string AlsTextLesen(string hash, Dateiaenderung datei)
+    public string AlsTextLesen(string hash, Dateiaenderung datei, Diffumfang umfang)
     {
         lock (sperre)
         {

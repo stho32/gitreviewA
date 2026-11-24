@@ -39,16 +39,16 @@ internal static class GitLeser
     /// Kontext, Leerzeilen, Farben, Submodul-Darstellung und Pfadbezug setzt der Aufruf selbst — die Konfiguration des fremden Repos
     /// verschiebt sonst die Zeilennummern oder leert den Patch (`diff.submodule=log`, `diff.relative`).
     /// </summary>
-    public static string DiffLesen(string hash, Dateiaenderung datei, string arbeitsordner)
+    public static string DiffLesen(string hash, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner)
     {
-        var start = GitShowDiffStart(hash, datei, arbeitsordner, alsText: false);
+        var start = GitShowDiffStart(hash, datei, umfang, arbeitsordner, alsText: false);
         return Ausfuehren(start, $"git show {hash} -- {datei.Pfad}");
     }
 
     /// <summary>Wie <see cref="DiffLesen"/>, aber mit `--text`: zeigt auch eine als binär eingestufte Datei mit allen Bytes.</summary>
-    public static string DiffAlsTextLesen(string hash, Dateiaenderung datei, string arbeitsordner)
+    public static string DiffAlsTextLesen(string hash, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner)
     {
-        var start = GitShowDiffStart(hash, datei, arbeitsordner, alsText: true);
+        var start = GitShowDiffStart(hash, datei, umfang, arbeitsordner, alsText: true);
         return Ausfuehren(start, $"git show --text {hash} -- {datei.Pfad}");
     }
 
@@ -245,7 +245,7 @@ internal static class GitLeser
         return start;
     }
 
-    private static ProcessStartInfo GitShowDiffStart(string hash, Dateiaenderung datei, string arbeitsordner, bool alsText)
+    private static ProcessStartInfo GitShowDiffStart(string hash, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner, bool alsText)
     {
         var start = GitStart.Im(arbeitsordner);
         start.ArgumentList.Add("--literal-pathspecs");
@@ -260,7 +260,7 @@ internal static class GitLeser
         start.ArgumentList.Add("-m");
         start.ArgumentList.Add("--first-parent");
         start.ArgumentList.Add("-M");
-        start.ArgumentList.Add("-U3");
+        start.ArgumentList.Add(KontextFuer(umfang));
         start.ArgumentList.Add("--inter-hunk-context=0");
         start.ArgumentList.Add("--submodule=short");
         start.ArgumentList.Add("--no-relative");
@@ -278,6 +278,20 @@ internal static class GitLeser
             start.ArgumentList.Add(alterPfad);
         }
         return start;
+    }
+
+    /// <summary>Die ganze Datei ist ein Abschnitt mit so viel Kontext, wie git zulässt: dieselbe Zeilenrechnung wie für die Änderungen, keine zweite Quelle.</summary>
+    private static string KontextFuer(Diffumfang umfang)
+    {
+        switch (umfang)
+        {
+            case Diffumfang.Aenderungen:
+                return "-U3";
+            case Diffumfang.Ganz:
+                return $"-U{int.MaxValue}";
+            default:
+                throw new ArgumentOutOfRangeException(nameof(umfang), umfang, "Unbekannter Diffumfang");
+        }
     }
 
     private static string Ausfuehren(ProcessStartInfo start, string aufruf)
