@@ -99,6 +99,6 @@ public class AnmerkungsPrueferTests
 
     private static CommitAuswahl Auswahl()
     {
-        return new CommitAuswahl(new Commitzeilen([new Commitzeile(HashA, "Erster"), new Commitzeile(HashB, "Zweiter")]));
+        return new CommitAuswahl(new Commitzeilen([new Commitzeile(HashA, "Testperson", "2026-01-01T09:00:00+00:00", "Erster", ""), new Commitzeile(HashB, "Testperson", "2026-01-01T09:00:00+00:00", "Zweiter", "")]));
     }
 }
