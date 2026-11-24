@@ -94,6 +94,66 @@ public class CommitsDerAuswahlTests
         Assert.That(fehler.Message, Does.Contain("1 000"));
     }
 
+    [TestCase("tag", false)]
+    [TestCase("tag", true)]
+    [TestCase("branch", false)]
+    public void Wenn_Ref_wie_das_Praefix_von_c1_heisst_und_auf_c4_zeigt_dann_als_Argument_mehrdeutig_ohne_Eingabetext(string refArt, bool grossbuchstaben)
+    {
+        using var repo = WegwerfRepo.MitCommits("c1", "c2", "c3", "c4");
+        var praefix = PraefixVon(repo.Hashes[0], grossbuchstaben);
+        repo.Git(refArt, praefix, repo.Hashes[3]);
+
+        var fehler = Assert.ThrowsAsync<AuswahlFehler>(() =>
+            CommitsDerAuswahl.LesenAsync(Auswahl.AusEinzelcommits(new CommitHashes([praefix])), OhneStdin(), repo.Ordner, Protokoll(new StringWriter())));
+
+        Assert.That(fehler.Message, Does.Contain("mehrdeutig"));
+        Assert.That(fehler.Message, Does.Not.Contain(praefix).IgnoreCase);
+    }
+
+    [TestCase("tag", false)]
+    [TestCase("tag", true)]
+    [TestCase("branch", false)]
+    public void Wenn_Ref_wie_das_Praefix_von_c1_heisst_und_auf_c4_zeigt_dann_ueber_stdin_mehrdeutig_ohne_Eingabetext(string refArt, bool grossbuchstaben)
+    {
+        using var repo = WegwerfRepo.MitCommits("c1", "c2", "c3", "c4");
+        var praefix = PraefixVon(repo.Hashes[0], grossbuchstaben);
+        repo.Git(refArt, praefix, repo.Hashes[3]);
+        var stdin = new Standardeingabe(new StringReader($"{praefix}\n"), IstTerminal: false);
+
+        var fehler = Assert.ThrowsAsync<AuswahlFehler>(() =>
+            CommitsDerAuswahl.LesenAsync(Auswahl.UeberStdin(), stdin, repo.Ordner, Protokoll(new StringWriter())));
+
+        Assert.That(fehler.Message, Does.Contain("mehrdeutig"));
+        Assert.That(fehler.Message, Does.Not.Contain(praefix).IgnoreCase);
+    }
+
+    [Test]
+    public async Task Wenn_voller_Hash_und_eindeutiges_Praefix_ohne_gleichnamige_Ref_dann_der_richtige_Commit()
+    {
+        using var repo = WegwerfRepo.MitCommits("c1", "c2", "c3", "c4");
+        repo.Git("tag", repo.Hashes[0], repo.Hashes[3]);
+        var eindeutigesPraefix = PraefixVon(repo.Hashes[1], grossbuchstaben: true);
+
+        var ueberArgumente = await CommitsDerAuswahl.LesenAsync(
+            Auswahl.AusEinzelcommits(new CommitHashes([repo.Hashes[0], eindeutigesPraefix])), OhneStdin(), repo.Ordner, Protokoll(new StringWriter()));
+        var stdin = new Standardeingabe(new StringReader($"{repo.Hashes[0]}\n{eindeutigesPraefix}\n"), IstTerminal: false);
+        var ueberStdin = await CommitsDerAuswahl.LesenAsync(Auswahl.UeberStdin(), stdin, repo.Ordner, Protokoll(new StringWriter()));
+
+        var erwartet = new[] { repo.Hashes[0], repo.Hashes[1] };
+        Assert.That(ueberArgumente.AlsArray().Select(zeile => zeile.Hash), Is.EqualTo(erwartet));
+        Assert.That(ueberStdin.AlsArray().Select(zeile => zeile.Hash), Is.EqualTo(erwartet));
+    }
+
+    private static string PraefixVon(string hash, bool grossbuchstaben)
+    {
+        var praefix = hash[..4];
+        if (grossbuchstaben)
+        {
+            return praefix.ToUpperInvariant();
+        }
+        return praefix;
+    }
+
     private static Standardeingabe OhneStdin()
     {
         return new Standardeingabe(new ZaehlendeEingabe(), IstTerminal: false);

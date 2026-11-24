@@ -20,15 +20,22 @@ internal static class CommitsDerAuswahl
         switch (auswahl.Art)
         {
             case Auswahlart.Einzelcommits:
-                return GitLeser.Lesen(auswahl.Hashes, arbeitsordner);
+                return LeseHashesGeprueft(auswahl.Hashes, arbeitsordner);
             case Auswahlart.Bereiche:
                 return GitLeser.LeseBereiche(auswahl.Bereiche, arbeitsordner);
             case Auswahlart.Stdin:
                 var hashes = await StdinHashes.LesenAsync(stdin.Eingabe, stdin.IstTerminal, StdinFrist);
-                return GitLeser.Lesen(hashes, arbeitsordner);
+                return LeseHashesGeprueft(hashes, arbeitsordner);
             default:
                 throw new ArgumentOutOfRangeException(nameof(auswahl), auswahl.Art, "unbekannte Auswahlart");
         }
+    }
+
+    private static Commitzeilen LeseHashesGeprueft(CommitHashes hashes, string arbeitsordner)
+    {
+        var commits = GitLeser.Lesen(hashes, arbeitsordner);
+        HashpraefixPruefer.PruefeTreffer(hashes, commits);
+        return commits;
     }
 
     private static void PruefeGrenze(Commitzeilen commits, StderrProtokoll protokoll)
