@@ -61,4 +61,30 @@ internal static class Diffaufbereitung
         }
         return ausgabe[(stelle + 1)..];
     }
+
+    /// <summary>
+    /// Die Netto-Antwort: ein Patch gegen den Elternstand des ältesten Commits, als netto gekennzeichnet, mit den Commits der Kette.
+    /// Eine Binärdatei kommt mit Grund und ohne Byte-Inhalt (wie R00004).
+    /// </summary>
+    public static ZusammenDiffAntwort Netto(Dateiaenderung datei, string patchText, string? binaerGrund, IEnumerable<string> commits)
+    {
+        var art = ArtVon(datei);
+        if (art == ArtBinaer)
+        {
+            return new ZusammenDiffAntwort(datei.Pfad, datei.Status, datei.AlterPfad, true, commits.ToArray(), ArtBinaer, binaerGrund, null, []);
+        }
+        return new ZusammenDiffAntwort(datei.Pfad, datei.Status, datei.AlterPfad, true, commits.ToArray(), art, null, PatchAbErstemHunk(patchText), []);
+    }
+
+    /// <summary>
+    /// Ohne lückenlose Kette: je Stelle ein Abschnitt in der Reihenfolge des Aufrufs, jeder mit seinem Commit; die Art nennt den
+    /// ganzen Satz (binär, wenn jede Stelle binär ist).
+    /// </summary>
+    public static ZusammenDiffAntwort Abschnitte(Dateiaenderung datei, IEnumerable<Diffabschnitt> abschnitte)
+    {
+        var liste = abschnitte.ToArray();
+        var alleBinaer = liste.Length > 0 && liste.All(abschnitt => abschnitt.Art == ArtBinaer);
+        var grund = alleBinaer ? liste[0].Grund : null;
+        return new ZusammenDiffAntwort(datei.Pfad, datei.Status, datei.AlterPfad, false, [], alleBinaer ? ArtBinaer : ArtText, grund, null, liste);
+    }
 }
