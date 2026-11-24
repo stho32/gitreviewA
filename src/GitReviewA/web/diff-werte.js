@@ -23,6 +23,11 @@
     return roh.split('\n').map(zeile => zeileMitNummern(zeile, zaehler));
   }
 
+  /** Ansicht „ganze Datei“: derselbe Patch mit einem Abschnitt über die ganze Datei, ohne den Abschnittskopf — er zählt nicht als Zeile. */
+  function ganzeDateiZeilen(patch) {
+    return patchZeilen(patch).filter(zeile => zeile.art !== 'kopf');
+  }
+
   function zeileMitNummern(zeile, zaehler) {
     const kopf = HUNK_KOPF.exec(zeile);
     if (kopf) {
@@ -196,5 +201,5 @@
     return 1;
   }
 
-  Object.assign(ziel, { patchZeilen, sichtbarTeile, bloecke, blockBreite, zuLang, BLOCK_ZEILEN, ZEILEN_GRENZE, ZEICHEN_GRENZE, MARKEN_GRENZE });
+  Object.assign(ziel, { patchZeilen, ganzeDateiZeilen, sichtbarTeile, bloecke, blockBreite, zuLang, BLOCK_ZEILEN, ZEILEN_GRENZE, ZEICHEN_GRENZE, MARKEN_GRENZE });
 })(typeof module !== 'undefined' ? module.exports : window);

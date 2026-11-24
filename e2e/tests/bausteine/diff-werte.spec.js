@@ -1,7 +1,7 @@
 'use strict';
 // Bausteintests (ohne Browser) der Diff-Rechnung: Zeilen mit Nummern aus den Hunk-Köpfen, sichtbare Marken, Blöcke.
 const { test, expect } = require('@playwright/test');
-const { patchZeilen, sichtbarTeile, bloecke, blockBreite, zuLang, BLOCK_ZEILEN, ZEICHEN_GRENZE, MARKEN_GRENZE, ZEILEN_GRENZE } = require('../../../src/GitReviewA/web/diff-werte.js');
+const { patchZeilen, ganzeDateiZeilen, sichtbarTeile, bloecke, blockBreite, zuLang, BLOCK_ZEILEN, ZEICHEN_GRENZE, MARKEN_GRENZE, ZEILEN_GRENZE } = require('../../../src/GitReviewA/web/diff-werte.js');
 
 const kopf = text => ({ art: 'kopf', alt: null, neu: null, text });
 const kontext = (text, alt, neu) => ({ art: 'kontext', alt, neu, text });
@@ -109,5 +109,31 @@ test.describe('Baustein Diff-Werte', () => {
     expect(zeilen).toHaveLength(20001);
     expect(zeilen[20000]).toEqual(plus('zeile 20000', 20000));
     expect(performance.now() - start).toBeLessThan(200);
+  });
+
+  test('soll die ganze Datei ohne Abschnittskopf zeigen und jede Zeile mit Nummer neu n als Zeile n des Stands danach', () => {
+    const davor = Array.from({ length: 20 }, (_, index) => `z${String(index + 1).padStart(2, '0')}`);
+    const danach = davor.map(zeile => (zeile === 'z03' ? 'Z03' : zeile)).filter(zeile => zeile !== 'z18');
+    const patch = '@@ -1,20 +1,19 @@\n z01\n z02\n-z03\n+Z03\n' + davor.slice(3, 17).map(zeile => ` ${zeile}\n`).join('') + '-z18\n z19\n z20\n';
+
+    const zeilen = ganzeDateiZeilen(patch);
+
+    expect(zeilen).toHaveLength(21);
+    expect(zeilen.filter(zeile => zeile.art === 'kopf')).toEqual([]);
+    expect(zeilen.slice(0, 4)).toEqual([kontext('z01', 1, 1), kontext('z02', 2, 2), minus('z03', 3), plus('Z03', 3)]);
+    expect(zeilen.slice(-3)).toEqual([minus('z18', 18), kontext('z19', 19, 18), kontext('z20', 20, 19)]);
+    for (const zeile of zeilen.filter(mitNummer => mitNummer.neu !== null)) {
+      expect(zeile.text, `Nummer neu ${zeile.neu}`).toBe(danach[zeile.neu - 1]);
+    }
+    for (const zeile of zeilen.filter(mitNummer => mitNummer.alt !== null)) {
+      expect(zeile.text, `Nummer alt ${zeile.alt}`).toBe(davor[zeile.alt - 1]);
+    }
+  });
+
+  test('soll in der ganzen Datei den Hinweis ohne Zeilenende behalten und einen leeren Patch leer lassen', () => {
+    expect(ganzeDateiZeilen('@@ -1 +1 @@\n-a\n\\ No newline at end of file\n+a\n')).toEqual([
+      minus('a', 1), { art: 'hinweis', alt: null, neu: null, text: '\\ No newline at end of file' }, plus('a', 1),
+    ]);
+    expect(ganzeDateiZeilen('')).toEqual([]);
   });
 });
