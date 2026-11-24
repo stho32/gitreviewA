@@ -30,7 +30,7 @@ test.describe('Baustein Commit-Werte', () => {
   });
 
   test('soll Steuerzeichen der Schreibrichtung aus fremdem Text entfernen', () => {
-    const werte = zeilenwerte({ kurzHash: 'a', autor: 'A\u202Eb', datum: '', betreff: '\u2066x\u2069', rumpf: 'r\u202D' });
+    const werte = zeilenwerte({ kurzHash: 'a', autor: 'A\u202Eb\u200F', datum: '', betreff: '\u2066x\u2069\u061C', rumpf: 'r\u202D\u200E' });
 
     expect([werte.autor, werte.betreff, werte.rumpf]).toEqual(['Ab', 'x', 'r']);
   });

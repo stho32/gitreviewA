@@ -5,8 +5,9 @@
 
   const zweistellig = zahl => String(zahl).padStart(2, '0');
 
-  /** Fremder Text: Steuerzeichen der Schreibrichtung würden die Zeile umdrehen und Hash oder Datum verdecken. */
-  const ohneSteuerzeichen = text => text.replace(/[\u202A-\u202E\u2066-\u2069]/g, '');
+  /** Fremder Text: Steuerzeichen der Schreibrichtung (Einbettungen, Isolierungen, LRM, RLM, ALM) würden die Zeile umdrehen
+      und Hash oder Datum verdecken. */
+  const ohneSteuerzeichen = text => text.replace(/[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, '');
 
   /** ISO-Zeitpunkt → `TT.MM.JJJJ HH:MM` in der Ortszeit des Browsers; ein Wert, der kein Zeitpunkt ist, bleibt unverändert. */
   function datumText(iso) {
