@@ -47,6 +47,7 @@ internal static class GitLeser
         start.ArgumentList.Add("--no-color");
         start.ArgumentList.Add("--no-ext-diff");
         start.ArgumentList.Add("--no-textconv");
+        start.ArgumentList.Add("--ignore-submodules=none");
         start.ArgumentList.Add("-m");
         start.ArgumentList.Add("--first-parent");
         start.ArgumentList.Add("-M");
