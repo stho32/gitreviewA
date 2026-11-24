@@ -20,13 +20,13 @@ Der Fehler besteht seit R00004 (vorher mit dem Ersatzzeichen U+FFFD im Namen, de
 
 Zahlt ein auf: [Vision](R00000-vision.md) — der prüfende Mensch „sieht genau die Commits“ und liest, was die KI geändert hat (Abschnitt „Der prüfende Mensch“), und das Sicherheitswissen (fremdes Repo: Anzeige darf nichts verbergen). Ein versteckter Inhalt ist das Gegenteil dieses Ziels.
 
-Ändert [R00004](R00004-diff-einer-datei-lesen.md) (Diff einer Datei lesen, I0006) im Zusagenteil „Pfad als wörtlicher Pfad“, „Diffs wie `git`“. Setzt [R00011](R00011-datei-abhaken.md) voraus (Karte #16): dort kommt die verlustfreie Dekodierung fremder Namen (`⟨0xFF⟩` statt U+FFFD, Klasse `Fremdtext/FremdeBytes`) nach `main`.
+Ändert [R00004](R00004-diff-einer-datei-lesen.md) (Diff einer Datei lesen, I0006) im Zusagenteil „Pfad als wörtlicher Pfad“, „Diffs wie `git`“. Setzt [R00011](R00011-datei-abhaken.md) voraus (Karte #16): die verlustfreie Dekodierung fremder Namen (`⟨0xFF⟩` statt U+FFFD, Klasse `Fremdtext/FremdeBytes`) liegt seit dem Merge von #16 auf `main` (`src/GitReviewA/Fremdtext/FremdeBytes.cs`, `GitStart` nutzt `FremdeBytes.Utf8MitBytemarken`).
 
 ## Ursachenanalyse
 
 ### Root Cause
 
-Stand `karte/16` (die Dekodierung liegt noch nicht auf `main`; auf `main` steht in `Pfad` das Ersatzzeichen U+FFFD, die Wirkung ist dieselbe).
+Stand `main` mit #16 (`FremdeBytes` ist da; vor #16 stand in `Pfad` das Ersatzzeichen U+FFFD, die Wirkung war dieselbe).
 
 1. `GitStart.Im` setzt `StandardOutputEncoding = FremdeBytes.Utf8MitBytemarken` (`src/GitReviewA/Git/GitStart.cs`): die Dateiliste von `git show --raw --numstat -z` wird als Text gelesen, jedes Byte außerhalb von UTF-8 wird zur Marke `⟨0xFF⟩`. Aus `Dateiaenderung.Pfad` (`DateiaenderungenParser`) lassen sich die Bytes nicht mehr herstellen: `a⟨0xFF⟩.sh` kann ein Name mit dem Byte `FF` sein oder ein Name, der die Zeichen `⟨0xFF⟩` wörtlich trägt (Zeichen U+27E8, `0xFF`, U+27E9).
 2. `GitLeser.GitShowDiffStart` hängt `datei.Pfad` als Argument hinter `--` und `--literal-pathspecs` an `git show` (`GitLeser.cs`, Suchmuster `literal-pathspecs`). git sucht einen Pfad mit den Zeichen der Marke, findet nichts und gibt nichts aus (Probe 1: 0 Bytes).
@@ -77,9 +77,9 @@ Mögliche Seiteneffekte der Behebung: der neue Leseweg (`git log --stdin`) ist e
 | E | Pfad als Argument mit Rohbyte oder `--pathspec-from-file` | — | — | nicht möglich: .NET kann das Byte nicht übergeben (Probe 4), `show` kennt die Option nicht (Probe 3) | — |
 | F | den ganzen Commit-Diff lesen und die Datei ausschneiden | wie B | — | liest je Auswahl den ganzen Patch, verletzt „Diffs je Datei bei Bedarf“ und das Lastprofil der Vision | — |
 
-**Empfehlung: B.** Begründung: Nur B und C zeigen dem Menschen den Inhalt — das verlangt die Vision, ein versteckter Inhalt ist ihr Gegenteil. A schließt die Täuschung, lässt aber die Prüfung genau dort aus, wo der Angreifer hinzielt; wer nach A „Diff nicht lesbar“ liest, wird die Datei vermutlich trotzdem abhaken. C löst zusätzlich das Doppelgänger-Paar vollständig, ändert aber fünf abgenommene Schnittstellen und gehört, falls gewollt, in eine eigene Anforderung nach R00013 (Offene Frage 2). D und E sind geprobt und scheiden aus, F verletzt das Lastprofil.
+**Empfehlung: B.** Begründung: Nur B und C zeigen dem Menschen den Inhalt — das verlangt die Vision, ein versteckter Inhalt ist ihr Gegenteil. A schließt die Täuschung, lässt aber die Prüfung genau dort aus, wo der Angreifer hinzielt; wer nach A „Diff nicht lesbar“ liest, wird die Datei vermutlich trotzdem abhaken. C löst zusätzlich das Doppelgänger-Paar vollständig, ändert aber fünf abgenommene Schnittstellen und gehört, falls gewollt, in eine eigene Anforderung nach R00013 (Offene Frage 1). D und E sind geprobt und scheiden aus, F verletzt das Lastprofil.
 
-Entscheidung bis zur Antwort: B mit Ablehnung für das Doppelgänger-Paar. Der Entwickler darf die Form des stdin-Aufrufs ändern, solange die Kriterien gelten.
+Entscheidung des product-owner (2026-11-24, `AI-Team/po-entscheidungen.md`, Zeile 83, Frage 4): **B ist endgültig gewählt**, A nicht; mit Ablehnung für das Doppelgänger-Paar (Zeile 84). Der Entwickler darf die Form des stdin-Aufrufs ändern, solange die Kriterien gelten.
 
 ### Langfristige Lösung
 
@@ -137,7 +137,7 @@ Grenz- und Leerfälle bedacht: Wurzelcommit, Merge (Probe 9) und Name mit `-` vo
 
 ## Implementierungshinweise
 
-Vorplanung; was am Ende gebaut wird, entscheidet der Entwickler. Dateien auf `karte/16` gelesen (`FremdeBytes.cs`, `GitStart.cs`, `GitLeser.cs`, `DateiaenderungenParser.cs`, `DiffLesenInteractor.cs`, `DiffEndpunkt.cs`), Änderungen erst nach dem Merge von #16 auf `main`.
+Vorplanung; was am Ende gebaut wird, entscheidet der Entwickler. Dateien beim Anlegen auf `karte/16` gelesen (`FremdeBytes.cs`, `GitStart.cs`, `GitLeser.cs`, `DateiaenderungenParser.cs`, `DiffLesenInteractor.cs`, `DiffEndpunkt.cs`); #16 liegt jetzt auf `main`, der Bau kann beginnen.
 
 ### Ablauf
 1. **Dateiliste als Bytes lesen** — `git show/log --raw --numstat -z`: die Ausgabe als Bytes holen, an NUL zerlegen, je Teil gültiges UTF-8 wie heute dekodieren; ist ein Teil kein gültiges UTF-8, steht im Namen die Marke (`FremdeBytes`) und die Rohbytes bleiben an der Datei (`Dateiaenderung.Rohpfad`, bei Umbenennung auch `RohAlterPfad`; sonst leer).
@@ -155,11 +155,12 @@ Vorplanung; was am Ende gebaut wird, entscheidet der Entwickler. Dateien auf `ka
 
 ## Offene Fragen
 
-1. An den product-owner: Doppelgänger-Paar **beide ablehnen** (Empfehlung, Kriterium 6; kein Eingriff in die Namensanzeige) oder die Namensanzeige eindeutig machen (ein wörtliches `⟨` im Namen als `⟨U+27E8⟩` zeigen, dann sind beide Dateien lesbar, ändert aber den Marken-Vertrag aus R00011 und die Anzeige legitimer Namen)? Bis zur Antwort gilt die Ablehnung.
-2. An den product-owner: **Haken und Anmerkung** an einer Datei, deren Diff nicht lesbar ist, und an einem Doppelgänger-Paar (gleiche Stelle `(Commit, Name)` für zwei Dateien): sperren, oder reicht der Hinweis? Betrifft R00010/R00011 und I0010/I0027, nicht R00013; Empfehlung: nach R00013 als eigene Anforderung prüfen, vorher nicht blockieren.
-3. An den Entwickler (keine Rückfrage): Windows und macOS kennen Namen mit ungültigem UTF-8 im Arbeitsbaum nicht (macOS lehnt sie ab, Windows nutzt UTF-16); im Repo-Objekt kommen sie vor, wenn der Autor sie anlegt. Die Proben liefen unter Linux; die E2E-Szenarien laufen dort. Ob `git log --stdin` unter Windows dieselben Bytes liest, ist ungeprüft (R00009 nennt Windows ohne Probe).
+Alle entschieden (product-owner, 2026-11-24, `AI-Team/po-entscheidungen.md`, Zeilen 83–86); keine bleibt offen.
 
-Keine davon blockiert den Bau; die Empfehlungen gelten bis zur Antwort.
+1. Doppelgänger-Paar `f⟨0xFF⟩.txt` neben `f\xFF.txt` — **entschieden (Zeile 84)**: beide ablehnen (Kriterium 6 bleibt); die Namensanzeige und der Marken-Vertrag aus R00011 bleiben unverändert (kein `⟨U+27E8⟩`). Lesbar machen wäre Option C, eine eigene Anforderung, falls der Betreiber es will.
+2. Haken und Anmerkung an Dateien mit nicht lesbarem Diff und am Paar — **entschieden (Zeile 85)**: R00013 baut weder Sperre noch Haken-Änderung und wird nicht blockiert; die Sperre kommt als Folgekarte #29 (siehe Notizen), nach #28 und vor dem Stapel-Haken von I0010.
+3. Windows und macOS (`git log --stdin` mit Rohbytes) — **entschieden (Zeile 86)**: nur Hinweis, keine Blockade, keine eigene Karte jetzt (siehe Notizen).
+4. Option B oder A — **entschieden (Zeile 83)**: B (siehe „Lösungsvorschlag“).
 
 ## Warum löst diese Anforderung das Problem?
 
@@ -169,6 +170,8 @@ Auslöser: Eine KI schreibt einen Commit, dessen Dateiname ein ungültiges Byte 
 
 - Priorität: Kritisch (Vorrang-Karte #28, Label `sicherheit`).
 - Betroffene Nutzer/Systeme: der prüfende Mensch und die KI, die für ihn `gitreviewA` aufruft; jedes geprüfte Repo mit einem Namen aus ungültigem UTF-8 (Angriff oder Altdaten aus Latin-1-Zeiten).
+- **Bis zur Folgekarte #29** („Haken und Ergebnis bei nicht gelesenem Diff — nie abgehakt ohne gesehen“, Entscheidung Zeile 85) kann der Mensch eine Datei mit nicht lesbarem Diff (Ausgänge „Name nicht eindeutig“, „Name nicht übergebbar“) noch abhaken; R00013 ändert den Haken nicht. Workaround bis dahin: `git show` im Terminal.
+- **Windows (Entscheidung Zeile 86)**: unter Windows ist ungeprüft, ob `git log --stdin` dieselben Rohbytes liest (die Proben liefen unter Linux; macOS legt solche Namen im Arbeitsbaum nicht an, im Objekt sind sie lesbar). Das ist nur ein Hinweis, keine Blockade und keine eigene Karte: die Probe gehört in die Plattformprüfung der Auslieferung je Plattform, sobald diese gebaut wird. Bis dahin ist Kriterium 9 (Zählprüfung) das Netz: liest `git` andere Bytes, kommt der Fehlerausgang, nie ein leerer Patch.
 - Workaround: den Diff dieser Datei mit `git show <Hash> -- <Datei>` im Terminal lesen; die Oberfläche warnt bis zur Behebung nicht.
 - Vorgeschlagene Bubbles und Zählung: `Dokumentation/Planung/gitreviewa.md`, I0029 (B1201–B1205): 5 Bubbles, davon 2 klar (2 h, Richtwert) und 3 unklar (2–4 h), Untergrenze 10 h, obere Schätzung 16 h, alles ungemessen.
 - Verworfene Alternativen: siehe „Optionen“ (A, C, D, E, F) mit je einem Satz.
