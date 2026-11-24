@@ -26,7 +26,7 @@ function annotierSprache(gr, page) {
   let ersterCommit;
   const hash = name => repo.hashes[name];
 
-  async function starten({ vorbereitung = 'Repo A', verbose = false, seiteOeffnen = true } = {}) {
+  async function starten({ vorbereitung = 'Repo A', verbose = false, seiteOeffnen = page !== null } = {}) {
     const art = VORBEREITUNGEN[vorbereitung];
     repo = art.anlegen(path.join(gr.eigenerOrdner(), 'repo'));
     [ersterCommit] = art.commits;
@@ -119,12 +119,13 @@ function annotierSprache(gr, page) {
     serverAntwortetBeimAendern: antwort => anmerkungSeite.aenderungAntwortetEinmal(page, antwort),
     aendernVerzoegern: () => anmerkungSeite.aenderungVerzoegern(page),
 
-    /** Anmerkung über die Schnittstelle (wie `curl`), am Commit `commit` mit vollem Hash. */
+    /** Anmerkung über die Schnittstelle (wie `curl`), am Commit `commit` mit vollem Hash; liefert die Antwort mit der Nummer. */
     ueberDieSchnittstelleAnlegen: async (commit, datei, zeile, text) => {
       const antwort = await gr.anmerkungAnlegen(lauf, { commit: hash(commit), datei, zeile, text });
       expect(antwort.status, `Anlegen ${datei}:${zeile}`).toBe(201);
+      return antwort;
     },
-    /** Text der Anmerkung mit dieser stabilen Nummer über die Schnittstelle ändern. */
+    /** Text der Anmerkung mit dieser stabilen Nummer über die Schnittstelle ändern; liefert Status, Nummer und Text der Antwort. */
     ueberDieSchnittstelleAendern: async (nummer, text) => {
       const antwort = await gr.anmerkungAendern(lauf, nummer, text);
       expect(antwort.status, `Ändern von Anmerkung ${nummer}`).toBe(200);
@@ -140,15 +141,25 @@ function annotierSprache(gr, page) {
     },
     sichtbarerAnmerkungstext: () => anmerkungSeite.sichtbarerAnmerkungstext(page),
 
+    /** Beenden ohne Seite: über die Schnittstelle wie die aufrufende KI. */
+    beendenAnfordern: () => gr.beendenAnfordern(lauf),
+    aufEnde: () => gr.aufEndeWarten(lauf),
     beendenUndErgebnisLesen,
+    lauf: () => lauf,
+    ergebnis: () => gr.ergebnis(lauf),
     stdoutBisher: () => gr.ergebnis(lauf),
     stderrBisher: () => lauf.stderr,
+    protokollzeilen: () => gr.stderrZeilen(lauf),
   };
 }
 
 const test = basis.extend({
   anm: async ({ gr, page }, verwenden) => {
     await verwenden(annotierSprache(gr, page));
+  },
+  /** Dieselbe Sprache ohne Seite: Programm als Prozess, Schnittstelle, stdout und stderr. */
+  programm: async ({ gr }, verwenden) => {
+    await verwenden(annotierSprache(gr, null));
   },
 });
 
