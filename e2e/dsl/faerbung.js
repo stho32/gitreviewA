@@ -124,6 +124,8 @@ function farbSprache(gr, page) {
     antwortenGehalten: anzahl => farbe.gehalteneAntwortenAbwarten(page, anzahl),
     antwortFreigeben: nummer => farbe.antwortFreigeben(page, nummer),
     farbeLaeuftOhneRolle: () => farbe.pruefeFarbeLaeuftOhneRolle(page),
+    /** Der Worker der verlassenen Anzeige ist sofort beendet, nicht erst mit der Frist. */
+    workerBeendet: anzahl => farbe.pruefeBeendeteWorker(page, anzahl),
   };
 }
 

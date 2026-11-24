@@ -293,6 +293,7 @@ test.describe('Ganze Datei', () => {
     await farbe.antwortenGehalten(1);
 
     await farbe.ansichtWaehlenOhneWarten(GANZE_DATEI);
+    await farbe.workerBeendet(1);
     await farbe.antwortenGehalten(2);
     await farbe.antwortFreigeben(1);
 

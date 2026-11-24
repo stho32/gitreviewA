@@ -311,6 +311,7 @@ async function workerAntwortenZurueckhalten(page) {
     const EchterWorker = window.Worker;
     const gehalten = [];
     window.gehalteneFarbantworten = gehalten;
+    window.beendeteFarbworker = 0;
     window.Worker = class ZurueckhaltenderWorker {
       constructor(adresse) {
         this.echt = new EchterWorker(adresse);
@@ -330,6 +331,7 @@ async function workerAntwortenZurueckhalten(page) {
       }
 
       terminate() {
+        window.beendeteFarbworker += 1;
         this.echt.terminate();
       }
     };
@@ -346,13 +348,18 @@ async function antwortFreigeben(page, nummer) {
   await page.evaluate(() => new Promise(fertig => setTimeout(() => requestAnimationFrame(() => requestAnimationFrame(fertig)), 0)));
 }
 
+/** Wie viele Worker bisher beendet wurden — sofort nach einer Aktion gelesen, ohne zu warten. */
+async function pruefeBeendeteWorker(page, anzahl) {
+  expect(await page.evaluate(() => window.beendeteFarbworker)).toBe(anzahl);
+}
+
 async function pruefeFarbeLaeuftOhneRolle(page) {
   await expect(page.locator(ROLLBEREICH)).toHaveAttribute('data-farbe', 'laeuft');
   expect(await page.locator(`${ROLLBEREICH} [class*="tk-"]`).count(), 'Elemente mit Rolle').toBe(0);
 }
 
 module.exports = {
-  workerAntwortenZurueckhalten, gehalteneAntwortenAbwarten, antwortFreigeben, pruefeFarbeLaeuftOhneRolle,
+  workerAntwortenZurueckhalten, gehalteneAntwortenAbwarten, antwortFreigeben, pruefeFarbeLaeuftOhneRolle, pruefeBeendeteWorker,
   mitschriftEinrichten, farbeAbwarten, rollenDerStelle, pruefeRolle, pruefeUngefaerbt, pruefeRollenNurImText, pruefeKeineMeldung, pruefeTextWieVorDerFarbe,
   zeilentexte, pruefeZeilenanzahl, farbzustaendeLeeren, pruefeFarbeLiefNeu, pruefeKeineLangeAufgabeSeitText, rollenfarbenMessen, pruefeRollenfarben,
   farbschemaSetzen, prismNichtAbrufbar, prismWirft, ohneWorker, pruefeOhneWorker, pruefeKeinPrismAufDerSeite, pruefeKonsoleLeer, anfragenMitschreiben,
