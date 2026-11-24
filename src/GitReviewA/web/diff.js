@@ -14,6 +14,7 @@
   function init() {
     const ansicht = ansichtElemente();
     zeigeAufforderungZurWahl(ansicht);
+    ansicht.umbruchElement.addEventListener('change', () => schalteUmbruch(ansicht));
     document.addEventListener('commit-gewaehlt', () => verwerfeWahl(ansicht));
     document.addEventListener('datei-gewaehlt', ereignis => ladeDiff(ansicht, ereignis.detail));
   }
@@ -21,10 +22,17 @@
   function ansichtElemente() {
     const wurzelElement = document.getElementById('diff');
     return {
+      wurzelElement,
+      umbruchElement: wurzelElement.querySelector('.umbruch-schalter'),
       pfadElement: wurzelElement.querySelector('.diff-pfad'),
       meldungElement: wurzelElement.querySelector('.diff-meldung'),
       rollElement: wurzelElement.querySelector('.df-sc'),
     };
+  }
+
+  /** Die Wahl liegt am Bereich, nicht am Diff: sie bleibt beim Wechsel von Datei und Commit. */
+  function schalteUmbruch(ansicht) {
+    ansicht.wurzelElement.classList.toggle('umbr', ansicht.umbruchElement.checked);
   }
 
   /** Ein Commit-Wechsel verdrängt auch eine noch laufende Ladung: deren Antwort wird verworfen. */
@@ -103,6 +111,7 @@
     const blockElement = document.createElement('div');
     blockElement.className = 'dz-b';
     blockElement.style.setProperty('--zeilen', String(zeilen.length));
+    blockElement.style.setProperty('--bb', `${blockBreite(zeilen)}px`);
     const tabelleElement = document.createElement('table');
     tabelleElement.className = 'dz';
     tabelleElement.setAttribute('aria-label', name);

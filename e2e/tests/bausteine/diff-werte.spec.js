@@ -1,7 +1,7 @@
 'use strict';
 // Bausteintests (ohne Browser) der Diff-Rechnung: Zeilen mit Nummern aus den Hunk-Köpfen, sichtbare Marken, Blöcke.
 const { test, expect } = require('@playwright/test');
-const { patchZeilen, sichtbarTeile, bloecke, BLOCK_ZEILEN } = require('../../../src/GitReviewA/web/diff-werte.js');
+const { patchZeilen, sichtbarTeile, bloecke, blockBreite, BLOCK_ZEILEN } = require('../../../src/GitReviewA/web/diff-werte.js');
 
 const kopf = text => ({ art: 'kopf', alt: null, neu: null, text });
 const kontext = (text, alt, neu) => ({ art: 'kontext', alt, neu, text });
@@ -61,6 +61,13 @@ test.describe('Baustein Diff-Werte', () => {
     expect(geteilt.map(block => block.length)).toEqual([500, 500, 201]);
     expect(geteilt.flat()).toEqual(zeilen);
     expect(bloecke([])).toEqual([]);
+  });
+
+  test('soll die Breite eines Blocks nach seiner längsten Zeile schätzen', () => {
+    expect(blockBreite([plus('kurz', 1), plus('0123456789'.repeat(30), 2)])).toBe(300 * 8 + 140);
+    expect(blockBreite([plus('\tx', 1)])).toBe(5 * 8 + 140);
+    expect(blockBreite([plus('日本', 1)])).toBe(4 * 8 + 140);
+    expect(blockBreite([])).toBe(140);
   });
 
   test('soll 20 000 Zeilen schnell rechnen', () => {

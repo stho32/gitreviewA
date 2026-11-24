@@ -40,14 +40,15 @@
       <p class="dateien-meldung gr-status muted" role="status"></p>
       <ul id="datei-zeilen" class="gr-dateien" role="listbox" aria-label="Dateien"></ul>
     </section>
-    <section id="diff" class="gr-diff" aria-label="Diff der gewählten Datei">
-      <div class="diff-kopf">
-        <h2 class="diff-pfad mono"></h2>
-      </div>
-      <p class="diff-meldung gr-status muted" role="status"></p>
-      <div class="df-sc" tabindex="0" role="region" hidden></div>
-    </section>
   </div>
+  <section id="diff" class="gr-diff" aria-label="Diff der gewählten Datei">
+    <div class="diff-kopf">
+      <h2 class="diff-pfad mono"></h2>
+      <label class="ru-sch"><input type="checkbox" class="umbruch-schalter">Umbruch</label>
+    </div>
+    <p class="diff-meldung gr-status muted" role="status"></p>
+    <div class="df-sc" tabindex="0" role="region" hidden></div>
+  </section>
 </main>
 </body>
 </html>

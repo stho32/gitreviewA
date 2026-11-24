@@ -2,6 +2,7 @@
 // Spezifikation R00004 „Diff einer Datei lesen“ (User Story Szenarien 1–16). Commits heißen wie in der Vorbereitung der Anforderung (p, q, s; m; u).
 const { test } = require('../dsl/diff-lesen.js');
 
+const LANGE_ZEILE = '0123456789'.repeat(30);
 const DIFF_VON_B = {
   pfad: 'src/b.txt',
   zeilen: [
@@ -64,7 +65,7 @@ test.describe('Diff einer Datei lesen', () => {
     await diff.starten();
 
     await diff.dateiAnsehen('breit.txt');
-    await diff.diffZeigt({ pfad: 'breit.txt', zeilen: [{ kopf: '@@ -0,0 +1,2 @@' }, { plus: 'kurz', neu: 1 }, { plus: '0123456789'.repeat(30), neu: 2 }] });
+    await diff.diffZeigt({ pfad: 'breit.txt', zeilen: [{ kopf: '@@ -0,0 +1,2 @@' }, { plus: 'kurz', neu: 1 }, { plus: LANGE_ZEILE, neu: 2 }] });
     await diff.dateiAnsehen('alt.txt');
     await diff.diffZeigt({
       pfad: 'alt.txt',
@@ -102,12 +103,12 @@ test.describe('Diff einer Datei lesen', () => {
     await diff.starten();
     await diff.dateiAnsehen('breit.txt');
 
-    await diff.langeZeileEinzeilig(2);
+    await diff.langeZeileEinzeilig(2, LANGE_ZEILE);
     await diff.umbruchUmschalten();
-    await diff.langeZeileUmbrochen(2, '0123456789'.repeat(30));
+    await diff.langeZeileUmbrochen(2, LANGE_ZEILE);
     await diff.dateiAnsehen('src/b.txt');
     await diff.dateiAnsehen('breit.txt');
-    await diff.langeZeileUmbrochen(2, '0123456789'.repeat(30));
+    await diff.langeZeileUmbrochen(2, LANGE_ZEILE);
   });
 
   test('soll fremden Text als Text zeigen und richtungsändernde Zeichen als Marke', async ({ diff }) => {

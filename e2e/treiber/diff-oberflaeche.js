@@ -92,19 +92,21 @@ async function zeilenmass(page, neu) {
   }, [ROLLBEREICH, ZEILE, neu]);
 }
 
-async function pruefeEinzeilig(page, neu) {
+async function pruefeEinzeilig(page, neu, text) {
   await expect(page.locator(BEREICH).getByLabel('Umbruch')).not.toBeChecked();
+  await expect(page.locator(`${ZEILE}[data-neu="${neu}"] .c`)).toHaveText(`hinzugefügt: ${text}`);
   const mass = await zeilenmass(page, neu);
-  expect(mass.verhaeltnis, `Höhe von Zeile ${neu} zu Zeile 1`).toBe(1);
+  // Zeile 1 trägt die halbe Kante des Hunk-Kopfs (border-collapse); eine Bildschirmzeile mehr wäre das Doppelte
+  expect(mass.verhaeltnis, `Höhe von Zeile ${neu} zu Zeile 1`).toBeCloseTo(1, 1);
   expect(mass.scrolltWaagerecht, 'waagerecht scrollbar').toBe(true);
 }
 
 async function pruefeUmbrochen(page, neu, text) {
   await expect(page.locator(BEREICH).getByLabel('Umbruch')).toBeChecked();
-  const mass = await zeilenmass(page, neu);
-  expect(mass.verhaeltnis, `Höhe von Zeile ${neu} zu Zeile 1`).toBeGreaterThanOrEqual(2);
-  expect(mass.scrolltWaagerecht, 'waagerecht scrollbar').toBe(false);
   await expect(page.locator(`${ZEILE}[data-neu="${neu}"] .c`)).toHaveText(`hinzugefügt: ${text}`);
+  const mass = await zeilenmass(page, neu);
+  expect(mass.verhaeltnis, `Höhe von Zeile ${neu} zu Zeile 1`).toBeGreaterThan(1.5);
+  expect(mass.scrolltWaagerecht, 'waagerecht scrollbar').toBe(false);
 }
 
 /** Hält die Antwort auf den Diff von `pfad` 1,5 s zurück; `eingetroffen` wartet, bis sie da ist und gezeichnet sein könnte. */

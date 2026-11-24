@@ -119,5 +119,30 @@
     return aus;
   }
 
-  Object.assign(ziel, { patchZeilen, sichtbarTeile, bloecke, BLOCK_ZEILEN });
+  /** Geschätzte Breite eines Blocks in px: ein Block außerhalb des Bildes wird nicht ausgelegt und hätte sonst keine Breite zum
+      waagerechten Scrollen. Großzügig 8 px je Zeichen (Monospace 12 px, Tab 4, breite Zeichen 2), dazu Nummern und Vorzeichen. */
+  function blockBreite(zeilen) {
+    const breiten = zeilen.map(zeichenBreite);
+    return Math.ceil(Math.max(0, ...breiten) * 8 + 140);
+  }
+
+  function zeichenBreite(zeile) {
+    let breite = 0;
+    for (const zeichen of zeile.text) {
+      breite += zeichenspalten(zeichen);
+    }
+    return breite;
+  }
+
+  function zeichenspalten(zeichen) {
+    if (zeichen === '\t') {
+      return 4;
+    }
+    if (zeichen.codePointAt(0) > 0x2E7F) {
+      return 2;
+    }
+    return 1;
+  }
+
+  Object.assign(ziel, { patchZeilen, sichtbarTeile, bloecke, blockBreite, BLOCK_ZEILEN });
 })(typeof module !== 'undefined' ? module.exports : window);

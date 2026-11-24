@@ -74,7 +74,7 @@ function diffSprache(gr, page) {
     diffMeldetFehler: (pfad, text) => diffSeite.pruefeMeldung(page, pfad, text, true),
     fordertZurWahlAuf: () => diffSeite.pruefeAufforderungZurWahl(page),
     umbruchUmschalten: () => diffSeite.umbruchUmschalten(page),
-    langeZeileEinzeilig: neu => diffSeite.pruefeEinzeilig(page, neu),
+    langeZeileEinzeilig: (neu, text) => diffSeite.pruefeEinzeilig(page, neu, text),
     langeZeileUmbrochen: (neu, text) => diffSeite.pruefeUmbrochen(page, neu, text),
     fremderTextBleibtText: async () => {
       await seite.pruefeKeineFormatierung(page);
