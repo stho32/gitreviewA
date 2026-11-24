@@ -76,6 +76,11 @@ internal sealed class ZusammenLesenInteractor : INettoDateiliste
         {
             return ZusammenDiffergebnis.Gelesen(Antwort(datei, stand, anfrage.Umfang));
         }
+        catch (GitZuGross zuGross)
+        {
+            protokoll.Melde(Protokollstufe.Warnung, Kontext, $"Diff in Zusammen von {datei.Anzeigepfad} zu groß: Ausgabegrenze von {zuGross.Grenze} Byte überschritten");
+            return ZusammenDiffergebnis.ZuGross(zuGross.Grenze);
+        }
         catch (GitFehler fehler)
         {
             protokoll.Melde(Protokollstufe.Fehler, Kontext, $"Diff in Zusammen von {datei.Anzeigepfad} nicht lesbar: {fehler.Message}");

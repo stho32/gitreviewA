@@ -66,6 +66,20 @@ internal sealed class ZusammenRepo : IDisposable
         return z;
     }
 
+    /// <summary>Repo der Grenzprobe: `z1` legt `riesig.txt` (2 000 Zeilen) und `winzig.txt` an, `z2` und `z3` ändern `winzig.txt`; `z1 z3` ist keine Kette.</summary>
+    public static ZusammenRepo Grenze()
+    {
+        var z = new ZusammenRepo(WegwerfRepo.MitCommits());
+        z.Schreibe("riesig.txt", string.Concat(Enumerable.Range(1, 2000).Select(nummer => $"zeile {nummer:D5}\n")));
+        z.Schreibe("winzig.txt", "eins\nzwei\ndrei\n");
+        z.Committe("z1", "Start");
+        z.Schreibe("winzig.txt", "eins\nZWEI\ndrei\n");
+        z.Committe("z2", "winzig ändern");
+        z.Schreibe("winzig.txt", "eins\nZWEI\ndrei\nvier\n");
+        z.Committe("z3", "winzig ergänzen");
+        return z;
+    }
+
     /// <summary>Das Lastprofil der Vision: 200 Commits, davon einer mit 2 000 Dateien, dazu eine Datei mit 20 000 Zeilen.</summary>
     public static ZusammenRepo Gross()
     {

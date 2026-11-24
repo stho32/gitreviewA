@@ -21,7 +21,7 @@ public class NettoDiffLesenTests
     {
         using var z = ZusammenRepo.Z();
 
-        var patch = Diffaufbereitung.PatchAbErstemHunk(GitLeser.NettoDiffLesen("", z.Hash("z3"), Datei(z, "", "z3", "src/a.txt"), Diffumfang.Aenderungen, z.Ordner));
+        var patch = Diffaufbereitung.PatchAbErstemHunk(GitLeser.NettoDiffLesen("", z.Hash("z3"), Datei(z, "", "z3", "src/a.txt"), Diffumfang.Aenderungen, z.Ordner, Ausgabegrenze.Standard));
 
         Assert.That(patch.Split('\n').Where(zeile => zeile.StartsWith('+')).Select(zeile => zeile[1..]),
             Is.EqualTo(new[] { "eins", "ZWEI", "drei", "vier" }));
@@ -34,7 +34,7 @@ public class NettoDiffLesenTests
     {
         using var z = ZusammenRepo.Z();
 
-        var patch = Diffaufbereitung.PatchAbErstemHunk(GitLeser.NettoDiffLesen("", z.Hash("z3"), Datei(z, "", "z3", "README.md"), Diffumfang.Aenderungen, z.Ordner));
+        var patch = Diffaufbereitung.PatchAbErstemHunk(GitLeser.NettoDiffLesen("", z.Hash("z3"), Datei(z, "", "z3", "README.md"), Diffumfang.Aenderungen, z.Ordner, Ausgabegrenze.Standard));
 
         Assert.That(patch.Split('\n').Where(zeile => zeile.StartsWith('+')).Select(zeile => zeile[1..]), Is.EqualTo(new[] { "Lager", "Beispiel" }));
     }
@@ -45,7 +45,7 @@ public class NettoDiffLesenTests
     {
         using var z = ZusammenRepo.Umbenennung();
 
-        var patch = Diffaufbereitung.PatchAbErstemHunk(GitLeser.NettoDiffLesen(z.Hash("z1"), z.Hash("u"), Datei(z, "z1", "u", "neu.txt"), Diffumfang.Aenderungen, z.Ordner));
+        var patch = Diffaufbereitung.PatchAbErstemHunk(GitLeser.NettoDiffLesen(z.Hash("z1"), z.Hash("u"), Datei(z, "z1", "u", "neu.txt"), Diffumfang.Aenderungen, z.Ordner, Ausgabegrenze.Standard));
 
         Assert.That(patch.Split('\n').Where(zeile => zeile.StartsWith('-')).Select(zeile => zeile[1..]), Is.EqualTo(new[] { "a2" }));
         Assert.That(patch.Split('\n').Where(zeile => zeile.StartsWith('+')).Select(zeile => zeile[1..]), Is.EqualTo(new[] { "A2" }));
@@ -65,7 +65,7 @@ public class NettoDiffLesenTests
         z.Git("config", "diff.x.textconv", programm);
         z.Git("config", "diff.x.command", programm);
 
-        var patch = GitLeser.NettoDiffLesen("", z.Hash("z3"), Datei(z, "", "z3", "src/a.txt"), Diffumfang.Aenderungen, z.Ordner);
+        var patch = GitLeser.NettoDiffLesen("", z.Hash("z3"), Datei(z, "", "z3", "src/a.txt"), Diffumfang.Aenderungen, z.Ordner, Ausgabegrenze.Standard);
 
         Assert.That(patch, Does.Contain("+vier"));
         Assert.That(File.Exists(marker), Is.False, "das Programm aus der Konfiguration des Repos lief");

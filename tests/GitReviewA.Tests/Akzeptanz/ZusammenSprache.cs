@@ -31,6 +31,12 @@ internal sealed class ZusammenSprache
         return new ZusammenSprache(ZusammenTreiber.Starten(ordner, commits.Select(hash)), hash, commits);
     }
 
+    /// <summary>Wie <see cref="Aufruf"/>, aber mit einer kleinen Ausgabegrenze für die Grenzprobe (Muster R00017).</summary>
+    public static ZusammenSprache AufrufMitAusgabegrenze(string ordner, Func<string, string> hash, Ausgabegrenze grenze, params string[] commits)
+    {
+        return new ZusammenSprache(ZusammenTreiber.Starten(ordner, commits.Select(hash), grenze), hash, commits);
+    }
+
     /// <summary>Wie <see cref="Aufruf"/>, aber die Übersicht der Dateien lässt sich nicht lesen.</summary>
     public static ZusammenSprache AufrufMitUnlesbarerUebersicht(string ordner, Func<string, string> hash, params string[] commits)
     {
@@ -68,16 +74,21 @@ internal sealed class ZusammenSprache
     public Diffbild Diff(string pfad, Diffumfang umfang = Diffumfang.Aenderungen)
     {
         var ergebnis = treiber.Diff(pfad, umfang);
+        var meldung = "";
+        if (ergebnis.Meldung is not null)
+        {
+            meldung = ergebnis.Meldung;
+        }
         var antwort = ergebnis.Antwort;
         if (antwort is null)
         {
-            return new Diffbild(AusgangAlsWort(ergebnis.Ausgang), false, "", null, [], [], []);
+            return new Diffbild(AusgangAlsWort(ergebnis.Ausgang), false, "", null, [], [], [], meldung);
         }
         var abschnitte = antwort.Abschnitte
             .Select(abschnitt => new Abschnittbild(Name(abschnitt.Commit), abschnitt.Art, Zeilen(abschnitt.Patch)))
             .ToArray();
         var zeilen = Zeilen(antwort.Patch ?? string.Join("\n", antwort.Abschnitte.Select(abschnitt => abschnitt.Patch)));
-        return new Diffbild("gelesen", antwort.Netto, antwort.Art, antwort.Grund, antwort.Commits.Select(Name).ToArray(), abschnitte, zeilen);
+        return new Diffbild("gelesen", antwort.Netto, antwort.Art, antwort.Grund, antwort.Commits.Select(Name).ToArray(), abschnitte, zeilen, meldung);
     }
 
     /// <summary>Eine einzelne Stelle abhaken („Einzeln“), Commitname aus der Story.</summary>
@@ -146,6 +157,7 @@ internal sealed class ZusammenSprache
         return ausgang switch
         {
             ZusammenDiffausgang.Gelesen => "gelesen",
+            ZusammenDiffausgang.ZuGross => "zu groß",
             ZusammenDiffausgang.NichtGefunden => "nicht gefunden",
             ZusammenDiffausgang.NameNichtLesbar => "name nicht lesbar",
             _ => "nicht lesbar",
@@ -164,8 +176,8 @@ internal sealed class ZusammenSprache
     }
 }
 
-/// <summary>Die Antwort des Zusammen-Diffs in Testwörtern: Ausgang, Kennzeichen „netto“, Art, Grund, Commits, Abschnitte und +/-Zeilen.</summary>
-internal sealed record Diffbild(string Ausgang, bool Netto, string Art, string? Grund, string[] Commits, Abschnittbild[] Abschnitte, string[] Zeilen)
+/// <summary>Die Antwort des Zusammen-Diffs in Testwörtern: Ausgang, Kennzeichen „netto“, Art, Grund, Commits, Abschnitte, +/-Zeilen und bei „zu groß“ die Meldung.</summary>
+internal sealed record Diffbild(string Ausgang, bool Netto, string Art, string? Grund, string[] Commits, Abschnittbild[] Abschnitte, string[] Zeilen, string Meldung)
 {
     public int Hinzugefuegt => Zeilen.Count(zeile => zeile.StartsWith('+'));
 

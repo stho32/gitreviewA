@@ -8,7 +8,7 @@ namespace GitReviewA.Zusammen;
 /// Adapter zwischen HTTP und <see cref="ZusammenLesenInteractor"/>: `GET /api/zusammen` liefert Kette und Netto-Dateiliste,
 /// `GET /api/zusammen/diff?pfad=…&umfang=…` den Diff einer Datei. Beide nur hinter der Host-Prüfung und ohne CORS-Freigabe.
 /// Ohne `pfad` oder mit unbekanntem `umfang` 400; ein Pfad außerhalb der Netto-Liste 404 ohne git-Aufruf; ein nicht eindeutiger
-/// Anzeigename 422 (wie R00013).
+/// Anzeigename 422 (wie R00013); über der Ausgabegrenze 200 mit Kennzeichen und Meldung statt eines Patches (wie R00017).
 /// </summary>
 internal static class ZusammenEndpunkt
 {
@@ -49,6 +49,8 @@ internal static class ZusammenEndpunkt
         {
             case ZusammenDiffausgang.Gelesen:
                 return Results.Json(ergebnis.Antwort, JsonAntwort.Optionen);
+            case ZusammenDiffausgang.ZuGross:
+                return ZuGrossAntwortFuer(ergebnis);
             case ZusammenDiffausgang.NichtGefunden:
                 return Results.NotFound();
             case ZusammenDiffausgang.NameNichtLesbar:
@@ -58,6 +60,17 @@ internal static class ZusammenEndpunkt
             default:
                 throw new InvalidOperationException($"Unbekannter Ausgang {ergebnis.Ausgang}");
         }
+    }
+
+    /// <summary>Über der Ausgabegrenze: Kennzeichen und die Meldung, die die Grenze nennt — kein Patch, kein Fehler.</summary>
+    private static IResult ZuGrossAntwortFuer(ZusammenDiffergebnis ergebnis)
+    {
+        var meldung = "";
+        if (ergebnis.Meldung is not null)
+        {
+            meldung = ergebnis.Meldung;
+        }
+        return Results.Json(new ZuGrossAntwort(true, meldung), JsonAntwort.Optionen);
     }
 
     private static ZusammenListenAntwort AlsListenantwort(Zusammenstand stand)

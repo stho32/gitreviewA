@@ -93,6 +93,25 @@ public class ZusammenEndpunktTests
     }
 
     [Test]
+    public async Task Wenn_ein_Abschnitt_ueber_der_Ausgabegrenze_liegt_dann_200_zu_gross_ohne_Patch()
+    {
+        var uebersicht = TestUebersichtsquelle.MitDateien(
+            new Commitdateien(HashP, new Dateiaenderungen([new Dateiaenderung("A", "src/a.txt", null, 3, 0)])),
+            new Commitdateien(HashQ, new Dateiaenderungen([new Dateiaenderung("A", "src/b.txt", null, 1, 0)])));
+        var quelle = new TestZusammenquelle { GegebeneElternfolge = new Elternfolge([new Elternzeile(HashP, ""), new Elternzeile(HashQ, "")]) };
+        var diffquelle = new TestDiffquelle(Patch, zuGrossFuer: HashP, zuGrossGrenze: 1024);
+        await using var server = await StarteServer(uebersicht, quelle, diffquelle);
+
+        var json = await new HttpClient().GetStringAsync(new Uri(new Uri(server.Adresse), "api/zusammen/diff?pfad=src%2Fa.txt"));
+
+        using var dokument = JsonDocument.Parse(json);
+        var wurzel = dokument.RootElement;
+        Assert.That(wurzel.GetProperty("zuGross").GetBoolean(), Is.True);
+        Assert.That(wurzel.GetProperty("meldung").GetString(), Does.Contain("1024"));
+        Assert.That(wurzel.TryGetProperty("patch", out _), Is.False, "kein gekürzter Rumpf");
+    }
+
+    [Test]
     public async Task Wenn_der_Anzeigename_nicht_eindeutig_ist_dann_422_ohne_Diff_Lesevorgang()
     {
         var literal = new Dateiaenderung("A", "f⟨0xFF⟩.txt", null, 1, 0);

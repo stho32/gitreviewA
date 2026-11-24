@@ -40,9 +40,15 @@ internal sealed class ZusammenTreiber
 
     public static ZusammenTreiber Starten(string startordner, IEnumerable<string> hashes)
     {
+        return Starten(startordner, hashes, Ausgabegrenze.Standard);
+    }
+
+    /// <summary>Wie <see cref="Starten(string, IEnumerable{string})"/>, aber mit einer kleinen Ausgabegrenze für die Grenzprobe.</summary>
+    public static ZusammenTreiber Starten(string startordner, IEnumerable<string> hashes, Ausgabegrenze grenze)
+    {
         var commits = GitLeser.Lesen(new CommitHashes(hashes), startordner);
         var arbeitsordner = GitLeser.WurzelLesen(startordner);
-        return Verdrahten(commits, arbeitsordner, new GitUebersichtsquelle(commits, arbeitsordner));
+        return Verdrahten(commits, arbeitsordner, new GitUebersichtsquelle(commits, arbeitsordner), grenze);
     }
 
     /// <summary>Wie <see cref="Starten"/>, aber die Übersicht der Dateien scheitert bei jedem Lesen wie git bei fehlendem Objekt.</summary>
@@ -50,16 +56,16 @@ internal sealed class ZusammenTreiber
     {
         var commits = GitLeser.Lesen(new CommitHashes(hashes), startordner);
         var arbeitsordner = GitLeser.WurzelLesen(startordner);
-        return Verdrahten(commits, arbeitsordner, new ScheiterndeUebersichtsquelle());
+        return Verdrahten(commits, arbeitsordner, new ScheiterndeUebersichtsquelle(), Ausgabegrenze.Standard);
     }
 
-    private static ZusammenTreiber Verdrahten(Commitzeilen commits, string arbeitsordner, IUebersichtsquelle uebersichtsquelle)
+    private static ZusammenTreiber Verdrahten(Commitzeilen commits, string arbeitsordner, IUebersichtsquelle uebersichtsquelle, Ausgabegrenze grenze)
     {
         var protokollziel = new StringWriter();
         var protokoll = new StderrProtokoll(protokollziel, TimeProvider.System, Protokollstufe.Debug);
         var uebersicht = new GemerkteUebersicht(uebersichtsquelle);
-        var quelle = new ZaehlendeZusammenquelle(new GitZusammenquelle(commits, arbeitsordner));
-        var zusammen = new ZusammenLesenInteractor(commits, uebersicht, quelle, new GitDiffquelle(arbeitsordner), protokoll);
+        var quelle = new ZaehlendeZusammenquelle(new GitZusammenquelle(commits, arbeitsordner, grenze));
+        var zusammen = new ZusammenLesenInteractor(commits, uebersicht, quelle, new GitDiffquelle(arbeitsordner, grenze), protokoll);
         var hakenspeicher = new Hakenspeicher();
         var haken = new DateiAbhakenInteractor(uebersicht, hakenspeicher, zusammen, protokoll);
         var anmerkungsspeicher = new Anmerkungsspeicher();

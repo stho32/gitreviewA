@@ -275,6 +275,24 @@ public class GitLeserDiffTests
     }
 
     [Test]
+    public void Wenn_der_Netto_Diff_genau_die_Grenze_erreicht_dann_liest_git_ihn_noch_und_ein_Byte_darueber_nicht()
+    {
+        using var repo = WegwerfRepo.MitCommits();
+        repo.SchreibeDatei("src/b.txt", "eins\nzwei\n");
+        var p = repo.Committe("p", "A", Zeitpunkt, "");
+        var datei = new Dateiaenderung("A", "src/b.txt", null, 2, 0);
+
+        var vollstaendig = GitLeser.NettoDiffLesen("", p, datei, Diffumfang.Aenderungen, repo.Ordner, Ausgabegrenze.Standard);
+        var grenze = Encoding.UTF8.GetByteCount(vollstaendig);
+
+        var anDerGrenze = GitLeser.NettoDiffLesen("", p, datei, Diffumfang.Aenderungen, repo.Ordner, new Ausgabegrenze(grenze));
+
+        Assert.That(Encoding.UTF8.GetByteCount(anDerGrenze), Is.EqualTo(grenze), "die Ausgabe genau an der Grenze wird vollständig gelesen");
+        Assert.That(Diffaufbereitung.PatchAbErstemHunk(anDerGrenze), Is.EqualTo("@@ -0,0 +1,2 @@\n+eins\n+zwei\n"));
+        Assert.Throws<GitZuGross>(() => GitLeser.NettoDiffLesen("", p, datei, Diffumfang.Aenderungen, repo.Ordner, new Ausgabegrenze(grenze - 1)));
+    }
+
+    [Test]
     public void Wenn_das_Commit_Objekt_fehlt_dann_GitFehler_mit_Hash_und_Pfad()
     {
         using var repo = WegwerfRepo.MitCommits();
