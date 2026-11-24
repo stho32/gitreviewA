@@ -144,9 +144,54 @@ async function pruefeUmbrochen(page, neu, text) {
   expect(mass.scrolltWaagerecht, 'waagerecht scrollbar').toBe(false);
 }
 
+/** Stellt den Umschalter der Ansicht auf `name` („nur Änderungen“ oder „ganze Datei“) — per Klick wie der Mensch. */
+async function ansichtWaehlen(page, name) {
+  await page.locator(BEREICH).getByRole('radiogroup', { name: 'Ansicht' }).getByRole('radio', { name, exact: true }).click();
+}
+
+/** Mit der Tastatur: Fokus auf die gewählte Stellung, dann Pfeiltaste zur anderen. */
+async function ansichtPerTastaturWechseln(page) {
+  await page.locator(BEREICH).getByRole('radiogroup', { name: 'Ansicht' }).getByRole('radio', { checked: true }).focus();
+  await page.keyboard.press('ArrowRight');
+}
+
+async function pruefeAnsicht(page, name) {
+  const gruppe = page.locator(BEREICH).getByRole('radiogroup', { name: 'Ansicht' });
+  await expect(gruppe.getByRole('radio', { name, exact: true })).toBeChecked();
+  await expect(gruppe.getByRole('radio', { checked: true })).toHaveCount(1);
+}
+
+/** Hintergrundfarbe der Textzelle der ersten Zeile je Art. */
+async function zeilenfarbenLesen(page) {
+  return page.evaluate(zeile => {
+    const farbe = art => getComputedStyle(document.querySelector(`${zeile}[data-art="${art}"] .c`)).backgroundColor;
+    return { plus: farbe('plus'), minus: farbe('minus'), kontext: farbe('kontext') };
+  }, ZEILE);
+}
+
+async function pruefeZeilenfarben(page, erwartet) {
+  const farben = await zeilenfarbenLesen(page);
+  expect(farben).toEqual(erwartet);
+  expect(new Set(Object.values(farben)).size, `drei verschiedene Farben: ${JSON.stringify(farben)}`).toBe(3);
+}
+
+/** Führt `aktion` aus und misst, bis die Kontextzeile `{alt, neu}` im Dokument steht; liefert den Messwert. */
+async function pruefeKontextzeileBinnen(page, aktion, { kontext, alt, neu }, fristMs) {
+  const startUmMs = Date.now();
+  await aktion();
+  await page.waitForFunction(([selektor, nummerAlt, nummerNeu]) => document.querySelector(`${selektor}[data-alt="${nummerAlt}"][data-neu="${nummerNeu}"]`) !== null, [ZEILE, alt, neu], { polling: 'raf', timeout: 10000 });
+  const dauerMs = Date.now() - startUmMs;
+  expect(dauerMs, `Zeile ${alt}/${neu} nach ${dauerMs} ms`).toBeLessThanOrEqual(fristMs);
+  await expect(page.locator(`${ZEILE}[data-alt="${alt}"][data-neu="${neu}"] .c`)).toHaveText(kontext);
+  return dauerMs;
+}
+
 /** Hält die Antwort auf den Diff von `pfad` 1,5 s zurück; `eingetroffen` wartet, bis sie da ist und gezeichnet sein könnte. */
-async function diffAntwortVerzoegern(page, pfad) {
-  const istDiffVon = url => url.includes('/diff?') && new URL(url).searchParams.get('pfad') === pfad;
+async function diffAntwortVerzoegern(page, pfad, umfang = null) {
+  const istDiffVon = url => {
+    const abfrage = new URL(url).searchParams;
+    return url.includes('/diff?') && abfrage.get('pfad') === pfad && abfrage.get('umfang') === umfang;
+  };
   await page.route(url => istDiffVon(url.toString()), async route => {
     await new Promise(weiter => setTimeout(weiter, VERZOEGERUNG_MS));
     await route.continue();
@@ -192,7 +237,7 @@ async function pruefeBedienbarNachAlsText(page, dateiWaehlen, datei, andereDatei
 }
 
 module.exports = {
-  pruefeBedienbarNachAlsText,
+  pruefeBedienbarNachAlsText, ansichtWaehlen, ansichtPerTastaturWechseln, pruefeAnsicht, zeilenfarbenLesen, pruefeZeilenfarben, pruefeKontextzeileBinnen,
   pruefeDiff, pruefeMeldung, pruefeAufforderungZurWahl, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, diffAntwortVerzoegern,
   pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
 };

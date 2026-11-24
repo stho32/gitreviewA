@@ -24,6 +24,7 @@ const VORBEREITUNGEN = {
   'Bidi im Dateinamen': { anlegen: repos.repoMitBidiPfad, commits: ['b'] },
   'große Binärdateien': { anlegen: repos.repoK, commits: ['k'] },
   '20 000 Zeilen': { anlegen: repos.repoU, commits: ['u'] },
+  '20 000 Zeilen, eine geändert': { anlegen: repos.repoUMitV, commits: ['v'] },
 };
 
 function diffSprache(gr, page) {
@@ -98,6 +99,18 @@ function diffSprache(gr, page) {
       await dialogePruefen();
     },
     antwortVerzoegern: pfad => diffSeite.diffAntwortVerzoegern(page, pfad),
+    ganzeDateiVerzoegern: pfad => diffSeite.diffAntwortVerzoegern(page, pfad, 'ganz'),
+
+    /** Ansicht „nur Änderungen“ oder „ganze Datei“ (R00008). */
+    ansichtWaehlen: name => diffSeite.ansichtWaehlen(page, name),
+    ansichtPerTastaturWechseln: () => diffSeite.ansichtPerTastaturWechseln(page),
+    ansichtIst: name => diffSeite.pruefeAnsicht(page, name),
+    dateiGewaehlt: name => seite.pruefeGewaehlteDateien(page, [name]),
+    zeilenfarben: () => diffSeite.zeilenfarbenLesen(page),
+    zeilenfarbenSind: farben => diffSeite.pruefeZeilenfarben(page, farben),
+    /** Kontextzeile binnen 1 s nach dem Umschalten auf `ansicht` bzw. nach dem Klick auf `datei`; liefert den Messwert. */
+    kontextzeileRechtzeitigNachUmschalten: (ansicht, erwartet) => diffSeite.pruefeKontextzeileBinnen(page, () => diffSeite.ansichtWaehlen(page, ansicht), erwartet, ZEILE_FRIST_MS),
+    kontextzeileRechtzeitigNachKlick: (datei, erwartet) => diffSeite.pruefeKontextzeileBinnen(page, () => seite.dateiWaehlen(page, datei), erwartet, ZEILE_FRIST_MS),
 
     diffsGelesen: (commit, anzahl) => schnittstelle.pruefeDiffsGelesen(lauf, hash(commit), anzahl),
     commitObjektEntfernen: commit => gr.commitObjektEntfernen(repo, hash(commit)),

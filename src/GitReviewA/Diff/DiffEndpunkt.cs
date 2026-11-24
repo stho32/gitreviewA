@@ -1,3 +1,4 @@
+using GitReviewA.Git;
 using GitReviewA.Server;
 
 namespace GitReviewA.Diff;
@@ -16,7 +17,7 @@ internal static class DiffEndpunkt
             {
                 return Results.BadRequest();
             }
-            var ergebnis = interactor.Lesen(new Diffanfrage(hash, pfad, alsText == true));
+            var ergebnis = interactor.Lesen(new Diffanfrage(hash, pfad, alsText == true, Diffumfang.Aenderungen));
             return AlsHttpAntwort(ergebnis);
         };
     }

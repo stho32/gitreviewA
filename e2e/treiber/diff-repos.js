@@ -165,6 +165,14 @@ function repoU(ordner) {
   return { ordner, hashes: { u: commitAnlegen(ordner, { betreff: '20 000 Zeilen' }) } };
 }
 
+/** Repo U mit Commit `v` auf `u`, der in `gross.txt` die Zeile `zeile 10000` zu `geändert 10000` ändert (R00008). */
+function repoUMitV(ordner) {
+  const { hashes } = repoU(ordner);
+  const gross = fs.readFileSync(path.join(ordner, 'gross.txt'), 'utf8');
+  dateiSchreiben(ordner, 'gross.txt', gross.replace('zeile 10000\n', 'geändert 10000\n'));
+  return { ordner, hashes: { ...hashes, v: commitAnlegen(ordner, { betreff: 'Eine Zeile in 20 000' }) } };
+}
+
 /** Repo K: ein Commit `k` mit Binärdateien aus Null-Bytes (100 KB, 500 KB, 3 MB) und 200 KB Zufall (fester Startwert) neben der kleinen `klein.txt`. */
 function repoK(ordner) {
   repoAnlegen(ordner);
@@ -186,4 +194,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoK, repoMitBidiPfad, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoK, repoMitBidiPfad, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, markerVorhanden, diffProgrammOhneSchutzStarten };
