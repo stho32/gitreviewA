@@ -100,7 +100,7 @@ Treiber `claude` läuft als Subagent des Directors, Treiber `opencode` über `we
 | Rolle | Kürzel | Treiber | Modell | Einsatz |
 |---|---|---|---|---|
 | planer | plan | opencode | openrouter/deepseek/deepseek-v4.1-flash | Interaction bis Bubble verfeinern, Anforderung schreiben, Labels setzen |
-| entwickler | entw | opencode | openrouter/deepseek/deepseek-v4.1-flash | bauen, Test zuerst, im Worktree der Karte (Betreiber 2026-11-24: alle Rollen über opencode/DeepSeek Flash) |
+| entwickler | entw | opencode | openrouter/deepseek/deepseek-v4.1-flash | bauen, Test zuerst, im Worktree der Karte (Betreiber 2026-11-24: alle Rollen über opencode/DeepSeek Flash); Entwickler-Pool: bis zu 3 Instanzen gleichzeitig, je eine Karte (WIP 1 je Instanz), damit bis zu 3 Karten tatsächlich bearbeitet werden (Betreiber 2026-11-24: „ich erlaube dir bis zu 3 Karten parallel“); Lastgrenze gilt |
 | code-reviewer | crev | opencode | openrouter/deepseek/deepseek-v4.1-flash | Korrektheit, Tests, Wartbarkeit je Arbeitspaket |
 | security-reviewer | srev | opencode | openrouter/deepseek/deepseek-v4.1-flash | Angriffsfläche nach „Wissen/Sicherheit“, mit Probe; kurz bei Karten ohne neue Grenze |
 | entwicklertester | etst | opencode | openrouter/deepseek/deepseek-v4.1-flash | User Story wörtlich im echten Programm, in einem Wegwerf-Repo |
