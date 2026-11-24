@@ -5,7 +5,7 @@ namespace GitReviewA.Tests.Akzeptanz;
 
 /// <summary>
 /// Spezifikation R00010 „Zeile annotieren“, Kriterien auf Ebene des Interactors (Szenarien 1–5 und 7 der User Story, Kriterien 2, 3, 5, 7, 11):
-/// was angelegt, abgelehnt, gelistet und ausgegeben wird. Zeile → Stelle und Anzeige rechnet <c>e2e/tests/bausteine/anmerkungen-werte.spec.js</c>,
+/// was angelegt, abgelehnt, gelistet und ausgegeben wird. Zeile zu Stelle und Anzeige rechnet <c>e2e/tests/bausteine/anmerkungen-werte.spec.js</c>,
 /// Bedienung, DOM und Zeit prüft <c>e2e/tests/zeile-annotieren.spec.js</c>.
 /// </summary>
 [UnsupportedOSPlatform("windows")]

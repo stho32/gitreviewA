@@ -257,7 +257,8 @@ public class AnmerkungsEndpunktTests
         {
             json = JsonDocument.Parse(text).RootElement.Clone();
         }
-        var koepfe = antwort.Headers.Concat(antwort.Content.Headers).Select(kopf => kopf.Key).ToArray();
+        var alleKoepfe = antwort.Headers.Concat(antwort.Content.Headers);
+        var koepfe = alleKoepfe.Select(kopf => kopf.Key).ToArray();
         return (antwort.StatusCode, json, text, koepfe);
     }
 }
