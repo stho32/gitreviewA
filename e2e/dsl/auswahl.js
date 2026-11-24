@@ -67,6 +67,8 @@ function auswahlWelt(gr) {
   return {
     verlaufAbisE: () => merken(verlauf.verlaufAbisEAnlegen()),
     verlaufMitMerge: () => merken(verlauf.verlaufMitMergeAnlegen()),
+    verlaufAbisEZurSelbenZeit: () => merken(verlauf.verlaufAbisEAnlegen({ zurSelbenZeit: true })),
+    verlaufMitMergeZurSelbenZeit: () => merken(verlauf.verlaufMitMergeAnlegen({ zurSelbenZeit: true })),
     zweigNebenMain: () => merken(verlauf.zweigNebenMainAnlegen()),
     verlaufMitCommits: anzahl => merken(verlauf.verlaufMitCommitsAnlegen(anzahl)),
     verlaufMitSignaturMarker: () => merken(verlauf.verlaufMitSignaturMarkerAnlegen()),
@@ -83,6 +85,9 @@ function auswahlWelt(gr) {
     },
 
     listeVonGit: (repo, bereich) => verlauf.revList(repo.ordner, bereich),
+
+    /** Wie git die Commits neuester zuerst und Kind vor Eltern ordnet: `git rev-list --date-order <bereich>`. */
+    listeVonGitNeuesteZuerst: (repo, bereich) => verlauf.revList(repo.ordner, bereich, ['--date-order']),
 
     bereicheReviewen: (repo, bereiche) => startzeileAbwarten(starten(repo, bereiche)),
 

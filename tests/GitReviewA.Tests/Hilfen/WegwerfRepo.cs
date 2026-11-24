@@ -6,9 +6,12 @@ internal sealed class WegwerfRepo : IDisposable
 {
     private static readonly DateTimeOffset ErsterZeitpunkt = new(2026, 1, 1, 9, 0, 0, TimeSpan.Zero);
 
-    private WegwerfRepo(string ordner)
+    private readonly bool alleZurSelbenZeit;
+
+    private WegwerfRepo(string ordner, bool alleZurSelbenZeit = false)
     {
         Ordner = ordner;
+        this.alleZurSelbenZeit = alleZurSelbenZeit;
     }
 
     public string Ordner { get; }
@@ -19,8 +22,19 @@ internal sealed class WegwerfRepo : IDisposable
 
     public static WegwerfRepo MitCommits(params string[] betreffe)
     {
+        return MitCommits(alleZurSelbenZeit: false, betreffe);
+    }
+
+    /// <summary>Wie <see cref="MitCommits(string[])"/>, aber alle Commits — auch spätere — tragen dieselbe Zeit, wie Commits einer KI in derselben Sekunde.</summary>
+    public static WegwerfRepo MitCommitsZurSelbenZeit(params string[] betreffe)
+    {
+        return MitCommits(alleZurSelbenZeit: true, betreffe);
+    }
+
+    private static WegwerfRepo MitCommits(bool alleZurSelbenZeit, string[] betreffe)
+    {
         var ordner = Directory.CreateTempSubdirectory("gitreviewa-test-").FullName;
-        var repo = new WegwerfRepo(ordner);
+        var repo = new WegwerfRepo(ordner, alleZurSelbenZeit);
         try
         {
             repo.Git("init", "-q", "-b", "main");
@@ -122,9 +136,14 @@ internal sealed class WegwerfRepo : IDisposable
         return Git("rev-parse", "HEAD");
     }
 
-    private static string Zeitpunkt(int minute)
+    private string Zeitpunkt(int minute)
     {
-        return ErsterZeitpunkt.AddMinutes(minute).ToString("yyyy-MM-ddTHH:mm:sszzz", System.Globalization.CultureInfo.InvariantCulture);
+        var zeitpunkt = ErsterZeitpunkt;
+        if (!alleZurSelbenZeit)
+        {
+            zeitpunkt = ErsterZeitpunkt.AddMinutes(minute);
+        }
+        return zeitpunkt.ToString("yyyy-MM-ddTHH:mm:sszzz", System.Globalization.CultureInfo.InvariantCulture);
     }
 
     private string Ausfuehren(string[] argumente, Dictionary<string, string> zusatzumgebung, string? eingabe = null)

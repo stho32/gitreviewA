@@ -1,6 +1,7 @@
 'use strict';
 // Treiber Repository für Auswahlen: Verläufe mit Zweig, Merge, vielen Commits und fremder Signaturkonfiguration.
-// Commit-Zeiten sind gestaffelt (eine Minute je Commit), damit die Reihenfolge von git nicht an gleichen Zeitstempeln hängt.
+// Commit-Zeiten sind gestaffelt (eine Minute je Commit), damit die Reihenfolge von git nicht an gleichen Zeitstempeln hängt;
+// die Varianten „zur selben Zeit“ lassen die Staffelung bewusst weg, wie bei Commits einer KI in derselben Sekunde.
 const { execFileSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
@@ -9,38 +10,44 @@ const { git, GIT_UMGEBUNG } = require('./wegwerf-repo.js');
 
 const ERSTE_SEKUNDE = 1767258000;
 
-function leeresRepo() {
+function leeresRepo({ zurSelbenZeit = false } = {}) {
   const ordner = fs.mkdtempSync(path.join(os.tmpdir(), 'gitreviewa-e2e-auswahl-'));
   git(ordner, 'init', '-q', '-b', 'main');
-  return { ordner, minute: 0 };
+  return { ordner, minute: 0, zurSelbenZeit };
+}
+
+function naechsteZeit(repo) {
+  repo.minute += 1;
+  if (repo.zurSelbenZeit) {
+    return `@${ERSTE_SEKUNDE} +0000`;
+  }
+  return `@${ERSTE_SEKUNDE + repo.minute * 60} +0000`;
 }
 
 function committe(repo, betreff) {
-  repo.minute += 1;
-  const zeit = `@${ERSTE_SEKUNDE + repo.minute * 60} +0000`;
+  const zeit = naechsteZeit(repo);
   const umgebung = { ...GIT_UMGEBUNG, GIT_AUTHOR_DATE: zeit, GIT_COMMITTER_DATE: zeit };
   execFileSync('git', ['-C', repo.ordner, 'commit', '-q', '--allow-empty', '-m', betreff], { env: umgebung });
   return git(repo.ordner, 'rev-parse', 'HEAD');
 }
 
 /** a → b → c → d → e auf main, e neuester. */
-function verlaufAbisEAnlegen() {
-  const repo = leeresRepo();
+function verlaufAbisEAnlegen({ zurSelbenZeit = false } = {}) {
+  const repo = leeresRepo({ zurSelbenZeit });
   const [a, b, c, d, e] = ['Erster', 'Zweiter', 'Dritter', 'Vierter', 'Fünfter'].map(wort => committe(repo, `${wort} Commit`));
   return { ordner: repo.ordner, a, b, c, d, e };
 }
 
 /** main: a, b; feature ab a: f1, f2; Merge m von feature in main. */
-function verlaufMitMergeAnlegen() {
-  const repo = leeresRepo();
+function verlaufMitMergeAnlegen({ zurSelbenZeit = false } = {}) {
+  const repo = leeresRepo({ zurSelbenZeit });
   const a = committe(repo, 'a');
   git(repo.ordner, 'checkout', '-q', '-b', 'feature');
   const f1 = committe(repo, 'f1');
   const f2 = committe(repo, 'f2');
   git(repo.ordner, 'checkout', '-q', 'main');
   const b = committe(repo, 'b');
-  repo.minute += 1;
-  const zeit = `@${ERSTE_SEKUNDE + repo.minute * 60} +0000`;
+  const zeit = naechsteZeit(repo);
   execFileSync('git', ['-C', repo.ordner, 'merge', '-q', '--no-ff', '-m', 'm', 'feature'], {
     env: { ...GIT_UMGEBUNG, GIT_AUTHOR_DATE: zeit, GIT_COMMITTER_DATE: zeit },
   });
@@ -117,9 +124,9 @@ function refAnlegen(ordner, art, name, ziel) {
   git(ordner, art, name, ziel);
 }
 
-/** Die Liste, die `git rev-list <bereich>` im Repo ausgibt. */
-function revList(ordner, bereich) {
-  return git(ordner, 'rev-list', bereich).split('\n').filter(zeile => zeile.length > 0);
+/** Die Liste, die `git rev-list [optionen] <bereich>` im Repo ausgibt. */
+function revList(ordner, bereich, optionen = []) {
+  return git(ordner, 'rev-list', ...optionen, bereich).split('\n').filter(zeile => zeile.length > 0);
 }
 
 module.exports = {
