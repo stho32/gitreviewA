@@ -89,6 +89,16 @@ public class AnmerkungsPrueferTests
     }
 
     [Test]
+    public void Wenn_Datei_4096_Zeichen_dann_gueltig_und_mit_4097_abgelehnt_mit_Hoechstlaenge()
+    {
+        var grenze = AnmerkungsPruefer.Pruefe(new NeueAnmerkung(HashA, new string('d', 4096), 1, "Text"), Auswahl());
+        var darueber = AnmerkungsPruefer.Pruefe(new NeueAnmerkung(HashA, new string('d', 4097), 1, "Text"), Auswahl());
+
+        Assert.That((grenze.IstGueltig, darueber.IstGueltig), Is.EqualTo((true, false)));
+        Assert.That(darueber.Ablehnungsgrund, Does.Contain("4096"));
+    }
+
+    [Test]
     public void Wenn_keine_Anmerkung_im_Koerper_dann_abgelehnt()
     {
         var ergebnis = AnmerkungsPruefer.Pruefe(null, Auswahl());

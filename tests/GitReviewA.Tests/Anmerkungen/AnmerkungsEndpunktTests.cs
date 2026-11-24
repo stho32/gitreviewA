@@ -52,6 +52,20 @@ public class AnmerkungsEndpunktTests
     }
 
     [Test]
+    public async Task Wenn_Datei_4097_Zeichen_dann_400_mit_Meldung_und_nichts_gespeichert()
+    {
+        await using var server = await StarteServer();
+        using var client = new HttpClient();
+        var koerper = "{\"commit\":\"" + HashA + "\",\"datei\":\"" + new string('d', 4097) + "\",\"zeile\":1,\"text\":\"t\"}";
+
+        var antwort = await Sende(client, server, "api/anmerkungen", koerper);
+
+        Assert.That(antwort.Status, Is.EqualTo(HttpStatusCode.BadRequest));
+        Assert.That(antwort.Json.GetProperty("meldung").GetString(), Does.Contain("4096"));
+        Assert.That(server.Anmerkungen.Schnappschuss().Anzahl, Is.Zero);
+    }
+
+    [Test]
     public async Task Wenn_Review_beendet_dann_409_und_nicht_gespeichert()
     {
         await using var server = await StarteServer();

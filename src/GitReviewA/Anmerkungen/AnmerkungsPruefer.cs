@@ -6,6 +6,7 @@ internal static class AnmerkungsPruefer
 {
     private const char Zeilentrenner = '\u2028';
     private const char Absatztrenner = '\u2029';
+    private const int HoechstePfadlaengeInZeichen = 4096;
 
     public static Pruefergebnis Pruefe(NeueAnmerkung? neu, CommitAuswahl auswahl)
     {
@@ -60,6 +61,12 @@ internal static class AnmerkungsPruefer
         if (string.IsNullOrWhiteSpace(datei))
         {
             grund = "Datei fehlt";
+            return false;
+        }
+        var dateiIstZuLang = datei.Length > HoechstePfadlaengeInZeichen;
+        if (dateiIstZuLang)
+        {
+            grund = $"Datei ist länger als {HoechstePfadlaengeInZeichen} Zeichen";
             return false;
         }
         var enthaeltZeilenumbruchOderSteuerzeichen = datei.Any(IstZeilenumbruchOderSteuerzeichen);
