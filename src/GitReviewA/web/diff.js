@@ -5,18 +5,23 @@
   'use strict';
 
   const HINWEIS_ZUR_WAHL = 'Datei wählen, um ihren Diff zu sehen';
-  const MELDUNG_NACH_ART = { binaer: 'Binärdatei', leer: 'Keine Zeilenänderungen' };
+  const KEINE_ZEILENAENDERUNGEN = 'Keine Zeilenänderungen';
+  const GRUND_TEXT = { nullbytes: 'enthält Null-Bytes', attribut: 'per Attribut als binär markiert' };
+  const TEXT_ZEILEN_GRENZE = 20000;
   const LESETEXT = { plus: 'hinzugefügt: ', minus: 'entfernt: ' };
   const VORZEICHEN = { plus: '+', minus: '−', kontext: '' };
 
-  const zustand = { letzteLadung: 0 };
+  /** `datei`: die gewählte Datei; `zugeklappt`: Zeilen eines langen Textes, die erst „Trotzdem laden“ zeichnet. */
+  const zustand = { letzteLadung: 0, datei: null, zugeklappt: null };
 
   function init() {
     const ansicht = ansichtElemente();
     zeigeAufforderungZurWahl(ansicht);
     ansicht.umbruchElement.addEventListener('change', () => schalteUmbruch(ansicht));
+    ansicht.alsTextElement.addEventListener('click', () => ladeDiff(ansicht, zustand.datei, true));
+    ansicht.trotzdemLadenElement.addEventListener('click', () => klappeAuf(ansicht));
     document.addEventListener('commit-gewaehlt', () => verwerfeWahl(ansicht));
-    document.addEventListener('datei-gewaehlt', ereignis => ladeDiff(ansicht, ereignis.detail));
+    document.addEventListener('datei-gewaehlt', ereignis => ladeDiff(ansicht, ereignis.detail, false));
   }
 
   function ansichtElemente() {
@@ -26,6 +31,8 @@
       umbruchElement: wurzelElement.querySelector('.umbruch-schalter'),
       pfadElement: wurzelElement.querySelector('.diff-pfad'),
       meldungElement: wurzelElement.querySelector('.diff-meldung'),
+      alsTextElement: wurzelElement.querySelector('.als-text'),
+      trotzdemLadenElement: wurzelElement.querySelector('.trotzdem-laden'),
       rollElement: wurzelElement.querySelector('.df-sc'),
     };
   }
@@ -46,15 +53,17 @@
     zeigeMeldung(ansicht, HINWEIS_ZUR_WAHL, false);
   }
 
-  /** Die jüngste Wahl gewinnt: eine Antwort zählt nur, wenn seit ihrer Anfrage keine andere Datei und kein anderer Commit gewählt wurde. */
-  async function ladeDiff(ansicht, datei) {
+  /** Die jüngste Wahl gewinnt: eine Antwort zählt nur, wenn seit ihrer Anfrage keine andere Datei und kein anderer Commit gewählt wurde.
+      `alsText`: der Mensch hat bei einer Binärdatei „Als Text zeigen“ gewählt — nur dann liest der Server ihre Bytes. */
+  async function ladeDiff(ansicht, datei, alsText) {
     const ladung = zustand.letzteLadung + 1;
     zustand.letzteLadung = ladung;
+    zustand.datei = datei;
     ansicht.pfadElement.replaceChildren(...sichtbarTeile(datei.pfad).map(teilKnoten));
     zeigeMeldung(ansicht, 'Diff wird geladen …', false);
     let antwort;
     try {
-      antwort = await diffAbrufen(datei);
+      antwort = await diffAbrufen(datei, alsText);
     } catch {
       if (ladung === zustand.letzteLadung) {
         zeigeMeldung(ansicht, 'Diff konnte nicht gelesen werden', true);
@@ -64,11 +73,15 @@
     if (ladung !== zustand.letzteLadung) {
       return;
     }
-    zeichneAntwort(ansicht, antwort);
+    zeichneAntwort(ansicht, antwort, alsText);
   }
 
-  async function diffAbrufen(datei) {
-    const adresse = `api/commits/${encodeURIComponent(datei.commit)}/diff?${new URLSearchParams({ pfad: datei.pfad })}`;
+  async function diffAbrufen(datei, alsText) {
+    const abfrage = new URLSearchParams({ pfad: datei.pfad });
+    if (alsText) {
+      abfrage.set('alsText', 'true');
+    }
+    const adresse = `api/commits/${encodeURIComponent(datei.commit)}/diff?${abfrage}`;
     const antwort = await fetch(adresse, { headers: { Accept: 'application/json' } });
     if (!antwort.ok) {
       throw new Error(`Antwort ${antwort.status}`);
@@ -81,26 +94,64 @@
     ansicht.meldungElement.classList.toggle('fehler', istFehler);
     ansicht.rollElement.replaceChildren();
     ansicht.rollElement.hidden = true;
+    ansicht.alsTextElement.hidden = true;
+    ansicht.trotzdemLadenElement.hidden = true;
+    zustand.zugeklappt = null;
   }
 
-  function zeichneAntwort(ansicht, antwort) {
-    const meldung = MELDUNG_NACH_ART[antwort.art];
-    if (meldung) {
-      zeigeMeldung(ansicht, meldung, false);
+  function zeichneAntwort(ansicht, antwort, alsText) {
+    const binaerOhneWahl = antwort.art === 'binaer' && !alsText;
+    if (binaerOhneWahl) {
+      zeigeBinaerdatei(ansicht, antwort.grund);
       return;
     }
     const zeilen = patchZeilen(antwort.patch);
     if (zeilen.length === 0) {
-      zeigeMeldung(ansicht, MELDUNG_NACH_ART.leer, false);
+      zeigeMeldung(ansicht, KEINE_ZEILENAENDERUNGEN, false);
       return;
     }
-    const name = `Änderungen in ${antwort.pfad}`;
+    const textzeilen = zeilen.filter(zeile => zeile.art !== 'kopf').length;
+    const langerTextAufWahl = alsText && textzeilen > TEXT_ZEILEN_GRENZE;
+    if (langerTextAufWahl) {
+      zeigeZugeklappt(ansicht, antwort.pfad, zeilen, textzeilen);
+      return;
+    }
+    zeichneZeilen(ansicht, antwort.pfad, zeilen);
+  }
+
+  /** Ohne Wahl kein Byte-Inhalt: Hinweis mit Grund und der Schalter, der den Text erst auf Wunsch lädt (Entscheidung des PO). */
+  function zeigeBinaerdatei(ansicht, grund) {
+    let meldung = 'Binärdatei';
+    const grundText = GRUND_TEXT[grund];
+    if (grundText) {
+      meldung = `Binärdatei — ${grundText}`;
+    }
+    zeigeMeldung(ansicht, meldung, false);
+    ansicht.alsTextElement.hidden = false;
+  }
+
+  /** Über der Grenze bleibt der Text zugeklappt, bis der Mensch „Trotzdem laden“ wählt (vorläufig bis I0014). */
+  function zeigeZugeklappt(ansicht, pfad, zeilen, textzeilen) {
+    zeigeMeldung(ansicht, `Sehr lang: ${textzeilen.toLocaleString('de-DE')} Zeilen — zugeklappt`, false);
+    zustand.zugeklappt = { pfad, zeilen };
+    ansicht.trotzdemLadenElement.hidden = false;
+  }
+
+  function klappeAuf(ansicht) {
+    const zugeklappt = zustand.zugeklappt;
+    if (!zugeklappt) {
+      return;
+    }
+    zeichneZeilen(ansicht, zugeklappt.pfad, zugeklappt.zeilen);
+  }
+
+  function zeichneZeilen(ansicht, pfad, zeilen) {
+    zeigeMeldung(ansicht, '', false);
+    const name = `Änderungen in ${pfad}`;
     const sammelElement = document.createDocumentFragment();
     for (const block of bloecke(zeilen)) {
       sammelElement.append(blockElement(block, name));
     }
-    ansicht.meldungElement.textContent = '';
-    ansicht.meldungElement.classList.remove('fehler');
     ansicht.rollElement.setAttribute('aria-label', name);
     ansicht.rollElement.replaceChildren(sammelElement);
     ansicht.rollElement.hidden = false;

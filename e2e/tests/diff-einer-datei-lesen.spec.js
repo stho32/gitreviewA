@@ -87,7 +87,7 @@ test.describe('Diff einer Datei lesen', () => {
     await diff.dateiAnsehen('LIESMICH.md');
     await diff.diffMeldet('LIESMICH.md', 'Keine Zeilenänderungen');
     await diff.dateiAnsehen('logo.bin');
-    await diff.diffMeldet('logo.bin', 'Binärdatei');
+    await diff.binaerMeldet('logo.bin', 'enthält Null-Bytes');
   });
 
   test('soll einen Merge-Commit gegenüber seinem ersten Elternteil zeigen', async ({ diff }) => {
@@ -253,6 +253,58 @@ test.describe('Fremdes Repository', () => {
     await diff.diffZeigt({ pfad: 'c.txt', zeilen: [{ kopf: '@@ -0,0 +1 @@' }, { plus: 'z', neu: 1 }] });
 
     diff.keineDateiAngelegt('pwn');
+  });
+});
+
+test.describe('Binärdateien', () => {
+  test('soll eine Datei mit Null-Bytes als Binärdatei mit Grund melden und ihren Text erst auf ausdrückliche Wahl zeigen', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'versteckter Code' });
+
+    await diff.dateiAnsehen('x.js');
+    await diff.binaerMeldet('x.js', 'enthält Null-Bytes');
+    await diff.dateiAnsehen('logo.bin');
+    await diff.binaerMeldet('logo.bin', 'enthält Null-Bytes');
+    await diff.alsTextGelesen(0);
+
+    await diff.dateiAnsehen('x.js');
+    await diff.alsTextZeigen();
+    await diff.diffZeigt({ pfad: 'x.js', zeilen: [{ kopf: '@@ -0,0 +1,2 @@' }, { plus: 'a␀ U+0000b', neu: 1 }, { plus: 'steal();', neu: 2 }] });
+    await diff.alsTextGelesen(1);
+
+    await diff.dateiAnsehen('logo.bin');
+    await diff.binaerMeldet('logo.bin', 'enthält Null-Bytes');
+    await diff.alsTextGelesen(1);
+  });
+
+  test('soll eine per Attribut des Repos als binär markierte Datei mit diesem Grund melden und auf Wahl zeigen', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'versteckter Code' });
+
+    await diff.dateiAnsehen('y.txt');
+    await diff.binaerMeldet('y.txt', 'per Attribut als binär markiert');
+    await diff.alsTextZeigen();
+
+    await diff.diffZeigt({ pfad: 'y.txt', zeilen: [{ kopf: '@@ -1 +1,2 @@' }, { kontext: 'eins', alt: 1, neu: 1 }, { plus: 'steal();', neu: 2 }] });
+  });
+
+  test('soll eine Binärdatei über 20 000 Zeilen als Text zugeklappt zeigen, bis „Trotzdem laden“ gewählt wird', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'versteckter Code' });
+
+    await diff.dateiAnsehen('viel.js');
+    await diff.alsTextZeigen();
+    await diff.zugeklappt('viel.js', 'Sehr lang: 20.001 Zeilen — zugeklappt');
+    await diff.trotzdemLaden();
+
+    await diff.zeileZeigt(20001, 'zeile 20000');
+  });
+
+  test('soll Änderungen, die das Repo per Attribut, Attributdatei oder Größengrenze als binär ausgeben ließe, als Text zeigen', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Binärausgabe des Repos' });
+
+    for (const pfad of ['a.js', 'b.js', 'c.js']) {
+      await diff.dateiAnsehen(pfad);
+      await diff.diffZeigt({ pfad, zeilen: [{ kopf: '@@ -1 +1,2 @@' }, { kontext: 'eins', alt: 1, neu: 1 }, { plus: 'steal();', neu: 2 }] });
+    }
+    await diff.alsTextGelesen(0);
   });
 });
 

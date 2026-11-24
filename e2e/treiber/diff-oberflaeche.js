@@ -60,6 +60,7 @@ function nummerText(nummer) {
 
 async function pruefeDiff(page, { pfad, zeilen }) {
   await expect(page.locator(PFAD)).toHaveText(pfad);
+  await pruefeKeinSchalter(page);
   await expect.poll(() => diffZeilenLesen(page), `Diff von ${pfad}`).toEqual(zeilen.map(alsGeleseneZeile));
   await expect(page.locator(MELDUNG)).toHaveText('');
 }
@@ -71,6 +72,40 @@ async function pruefeMeldung(page, pfad, text, istFehler) {
   if (istFehler) {
     await expect(page.locator(MELDUNG)).toHaveClass(/\bfehler\b/);
   }
+}
+
+const ALS_TEXT = 'Als Text zeigen';
+const TROTZDEM_LADEN = 'Trotzdem laden';
+
+/** Meldung „Binärdatei — <Grund>“, kein Byte-Inhalt, Schalter „Als Text zeigen“ bereit. */
+async function pruefeBinaer(page, pfad, grund) {
+  await pruefeMeldung(page, pfad, `Binärdatei — ${grund}`, false);
+  await expect(page.locator(BEREICH).getByRole('button', { name: ALS_TEXT })).toBeVisible();
+}
+
+async function alsTextZeigen(page) {
+  await page.locator(BEREICH).getByRole('button', { name: ALS_TEXT }).click();
+}
+
+/** Text über der Grenze: Meldung mit Zeilenzahl, keine Zeilen, Schalter „Trotzdem laden“. */
+async function pruefeZugeklappt(page, pfad, meldung) {
+  await pruefeMeldung(page, pfad, meldung, false);
+  await expect(page.locator(BEREICH).getByRole('button', { name: ALS_TEXT })).toBeHidden();
+  await expect(page.locator(BEREICH).getByRole('button', { name: TROTZDEM_LADEN })).toBeVisible();
+}
+
+async function trotzdemLaden(page) {
+  await page.locator(BEREICH).getByRole('button', { name: TROTZDEM_LADEN }).click();
+}
+
+async function pruefeZeile(page, neu, text) {
+  await expect(page.locator(`${ZEILE}[data-neu="${neu}"] .c`)).toHaveText(`hinzugefügt: ${text}`);
+  await expect(page.locator(MELDUNG)).toHaveText('');
+}
+
+async function pruefeKeinSchalter(page) {
+  await expect(page.locator(BEREICH).getByRole('button', { name: ALS_TEXT })).toBeHidden();
+  await expect(page.locator(BEREICH).getByRole('button', { name: TROTZDEM_LADEN })).toBeHidden();
 }
 
 async function pruefeAufforderungZurWahl(page) {
@@ -139,5 +174,5 @@ async function pruefeZeileBinnenNachKlick(page, waehlen, { kopf, plus, neu }, fr
 
 module.exports = {
   pruefeDiff, pruefeMeldung, pruefeAufforderungZurWahl, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, diffAntwortVerzoegern,
-  pruefeZeileBinnenNachKlick,
+  pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
 };

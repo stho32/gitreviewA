@@ -102,6 +102,40 @@ function repoMitSubmodulAlsLog(ordner) {
   return { ordner, hashes: { e, z, n: git(ordner, 'rev-parse', 'HEAD') } };
 }
 
+/** Commit `v` mit Dateien, die git als binär einstuft: `x.js` und `logo.bin` mit Null-Bytes, `y.txt` per `.git/info/attributes`
+    (lässt sich nicht abschalten), `viel.js` mit Null-Byte und 20 001 Zeilen. */
+function repoMitVerstecktemCode(ordner) {
+  repoAnlegen(ordner);
+  dateiSchreiben(ordner, 'y.txt', 'eins\n');
+  commitAnlegen(ordner, { betreff: 'Start' });
+  dateiSchreiben(ordner, 'x.js', 'a\0b\nsteal();\n');
+  dateiSchreiben(ordner, 'y.txt', 'eins\nsteal();\n');
+  dateiSchreiben(ordner, 'viel.js', `\0\n${zeilen(20000, nummer => `zeile ${nummer}`)}`);
+  fs.writeFileSync(path.join(ordner, 'logo.bin'), Buffer.from([0x41, 0, 0x42, 0, 1, 2]));
+  const v = commitAnlegen(ordner, { betreff: 'Versteckter Code' });
+  dateiSchreiben(ordner, '.git/info/attributes', 'y.txt -diff\n');
+  return { ordner, hashes: { v } };
+}
+
+/** Commit `w` ändert `a.js`, `b.js` und `c.js`; das Repo lässt sie als binär ausgeben: `a.js` per `.gitattributes`, `b.js` per
+    `core.attributesFile`, alle per `core.bigFileThreshold=1`. */
+function repoMitBinaerausgabe(ordner) {
+  repoAnlegen(ordner);
+  for (const name of ['a.js', 'b.js', 'c.js']) {
+    dateiSchreiben(ordner, name, 'eins\n');
+  }
+  commitAnlegen(ordner, { betreff: 'Start' });
+  for (const name of ['a.js', 'b.js', 'c.js']) {
+    dateiSchreiben(ordner, name, 'eins\nsteal();\n');
+  }
+  const w = commitAnlegen(ordner, { betreff: 'Verborgen' });
+  dateiSchreiben(ordner, '.gitattributes', 'a.js -diff\n');
+  dateiSchreiben(ordner, '.git/fremde-attribute', 'b.js -diff\n');
+  git(ordner, 'config', 'core.attributesFile', path.join(ordner, '.git', 'fremde-attribute'));
+  git(ordner, 'config', 'core.bigFileThreshold', '1');
+  return { ordner, hashes: { w } };
+}
+
 /** Repo M: `c1`, Zweig `feature` mit `f.txt`, `c2` mit `g.txt` auf main, `m` = Merge von `feature`. */
 function repoM(ordner) {
   repoAnlegen(ordner);
@@ -131,4 +165,4 @@ function repoU(ordner) {
   return { ordner, hashes: { u: commitAnlegen(ordner, { betreff: '20 000 Zeilen' }) } };
 }
 
-module.exports = { repoMitBidiPfad, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoMitBidiPfad, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, markerVorhanden, diffProgrammOhneSchutzStarten };

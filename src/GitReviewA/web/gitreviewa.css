@@ -48,6 +48,8 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .balken-plus{background:var(--kd-c-green-line)}.balken-minus{background:var(--kd-c-red-line)}
 /* Diff-Bereich nach kanbanD kd-app.css (.df-sc, .dz-b, .dz, .mk-z): Spalten alt | neu | Vorzeichen | Text, Blöcke zu 500 Zeilen */
 .gr-diff{margin-block-start:var(--kd-s5);min-width:0}
+.diff-wahl{display:flex;gap:var(--kd-s2);margin:0 0 var(--kd-s3)}
+.diff-wahl:not(:has(button:not([hidden]))),.diff-wahl button[hidden]{display:none}
 .diff-kopf{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--kd-s2) var(--kd-s4);margin:0 0 var(--kd-s3)}
 .diff-pfad{margin:0;font-size:13px;font-weight:600;overflow-wrap:anywhere;min-width:0}
 .diff-pfad:empty{display:none}

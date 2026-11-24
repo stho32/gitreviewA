@@ -4,6 +4,7 @@ const { expect } = require('@playwright/test');
 const { anfrage } = require('./http.js');
 
 const DIFF_AUFRUF = '-U3';
+const TEXT_AUFRUF = '--text';
 
 function diffAdresse(hash, pfad) {
   const adresse = `/api/commits/${encodeURIComponent(hash)}/diff`;
@@ -35,10 +36,16 @@ function pruefeEinDiffAufruf(zaehler) {
   expect(diffAufrufe).toHaveLength(1);
 }
 
+/** Zahl der git-Aufrufe, die eine Datei mit `--text` lesen — nur die ausdrückliche Wahl „Als Text zeigen“ darf sie auslösen. */
+async function pruefeTextAufrufe(zaehler, anzahl) {
+  const textAufrufe = () => zaehler.aufrufe().filter(aufruf => aufruf.split(' ').includes(TEXT_AUFRUF)).length;
+  await expect.poll(textAufrufe, 'git-Aufrufe mit --text').toBe(anzahl);
+}
+
 /** Genau eine Fehlerzeile, die Hash und Pfad nennt. */
 function pruefeFehlerzeileMit(lauf, hash, pfad) {
   const fehlerzeilen = lauf.stderr.split('\n').filter(zeile => zeile.includes(' FEHLER ') && zeile.includes(hash) && zeile.includes(pfad));
   expect(fehlerzeilen).toHaveLength(1);
 }
 
-module.exports = { pruefeDiffAntwort, pruefeDiffsGelesen, pruefeKeinDiffAufruf, pruefeEinDiffAufruf, pruefeFehlerzeileMit };
+module.exports = { pruefeDiffAntwort, pruefeDiffsGelesen, pruefeKeinDiffAufruf, pruefeEinDiffAufruf, pruefeTextAufrufe, pruefeFehlerzeileMit };
