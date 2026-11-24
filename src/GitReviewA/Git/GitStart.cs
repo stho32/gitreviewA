@@ -4,7 +4,8 @@ using GitReviewA.Fremdtext;
 namespace GitReviewA.Git;
 
 /// <summary>
-/// Jeder git-Aufruf beginnt hier: das geprüfte Repo ist fremd, seine Konfiguration darf keine Programme starten,
+/// Jeder git-Aufruf beginnt hier: das geprüfte Repo ist fremd, seine Konfiguration darf keine Programme starten
+/// (auch nicht `core.fsmonitor` beim Lesen des Index und keinen Lazy-Fetch eines Partial-Clones über `remote.*.uploadpack` oder `core.sshCommand`),
 /// seine Ersatzrefs (refs/replace) keinen anderen Inhalt unter einem angezeigten Hash unterschieben
 /// und seine Einstellungen und Attribute keine Dateien kürzen oder Änderungen als binär verbergen (Attribute weder aus dem Baum
 /// noch aus `core.attributesFile`; nur `.git/info/attributes` lässt sich nicht abschalten — dafür „als Text zeigen“ im Diff).
@@ -35,9 +36,12 @@ internal static class GitStart
         start.ArgumentList.Add("core.bigFileThreshold=512m");
         start.ArgumentList.Add("-c");
         start.ArgumentList.Add("core.attributesFile=");
+        start.ArgumentList.Add("-c");
+        start.ArgumentList.Add("core.fsmonitor=false");
         start.ArgumentList.Add($"--attr-source={Leerbaum}");
         start.Environment["GIT_TERMINAL_PROMPT"] = "0";
         start.Environment["GIT_NO_REPLACE_OBJECTS"] = "1";
+        start.Environment["GIT_NO_LAZY_FETCH"] = "1";
         return start;
     }
 }
