@@ -147,6 +147,40 @@ internal static class GitLeser
     }
 
     /// <summary>
+    /// Der Netto-Diff einer Datei über die lückenlose Kette: ein Patch gegen den Elternstand des ältesten Commits, unabhängig von der
+    /// Commit-Reihenfolge. Revisionen und Pfade kommen über stdin (<c>git diff --stdin</c>, wie <c>git log --stdin</c> in #28): .NET kann
+    /// ein Byte außerhalb von UTF-8 nicht als Argument übergeben, und ein Pfad aus der Anfrage darf nie Argument werden.
+    /// </summary>
+    public static string NettoDiffLesen(string basis, string spitze, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner)
+    {
+        var start = GitDiffStdinStart(umfang, arbeitsordner, alsText: false);
+        return AusfuehrenMitEingabe(start, NettoEingabe(basis, spitze, datei), $"git diff --stdin {Kurz(basis)}..{Kurz(spitze)} -- {datei.Pfad}");
+    }
+
+    /// <summary>Wie <see cref="NettoDiffLesen"/>, aber mit `--text`: zeigt auch eine als binär eingestufte Datei mit allen Bytes.</summary>
+    public static string NettoDiffAlsTextLesen(string basis, string spitze, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner)
+    {
+        var start = GitDiffStdinStart(umfang, arbeitsordner, alsText: true);
+        return AusfuehrenMitEingabe(start, NettoEingabe(basis, spitze, datei), $"git diff --stdin --text {Kurz(basis)}..{Kurz(spitze)} -- {datei.Pfad}");
+    }
+
+    /// <summary>Zeilen für `git diff --stdin`: Basis (leer = leerer Baum), Spitze, `--`, der Pfad und bei einer Umbenennung der alte Pfad, je als Bytes.</summary>
+    private static byte[] NettoEingabe(string basis, string spitze, Dateiaenderung datei)
+    {
+        var eingabe = new List<byte>();
+        eingabe.AddRange(Encoding.ASCII.GetBytes($"{BasisOderLeerbaum(basis)}\n{spitze}\n--\n"));
+        eingabe.AddRange(NameAlsBytes(datei.Pfad, datei.Rohpfad));
+        eingabe.Add((byte)'\n');
+        var alterPfad = datei.AlterPfad;
+        if (alterPfad is not null)
+        {
+            eingabe.AddRange(NameAlsBytes(alterPfad, datei.RohAlterPfad));
+            eingabe.Add((byte)'\n');
+        }
+        return eingabe.ToArray();
+    }
+
+    /// <summary>
     /// Der Wert des `diff`-Attributs (`unspecified`, `set`, `unset` oder ein Treibername) unter denselben Schutzoptionen wie der Diff:
     /// nur `.git/info/attributes` wirkt noch. Mit `-z` übersteht jeder Pfad die Ausgabe: Pfad NUL `diff` NUL Wert NUL.
     /// </summary>
@@ -524,9 +558,36 @@ internal static class GitLeser
         return start;
     }
 
-    /// <summary>Zeilen für `git log --stdin`: der volle Hash, `--`, der Pfad und bei einer Umbenennung der alte Pfad, je als Bytes.</summary>
-    private static byte[] DiffEingabe(string hash, Dateiaenderung datei)
+    /// <summary>
+    /// Wie <see cref="GitShowDiffStart"/>, aber Revisionen und Pfade kommen über stdin (<c>git diff --stdin</c>): .NET kann ein Byte
+    /// außerhalb von UTF-8 nicht als Argument übergeben, und ein Pfad aus der Anfrage darf nie Argument werden.
+    /// </summary>
+    private static ProcessStartInfo GitDiffStdinStart(Diffumfang umfang, string arbeitsordner, bool alsText)
     {
+        var start = GitStart.Im(arbeitsordner);
+        start.ArgumentList.Add("--literal-pathspecs");
+        start.ArgumentList.Add("-c");
+        start.ArgumentList.Add("diff.suppressBlankEmpty=false");
+        start.ArgumentList.Add("diff");
+        start.ArgumentList.Add("--stdin");
+        start.ArgumentList.Add("--no-color");
+        start.ArgumentList.Add("--no-ext-diff");
+        start.ArgumentList.Add("--no-textconv");
+        start.ArgumentList.Add("--ignore-submodules=none");
+        start.ArgumentList.Add("-M");
+        start.ArgumentList.Add(KontextFuer(umfang));
+        start.ArgumentList.Add("--inter-hunk-context=0");
+        start.ArgumentList.Add("--submodule=short");
+        start.ArgumentList.Add("--no-relative");
+        if (alsText)
+        {
+            start.ArgumentList.Add("--text");
+        }
+        return start;
+    }
+
+    /// <summary>Zeilen für `git log --stdin`: der volle Hash, `--`, der Pfad und bei einer Umbenennung der alte Pfad, je als Bytes.</summary>
+    private static byte[] DiffEingabe(string hash, Dateiaenderung datei)    {
         var eingabe = new List<byte>();
         eingabe.AddRange(Encoding.ASCII.GetBytes($"{hash}\n--\n"));
         eingabe.AddRange(NameAlsBytes(datei.Pfad, datei.Rohpfad));
