@@ -1,7 +1,7 @@
 'use strict';
 // Bausteintests (ohne Browser) der Tokens je Hunk und Seite (R00007): echte Prism-Grammatiken unter Node, Antwort `[Zeile, von, bis, Rolle]*`.
 const { test, expect } = require('@playwright/test');
-const { hunkTokens, prism } = require('../../../src/GitReviewA/web/faerben.js');
+const { hunkTokens, grammatikVon, prism } = require('../../../src/GitReviewA/web/faerben.js');
 const { patchZeilen, ganzeDateiZeilen } = require('../../../src/GitReviewA/web/diff-werte.js');
 
 const SCHLUESSELWORT = 0;
@@ -103,6 +103,14 @@ test.describe('Baustein Tokens je Hunk und Seite', () => {
 
     expect(faerben(patch, 'typescript')[1]).toEqual(expect.arrayContaining([['readonly', SCHLUESSELWORT], ['abstract', SCHLUESSELWORT], ['42', ZAHL]]));
     expect(faerben(patch, 'javascript')[1].map(([text]) => text)).not.toContain('readonly');
+  });
+
+  test('soll nur echte Grammatiken herausgeben, keine Hilfsfunktion von Prism.languages (Sollte des Security-Reviews zu #8)', () => {
+    expect(grammatikVon(prism, 'javascript')).toBe(prism.languages.javascript);
+    for (const name of ['extend', 'insertBefore', 'DFS', 'unbekannt', '__proto__', 'toString', 'constructor']) {
+      expect(() => grammatikVon(prism, name), name).toThrow('keine Grammatik');
+    }
+    expect(() => grammatikVon(null, 'javascript')).toThrow('keine Grammatik');
   });
 
   test('soll ohne Zeilen eine leere Antwort geben', () => {

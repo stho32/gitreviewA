@@ -98,8 +98,19 @@
     return aussen;
   }
 
+  /** Name → Grammatik von Prism; ohne Prism, für einen unbekannten Namen und für die Hilfsfunktionen in `languages` (`extend`,
+      `insertBefore`, `DFS`) eine Ausnahme. */
+  function grammatikVon(prism, sprache) {
+    const bekannt = prism && Object.prototype.hasOwnProperty.call(prism.languages, sprache);
+    const istGrammatik = bekannt && typeof prism.languages[sprache] === 'object' && prism.languages[sprache] !== null;
+    if (!istGrammatik) {
+      throw new Error('keine Grammatik');
+    }
+    return prism.languages[sprache];
+  }
+
   if (!imWorker) {
-    module.exports = { hunkTokens, prism: require('./vendor/prism.js') };
+    module.exports = { hunkTokens, grammatikVon, prism: require('./vendor/prism.js') };
     return;
   }
 
@@ -132,20 +143,13 @@
       return;
     }
     try {
-      const stuecke = hunkTokens(auftrag.zeilen, grammatikVon(auftrag.sprache), prism);
+      const stuecke = hunkTokens(auftrag.zeilen, grammatikVon(prism, auftrag.sprache), prism);
       self.postMessage(stuecke, [stuecke.buffer]);
     } catch {
       self.postMessage({ fehler: true });
     }
   }
 
-  function grammatikVon(sprache) {
-    const bekannt = prism && Object.prototype.hasOwnProperty.call(prism.languages, sprache);
-    if (!bekannt) {
-      throw new Error('keine Grammatik');
-    }
-    return prism.languages[sprache];
-  }
 
   self.addEventListener('message', auftragBeantworten);
 }());
