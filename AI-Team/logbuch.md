@@ -60,3 +60,4 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-24 | #2 | Entwicklertest | entwickler | bestanden | 5 min | Rebase auf main, 7 Konfliktstellen beidseitig gelöst, Reihenfolge Auswahl vor WurzelLesen; Kopie NUnit 370, Playwright 124 · claude · sonnet · Lauf 2-entwickler-3 · 0,54 $ · Karte gesamt 11,32 $ |
 | 2026-11-24 | #6 | Reviews | code-reviewer | bestanden | 3 min | Nachprüfung: Muss geschlossen · claude · sonnet · Lauf 6-code-reviewer-2 · 0,45 $ · Karte gesamt 3,76 $ |
 | 2026-11-24 | #6 | Reviews | security-reviewer | bestanden | 3 min | Nachprüfung: Muss geschlossen · claude · sonnet · Lauf 6-security-reviewer-2 · 0,29 $ · Karte gesamt 4,05 $ |
+| 2026-11-24 | #6 | Entwicklertest | entwickler | bestanden | 3 min | Rebase auf main, 5 Konfliktstellen beidseitig; Kopie NUnit 462, Playwright 156 · claude · sonnet · Lauf 6-entwickler-3 · 0,28 $ · Karte gesamt 4,33 $ |

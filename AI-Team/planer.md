@@ -10,7 +10,7 @@ Ergänzt die Rolle `planer` der Factory für dieses Projekt. Gilt für Projektge
 
 - Kriterien zur Oberfläche am Stil von kanbanD messen (factory.md, „Gestaltung und Vorlage kanbanD“), keine eigenen Gestaltungsvorgaben erfinden.
 
-- **ATDD (Betreiber 2026-11-24)**: Akzeptanzkriterien und Szenarien in Fachsprache schreiben — was der Nutzer erreicht, nicht welche Knöpfe er drückt —, damit sie als ausführbare Spezifikation taugen (factory.md, „ATDD nach Dave Farley“).
+- **Testbarkeit (Betreiber 2026-11-24)**: Kriterien in Fachsprache (was der Nutzer erreicht); je Kriterium die Testebene vorschlagen — Standard Integrationstest gegen den Interactor, Playwright nur auf dem Hot Path oder wenn nur im Browser prüfbar (factory.md, „Testbarkeit und Testverteilung“).
 
 ## Spezialisierungen
 

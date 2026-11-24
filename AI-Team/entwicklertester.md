@@ -10,6 +10,8 @@ Ergänzt die Rolle `entwicklertester` der Factory für dieses Projekt. Gilt für
 - Testdaten: ein frisch angelegtes Wegwerf-Repo mit gezielt gebauten Commits (Kette, Lücke, Umbenennung, Binärdatei, Bild); nie das Projekt-Repo.
 - Prüft je Lauf zusätzlich: stdout enthält nur das Ergebnis, Exit-Code wie in der Anforderung.
 
+- **Testverteilung (Betreiber 2026-11-24)**: deine Prüfung im echten Programm ersetzt keine automatischen Tests; Abweichungen vom Hot Path (factory.md, „Testbarkeit und Testverteilung“) nur melden, nicht nachbauen.
+
 ## Spezialisierungen
 
 Keine aus der Factory.

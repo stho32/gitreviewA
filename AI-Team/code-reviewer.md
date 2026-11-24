@@ -9,7 +9,7 @@ Ergänzt die Rolle `code-reviewer` der Factory für dieses Projekt. Gilt für Pr
 - Nur `127.0.0.1`, freier Port; nichts wird auf Platte gespeichert.
 - Prüft auch: keine Ausgabe außer dem Ergebnis auf stdout, git-Aufrufe mit Argumentliste statt Shell-String.
 
-- **ATDD (Betreiber 2026-11-24)**: die Akzeptanztests der Karte mit dem Skill `msec:atdd-review` prüfen (vier Schichten, Fachsprache, Prüfungen im Treiber, Isolation, keine Kopplung an Oberflächendetails). Verstöße sind Sollte, außer ein Test lügt (prüft nichts oder ist abgeschaltet) — dann Muss.
+- **Testbarkeit (Betreiber 2026-11-24)**: prüfen, dass Logik im Interactor liegt und Adapter dünn sind, Akzeptanzkriterien als Integrationstests gegen den Interactor laufen und Playwright nur den Hot Path oder Browser-Eigenes abdeckt (factory.md, „Testbarkeit und Testverteilung“; Skill `msec:atdd-review`). Neue Playwright-Fälle außerhalb des Hot Paths ohne Begründung sind Sollte; ein lügender Test ist Muss.
 
 ## Spezialisierungen
 

@@ -78,13 +78,13 @@ Angriffsfläche: Aufruf von `git` mit Argumenten aus der Befehlszeile, stdin und
 - **Design**: Tokens, Grundstil und Schriften aus kanbanD übernehmen — `~/Projekte/kanbanD/web/kd-tokens.css`, `kd-base.css`, `kd-app.css`, `web/fonts/` (Präfix in gitreviewA frei). Keine Wireframes; der Stil von kanbanD ist der Maßstab.
 - **Review-Code**: kanbanD hat bereits eine Commit-Review-Seite (R00207, ADR-0033) — `web/diff.js` (Diff-Rechnung, im Browser und in Node testbar), `web/review-uebersicht.js` (Dateiarten, Gruppen, `vscodeLink`, `sprungZeile`, `linkErlaubt`), `web/commits.js`, `web/tastatur.js`, `web/markdown.js`. JavaScript direkt übernehmen und anpassen; Server-Teile (Rust, `src/`) nach C# übertragen. Herkunft im Commit nennen.
 
-### ATDD nach Dave Farley (Betreiber 2026-11-24: „attd-Methoden zur Entwicklung verwenden (msec)“)
+### Testbarkeit und Testverteilung (Betreiber 2026-11-24: „testbar implementieren — Interactor-Pattern —, Playwright nur auf den Hot Path, die heißesten 10 %; der Rest Integrations- und Unit-Tests, weil schneller“)
 
-- **Akzeptanztests zuerst, als ausführbare Spezifikation**: je Akzeptanzkriterium zuerst die Spezifikation in Fachsprache, dann DSL, dann Protokolltreiber, dann das System — ein Kriterium nach dem anderen grün (Skill `msec:atdd-build`, Gegenprobe `msec:atdd-review`; Kursinhalte über die msec-MCP-Werkzeuge, falls in der Sitzung verfügbar).
-- **Vier Schichten** in `e2e/`: `tests/` (Spezifikation: Fälle nach der Fähigkeit benannt, nicht nach dem Oberflächenelement; Testnamen beginnen mit „soll …“), `dsl/` (Fachsprache, benannte Parameter mit Vorgaben, Aliasing für Isolation, je Fachgebiet aufgeteilt), `treiber/` (Protokolltreiber — einzige Schicht, die weiß, wie das System bedient wird: Prozess, HTTP, Browser; Prüfungen sitzen hier), System unter Test. Die vorhandene Struktur wird erweitert, nicht daneben neu gebaut.
-- **Keine lügende Suite**: kein `skip`/`fixme`, kein Wiederholen wackliger Tests, keine verschluckten Fehler in DSL oder Treiber.
-- **Vor dem Fix diagnostizieren**: bei rotem Akzeptanztest erst die Schicht bestimmen, dann ändern.
-- Unit- und Integrationstests (NUnit) bleiben für die Bausteine darunter (Test-Pyramide).
+- **Interactor je Interaction**: jede Interaction der WBS (`I…`) ist im Code ein Interactor — Anfrage rein, Ergebnis raus, steuert Operationen (git über `GitStart`, Speicher, Format) über schmale Schnittstellen. HTTP-Endpunkte, Oberfläche und `Program` sind dünne Adapter ohne eigene Logik. Neue Karten bauen so; vorhandener Code wird bei Berührung dorthin verschoben, nicht in eigenen Umbaukarten.
+- **Testpyramide**: Unit-Tests für Operationen und Rechnungen; **Integrationstests (NUnit) gegen den Interactor** mit echtem git im Wegwerf-Repo — sie tragen die Akzeptanzkriterien; **Playwright nur für den Hot Path** (Liste unten, etwa 10 % der Abläufe) und für das, was nur im Browser prüfbar ist (DOM-Sicherheit/XSS, Tastatur, Darstellung).
+- **Hot Path** (der heißeste Ablauf, Stand 2026-11-24): Aufruf mit Commits → Commit wählen → Datei wählen → Diff lesen → Zeile annotieren → Beenden mit Ergebnis auf stdout. Ein Kriterium gehört nur dann in Playwright, wenn es auf diesem Weg liegt oder nur im Browser prüfbar ist; die Begründung steht in der Anforderung bzw. im Bericht.
+- **ATDD bleibt** (Skill `msec:atdd-build`): Spezifikation in Fachsprache → DSL → Protokolltreiber → System. Der Standard-Treiber ruft den **Interactor in-process** (C#, NUnit); ein Browser-Treiber kommt nur für Hot-Path-Fälle dazu. Dieselbe Fachsprache, zwei Treiber.
+- **Keine lügende Suite**: kein `skip`/`fixme`, keine Wiederholung wackliger Tests, keine verschluckten Fehler; vor dem Fix die Schicht diagnostizieren.
 
 ### Durchsatz (Betreiber 2026-11-24: „kleine schnelle Factory, Ergebnis zügig“)
 
