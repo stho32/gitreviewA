@@ -1,5 +1,6 @@
 /* gitreviewA — Dateiliste des gewählten Commits: liest sie erst bei der Wahl (Ereignis `commit-gewaehlt`), zeigt sie flach oder als Baum
-   und hält die gewählte Datei als Zustand {commit, pfad, status, alterPfad}; jede Wahl meldet das Ereignis `datei-gewaehlt`. */
+   und hält die gewählte Datei als Zustand {commit, pfad, status, alterPfad}; jede Wahl meldet das Ereignis `datei-gewaehlt`.
+   Jede Dateizeile trägt ein Kästchen zum Abhaken; dessen Zustand führt haken.js, nach jedem Zeichnen gemeldet mit `dateiliste-gezeichnet`. */
 (function () {
   'use strict';
 
@@ -78,6 +79,7 @@
       sammelElement.append(listeneintragElement(zeile, groesste));
     }
     ansicht.zeilenElement.replaceChildren(sammelElement);
+    document.dispatchEvent(new CustomEvent('dateiliste-gezeichnet', { detail: { commit: zustand.commit } }));
   }
 
   /** Fremder Text (Pfade) nur über textContent — nie als HTML. */
@@ -90,12 +92,24 @@
     }
     const datei = zeile.datei;
     const dateiElement = eintragElement('datei-zeile', zeile.tiefe);
-    dateiElement.setAttribute('role', 'option');
-    dateiElement.setAttribute('aria-selected', String(datei.pfad === zustand.gewaehlterPfad));
+    dateiElement.setAttribute('aria-current', String(datei.pfad === zustand.gewaehlterPfad));
     dateiElement.dataset.pfad = datei.pfad;
     const statusElement = textElement(`status status-${datei.status}`, datei.status);
-    dateiElement.append(statusElement, textElement('pfad', zeile.name), balkenElement(datei, groesste), textElement('zahlen mono', zahlenText(datei)));
+    dateiElement.append(hakenElement(datei), statusElement, textElement('pfad', zeile.name), balkenElement(datei, groesste), textElement('zahlen mono', zahlenText(datei)));
     return dateiElement;
+  }
+
+  /** Kästchen vor dem Pfad (Vorlage kanbanD „Gesehen“: Name „Abgehakt: <voller Pfad>“); gesperrt, bis haken.js den Stand kennt. */
+  function hakenElement(datei) {
+    const zielElement = document.createElement('label');
+    zielElement.className = 'haken-ziel';
+    const kaestchenElement = document.createElement('input');
+    kaestchenElement.type = 'checkbox';
+    kaestchenElement.className = 'haken';
+    kaestchenElement.disabled = true;
+    kaestchenElement.setAttribute('aria-label', `Abgehakt: ${sichtbarerName(datei.pfad)}`);
+    zielElement.append(kaestchenElement);
+    return zielElement;
   }
 
   function eintragElement(klasse, tiefe) {
@@ -144,17 +158,19 @@
     }
   }
 
+  /** Das Kästchen setzt nur den Haken: ein Klick darauf wählt keine Datei. */
   function waehleDatei(ansicht, ereignis) {
     const zeileElement = ereignis.target.closest('.datei-zeile');
-    if (!zeileElement) {
+    const giltDemKaestchen = ereignis.target.closest('.haken-ziel') !== null;
+    if (!zeileElement || giltDemKaestchen) {
       return;
     }
     const datei = zustand.dateien.find(d => d.pfad === zeileElement.dataset.pfad);
     zustand.gewaehlterPfad = datei.pfad;
-    for (const element of ansicht.zeilenElement.querySelectorAll('.datei-zeile[aria-selected="true"]')) {
-      element.setAttribute('aria-selected', 'false');
+    for (const element of ansicht.zeilenElement.querySelectorAll('.datei-zeile[aria-current="true"]')) {
+      element.setAttribute('aria-current', 'false');
     }
-    zeileElement.setAttribute('aria-selected', 'true');
+    zeileElement.setAttribute('aria-current', 'true');
     const gewaehlteDatei = { commit: zustand.commit, pfad: datei.pfad, status: datei.status, alterPfad: datei.alterPfad };
     document.dispatchEvent(new CustomEvent('datei-gewaehlt', { detail: gewaehlteDatei }));
   }

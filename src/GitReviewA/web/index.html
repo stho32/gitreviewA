@@ -10,6 +10,8 @@
 <script src="commit-werte.js" defer></script>
 <script src="dateiliste-werte.js" defer></script>
 <script src="dateiliste.js" defer></script>
+<script src="haken-werte.js" defer></script>
+<script src="haken.js" defer></script>
 <script src="diff-werte.js" defer></script>
 <script src="farbe-werte.js" defer></script>
 <script src="farbschlange.js" defer></script>
@@ -34,6 +36,12 @@
       <ol id="commit-liste" class="gr-commits" aria-label="Commits der Auswahl"></ol>
     </section>
     <section id="dateiliste" class="gr-dateiliste" aria-label="Dateien des gewählten Commits">
+      <div class="haken-fortschritt">
+        <span class="haken-zaehler" aria-hidden="true"></span>
+        <span class="haken-balken" aria-hidden="true" hidden><span class="haken-anteil"></span></span>
+        <span class="haken-ansage vh" aria-live="polite" aria-atomic="true"></span>
+        <span class="haken-meldung" role="status"></span>
+      </div>
       <div class="dateien-kopf">
         <p class="dateien-summe"></p>
         <div class="darstellung" role="group" aria-label="Darstellung der Dateiliste">
@@ -42,7 +50,7 @@
         </div>
       </div>
       <p class="dateien-meldung gr-status muted" role="status"></p>
-      <ul id="datei-zeilen" class="gr-dateien" role="listbox" aria-label="Dateien"></ul>
+      <ul id="datei-zeilen" class="gr-dateien" aria-label="Dateien"></ul>
     </section>
   </div>
   <section id="diff" class="gr-diff" aria-label="Diff der gewählten Datei">

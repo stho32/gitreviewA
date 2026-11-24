@@ -109,5 +109,5 @@
     return 1;
   }
 
-  Object.assign(ziel, { summeText, zahlenText, groessteAenderung, balkenTeile, flacheZeilen, baumZeilen });
+  Object.assign(ziel, { summeText, zahlenText, groessteAenderung, balkenTeile, sichtbarerName, flacheZeilen, baumZeilen });
 })(typeof module !== 'undefined' ? module.exports : window);

@@ -128,9 +128,9 @@ async function dateiMitPfadWaehlen(page, pfad) {
   await page.locator(`${DATEIZEILE}[data-pfad="${pfad}"]`).click();
 }
 
-/** Namen der Dateizeilen mit `aria-selected="true"`. */
+/** Namen der Dateizeilen mit `aria-current="true"`. */
 async function gewaehlteDateien(page) {
-  return page.locator(`${DATEIZEILE}[aria-selected="true"] .pfad`).allTextContents();
+  return page.locator(`${DATEIZEILE}[aria-current="true"] .pfad`).allTextContents();
 }
 
 /** Sammelt die Ereignisse `datei-gewaehlt` der Seite; abrufbar über `gesammelteDateiwahlen`. */
@@ -209,7 +209,7 @@ async function pruefeDateilistenMeldung(page, text) {
 }
 
 async function pruefeGewaehlteDateien(page, namen) {
-  await expect(page.locator(`${DATEIZEILE}[aria-selected="true"] .pfad`)).toHaveText(namen);
+  await expect(page.locator(`${DATEIZEILE}[aria-current="true"] .pfad`)).toHaveText(namen);
 }
 
 async function pruefeDateiwahlen(page, erwartet) {

@@ -37,7 +37,7 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .ordner-zeile{color:var(--kd-muted);font-weight:600}
 .datei-zeile{cursor:pointer;border-inline-start:3px solid transparent}
 .datei-zeile:hover{background:var(--kd-sunken)}
-.datei-zeile[aria-selected="true"]{background:var(--kd-accent-weak);border-inline-start-color:var(--kd-accent)}
+.datei-zeile[aria-current="true"]{background:var(--kd-accent-weak);border-inline-start-color:var(--kd-accent)}
 .datei-zeile .pfad{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
 .datei-zeile .status{flex:none;inline-size:18px;text-align:center;font:600 12px/18px var(--kd-mono);border:1px solid currentColor}
 .status-A{color:var(--kd-status-ok-ink)}.status-M{color:var(--kd-status-warn-ink)}.status-D{color:var(--kd-status-error-ink)}.status-R{color:var(--kd-accent)}
@@ -98,3 +98,18 @@ body{background:var(--kd-bg);min-block-size:100vh}
 /* Syntaxfarben nach kanbanD kd-app.css (.dz .c .tk-*): sieben Rollen aus den Tokens --kd-tk-*, nur der Kommentar kursiv (R00007) */
 .dz .c .tk-keyword{color:var(--kd-tk-keyword)}.dz .c .tk-string{color:var(--kd-tk-string)}.dz .c .tk-comment{color:var(--kd-tk-comment);font-style:italic}
 .dz .c .tk-number{color:var(--kd-tk-number)}.dz .c .tk-function{color:var(--kd-tk-function)}.dz .c .tk-type{color:var(--kd-tk-type)}.dz .c .tk-macro{color:var(--kd-tk-macro)}
+/* Datei abhaken (R00011) nach kanbanD kd-app.css (.rv-ges, .rv-ges-balken, .ru-ges): Zeile „n von m abgehakt“ mit Balken über der Dateiliste,
+   Kästchen vor dem Pfad mit der Zielgröße der übrigen Bedienelemente */
+.haken-fortschritt{display:flex;flex-wrap:wrap;align-items:center;gap:4px var(--kd-s3);min-width:0;margin:0 0 var(--kd-s3);font-size:12.5px;color:var(--kd-text)}
+.haken-fortschritt:not(:has(.haken-zaehler:not(:empty))):not(:has(.haken-meldung:not(:empty))){display:none}
+.haken-zaehler{font-weight:600;overflow-wrap:anywhere;min-width:0}
+.haken-zaehler:empty{display:none}
+.haken-balken{display:block;flex:0 1 160px;min-width:48px;block-size:4px;background:var(--kd-line-strong)}
+.haken-balken[hidden]{display:none}
+.haken-anteil{display:block;block-size:4px;inline-size:calc(100% * var(--anteil,0));background:var(--kd-accent)}
+.haken-meldung{color:var(--kd-status-error-ink);overflow-wrap:anywhere;min-width:0}
+.haken-meldung:empty{display:none}
+.haken-ziel{display:inline-flex;align-items:center;justify-content:center;flex:none;min-inline-size:var(--kd-ziel);min-block-size:var(--kd-ziel);margin-inline:calc(-1 * var(--kd-s1)) 0;cursor:pointer}
+.haken-ziel input{flex:none;inline-size:18px;block-size:18px;margin:0;accent-color:var(--kd-accent);cursor:pointer}
+.haken-ziel input:disabled{cursor:not-allowed}
+.haken-ziel input:focus-visible{outline:2px solid var(--kd-accent);outline-offset:2px}

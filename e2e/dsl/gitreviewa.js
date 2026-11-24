@@ -37,6 +37,11 @@ function welt() {
     return gemerkt(repos.repoMitVorbereitungAnlegen());
   }
 
+  /** Ein anderswo angelegtes Repo, das beim Aufräumen mit entfernt wird. */
+  function gemerktesRepo(repo) {
+    return gemerkt(repo);
+  }
+
   function repoMitDateien(dateien) {
     return gemerkt(repos.repoMitDateienAnlegen(dateien));
   }
@@ -142,6 +147,10 @@ function welt() {
 
   function zustandAbfragen(lauf, hostKopf) {
     return anfrage(lauf.adresse, '/api/zustand', hostKopf);
+  }
+
+  function dateienAbfragen(lauf, hash) {
+    return anfrage(lauf.adresse, `/api/commits/${hash}/dateien`);
   }
 
   function commitsAbfragen(lauf) {
@@ -291,7 +300,7 @@ function welt() {
 
   return {
     repoMitCommits, gitreviewAStarten, gitreviewAImHintergrundStarten, gitreviewAAufrufen, aufrufBeendet, aufEndeWarten, laeuftNoch, bisSekundenNachStart, laufAbbrechen,
-    zustandAbfragen, commitsAbfragen, commitsStatusOderNull, freierPort, startseiteAbfragen, stderrZeilen, portVon, hostDesLaufs,
+    zustandAbfragen, commitsAbfragen, dateienAbfragen, commitsStatusOderNull, freierPort, startseiteAbfragen, stderrZeilen, portVon, hostDesLaufs,
     lauschendeAdressen, aufzeichnenderBrowser, gitAttrappe, aufraeumen,
     anmerkungAnlegen, beendenAnfordern, anfrageHalbGesendet, beendenUndDauerMessen, fremdeSeite, ergebnis,
     beendenBetaetigen: oberflaeche.beendenBetaetigen,
@@ -299,7 +308,7 @@ function welt() {
     beendetMeldung: oberflaeche.beendetMeldung,
     beendenFehler: oberflaeche.beendenFehler,
     beendenScheitertMit: oberflaeche.beendenScheitertMit,
-    eigenerOrdner, repoMitVorbereitung, repoMitDateien, repoMitFremdemText, repoMitUnterordner, repoMitVielenCommits, repoMitGrossemCommit, commitObjektEntfernen,
+    eigenerOrdner, gemerktesRepo, repoMitVorbereitung, repoMitDateien, repoMitFremdemText, repoMitUnterordner, repoMitVielenCommits, repoMitGrossemCommit, commitObjektEntfernen,
     oberflaecheOeffnen: (page, lauf) => page.goto(lauf.adresse),
     ...oberflaeche,
   };
