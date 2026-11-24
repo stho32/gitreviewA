@@ -12,7 +12,7 @@ Wählt der prüfende Mensch in der Dateiliste eine Datei, zeigt die Hauptansicht
 
 Zahlt ein auf: [Vision](R00000-vision.md) — „Lesbare Diffs“ (unified, Zeilenumbruch) und die Leitplanken Lastprofil (20 000 Diff-Zeilen je Datei flüssig, Dateiwechsel ≤ 1 s an der Obergrenze, Diffs je Datei bei Bedarf), „Git über die Kommandozeile“ (Diffs entsprechen denen von `git`) und das Sicherheitswissen (fremdes Repo).
 
-Baut auf [R00003](R00003-commits-und-dateien-sehen.md) auf: der Zustand „gewählte Datei“ (Commit-Hash, Pfad, Status, bei `R` alter Pfad), `aria-selected="true"` an der gewählten Zeile, das Dokumentereignis `datei-gewaehlt` und `GET /api/commits/{hash}/dateien`. Baut auf [R00001](R00001-mit-commit-hashes-aufrufen.md) (Gerüst, `GitStart`, Wegwerf-Repo-Hilfsklasse, E2E-Gerüst).
+Baut auf [R00003](R00003-commits-und-dateien-sehen.md) auf: der Zustand „gewählte Datei“ (Commit-Hash, Pfad, Status, bei `R` alter Pfad), `aria-current="true"` an der gewählten Zeile (seit R00011 statt `aria-selected`), das Dokumentereignis `datei-gewaehlt` und `GET /api/commits/{hash}/dateien`. Baut auf [R00001](R00001-mit-commit-hashes-aufrufen.md) (Gerüst, `GitStart`, Wegwerf-Repo-Hilfsklasse, E2E-Gerüst).
 
 **Entscheidung des product-owners (2026-11-24, `AI-Team/po-entscheidungen.md`):** Merge-Commits werden gegen den **ersten Elternteil** gezeigt — Dateiliste (R00003) und Diff haben dieselbe Basis.
 
