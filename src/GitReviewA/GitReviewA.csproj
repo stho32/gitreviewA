@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>gitreviewA</AssemblyName>
+    <RootNamespace>GitReviewA</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="GitReviewA.Tests" />
+  </ItemGroup>
+</Project>
