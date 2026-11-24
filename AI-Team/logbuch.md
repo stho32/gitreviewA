@@ -25,3 +25,5 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-24 | #6 | Detailplanung | planer | bestanden | 9 min | R00004 + User Story (16 Szenarien), I0006 bis Bubble B0301–B0308 · claude · sonnet · Lauf 6-planer-1 |
 | 2026-11-24 | #6 | Detailplanung | product-owner | bestanden | 1 min | 6 Fragen nach Empfehlung entschieden, keine Kriterien gestrichen · claude · sonnet · Lauf 6-product-owner-1 · 0,25 $ · Karte gesamt 0,25 $ |
 | 2026-11-24 | #21 | Detailplanung | planer | bestanden | 2 min | R00005 + User Story (5 Szenarien), I0021 bis Bubble B0401–B0403 · claude · sonnet · Lauf 21-planer-1 · 0,42 $ · Karte gesamt 0,42 $ |
+| 2026-11-24 | #2 | Detailplanung | planer | bestanden | 4 min | R00006 + User Story (11 Szenarien), I0002 bis Bubble B0501–B0507 · claude · sonnet · Lauf 2-planer-1 · 0,71 $ · Karte gesamt 0,71 $ |
+| 2026-11-24 | #2 | Detailplanung | product-owner | bestanden | 0 min | 4 Fragen nach Empfehlung · claude · sonnet · Lauf 2-product-owner-1 · 0,22 $ · Karte gesamt 0,93 $ |
