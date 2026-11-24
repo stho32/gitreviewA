@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using GitReviewA.Anmerkungen;
 using GitReviewA.Git;
 using GitReviewA.Protokoll;
 using Microsoft.AspNetCore.Hosting.Server;
@@ -17,25 +18,30 @@ internal sealed class Webserver : IAsyncDisposable
 
     private readonly WebApplication anwendung;
 
-    private Webserver(WebApplication anwendung, int port)
+    private Webserver(WebApplication anwendung, int port, Anmerkungsspeicher anmerkungen)
     {
         this.anwendung = anwendung;
         Adresse = $"http://{HostPruefung.Rechneradresse}:{port}/";
+        Anmerkungen = anmerkungen;
     }
 
     public string Adresse { get; }
 
+    public Anmerkungsspeicher Anmerkungen { get; }
+
     public static async Task<Webserver> StartenAsync(int port, Commitzeilen commits, Oberflaeche oberflaeche, StderrProtokoll protokoll)
     {
         var anwendung = BaueAnwendung(port, protokoll);
+        var anmerkungen = new Anmerkungsspeicher();
         var lauscherPort = new LauscherPort();
         anwendung.Use(SchuetzeVorFremdemHost(lauscherPort, protokoll));
         anwendung.Use(SetzeSchutzkoepfe);
         anwendung.Use(ProtokolliereAnfrage(protokoll));
         BildeEndpunkte(anwendung, commits, oberflaeche);
+        BildeRueckkanal(anwendung, commits, anmerkungen, protokoll);
         await anwendung.StartAsync();
         lauscherPort.Wert = TatsaechlicherPort(anwendung);
-        return new Webserver(anwendung, lauscherPort.Wert);
+        return new Webserver(anwendung, lauscherPort.Wert, anmerkungen);
     }
 
     public Task WartenBisBeendetAsync()
@@ -72,7 +78,7 @@ internal sealed class Webserver : IAsyncDisposable
             if (!hostIstErlaubt)
             {
                 protokoll.Melde(Protokollstufe.Debug, Anfragekontext, $"fremder Host abgewiesen (Länge {kontext.Request.Headers.Host.ToString().Length})");
-                kontext.Response.StatusCode = StatusCodes.Status400BadRequest;
+                kontext.Response.StatusCode = StatusCodes.Status403Forbidden;
                 return;
             }
             await weiter(kontext);
@@ -110,6 +116,12 @@ internal sealed class Webserver : IAsyncDisposable
         anwendung.MapGet("/api/zustand", () => Results.Json(zustand, JsonOptionen));
         anwendung.MapGet("/", () => Oberflaechendatei(oberflaeche, Startseite));
         anwendung.MapGet("/{**pfad}", (string pfad) => Oberflaechendatei(oberflaeche, pfad));
+    }
+
+    private static void BildeRueckkanal(WebApplication anwendung, Commitzeilen commits, Anmerkungsspeicher anmerkungen, StderrProtokoll protokoll)
+    {
+        var anlegen = AnmerkungsEndpunkt.Fuer(anmerkungen, new CommitAuswahl(commits), protokoll);
+        anwendung.Map("/api/anmerkungen", GeschuetzterEndpunkt.Mit(anlegen, protokoll));
     }
 
     private static List<CommitAntwort> AlsAntworten(Commitzeilen commits)
