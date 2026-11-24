@@ -23,3 +23,5 @@ Keine aus der Factory.
 ## Gelerntes
 
 - 2026-11-24 (#1, #5): User Stories liegen unter `Anforderungen/user-stories/RXXXXX.md` (Ablageort der Anforderungs-Familie, `./user-stories/` relativ zur Anforderung) — nicht im Repo-Root.
+
+- **Nur im Worktree der Karte schreiben** (2026-11-24, #10 und #14): Der Arbeitsort steht im Auftragskopf. Dateien unter `/home/shoff/Projekte/gitreviewA/` (Hauptbaum, `main`) nie anlegen oder ändern — auch nicht vorübergehend; Pfade immer mit dem Worktree-Präfix schreiben und vor dem Commit `git -C <worktree> status` sowie `git -C /home/shoff/Projekte/gitreviewA status` prüfen.
