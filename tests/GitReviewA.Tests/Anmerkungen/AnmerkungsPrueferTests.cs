@@ -40,7 +40,7 @@ public class AnmerkungsPrueferTests
     [Test]
     public void Wenn_10000_Zeichen_ausserhalb_der_Grundebene_dann_gueltig_und_eines_mehr_abgelehnt()
     {
-        var zehntausend = string.Concat(Enumerable.Repeat("😀", 10_000));
+        var zehntausend = string.Concat(Enumerable.Repeat("\U0001F600", 10_000));
 
         var grenze = AnmerkungsPruefer.Pruefe(new NeueAnmerkung(HashA, "a.txt", 1, zehntausend), Auswahl());
         var darueber = AnmerkungsPruefer.Pruefe(new NeueAnmerkung(HashA, "a.txt", 1, zehntausend + "x"), Auswahl());
