@@ -2,8 +2,11 @@
 // Testsprache für den Abbruch: Strg+C, Beendigungssignal, Tab schließen; die Treiber darunter kennen Signale und Browser.
 const { test: basis, expect } = require('./gitreviewa.js');
 const signale = require('../treiber/signale.js');
+const { aufhaltendesGitAnlegen } = require('../treiber/aufhaltendes-git.js');
 
-function abbruchSprache() {
+function abbruchSprache(gr) {
+  const aufhaltendeGits = [];
+
   function mitStrgCAbbrechen(lauf) {
     signale.signalSenden(lauf, signale.STRG_C);
   }
@@ -28,6 +31,23 @@ function abbruchSprache() {
     signale.pruefeLaeuftOhneErgebnis(lauf);
   }
 
+  /** Strg+C, während gitreviewA beim Start die Commits liest — vor dem Start des Servers. */
+  async function waehrendDesStartsMitStrgCAbbrechen(repo, hashes) {
+    const git = aufhaltendesGitAnlegen();
+    aufhaltendeGits.push(git);
+    const lauf = gr.gitreviewAAufrufen(repo, hashes, { pfadVorne: git.ordner });
+    await git.aufGitStartWarten(lauf);
+    signale.signalSenden(lauf, signale.STRG_C);
+    git.weiterlaufenLassen();
+    return lauf;
+  }
+
+  function aufraeumen() {
+    for (const git of aufhaltendeGits) {
+      git.entfernen();
+    }
+  }
+
   async function tabSchliessen(page) {
     await page.close();
   }
@@ -40,14 +60,15 @@ function abbruchSprache() {
 
   return {
     mitStrgCAbbrechen, mitBeendigungssignalAbbrechen, mitStrgCAbbrechenUndDauerMessen, sollOhneErgebnisAbgebrochenSein, sollWeiterlaufen,
-    tabSchliessen, oberflaecheInNeuemTabOeffnen,
+    waehrendDesStartsMitStrgCAbbrechen, tabSchliessen, oberflaecheInNeuemTabOeffnen, aufraeumen,
   };
 }
 
 const test = basis.extend({
-  // eslint-disable-next-line no-empty-pattern
-  abbruch: async ({}, verwenden) => {
-    await verwenden(abbruchSprache());
+  abbruch: async ({ gr }, verwenden) => {
+    const sprache = abbruchSprache(gr);
+    await verwenden(sprache);
+    sprache.aufraeumen();
   },
 });
 

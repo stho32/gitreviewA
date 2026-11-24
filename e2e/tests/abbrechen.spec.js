@@ -38,6 +38,14 @@ test.describe('Review abbrechen', () => {
     await abbruch.sollOhneErgebnisAbgebrochenSein(lauf);
   });
 
+  test('soll bei Strg+C noch während des Starts ohne Ergebnis mit 130 enden', async ({ gr, abbruch }) => {
+    const repo = gr.repoMitCommits();
+
+    const lauf = await abbruch.waehrendDesStartsMitStrgCAbbrechen(repo, [repo.hashes[0]]);
+
+    await abbruch.sollOhneErgebnisAbgebrochenSein(lauf);
+  });
+
   test('soll nach geschlossenem Tab weiterlaufen und beim Beenden die Anmerkung liefern (US-4)', async ({ gr, abbruch, context, page }) => {
     const repo = gr.repoMitCommits();
     const [a] = repo.hashes;
