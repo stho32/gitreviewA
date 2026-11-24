@@ -3,6 +3,7 @@ using GitReviewA.Aufruf;
 using GitReviewA.Beenden;
 using GitReviewA.Browser;
 using GitReviewA.Dateien;
+using GitReviewA.Diff;
 using GitReviewA.Git;
 using GitReviewA.Protokoll;
 using GitReviewA.Server;
@@ -51,7 +52,7 @@ internal static class Program
     {
         var commits = await CommitsDerAuswahl.LesenAsync(startauftrag.Auswahl, StandardeingabeDesProzesses(), Environment.CurrentDirectory, protokoll);
         var arbeitsordner = GitLeser.WurzelLesen(Environment.CurrentDirectory);
-        await using var server = await Webserver.StartenAsync(startauftrag.Port, commits, new GitDateiquelle(arbeitsordner), Oberflaeche.AusDemProgramm(), protokoll);
+        await using var server = await Webserver.StartenAsync(startauftrag.Port, commits, new GitDateiquelle(arbeitsordner), new GitDiffquelle(arbeitsordner), Oberflaeche.AusDemProgramm(), protokoll);
         protokoll.MeldeStart(server.Adresse);
         if (startauftrag.BrowserOeffnen)
         {
