@@ -14,8 +14,9 @@ public class CommitsDerAuswahlTests
     {
         using var repo = WegwerfRepo.MitCommits("a", "b", "c");
         var stdin = new Standardeingabe(new StringReader($"{repo.Hashes[2]}\n{repo.Hashes[0]}\n"), IstTerminal: false);
+        var vorbereitet = await CommitsDerAuswahl.VorbereitenAsync(Auswahl.UeberStdin(), stdin);
 
-        var commits = await CommitsDerAuswahl.LesenAsync(Auswahl.UeberStdin(), stdin, repo.Ordner, Protokoll(new StringWriter()));
+        var commits = CommitsDerAuswahl.Lesen(vorbereitet, repo.Ordner, Protokoll(new StringWriter()));
 
         Assert.That(commits.AlsArray().Select(zeile => zeile.Betreff), Is.EqualTo(new[] { "c", "a" }));
     }
@@ -25,33 +26,32 @@ public class CommitsDerAuswahlTests
     {
         using var repo = WegwerfRepo.MitCommits("a", "b", "c");
         var eingabe = new ZaehlendeEingabe();
-        var stdin = new Standardeingabe(eingabe, IstTerminal: false);
 
-        await CommitsDerAuswahl.LesenAsync(Auswahl.AusBereichen(new Bereiche(["HEAD~1.."])), stdin, repo.Ordner, Protokoll(new StringWriter()));
-        await CommitsDerAuswahl.LesenAsync(Auswahl.AusEinzelcommits(new CommitHashes([repo.Hashes[0]])), stdin, repo.Ordner, Protokoll(new StringWriter()));
+        await CommitsDerAuswahl.VorbereitenAsync(Auswahl.AusBereichen(new Bereiche(["HEAD~1.."])), new Standardeingabe(eingabe, IstTerminal: false));
+        await CommitsDerAuswahl.VorbereitenAsync(Auswahl.AusEinzelcommits(new CommitHashes([repo.Hashes[0]])), new Standardeingabe(eingabe, IstTerminal: false));
 
         Assert.That(eingabe.Lesevorgaenge, Is.Zero);
     }
 
     [Test]
-    public async Task Wenn_200_Commits_dann_keine_Warnung()
+    public void Wenn_200_Commits_dann_keine_Warnung()
     {
         using var repo = WegwerfRepo.MitVielenCommits(200);
         var stderr = new StringWriter();
 
-        var commits = await CommitsDerAuswahl.LesenAsync(Auswahl.AusBereichen(new Bereiche([$"{repo.Hashes[0]}..HEAD"])), OhneStdin(), repo.Ordner, Protokoll(stderr));
+        var commits = CommitsDerAuswahl.Lesen(Auswahl.AusBereichen(new Bereiche([$"{repo.Hashes[0]}..HEAD"])), repo.Ordner, Protokoll(stderr));
 
         Assert.That(commits.Anzahl, Is.EqualTo(200));
         Assert.That(stderr.ToString(), Is.Empty);
     }
 
     [Test]
-    public async Task Wenn_201_Commits_dann_eine_Warnung_mit_der_Anzahl()
+    public void Wenn_201_Commits_dann_eine_Warnung_mit_der_Anzahl()
     {
         using var repo = WegwerfRepo.MitVielenCommits(201);
         var stderr = new StringWriter();
 
-        var commits = await CommitsDerAuswahl.LesenAsync(Auswahl.AusBereichen(new Bereiche([$"{repo.Hashes[0]}..HEAD"])), OhneStdin(), repo.Ordner, Protokoll(stderr));
+        var commits = CommitsDerAuswahl.Lesen(Auswahl.AusBereichen(new Bereiche([$"{repo.Hashes[0]}..HEAD"])), repo.Ordner, Protokoll(stderr));
 
         Assert.That(commits.Anzahl, Is.EqualTo(201));
         var zeilen = stderr.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries);
@@ -61,12 +61,12 @@ public class CommitsDerAuswahlTests
     }
 
     [Test]
-    public async Task Wenn_201_Commits_und_quiet_dann_keine_Warnung()
+    public void Wenn_201_Commits_und_quiet_dann_keine_Warnung()
     {
         using var repo = WegwerfRepo.MitVielenCommits(201);
         var stderr = new StringWriter();
 
-        await CommitsDerAuswahl.LesenAsync(Auswahl.AusBereichen(new Bereiche([$"{repo.Hashes[0]}..HEAD"])), OhneStdin(), repo.Ordner, Protokoll(stderr, Protokollstufe.Fehler));
+        CommitsDerAuswahl.Lesen(Auswahl.AusBereichen(new Bereiche([$"{repo.Hashes[0]}..HEAD"])), repo.Ordner, Protokoll(stderr, Protokollstufe.Fehler));
 
         Assert.That(stderr.ToString(), Is.Empty);
     }
@@ -76,8 +76,8 @@ public class CommitsDerAuswahlTests
     {
         using var repo = WegwerfRepo.MitVielenCommits(1001);
 
-        var fehler = Assert.ThrowsAsync<AuswahlFehler>(() =>
-            CommitsDerAuswahl.LesenAsync(Auswahl.AusBereichen(new Bereiche([$"{repo.Hashes[0]}..HEAD"])), OhneStdin(), repo.Ordner, Protokoll(new StringWriter())));
+        var fehler = Assert.Throws<AuswahlFehler>(() =>
+            CommitsDerAuswahl.Lesen(Auswahl.AusBereichen(new Bereiche([$"{repo.Hashes[0]}..HEAD"])), repo.Ordner, Protokoll(new StringWriter())));
 
         Assert.That(fehler.Message, Does.Contain("1 000"));
     }
@@ -88,8 +88,8 @@ public class CommitsDerAuswahlTests
         using var repo = WegwerfRepo.MitVielenCommits(1001);
         var hashes = new CommitHashes(repo.Hashes.Skip(1));
 
-        var fehler = Assert.ThrowsAsync<AuswahlFehler>(() =>
-            CommitsDerAuswahl.LesenAsync(Auswahl.AusEinzelcommits(hashes), OhneStdin(), repo.Ordner, Protokoll(new StringWriter())));
+        var fehler = Assert.Throws<AuswahlFehler>(() =>
+            CommitsDerAuswahl.Lesen(Auswahl.AusEinzelcommits(hashes), repo.Ordner, Protokoll(new StringWriter())));
 
         Assert.That(fehler.Message, Does.Contain("1 000"));
     }
@@ -103,8 +103,8 @@ public class CommitsDerAuswahlTests
         var praefix = PraefixVon(repo.Hashes[0], grossbuchstaben);
         repo.Git(refArt, praefix, repo.Hashes[3]);
 
-        var fehler = Assert.ThrowsAsync<AuswahlFehler>(() =>
-            CommitsDerAuswahl.LesenAsync(Auswahl.AusEinzelcommits(new CommitHashes([praefix])), OhneStdin(), repo.Ordner, Protokoll(new StringWriter())));
+        var fehler = Assert.Throws<AuswahlFehler>(() =>
+            CommitsDerAuswahl.Lesen(Auswahl.AusEinzelcommits(new CommitHashes([praefix])), repo.Ordner, Protokoll(new StringWriter())));
 
         Assert.That(fehler.Message, Does.Contain("mehrdeutig"));
         Assert.That(fehler.Message, Does.Not.Contain(praefix).IgnoreCase);
@@ -113,15 +113,16 @@ public class CommitsDerAuswahlTests
     [TestCase("tag", false)]
     [TestCase("tag", true)]
     [TestCase("branch", false)]
-    public void Wenn_Ref_wie_das_Praefix_von_c1_heisst_und_auf_c4_zeigt_dann_ueber_stdin_mehrdeutig_ohne_Eingabetext(string refArt, bool grossbuchstaben)
+    public async Task Wenn_Ref_wie_das_Praefix_von_c1_heisst_und_auf_c4_zeigt_dann_ueber_stdin_mehrdeutig_ohne_Eingabetext(string refArt, bool grossbuchstaben)
     {
         using var repo = WegwerfRepo.MitCommits("c1", "c2", "c3", "c4");
         var praefix = PraefixVon(repo.Hashes[0], grossbuchstaben);
         repo.Git(refArt, praefix, repo.Hashes[3]);
         var stdin = new Standardeingabe(new StringReader($"{praefix}\n"), IstTerminal: false);
+        var vorbereitet = await CommitsDerAuswahl.VorbereitenAsync(Auswahl.UeberStdin(), stdin);
 
-        var fehler = Assert.ThrowsAsync<AuswahlFehler>(() =>
-            CommitsDerAuswahl.LesenAsync(Auswahl.UeberStdin(), stdin, repo.Ordner, Protokoll(new StringWriter())));
+        var fehler = Assert.Throws<AuswahlFehler>(() =>
+            CommitsDerAuswahl.Lesen(vorbereitet, repo.Ordner, Protokoll(new StringWriter())));
 
         Assert.That(fehler.Message, Does.Contain("mehrdeutig"));
         Assert.That(fehler.Message, Does.Not.Contain(praefix).IgnoreCase);
@@ -134,10 +135,11 @@ public class CommitsDerAuswahlTests
         repo.Git("tag", repo.Hashes[0], repo.Hashes[3]);
         var eindeutigesPraefix = PraefixVon(repo.Hashes[1], grossbuchstaben: true);
 
-        var ueberArgumente = await CommitsDerAuswahl.LesenAsync(
-            Auswahl.AusEinzelcommits(new CommitHashes([repo.Hashes[0], eindeutigesPraefix])), OhneStdin(), repo.Ordner, Protokoll(new StringWriter()));
+        var ueberArgumente = CommitsDerAuswahl.Lesen(
+            Auswahl.AusEinzelcommits(new CommitHashes([repo.Hashes[0], eindeutigesPraefix])), repo.Ordner, Protokoll(new StringWriter()));
         var stdin = new Standardeingabe(new StringReader($"{repo.Hashes[0]}\n{eindeutigesPraefix}\n"), IstTerminal: false);
-        var ueberStdin = await CommitsDerAuswahl.LesenAsync(Auswahl.UeberStdin(), stdin, repo.Ordner, Protokoll(new StringWriter()));
+        var ueberStdin = CommitsDerAuswahl.Lesen(
+            await CommitsDerAuswahl.VorbereitenAsync(Auswahl.UeberStdin(), stdin), repo.Ordner, Protokoll(new StringWriter()));
 
         var erwartet = new[] { repo.Hashes[0], repo.Hashes[1] };
         Assert.That(ueberArgumente.AlsArray().Select(zeile => zeile.Hash), Is.EqualTo(erwartet));
@@ -152,11 +154,6 @@ public class CommitsDerAuswahlTests
             return praefix.ToUpperInvariant();
         }
         return praefix;
-    }
-
-    private static Standardeingabe OhneStdin()
-    {
-        return new Standardeingabe(new ZaehlendeEingabe(), IstTerminal: false);
     }
 
     private static StderrProtokoll Protokoll(StringWriter ziel, Protokollstufe mindeststufe = Protokollstufe.Warnung)

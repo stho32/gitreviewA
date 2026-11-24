@@ -8,19 +8,34 @@ internal static class CommitsDerAuswahl
     private const string Kontext = "Auswahl";
     private static readonly TimeSpan StdinFrist = TimeSpan.FromSeconds(10);
 
-    public static async Task<Commitzeilen> LesenAsync(Auswahl auswahl, Standardeingabe stdin, string arbeitsordner, StderrProtokoll protokoll)
+    /// <summary>
+    /// stdin wird vor jedem git-Aufruf gelesen und geprüft: eine ungültige Zeile erreicht git nie (R00006).
+    /// Danach ist eine stdin-Auswahl eine Einzelcommit-Auswahl in Eingabereihenfolge.
+    /// </summary>
+    public static async Task<Auswahl> VorbereitenAsync(Auswahl auswahl, Standardeingabe stdin)
     {
-        var commits = await LeseMitGrundAsync(auswahl, stdin, arbeitsordner);
+        var istUeberStdin = auswahl.Art == Auswahlart.Stdin;
+        if (!istUeberStdin)
+        {
+            return auswahl;
+        }
+        var hashes = await StdinHashes.LesenAsync(stdin.Eingabe, stdin.IstTerminal, StdinFrist);
+        return Auswahl.AusEinzelcommits(hashes);
+    }
+
+    public static Commitzeilen Lesen(Auswahl auswahl, string arbeitsordner, StderrProtokoll protokoll)
+    {
+        var commits = LeseMitGrund(auswahl, arbeitsordner);
         Beurteile(commits, protokoll);
         return commits;
     }
 
     /// <summary>Ein gescheitertes Auflösen ist ein ungültiger Aufruf; der rohe git-Text wandert in den Debugtext.</summary>
-    private static async Task<Commitzeilen> LeseMitGrundAsync(Auswahl auswahl, Standardeingabe stdin, string arbeitsordner)
+    private static Commitzeilen LeseMitGrund(Auswahl auswahl, string arbeitsordner)
     {
         try
         {
-            return await LeseRohAsync(auswahl, stdin, arbeitsordner);
+            return LeseRoh(auswahl, arbeitsordner);
         }
         catch (GitNichtGefunden fehler)
         {
@@ -32,7 +47,7 @@ internal static class CommitsDerAuswahl
         }
     }
 
-    private static async Task<Commitzeilen> LeseRohAsync(Auswahl auswahl, Standardeingabe stdin, string arbeitsordner)
+    private static Commitzeilen LeseRoh(Auswahl auswahl, string arbeitsordner)
     {
         switch (auswahl.Art)
         {
@@ -40,9 +55,6 @@ internal static class CommitsDerAuswahl
                 return LeseHashesGeprueft(auswahl.Hashes, arbeitsordner);
             case Auswahlart.Bereiche:
                 return GitLeser.LeseBereiche(auswahl.Bereiche, arbeitsordner);
-            case Auswahlart.Stdin:
-                var hashes = await StdinHashes.LesenAsync(stdin.Eingabe, stdin.IstTerminal, StdinFrist);
-                return LeseHashesGeprueft(hashes, arbeitsordner);
             default:
                 throw new ArgumentOutOfRangeException(nameof(auswahl), auswahl.Art, "unbekannte Auswahlart");
         }

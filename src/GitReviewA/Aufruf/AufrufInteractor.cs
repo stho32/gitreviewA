@@ -4,7 +4,8 @@ using GitReviewA.Protokoll;
 namespace GitReviewA.Aufruf;
 
 /// <summary>
-/// Die Interaction „Ungültiger Aufruf“: prüft erst die Umgebung (Repoprüfung), liest dann die Auswahl — beides vor dem Serverstart.
+/// Die Interaction „Ungültiger Aufruf“: liest eine stdin-Auswahl zuerst (ohne git), prüft dann die Umgebung
+/// (Repoprüfung) und liest die Auswahl — alles vor dem Serverstart.
 /// Ein ungültiger Aufruf kommt als Aufruffehler zurück; der rohe git-Text hängt nur im Debugtext.
 /// </summary>
 internal static class AufrufInteractor
@@ -13,8 +14,9 @@ internal static class AufrufInteractor
     {
         try
         {
+            var vorbereiteteAuswahl = await CommitsDerAuswahl.VorbereitenAsync(anfrage.Startauftrag.Auswahl, anfrage.Stdin);
             var arbeitsbaumwurzel = GitLeser.WurzelLesen(anfrage.Arbeitsordner);
-            var commits = await CommitsDerAuswahl.LesenAsync(anfrage.Startauftrag.Auswahl, anfrage.Stdin, anfrage.Arbeitsordner, protokoll);
+            var commits = CommitsDerAuswahl.Lesen(vorbereiteteAuswahl, anfrage.Arbeitsordner, protokoll);
             return Aufruffolge.Erfolg(commits, arbeitsbaumwurzel);
         }
         catch (Aufruffehler fehler)
