@@ -49,3 +49,5 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-24 | #8 | Detailplanung | planer | bestanden | 10 min | R00007 + User Story, I0008 bis Bubble B0601–B0608 · claude · sonnet · Lauf 8-planer-1 · 0,97 $ · Karte gesamt 0,97 $ |
 | 2026-11-24 | #5 | Nacharbeit | entwickler | bestanden | 12 min | 3 Muss + Ergänzung (Wurzel, diff.relative, attr-source, bigFileThreshold) + Sollte Zeilenzahl; NUnit 256, Playwright 62 · claude · opus · Lauf 5-entwickler-2 · 2,31 $ · Karte gesamt 5,13 $ |
 | 2026-11-24 | #8 | Detailplanung | product-owner | bestanden | 2 min | 5 Fragen; TypeScript abweichend vom planer aufgenommen · claude · sonnet · Lauf 8-product-owner-1 · 0,27 $ · Karte gesamt 1,24 $ |
+| 2026-11-24 | #2 | Nacharbeit | entwickler | bestanden | 17 min | 2 Muss behoben (Präfix gegen Ref-Namen, --date-order); NUnit 308 · claude · opus · Lauf 2-entwickler-2 · 1,34 $ · Karte gesamt 9,99 $ |
+| 2026-11-24 | #4 | Detailplanung | planer | bestanden | 4 min | R00009 + User Story (6 Szenarien), I0004 bis Bubble B0801–B0803; Ursache 100 MB gefunden · claude · sonnet · Lauf 4-planer-1 · 0,56 $ · Karte gesamt 0,56 $ |
