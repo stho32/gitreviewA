@@ -6,6 +6,7 @@ const seite = require('../treiber/oberflaeche.js');
 const beobachtung = require('../treiber/beobachtung.js');
 
 const LEISTE_FRIST_MS = 2000;
+const AUTOR_MIT_HTML = 'Mallory &lt;i&gt; &amp; Co';
 const DATEILISTE_FRIST_MS = 1000;
 
 /** Repos je Vorbereitung; jedes liefert Ordner und die Hashes je Name. */
@@ -16,7 +17,8 @@ function repoAnlegen(gr, art) {
       return { ordner: repo.ordner, hashes: { p: repo.p, q: repo.q, r: repo.r } };
     }
     case 'fremder Text': {
-      const repo = gr.repoMitFremdemText({ autor: '<i>Mallory</i>', betreff: '<script>alert(1)</script>', rumpf: '<b>fett</b>' });
+      // git entfernt spitze Klammern aus Autornamen; HTML-Text im Autor steht deshalb als Entität da, die nicht gedeutet werden darf
+      const repo = gr.repoMitFremdemText({ autor: AUTOR_MIT_HTML, betreff: '<script>alert(1)</script>', rumpf: '<b>fett</b>' });
       return { ordner: repo.ordner, hashes: { s: repo.hash } };
     }
     case 'Sonderzeichen': {
@@ -125,4 +127,4 @@ const test = basis.extend({
   },
 });
 
-module.exports = { test, expect };
+module.exports = { test, expect, AUTOR_MIT_HTML };

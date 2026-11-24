@@ -1,9 +1,13 @@
 'use strict';
 // Spezifikation R00003 „Commits und Dateien sehen“ (User Story Szenarien 1–14). Commits heißen wie in der Vorbereitung der Anforderung.
-const { test } = require('../dsl/commits-und-dateien.js');
+const { test, AUTOR_MIT_HTML } = require('../dsl/commits-und-dateien.js');
 
-// erwartet rot, bis R00003 gebaut ist; die Markierung fällt mit dem letzten grünen Szenario
-test.beforeEach(() => test.fail());
+/** Markiert die Fälle eines Blocks als erwartet rot, solange sie nicht gebaut sind; fällt mit dem letzten grünen Fall weg. */
+function erwartetRot() {
+  if (!process.env.GITREVIEWA_OHNE_MARKER) {
+    test.beforeEach(() => test.fail());
+  }
+}
 
 const DATEIEN_VON_P = {
   summe: '4 Dateien · +11 −0',
@@ -65,13 +69,15 @@ test.describe('Commits überblicken', () => {
 
     await review.messageUmschalten('s');
 
-    await review.leisteZeigt([{ commit: 's', autor: '<i>Mallory</i>', betreff: '<script>alert(1)</script>' }]);
+    await review.leisteZeigt([{ commit: 's', autor: AUTOR_MIT_HTML, betreff: '<script>alert(1)</script>' }]);
     await review.messageZeigt('s', '<b>fett</b>');
     await review.fremderTextBleibtText();
   });
 });
 
 test.describe('Dateien eines Commits sehen', () => {
+  erwartetRot();
+
   test('soll beim Start den ersten Commit mit seinen Dateien in git-Reihenfolge zeigen', async ({ review }) => {
     await review.starten({ commits: ['p', 'q', 'r'] });
 
@@ -176,6 +182,8 @@ test.describe('Dateien eines Commits sehen', () => {
 });
 
 test.describe('Dateilisten nur auf Anfrage lesen', () => {
+  erwartetRot();
+
   test('soll die Dateiliste eines Commits erst bei seiner Wahl lesen, einmal je Wahl', async ({ review }) => {
     await review.starten({ commits: ['p', 'q', 'r'], verbose: true });
     await review.dateienZeigen(DATEIEN_VON_P);
@@ -230,6 +238,9 @@ test.describe('Große Reviews', () => {
   });
 
   test('soll 2 000 Dateien spätestens 1 s nach dem Klick zeigen', async ({ review }) => {
+    if (!process.env.GITREVIEWA_OHNE_MARKER) {
+      test.fail();
+    }
     await review.starten({ vorbereitung: '2000 Dateien', commits: ['p', 'u'] });
     await review.dateienZeigen({ summe: '1 Datei · +1 −0', eintraege: [{ status: 'A', name: 'README.md' }] });
 

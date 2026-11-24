@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="kd-tokens.css">
 <link rel="stylesheet" href="kd-base.css">
 <link rel="stylesheet" href="gitreviewa.css">
+<script src="commit-werte.js" defer></script>
 <script src="commits.js" defer></script>
 <script src="beenden.js" defer></script>
 </head>
@@ -19,8 +20,12 @@
 </header>
 <main class="gr-inhalt">
   <p id="beenden-status" class="gr-status fehler" role="alert"></p>
-  <p id="commit-status" class="gr-status muted" role="status">Commits werden geladen …</p>
-  <ol id="commit-liste" class="gr-commits" aria-label="Commits der Auswahl"></ol>
+  <div class="gr-ansicht">
+    <section class="gr-leiste" aria-label="Commits">
+      <p id="commit-status" class="gr-status muted" role="status">Commits werden geladen …</p>
+      <ol id="commit-liste" class="gr-commits" aria-label="Commits der Auswahl"></ol>
+    </section>
+  </div>
 </main>
 </body>
 </html>
