@@ -194,6 +194,68 @@ public class GitLeserDiffTests
     }
 
     [Test]
+    public void Wenn_als_Text_gelesen_dann_zeigt_der_Diff_auch_eine_Datei_mit_Null_Bytes_mit_allen_Bytes()
+    {
+        using var repo = WegwerfRepo.MitCommits();
+        repo.SchreibeDatei("x.js", "a\0b\nsteal();\n");
+        var p = repo.Committe("p", "A", Zeitpunkt, "");
+        var datei = new Dateiaenderung("A", "x.js", null, null, null);
+        Assert.That(PatchLesen(repo, p, datei), Is.Empty, "Kontrolle: ohne Wahl zeigt git keinen Inhalt");
+
+        var patch = Diffaufbereitung.PatchAbErstemHunk(GitLeser.DiffAlsTextLesen(p, datei, repo.Ordner));
+
+        Assert.That(patch, Is.EqualTo("@@ -0,0 +1,2 @@\n+a\0b\n+steal();\n"));
+    }
+
+    [TestCase("y.txt -diff")]
+    [TestCase("y.txt binary")]
+    public void Wenn_info_attributes_die_Datei_als_binaer_markiert_dann_zeigt_erst_der_Diff_als_Text_die_Zeilen(string attribut)
+    {
+        using var repo = WegwerfRepo.MitCommits();
+        repo.SchreibeDatei("y.txt", "eins\n");
+        repo.Committe("p", "A", Zeitpunkt, "");
+        repo.SchreibeDatei("y.txt", "eins\nsteal();\n");
+        var q = repo.Committe("q", "A", Zeitpunkt, "");
+        repo.SchreibeDatei(".git/info/attributes", $"{attribut}\n");
+        var datei = new Dateiaenderung("M", "y.txt", null, null, null);
+        Assert.That(PatchLesen(repo, q, datei), Is.Empty, "Kontrolle: info/attributes verbirgt die Änderung");
+
+        var patch = Diffaufbereitung.PatchAbErstemHunk(GitLeser.DiffAlsTextLesen(q, datei, repo.Ordner));
+
+        Assert.That(patch, Is.EqualTo("@@ -1 +1,2 @@\n eins\n+steal();\n"));
+    }
+
+    [TestCase("ohne Attribut", "unspecified")]
+    [TestCase("info/attributes -diff", "unset")]
+    [TestCase("info/attributes binary", "unset")]
+    [TestCase("info/attributes diff=verbergen", "verbergen")]
+    [TestCase(".gitattributes -diff", "unspecified")]
+    [TestCase("config core.attributesFile", "unspecified")]
+    public void Wenn_das_diff_Attribut_gelesen_wird_dann_gilt_nur_was_sich_nicht_abschalten_laesst(string quelle, string erwartet)
+    {
+        using var repo = WegwerfRepo.MitCommits();
+        repo.SchreibeDatei("-x\ny.txt", "eins\n");
+        repo.Committe("p", "A", Zeitpunkt, "");
+        var muster = "\"-x\\ny.txt\"";
+        if (quelle.StartsWith("info/attributes ", StringComparison.Ordinal))
+        {
+            repo.SchreibeDatei(".git/info/attributes", $"{muster} {quelle["info/attributes ".Length..]}\n");
+        }
+        if (quelle == ".gitattributes -diff")
+        {
+            repo.SchreibeDatei(".gitattributes", $"{muster} -diff\n");
+        }
+        if (quelle == "config core.attributesFile")
+        {
+            Binaerausgabe.Einstellen(repo, quelle);
+        }
+
+        var attribut = GitLeser.DiffAttributLesen("-x\ny.txt", repo.Ordner);
+
+        Assert.That(attribut, Is.EqualTo(erwartet));
+    }
+
+    [Test]
     public void Wenn_das_Commit_Objekt_fehlt_dann_GitFehler_mit_Hash_und_Pfad()
     {
         using var repo = WegwerfRepo.MitCommits();
@@ -213,6 +275,22 @@ public class GitLeserDiffTests
     [UnsupportedOSPlatform("windows")]
     public void Wenn_das_Repo_ein_Diff_Programm_verlangt_dann_startet_das_Lesen_des_Diffs_das_Programm_nicht(string schluessel)
     {
+        DiffProgrammBleibtAus(schluessel, PatchLesen);
+    }
+
+    [TestCase("diff.marker.textconv")]
+    [TestCase("diff.marker.command")]
+    [TestCase("diff.external")]
+    [Platform(Exclude = "Win", Reason = "Marker-Programm ist ein Shell-Skript")]
+    [UnsupportedOSPlatform("windows")]
+    public void Wenn_das_Repo_ein_Diff_Programm_verlangt_dann_startet_das_Lesen_als_Text_das_Programm_nicht(string schluessel)
+    {
+        DiffProgrammBleibtAus(schluessel, (repo, hash, datei) => Diffaufbereitung.PatchAbErstemHunk(GitLeser.DiffAlsTextLesen(hash, datei, repo.Ordner)));
+    }
+
+    [UnsupportedOSPlatform("windows")]
+    private static void DiffProgrammBleibtAus(string schluessel, Func<WegwerfRepo, string, Dateiaenderung, string> lesen)
+    {
         using var repo = WegwerfRepo.MitCommits();
         repo.SchreibeDatei(".gitattributes", "*.txt diff=marker\n");
         repo.SchreibeDatei("src/b.txt", "eins\nzwei\n");
@@ -222,7 +300,7 @@ public class GitLeserDiffTests
         var marker = Path.Combine(repo.Ordner, ".git", "marker.txt");
         repo.Git("config", schluessel, MarkerProgrammAnlegen(repo, marker));
 
-        var patch = PatchLesen(repo, q, new Dateiaenderung("M", "src/b.txt", null, 1, 1));
+        var patch = lesen(repo, q, new Dateiaenderung("M", "src/b.txt", null, 1, 1));
 
         Assert.That(patch, Is.EqualTo("@@ -1,2 +1,2 @@\n eins\n-zwei\n+ZWEI\n"));
         Assert.That(File.Exists(marker), Is.False, "das Programm aus der Konfiguration des Repos lief");

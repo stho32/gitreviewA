@@ -8,6 +8,11 @@ internal static class Diffaufbereitung
     public const string ArtText = "text";
     public const string ArtBinaer = "binaer";
     public const string ArtLeer = "leer";
+    public const string GrundNullbytes = "nullbytes";
+    public const string GrundAttribut = "attribut";
+
+    private const string AttributUnbestimmt = "unspecified";
+    private const string AttributGesetzt = "set";
 
     private const string HunkKopf = "@@ ";
     private const string HunkKopfAmZeilenanfang = "\n@@ ";
@@ -25,6 +30,20 @@ internal static class Diffaufbereitung
             return ArtLeer;
         }
         return ArtText;
+    }
+
+    /// <summary>
+    /// Warum git eine Datei als binär einstuft: ein `diff`-Attribut, das sich nicht abschalten lässt (`.git/info/attributes`: `-diff`, `binary`
+    /// oder ein Treiber mit `binary=true`), sonst Null-Bytes in den ersten 8000 Byte.
+    /// </summary>
+    public static string BinaerGrundAus(string diffAttribut)
+    {
+        var ohneEigenesAttribut = diffAttribut == AttributUnbestimmt || diffAttribut == AttributGesetzt;
+        if (ohneEigenesAttribut)
+        {
+            return GrundNullbytes;
+        }
+        return GrundAttribut;
     }
 
     public static string PatchAbErstemHunk(string ausgabe)

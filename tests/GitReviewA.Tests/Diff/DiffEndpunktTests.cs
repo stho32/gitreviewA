@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using GitReviewA.Diff;
 using GitReviewA.Git;
 using GitReviewA.Protokoll;
 using GitReviewA.Server;
@@ -12,6 +13,7 @@ public class DiffEndpunktTests
     private const string HashP = "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4";
     private const string HashQ = "c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f6";
     private const string HashNichtUebergeben = "e5f60718293a4b5c6d7e8f90a1b2c3d4e5f6a7b8";
+    private const string TextPatchVonLogo = "@@ -0,0 +1 @@\n+A\0B\0\u0001\u0002\n";
     private const string PatchVonB = "@@ -1,2 +1,3 @@\n eins\n-zwei\n+ZWEI\n+drei\n";
 
     [Test]
@@ -28,7 +30,7 @@ public class DiffEndpunktTests
         Assert.That(antwort.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         using var dokument = JsonDocument.Parse(json);
         var felder = dokument.RootElement.EnumerateObject().Select(feld => (feld.Name, feld.Value.ToString())).ToArray();
-        Assert.That(felder, Is.EqualTo(new[] { ("pfad", "src/b.txt"), ("status", "M"), ("alterPfad", ""), ("art", "text"), ("patch", PatchVonB) }));
+        Assert.That(felder, Is.EqualTo(new[] { ("pfad", "src/b.txt"), ("status", "M"), ("alterPfad", ""), ("art", "text"), ("grund", ""), ("patch", PatchVonB) }));
         Assert.That(dokument.RootElement.GetProperty("alterPfad").ValueKind, Is.EqualTo(JsonValueKind.Null));
         Assert.That(diffquelle.Lesevorgaenge, Is.EqualTo(1));
         Assert.That(diffquelle.ZuletztGelesen, Is.EqualTo(new Dateiaenderung("M", "src/b.txt", null, 2, 1)));
@@ -61,6 +63,70 @@ public class DiffEndpunktTests
 
         Assert.That(json, Does.Contain($"\"art\":\"{art}\"").And.Contain("\"patch\":\"\""));
         Assert.That(diffquelle.Lesevorgaenge, Is.Zero);
+    }
+
+    [TestCase(Diffaufbereitung.GrundNullbytes)]
+    [TestCase(Diffaufbereitung.GrundAttribut)]
+    public async Task Wenn_Binaerdatei_dann_200_mit_Grund_und_ohne_Byte_Inhalt(string grund)
+    {
+        var dateien = new TestDateiquelle(new() { [HashQ] = DateienVonQ() });
+        var diffquelle = new TestDiffquelle(PatchVonB, textPatch: TextPatchVonLogo, binaerGrund: grund);
+        await using var server = await StarteServer(dateien, diffquelle, new StringWriter(), Protokollstufe.Warnung);
+        using var client = new HttpClient();
+
+        var json = await client.GetStringAsync(DiffAdresse(server, HashQ, "logo.bin"));
+
+        Assert.That(json, Does.Contain($"\"art\":\"binaer\",\"grund\":\"{grund}\",\"patch\":\"\""));
+        Assert.That(diffquelle.Lesevorgaenge + diffquelle.TextLesevorgaenge, Is.Zero);
+    }
+
+    [Test]
+    public async Task Wenn_Binaerdatei_ausdruecklich_als_Text_gewaehlt_dann_200_mit_Grund_und_dem_Text_Patch()
+    {
+        var dateien = new TestDateiquelle(new() { [HashQ] = DateienVonQ() });
+        var diffquelle = new TestDiffquelle(PatchVonB, textPatch: TextPatchVonLogo);
+        await using var server = await StarteServer(dateien, diffquelle, new StringWriter(), Protokollstufe.Warnung);
+        using var client = new HttpClient();
+
+        var json = await client.GetStringAsync(DiffAdresse(server, HashQ, "logo.bin", "&alsText=true"));
+
+        using var dokument = JsonDocument.Parse(json);
+        Assert.That(dokument.RootElement.GetProperty("art").GetString(), Is.EqualTo("binaer"));
+        Assert.That(dokument.RootElement.GetProperty("grund").GetString(), Is.EqualTo(Diffaufbereitung.GrundNullbytes));
+        Assert.That(dokument.RootElement.GetProperty("patch").GetString(), Is.EqualTo(TextPatchVonLogo));
+        Assert.That(diffquelle.TextLesevorgaenge, Is.EqualTo(1));
+        Assert.That(diffquelle.Lesevorgaenge, Is.Zero);
+    }
+
+    [TestCase("src/b.txt", "text", 1)]
+    [TestCase("LIESMICH.md", "leer", 0)]
+    public async Task Wenn_Textdatei_als_Text_gewaehlt_dann_wie_ohne_Wahl_und_ohne_Text_Lesevorgang(string pfad, string art, int lesevorgaenge)
+    {
+        var dateien = new TestDateiquelle(new() { [HashQ] = DateienVonQ() });
+        var diffquelle = new TestDiffquelle(PatchVonB, textPatch: TextPatchVonLogo);
+        await using var server = await StarteServer(dateien, diffquelle, new StringWriter(), Protokollstufe.Warnung);
+        using var client = new HttpClient();
+
+        var json = await client.GetStringAsync(DiffAdresse(server, HashQ, pfad, "&alsText=true"));
+
+        Assert.That(json, Does.Contain($"\"art\":\"{art}\",\"grund\":null"));
+        Assert.That(diffquelle.Lesevorgaenge, Is.EqualTo(lesevorgaenge));
+        Assert.That(diffquelle.TextLesevorgaenge, Is.Zero);
+    }
+
+    [TestCase("&alsText=ja")]
+    [TestCase("&alsText=")]
+    public async Task Wenn_die_Wahl_als_Text_unlesbar_dann_400_ohne_Lesevorgang(string zusatz)
+    {
+        var dateien = new TestDateiquelle(new() { [HashQ] = DateienVonQ() });
+        var diffquelle = new TestDiffquelle(PatchVonB, textPatch: TextPatchVonLogo);
+        await using var server = await StarteServer(dateien, diffquelle, new StringWriter(), Protokollstufe.Warnung);
+        using var client = new HttpClient();
+
+        var antwort = await client.GetAsync(DiffAdresse(server, HashQ, "logo.bin", zusatz));
+
+        Assert.That(antwort.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        Assert.That(diffquelle.Lesevorgaenge + diffquelle.TextLesevorgaenge, Is.Zero);
     }
 
     [TestCase("nicht-da.txt")]
@@ -197,6 +263,22 @@ public class DiffEndpunktTests
         Assert.That(zeilen.Count(zeile => zeile.Contains("Länge 18")), Is.EqualTo(1));
     }
 
+    [Test]
+    public async Task Wenn_verbose_und_als_Text_gewaehlt_dann_nennt_die_Debug_Zeile_die_Wahl()
+    {
+        var dateien = new TestDateiquelle(new() { [HashQ] = DateienVonQ() });
+        var protokollziel = new StringWriter();
+        await using var server = await StarteServer(dateien, new TestDiffquelle(PatchVonB, textPatch: TextPatchVonLogo), protokollziel, Protokollstufe.Debug);
+        using var client = new HttpClient();
+
+        await client.GetAsync(DiffAdresse(server, HashQ, "logo.bin"));
+        await client.GetAsync(DiffAdresse(server, HashQ, "logo.bin", "&alsText=true"));
+
+        var zeilen = protokollziel.ToString().Split('\n');
+        Assert.That(zeilen.Count(zeile => zeile.EndsWith($"GET /api/commits/{HashQ}/diff Datei logo.bin", StringComparison.Ordinal)), Is.EqualTo(1));
+        Assert.That(zeilen.Count(zeile => zeile.EndsWith($"GET /api/commits/{HashQ}/diff Datei logo.bin als Text", StringComparison.Ordinal)), Is.EqualTo(1));
+    }
+
     private static Dateiaenderungen DateienVonQ()
     {
         return new Dateiaenderungen([
@@ -207,9 +289,9 @@ public class DiffEndpunktTests
         ]);
     }
 
-    private static Uri DiffAdresse(Webserver server, string hash, string pfad)
+    private static Uri DiffAdresse(Webserver server, string hash, string pfad, string zusatz = "")
     {
-        return new Uri(new Uri(server.Adresse), $"api/commits/{Uri.EscapeDataString(hash)}/diff?pfad={Uri.EscapeDataString(pfad)}");
+        return new Uri(new Uri(server.Adresse), $"api/commits/{Uri.EscapeDataString(hash)}/diff?pfad={Uri.EscapeDataString(pfad)}{zusatz}");
     }
 
     private static async Task<Webserver> StarteServer(TestDateiquelle dateien, TestDiffquelle diffquelle, StringWriter protokollziel, Protokollstufe mindeststufe)

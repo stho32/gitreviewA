@@ -41,9 +41,39 @@ internal static class GitLeser
     /// </summary>
     public static string DiffLesen(string hash, Dateiaenderung datei, string arbeitsordner)
     {
-        var start = GitShowDiffStart(hash, datei, arbeitsordner);
+        var start = GitShowDiffStart(hash, datei, arbeitsordner, alsText: false);
         return Ausfuehren(start, $"git show {hash} -- {datei.Pfad}");
     }
+
+    /// <summary>Wie <see cref="DiffLesen"/>, aber mit `--text`: zeigt auch eine als binär eingestufte Datei mit allen Bytes.</summary>
+    public static string DiffAlsTextLesen(string hash, Dateiaenderung datei, string arbeitsordner)
+    {
+        var start = GitShowDiffStart(hash, datei, arbeitsordner, alsText: true);
+        return Ausfuehren(start, $"git show --text {hash} -- {datei.Pfad}");
+    }
+
+    /// <summary>
+    /// Der Wert des `diff`-Attributs (`unspecified`, `set`, `unset` oder ein Treibername) unter denselben Schutzoptionen wie der Diff:
+    /// nur `.git/info/attributes` wirkt noch. Mit `-z` übersteht jeder Pfad die Ausgabe: Pfad NUL `diff` NUL Wert NUL.
+    /// </summary>
+    public static string DiffAttributLesen(string pfad, string arbeitsordner)
+    {
+        var start = GitStart.Im(arbeitsordner);
+        start.ArgumentList.Add("check-attr");
+        start.ArgumentList.Add("-z");
+        start.ArgumentList.Add("diff");
+        start.ArgumentList.Add("--");
+        start.ArgumentList.Add(pfad);
+        var aufruf = $"git check-attr diff -- {pfad}";
+        var felder = Ausfuehren(start, aufruf).Split('\0');
+        var istEinEintrag = felder.Length == 4 && felder[0] == pfad && felder[1] == "diff" && felder[3].Length == 0;
+        if (!istEinEintrag)
+        {
+            throw new GitFehler($"{aufruf} lieferte keinen einzelnen Eintrag");
+        }
+        return felder[2];
+    }
+
 
     /// <summary>
     /// Ein Bereich ergibt dieselbe Liste wie <c>git rev-list</c>. Mehrere Bereiche ergeben die Vereinigung der einzelnen Bereiche,
@@ -215,7 +245,7 @@ internal static class GitLeser
         return start;
     }
 
-    private static ProcessStartInfo GitShowDiffStart(string hash, Dateiaenderung datei, string arbeitsordner)
+    private static ProcessStartInfo GitShowDiffStart(string hash, Dateiaenderung datei, string arbeitsordner, bool alsText)
     {
         var start = GitStart.Im(arbeitsordner);
         start.ArgumentList.Add("--literal-pathspecs");
@@ -234,6 +264,10 @@ internal static class GitLeser
         start.ArgumentList.Add("--inter-hunk-context=0");
         start.ArgumentList.Add("--submodule=short");
         start.ArgumentList.Add("--no-relative");
+        if (alsText)
+        {
+            start.ArgumentList.Add("--text");
+        }
         start.ArgumentList.Add("--end-of-options");
         start.ArgumentList.Add(hash);
         start.ArgumentList.Add("--");

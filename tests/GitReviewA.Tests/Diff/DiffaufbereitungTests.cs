@@ -21,6 +21,15 @@ public class DiffaufbereitungTests
         Assert.That(art, Is.EqualTo(Diffaufbereitung.ArtBinaer));
     }
 
+    [TestCase("unspecified", Diffaufbereitung.GrundNullbytes)]
+    [TestCase("set", Diffaufbereitung.GrundNullbytes)]
+    [TestCase("unset", Diffaufbereitung.GrundAttribut)]
+    [TestCase("verbergen", Diffaufbereitung.GrundAttribut)]
+    public void Wenn_Binaerdatei_dann_Grund_aus_dem_diff_Attribut(string attribut, string grund)
+    {
+        Assert.That(Diffaufbereitung.BinaerGrundAus(attribut), Is.EqualTo(grund));
+    }
+
     [TestCase("R", "LIESMICH.md", "README.md")]
     [TestCase("A", "leer.txt", null)]
     [TestCase("M", "skript.sh", null)]

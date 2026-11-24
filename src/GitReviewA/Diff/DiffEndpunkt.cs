@@ -19,7 +19,7 @@ internal static class DiffEndpunkt
     public static Delegate Fuer(Commitzeilen commits, GemerkteDateiquelle dateien, IDiffquelle diffquelle, StderrProtokoll protokoll)
     {
         var auswahl = HashesDerAuswahl(commits);
-        return (string hash, string? pfad) =>
+        return (string hash, string? pfad, bool? alsText) =>
         {
             var istHashDerAuswahl = auswahl.TryGetValue(hash, out var hashDerAuswahl);
             if (!istHashDerAuswahl || hashDerAuswahl is null)
@@ -30,7 +30,8 @@ internal static class DiffEndpunkt
             {
                 return Results.BadRequest();
             }
-            return DiffAntworten(hashDerAuswahl, pfad, dateien, diffquelle, protokoll);
+            var anfrage = new Diffanfrage(hashDerAuswahl, pfad, alsText == true);
+            return DiffAntworten(anfrage, dateien, diffquelle, protokoll);
         };
     }
 
@@ -44,8 +45,12 @@ internal static class DiffEndpunkt
         return hashNachSchreibweise;
     }
 
-    private static IResult DiffAntworten(string hash, string pfad, GemerkteDateiquelle dateien, IDiffquelle diffquelle, StderrProtokoll protokoll)
+    /// <summary>`AlsText`: der Mensch hat bei einer Binärdatei „Als Text zeigen“ gewählt.</summary>
+    private sealed record Diffanfrage(string Hash, string Pfad, bool AlsText);
+
+    private static IResult DiffAntworten(Diffanfrage anfrage, GemerkteDateiquelle dateien, IDiffquelle diffquelle, StderrProtokoll protokoll)
     {
+        var hash = anfrage.Hash;
         Dateiaenderungen dateienDesCommits;
         try
         {
@@ -56,16 +61,21 @@ internal static class DiffEndpunkt
             protokoll.Melde(Protokollstufe.Fehler, Fehlerkontext, $"Dateiliste von Commit {hash} für den Diff nicht lesbar: {fehler.Message}");
             return Fehlerantwort();
         }
-        var datei = DateiMitPfad(dateienDesCommits, pfad);
+        var datei = DateiMitPfad(dateienDesCommits, anfrage.Pfad);
         if (datei is null)
         {
-            protokoll.Melde(Protokollstufe.Debug, Anfragekontext, $"Diff von Commit {hash} abgewiesen: Pfad steht nicht in der Dateiliste (Länge {pfad.Length})");
+            protokoll.Melde(Protokollstufe.Debug, Anfragekontext, $"Diff von Commit {hash} abgewiesen: Pfad steht nicht in der Dateiliste (Länge {anfrage.Pfad.Length})");
             return Results.NotFound();
         }
-        protokoll.Melde(Protokollstufe.Debug, Anfragekontext, $"GET /api/commits/{hash}/diff Datei {datei.Pfad}");
+        var wahl = "";
+        if (anfrage.AlsText)
+        {
+            wahl = " als Text";
+        }
+        protokoll.Melde(Protokollstufe.Debug, Anfragekontext, $"GET /api/commits/{hash}/diff Datei {datei.Pfad}{wahl}");
         try
         {
-            return Results.Json(AntwortFuer(hash, datei, diffquelle), JsonAntwort.Optionen);
+            return Results.Json(AntwortFuer(anfrage, datei, diffquelle), JsonAntwort.Optionen);
         }
         catch (GitFehler fehler)
         {
@@ -93,15 +103,25 @@ internal static class DiffEndpunkt
         return null;
     }
 
-    private static DiffAntwort AntwortFuer(string hash, Dateiaenderung datei, IDiffquelle diffquelle)
+    /// <summary>Eine Binärdatei kommt mit Grund und ohne Byte-Inhalt — ihren Text liest erst die ausdrückliche Wahl (Entscheidung des PO).</summary>
+    private static DiffAntwort AntwortFuer(Diffanfrage anfrage, Dateiaenderung datei, IDiffquelle diffquelle)
     {
         var art = Diffaufbereitung.ArtVon(datei);
         var patch = "";
-        var hatZeilen = art == Diffaufbereitung.ArtText;
-        if (hatZeilen)
+        string? grund = null;
+        if (art == Diffaufbereitung.ArtText)
         {
-            patch = diffquelle.Lesen(hash, datei);
+            patch = diffquelle.Lesen(anfrage.Hash, datei);
         }
-        return new DiffAntwort(datei.Pfad, datei.Status, datei.AlterPfad, art, patch);
+        if (art == Diffaufbereitung.ArtBinaer)
+        {
+            grund = diffquelle.BinaerGrund(anfrage.Hash, datei);
+        }
+        var binaerAlsTextGewaehlt = art == Diffaufbereitung.ArtBinaer && anfrage.AlsText;
+        if (binaerAlsTextGewaehlt)
+        {
+            patch = diffquelle.AlsTextLesen(anfrage.Hash, datei);
+        }
+        return new DiffAntwort(datei.Pfad, datei.Status, datei.AlterPfad, art, grund, patch);
     }
 }

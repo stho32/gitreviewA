@@ -1,3 +1,3 @@
 namespace GitReviewA.Diff;
 
-internal sealed record DiffAntwort(string Pfad, string Status, string? AlterPfad, string Art, string Patch);
+internal sealed record DiffAntwort(string Pfad, string Status, string? AlterPfad, string Art, string? Grund, string Patch);
