@@ -279,6 +279,107 @@ public class DiffEndpunktTests
         Assert.That(zeilen.Count(zeile => zeile.EndsWith($"GET /api/commits/{HashQ}/diff Datei logo.bin als Text", StringComparison.Ordinal)), Is.EqualTo(1));
     }
 
+    [TestCase("", "Aenderungen")]
+    [TestCase("&umfang=aenderungen", "Aenderungen")]
+    [TestCase("&umfang=ganz", "Ganz")]
+    public async Task Wenn_Umfang_bekannt_oder_ohne_Angabe_dann_200_und_der_Diff_wird_in_diesem_Umfang_gelesen(string zusatz, string erwartet)
+    {
+        var dateien = new TestDateiquelle(new() { [HashQ] = DateienVonQ() });
+        var diffquelle = new TestDiffquelle(PatchVonB);
+        await using var server = await StarteServer(dateien, diffquelle, new StringWriter(), Protokollstufe.Warnung);
+        using var client = new HttpClient();
+
+        var antwort = await client.GetAsync(DiffAdresse(server, HashQ, "src/b.txt", zusatz));
+
+        Assert.That(antwort.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        Assert.That(diffquelle.Lesevorgaenge, Is.EqualTo(1));
+        Assert.That(diffquelle.ZuletztGelesenMitUmfang.ToString(), Is.EqualTo(erwartet));
+    }
+
+    [TestCase("&umfang=GANZ")]
+    [TestCase("&umfang=voll")]
+    [TestCase("&umfang=")]
+    [TestCase("&umfang=1")]
+    [TestCase("&umfang=ganz&umfang=ganz")]
+    public async Task Wenn_Umfang_unbekannt_dann_400_ohne_Lesevorgang(string zusatz)
+    {
+        var dateien = new TestDateiquelle(new() { [HashQ] = DateienVonQ() });
+        var diffquelle = new TestDiffquelle(PatchVonB);
+        await using var server = await StarteServer(dateien, diffquelle, new StringWriter(), Protokollstufe.Warnung);
+        using var client = new HttpClient();
+
+        var antwort = await client.GetAsync(DiffAdresse(server, HashQ, "src/b.txt", zusatz));
+
+        Assert.That(antwort.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        Assert.That(dateien.Lesevorgaenge + diffquelle.Lesevorgaenge + diffquelle.TextLesevorgaenge, Is.Zero);
+    }
+
+    [TestCase("nicht-da.txt")]
+    [TestCase("../README.md")]
+    [TestCase("--output=pwn")]
+    [TestCase("src")]
+    [TestCase("SRC/B.TXT")]
+    [TestCase(":(top)src/b.txt")]
+    [TestCase("*.txt")]
+    public async Task Wenn_ganze_Datei_und_Pfad_nicht_genau_in_der_Dateiliste_dann_404_ohne_Diff_Lesevorgang(string pfad)
+    {
+        var dateien = new TestDateiquelle(new() { [HashQ] = DateienVonQ() });
+        var diffquelle = new TestDiffquelle(PatchVonB);
+        await using var server = await StarteServer(dateien, diffquelle, new StringWriter(), Protokollstufe.Warnung);
+        using var client = new HttpClient();
+
+        var antwort = await client.GetAsync(DiffAdresse(server, HashQ, pfad, "&umfang=ganz"));
+
+        Assert.That(antwort.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        Assert.That(diffquelle.Lesevorgaenge + diffquelle.TextLesevorgaenge, Is.Zero);
+    }
+
+    [TestCase("HEAD")]
+    [TestCase(HashP)]
+    [TestCase("c3d4e5f")]
+    public async Task Wenn_ganze_Datei_und_kein_voller_Hash_der_Auswahl_dann_404_ohne_Lesevorgang(string fremd)
+    {
+        var dateien = new TestDateiquelle(new() { [HashQ] = DateienVonQ() });
+        var diffquelle = new TestDiffquelle(PatchVonB);
+        await using var server = await StarteServer(dateien, diffquelle, new StringWriter(), Protokollstufe.Warnung, nurQ: true);
+        using var client = new HttpClient();
+
+        var antwort = await client.GetAsync(DiffAdresse(server, fremd, "src/b.txt", "&umfang=ganz"));
+
+        Assert.That(antwort.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        Assert.That(dateien.Lesevorgaenge + diffquelle.Lesevorgaenge, Is.Zero);
+    }
+
+    [Test]
+    public async Task Wenn_ganze_Datei_ohne_pfad_dann_400_ohne_Lesevorgang()
+    {
+        var dateien = new TestDateiquelle(new() { [HashQ] = DateienVonQ() });
+        var diffquelle = new TestDiffquelle(PatchVonB);
+        await using var server = await StarteServer(dateien, diffquelle, new StringWriter(), Protokollstufe.Warnung);
+        using var client = new HttpClient();
+
+        var antwort = await client.GetAsync(new Uri(new Uri(server.Adresse), $"api/commits/{HashQ}/diff?umfang=ganz"));
+
+        Assert.That(antwort.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        Assert.That(dateien.Lesevorgaenge + diffquelle.Lesevorgaenge, Is.Zero);
+    }
+
+    [Test]
+    public async Task Wenn_verbose_und_ganze_Datei_dann_nennt_die_Debug_Zeile_die_Ansicht()
+    {
+        var dateien = new TestDateiquelle(new() { [HashQ] = DateienVonQ() });
+        var protokollziel = new StringWriter();
+        await using var server = await StarteServer(dateien, new TestDiffquelle(PatchVonB), protokollziel, Protokollstufe.Debug);
+        using var client = new HttpClient();
+
+        await client.GetAsync(DiffAdresse(server, HashQ, "src/b.txt"));
+        await client.GetAsync(DiffAdresse(server, HashQ, "src/b.txt", "&umfang=ganz"));
+
+        var zeilen = protokollziel.ToString().Split('\n');
+        Assert.That(zeilen.Count(zeile => zeile.EndsWith($"GET /api/commits/{HashQ}/diff Datei src/b.txt", StringComparison.Ordinal)), Is.EqualTo(1));
+        Assert.That(zeilen.Count(zeile => zeile.EndsWith($"GET /api/commits/{HashQ}/diff Datei src/b.txt ganze Datei", StringComparison.Ordinal)), Is.EqualTo(1));
+    }
+
     private static Dateiaenderungen DateienVonQ()
     {
         return new Dateiaenderungen([
@@ -294,12 +395,15 @@ public class DiffEndpunktTests
         return new Uri(new Uri(server.Adresse), $"api/commits/{Uri.EscapeDataString(hash)}/diff?pfad={Uri.EscapeDataString(pfad)}{zusatz}");
     }
 
-    private static async Task<Webserver> StarteServer(TestDateiquelle dateien, TestDiffquelle diffquelle, StringWriter protokollziel, Protokollstufe mindeststufe)
+    private static async Task<Webserver> StarteServer(TestDateiquelle dateien, TestDiffquelle diffquelle, StringWriter protokollziel, Protokollstufe mindeststufe, bool nurQ = false)
     {
-        var commits = new Commitzeilen([
-            new Commitzeile(HashP, "Anna Beispiel", "2026-03-04T09:15:00+01:00", "Start", ""),
-            new Commitzeile(HashQ, "Bernd Beispiel", "2026-03-05T18:30:00+01:00", "Dateien ändern", ""),
-        ]);
+        var commitP = new Commitzeile(HashP, "Anna Beispiel", "2026-03-04T09:15:00+01:00", "Start", "");
+        var commitQ = new Commitzeile(HashQ, "Bernd Beispiel", "2026-03-05T18:30:00+01:00", "Dateien ändern", "");
+        var commits = new Commitzeilen([commitP, commitQ]);
+        if (nurQ)
+        {
+            commits = new Commitzeilen([commitQ]);
+        }
         var protokoll = new StderrProtokoll(protokollziel, TimeProvider.System, mindeststufe);
         return await Webserver.StartenAsync(0, commits, dateien, diffquelle, Oberflaeche.AusDemProgramm(), protokoll);
     }
