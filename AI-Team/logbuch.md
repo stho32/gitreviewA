@@ -28,3 +28,6 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-24 | #2 | Detailplanung | planer | bestanden | 4 min | R00006 + User Story (11 Szenarien), I0002 bis Bubble B0501–B0507 · claude · sonnet · Lauf 2-planer-1 · 0,71 $ · Karte gesamt 0,71 $ |
 | 2026-11-24 | #2 | Detailplanung | product-owner | bestanden | 0 min | 4 Fragen nach Empfehlung · claude · sonnet · Lauf 2-product-owner-1 · 0,22 $ · Karte gesamt 0,93 $ |
 | 2026-11-24 | #21 | Entwicklung | entwickler | bestanden | 8 min | Build 0 Warnungen, NUnit 198, Playwright 36; US-1..5 vorher rot · claude · opus · Lauf 21-entwickler-1 · 2,38 $ · Karte gesamt 2,80 $ |
+| 2026-11-24 | #21 | Reviews | security-reviewer | bestanden | 1 min | Kurzblick: Angriffsfläche unverändert · claude · sonnet · Lauf 21-security-reviewer-1 · 0,15 $ · Karte gesamt 2,95 $ |
+| 2026-11-24 | #21 | Reviews | code-reviewer | bestanden | 1 min | kein Muss; 3 Sollte (ATDD: Prüfungen im Spec, US-5 racy, Testname) · claude · sonnet · Lauf 21-code-reviewer-1 · 0,28 $ · Karte gesamt 3,23 $ |
+| 2026-11-24 | #5 | Entwicklung | entwickler | bestanden | 31 min | Build 0 Warnungen, NUnit 234, Playwright 58; Lastprofil 485–552 ms / 110–142 ms · claude · opus · Lauf 5-entwickler-1 · 1,45 $ · Karte gesamt 1,59 $ |
