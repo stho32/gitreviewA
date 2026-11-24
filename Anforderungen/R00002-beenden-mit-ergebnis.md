@@ -78,7 +78,7 @@ Regeln:
 - [ ] Gegeben ein laufender Review ohne Anmerkung, wenn beendet wird, dann besteht stdout aus genau `# Ergebnis manueller Review`, einer Leerzeile, `Keine Anmerkungen.` und einem Zeilenumbruch, und der Prozess endet mit Exit-Code 0.
 - [ ] Gegeben zwei Anmerkungen — Commit A, Datei `src/Foo.cs`, Zeile 42, „Null-Prüfung fehlt“, danach Commit B, Datei `README.md` ohne Zeile, „Abschnitt Installation veraltet“ —, wenn beendet wird, dann entspricht stdout Byte für Byte dem Beispiel oben (mit den vollen Hashes von A und B) und der Prozess endet mit Exit-Code 0.
 - [ ] Gegeben eine Anmerkung mit dem Text „Zeile 1“, einer Leerzeile und „## Fertig“, wenn beendet wird, dann steht jede der drei Textzeilen als Zitat (`> Zeile 1`, `>`, `> ## Fertig`) und das Ergebnis enthält keine zusätzliche Überschrift.
-- [ ] Gegeben eine Anmerkung mit dem Text „Prüfen: größer ≥ 3“, wenn beendet wird, dann steht der Text auf stdout unverändert in UTF-8 ohne BOM.
+- ~~Gegeben eine Anmerkung mit dem Text „Prüfen: größer ≥ 3“, wenn beendet wird, dann steht der Text auf stdout unverändert in UTF-8 ohne BOM.~~ **Gestrichen** (Entscheidung des product-owner 2026-11-24, `AI-Team/po-entscheidungen.md`): Kriterium 2 vergleicht Byte für Byte und enthält mit „Null-Prüfung“ schon einen Umlaut, ein BOM fiele dort auf. Die Formatregel „UTF-8 ohne BOM“ im Ergebnisformat bleibt.
 - [ ] Gegeben ein Lauf, der beim Start und im Betrieb Meldungen ausgibt, wenn beendet wird, dann steht auf stdout nur das Ergebnis (erste Zeile ist die Überschrift, nichts davor oder danach) und alle Meldungen stehen auf stderr.
 - [ ] Gegeben ein laufender Review, wenn das Beenden zweimal kurz hintereinander angefordert wird, dann steht das Ergebnis genau einmal auf stdout und der Prozess endet mit Exit-Code 0.
 - [ ] Gegeben 500 Anmerkungen zu je 200 Zeichen, wenn beendet wird, dann endet der Prozess mit Exit-Code 0 höchstens 1 s nach der Anforderung und stdout enthält 500 nummerierte Anmerkungen (`## 1.` bis `## 500.`).
@@ -92,7 +92,7 @@ Regeln:
 - [ ] Gegeben ein bereits beendeter Review, wenn eine Anmerkung angelegt werden soll, dann wird sie abgelehnt (409) und erscheint nicht im Ergebnis.
 
 ### Schutz
-- [ ] Gegeben ein laufender Review, wenn Beenden oder Anlegen mit fremdem Origin (nicht die eigene Adresse) oder fremdem Host (nicht `127.0.0.1:<port>` und nicht `localhost:<port>`) angefordert wird, dann wird abgelehnt (403), der Lauf geht weiter, stdout bleibt leer und nichts wird gespeichert; eine Anforderung ohne Origin-Kopf (Befehlszeile) mit richtigem Host wird angenommen.
+- [ ] Gegeben ein laufender Review, wenn Beenden oder Anlegen mit fremdem Origin (nicht die eigene Adresse) oder fremdem Host (nur `127.0.0.1:<port>` gilt als eigener Host und Origin; `localhost:<port>` ist fremd; Entscheidung des product-owner 2026-11-24, `AI-Team/po-entscheidungen.md`) angefordert wird, dann wird abgelehnt (403), der Lauf geht weiter, stdout bleibt leer und nichts wird gespeichert; eine Anforderung ohne Origin-Kopf (Befehlszeile) mit richtigem Host wird angenommen.
 - [ ] Gegeben ein laufender Review, wenn Beenden oder Anlegen ohne Inhaltstyp `application/json` angefordert wird, dann wird abgelehnt (415); wenn Beenden per GET angefordert wird, dann wird abgelehnt (405); in beiden Fällen geht der Lauf weiter und stdout bleibt leer.
 
 ## Betroffene Verzeichnisstruktur
@@ -149,11 +149,17 @@ Nach Test-Pyramide, Test zuerst je Bubble; jedes Kriterium wird mindestens einma
 
 ## Offene Fragen
 
+Offen (Richtungsfragen der Vision, Betreiber; bis zur Antwort gilt der Zwischenstand des product-owner, `AI-Team/po-entscheidungen.md`):
+
 - Gesamturteil und Exit-Code (Vision): bleibt Exit 0, und trägt das Ergebnis später ein Urteil? Bis dahin gilt: Exit 0, kein Urteil.
 - Lauf ohne „Beenden“ (Tab zu, Strg+C): hier nicht geregelt; es erscheint kein Ergebnis.
-- Format: nur Markdown (hier) oder zusätzlich JSON?
-- Soll der Abschnitt „Dateien“ (abgehakt/ungeprüft) ab I0016 Teil des Ergebnisses sein? Empfehlung: ja, wie oben reserviert.
-- Soll das Ergebnis die geprüften Commits (Hash und Betreff) vorab nennen, damit es ohne Aufrufkontext lesbar ist? Empfehlung: nicht jetzt.
+- Format: nur Markdown (hier) oder zusätzlich JSON? Bis dahin: nur Markdown.
+
+Entschieden (product-owner 2026-11-24, `AI-Team/po-entscheidungen.md`):
+
+- ~~Soll der Abschnitt „Dateien“ (abgehakt/ungeprüft) ab I0016 Teil des Ergebnisses sein?~~ Ja, wie oben reserviert; der Abschnitt kommt mit I0016, hier ist nichts zu bauen.
+- ~~Soll das Ergebnis die geprüften Commits (Hash und Betreff) vorab nennen?~~ Nein, jetzt nicht; jede Anmerkung trägt den vollen Hash, später als eigener Abschnitt ergänzbar.
+- ~~`localhost:<port>` als eigener Host?~~ Nein, nur `127.0.0.1:<port>` (Kriterium 12; Code und R00001 stimmen überein).
 
 ## Manuelle Vorbereitungstätigkeiten
 
