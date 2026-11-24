@@ -39,3 +39,4 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-24 | #2 | Reviews | product-owner | bestanden | 1 min | Kriterium 5: Vereinigung einzelner Bereiche; Gelesen erstmals vollständig mit Zeilenzahlen · claude · sonnet · Lauf 2-product-owner-2 · 0,22 $ · Karte gesamt 7,83 $ |
 | 2026-11-24 | #2 | Reviews | security-reviewer | befund | 4 min | 1 Muss: Hash-Präfix wird von gleichnamigem Tag/Zweig umgelenkt · claude · sonnet · Lauf 2-security-reviewer-1 · 0,34 $ · Karte gesamt 8,17 $ |
 | 2026-11-24 | #2 | Reviews | code-reviewer | befund | 4 min | 1 Muss: Reihenfolge mehrerer Bereiche bei gleichen Commit-Zeiten · claude · sonnet · Lauf 2-code-reviewer-1 · 0,48 $ · Karte gesamt 8,65 $ |
+| 2026-11-24 | #6 | Entwicklung | entwickler | bestanden | 26 min | Build 0 Warnungen, NUnit 280, Playwright 84; 20 000 Zeilen 333–369 ms · claude · opus · Lauf 6-entwickler-1 · 1,56 $ · Karte gesamt 1,81 $ |
