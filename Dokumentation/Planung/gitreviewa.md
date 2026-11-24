@@ -46,13 +46,21 @@ zuletzt: 2026-11-24
 | I0017 | Interaction | D0003 | Zeile annotieren | rot | Klick auf Diff-Zeile öffnet Notizfeld; Anmerkung bleibt sichtbar an der Stelle, änderbar und löschbar | | | | I0006 | | aus Vision, kein Requirement; nur RAM |
 | I0018 | Interaction | D0003 | Datei annotieren | rot | Anmerkung an einer Datei ohne Zeilenbezug, änderbar und löschbar | | | | I0017 | | aus Vision, kein Requirement |
 | D0004 | Dialog | A0001 | Lauf beenden | rot | alle Interactions gruen | | | | | | Rückkanal Mensch → KI |
-| I0019 | Interaction | D0004 | Beenden mit Ergebnis | rot | „Beenden“ gibt „Ergebnis manueller Review“ mit allen Anmerkungen und Stellenangaben (Commit, Datei, Zeile) auf stdout aus und beendet den Prozess mit Exit-Code 0 | | | | I0001 | | aus Vision, kein Requirement; Gerüst-Partner von I0001 |
+| I0019 | Interaction | D0004 | Beenden mit Ergebnis | rot | „Beenden“ gibt „Ergebnis manueller Review“ mit allen Anmerkungen und Stellenangaben (Commit, Datei, Zeile) auf stdout aus und beendet den Prozess mit Exit-Code 0 | | | | I0001 | | R00002 | aus Vision; Gerüst-Partner von I0001; kein Feature noetig; Ergebnisformat, Speicher und Beenden-Ablauf hier festgelegt |
+| B0101 | Bubble | I0019 | Anmerkungsspeicher | rot | | Neue Anmerkung (Commit, Datei, Zeile?, Text) → Anmerkung mit Nummer; Schnappschuss → Liste in Anlegereihenfolge | 2 | | | | Operation, thread-sicher, nur RAM |
+| B0102 | Bubble | I0019 | Anmerkung prüfen | rot | | Neue Anmerkung + Auswahl des Laufs → gültig oder Ablehnungsgrund (Hash nicht in Auswahl oder gekürzt, Datei leer oder mit Zeilenumbruch, Zeile < 1, Text leer oder > 10 000 Zeichen) | 2 | | | | Operation, rein |
+| B0103 | Bubble | I0019 | Ergebnis formatieren | rot | | Liste von Anmerkungen → Markdown-Text (Überschrift, Anzahl, je Anmerkung Abschnitt mit Zitat; Leerfall „Keine Anmerkungen.“) | 2-4 | | | | Operation, rein; Format siehe R00002 |
+| B0104 | Bubble | I0019 | Endpunkt Anmerkung anlegen | rot | | POST /api/anmerkungen (JSON) → 201 mit Nummer, oder 400 mit Meldung, oder 409 nach Beenden | 2 | | | | Integration |
+| B0105 | Bubble | I0019 | Anfrageschutz | rot | | Anfragekopf (Host, Origin, Methode, Inhaltstyp) + eigener Port → zulassen, oder 403, oder 405, oder 415 | 2 | | | | Operation rein, als Middleware für beide Endpunkte; sicherheit |
+| B0106 | Bubble | I0019 | Beenden-Ablauf | rot | | POST /api/beenden → Einmal-Schalter, Antwort 200, Ergebnis nach stdout (UTF-8 ohne BOM, Flush), Host stoppen, Exit-Code 0 | 2-4 | | | | Integration; stdout nur Ergebnis; sicherheit |
+| B0107 | Bubble | I0019 | Beenden in der Oberfläche | rot | | Betätigung von „Beenden“ → Anforderung an den Server → Meldung „Review beendet“ statt Bedienung | 2 | | | | Integration; Stil kanbanD |
 | I0020 | Interaction | D0004 | Befunde kopieren | rot | Knopf kopiert dasselbe Ergebnis als Markdown in die Zwischenablage, ohne den Lauf zu beenden | | | | I0019 | | aus Vision, kein Requirement |
 
 ## Offene Fragen
 
 - Oberfläche ohne Wireframes: Design aus kanbanD (Betreiber 2026-11-24).
 - Vision, Offene Richtungsfragen: Gesamturteil/Exit-Code, Lauf ohne „Beenden“ (Tab zu, Abbruch), Ergebnisformat Markdown/JSON, Anbindung an kanbanD — je nach Entscheidung neue Interactions unter D0004 bzw. D0001.
+- I0019 (R00002): Gesamturteil/Exit-Code, Lauf ohne „Beenden“, Markdown/JSON bleiben offen (Vision); zusätzlich: Dateiliste (abgehakt/ungeprüft) ab I0016 im Ergebnis, Commit-Kontext im Ergebnis — Fragen an den product-owner.
 - Phasen nach der Abnahme: im Modus `still` nur das Standardmodell.
 - Reihenfolge der ersten Pakete: Gerüst I0001 + I0019 (Aufruf → Beenden → stdout), dann I0005, I0006, I0017 — der kleinste durchgehende Rückkanal.
 
