@@ -11,7 +11,6 @@ namespace GitReviewA.Anmerkungen;
 internal sealed class ZeileAnnotierenInteractor(Anmerkungsspeicher speicher, CommitAuswahl auswahl, Stellensperre sperre, StderrProtokoll protokoll)
 {
     private const string Kontext = "Anmerkung";
-    private const string BeendetGrund = "Review ist beendet — keine Anmerkung mehr möglich";
 
     public AnnotierenErgebnis LegeAn(NeueAnmerkung? neu)
     {
@@ -31,7 +30,7 @@ internal sealed class ZeileAnnotierenInteractor(Anmerkungsspeicher speicher, Com
         if (!speicher.VersucheAnzuhaengen(pruefung.Anmerkung, out var angelegt))
         {
             protokoll.Melde(Protokollstufe.Debug, Kontext, "abgelehnt: Review ist beendet");
-            return new AnnotierenErgebnis(Annotierenausgang.Beendet, null, BeendetGrund);
+            return new AnnotierenErgebnis(Annotierenausgang.Beendet, null, AnmerkungMeldungen.Beendet);
         }
         var nummer = angelegt.Nummer.ToString(CultureInfo.InvariantCulture);
         var textlaenge = angelegt.Text.Length.ToString(CultureInfo.InvariantCulture);
