@@ -1,7 +1,8 @@
 'use strict';
-// Bausteintests (ohne Browser) der Anmerkungs-Rechnung (R00010): welche Diff-Zeile annotierbar ist und welche Anmerkungen eine Ansicht zeigt.
+// Bausteintests (ohne Browser) der Anmerkungs-Rechnung: welche Diff-Zeile annotierbar ist und welche Anmerkungen eine Ansicht zeigt (R00010)
+// und wie der Stand nach einer geänderten Anmerkung aussieht (R00018).
 const { test, expect } = require('@playwright/test');
-const { zeilenziel, anmerkungsstand, hinweisAusserhalb, ENTFERNT_HINWEIS } = require('../../../src/GitReviewA/web/anmerkungen-werte.js');
+const { zeilenziel, anmerkungsstand, hinweisAusserhalb, mitGeaendertemText, ENTFERNT_HINWEIS } = require('../../../src/GitReviewA/web/anmerkungen-werte.js');
 
 const Q = 'q'.repeat(40);
 const P = 'p'.repeat(40);
@@ -113,5 +114,35 @@ test.describe('Baustein Hinweis außerhalb', () => {
 
   test('soll ohne Anmerkung außerhalb leer sein', () => {
     expect(hinweisAusserhalb({ anzahl: 0, zeilen: [] })).toBe('');
+  });
+});
+
+test.describe('Baustein Mit geändertem Text', () => {
+  test('soll nur den Text der Anmerkung mit dieser Nummer ersetzen und Nummer, Stelle und Reihenfolge lassen (Nummer in der Mitte)', () => {
+    const anmerkungen = [anmerkung(1, 18, 'erster'), anmerkung(2, 2, 'zweiter', { datei: 'src/b.txt' }), anmerkung(3, 4, 'dritter')];
+
+    const geaendert = mitGeaendertemText(anmerkungen, 2, 'zweiter, berichtigt');
+
+    expect(geaendert).toEqual([anmerkung(1, 18, 'erster'), anmerkung(2, 2, 'zweiter, berichtigt', { datei: 'src/b.txt' }), anmerkung(3, 4, 'dritter')]);
+    expect(geaendert).toHaveLength(3);
+    expect(anmerkungen[1].text).toBe('zweiter');
+  });
+
+  test('soll eine unbekannte Nummer ohne Wirkung lassen und dieselbe Reihenfolge und Länge liefern', () => {
+    const anmerkungen = [anmerkung(1, 18, 'erster'), anmerkung(2, 2, 'zweiter')];
+
+    const geaendert = mitGeaendertemText(anmerkungen, 7, 'nirgends');
+
+    expect(geaendert).toEqual(anmerkungen);
+    expect(geaendert).toHaveLength(2);
+  });
+
+  test('soll eine Dateianmerkung ohne Zeile ändern und ihre Stelle ohne Zeile lassen', () => {
+    const anmerkungen = [anmerkung(1, null, 'Abschnitt Installation veraltet', { datei: 'README.md' })];
+
+    const geaendert = mitGeaendertemText(anmerkungen, 1, 'Abschnitt Installation fehlt');
+
+    expect(geaendert).toEqual([anmerkung(1, null, 'Abschnitt Installation fehlt', { datei: 'README.md' })]);
+    expect(geaendert[0].zeile).toBeNull();
   });
 });

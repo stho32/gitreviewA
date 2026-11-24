@@ -65,5 +65,16 @@
     return `${anmerkungen} ${zeilenteil}: ${liste}`;
   }
 
-  Object.assign(ziel, { zeilenziel, anmerkungsstand, hinweisAusserhalb, ENTFERNT_HINWEIS });
+  /** Anmerkungen (Anlegereihenfolge) + Nummer + neuer Text → dieselbe Liste in derselben Reihenfolge; nur der Text der Anmerkung mit
+      dieser Nummer wechselt, Nummer und Stelle bleiben. Eine unbekannte Nummer lässt den Inhalt unverändert. */
+  function mitGeaendertemText(anmerkungen, nummer, text) {
+    return anmerkungen.map(anmerkung => {
+      if (anmerkung.nummer !== nummer) {
+        return anmerkung;
+      }
+      return { ...anmerkung, text };
+    });
+  }
+
+  Object.assign(ziel, { zeilenziel, anmerkungsstand, hinweisAusserhalb, mitGeaendertemText, ENTFERNT_HINWEIS });
 })(typeof module !== 'undefined' ? module.exports : window);
