@@ -152,3 +152,10 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Durchlauf: Bau opencode 24 min, Security ohne Muss, Code-Review 1 Muss (Meldung bei teilweise auflösbarer Auswahl), Nacharbeit 29 min, Nachprüfung eng (nur code-reviewer), Entwicklertest ohne Befund. Karte gesamt 1,69 $.
 - Gate: erster Playwright-Lauf 12 rot, weil der Director `GitReviewA.dll` suchte (Datei heißt `gitreviewA.dll`) und der Treiber auf den alten Standard-Build fiel. Lehre: im Gate den DLL-Pfad fest nennen (`target-gate/bin/GitReviewA/debug/gitreviewA.dll`) und vor dem Lauf mit `ls` prüfen — ein leeres `GITREVIEWA_DLL` testet still einen alten Stand.
 - Zweiter Lauf 306/306 zweimal, NUnit 781/781.
+| 2026-11-24 | #14 | Entwicklertest | entwicklertester | bestanden | 9 min | opencode: US-1..US-9 bestanden; RSS +50 MB bei 52 MB-Datei; Positivkontrolle im Prüfbrowser 196 ms · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 14-entwicklertester-1 · 0,053 $ · Karte gesamt 1,40 $ |
+
+## Retrospektive #29 I0030 Haken und Anmerkung bei nicht lesbarem Diff sperren (2026-11-24)
+- Durchlauf: Bau (Claude), Code-Review bestanden, Security 1 Muss (Sperre verglich Rohform, Anzeige Markenform), Nacharbeit opencode 43 min (1,10 $), enge Nachprüfung nur security-reviewer (12 Varianten, keine dritte Form), Entwicklertest 7 Szenarien ohne Befund. Karte gesamt 11,04 $.
+- Lehre (Security): Sperre und Ergebnis vergleichen denselben kanonischen Namen; „dritte Form?“ entscheidet die Anzeigefunktion.
+- Offen, älter als die Karte: Der Stand liefert LF im Namen roh; als Pflichtpunkt an I0010/I0027 gegeben.
+- Gate: Lauf 2 mit 1 rotem Playwright-Test unter Last (paralleler Bau #10), Lauf 1 und 3 grün 312/312 — Name nicht erfasst. Lehre: Gate-Läufe mit `--reporter=line` fahren, damit ein einzelner roter Test benannt ist.

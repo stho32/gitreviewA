@@ -32,3 +32,4 @@ zuletzt: 2026-11-24
 | I0016 | Entwicklertest | 2026-11-24 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | 10 Szenarien (R00011), Karte #16 |
 | I0029 | Entwicklertest | 2026-11-24 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | 9 Szenarien (R00013), Karte #28 |
 | I0003 | Entwicklertest | 2026-11-24 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | 9 Szenarien (R00016), Karte #3 |
+| I0030 | Entwicklertest | 2026-11-24 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | 7 Szenarien (R00014), Karte #29 |
