@@ -6,7 +6,9 @@ namespace GitReviewA.Diff;
 
 /// <summary>
 /// Interaction „Diff einer Datei lesen“: git bekommt nur einen vollen Hash der Auswahl und einen Pfad, der genau so in der Dateiliste
-/// dieses Commits steht — alles andere endet vorher als <see cref="Diffausgang.NichtGefunden"/>.
+/// dieses Commits steht — alles andere endet vorher als <see cref="Diffausgang.NichtGefunden"/>. Ein Name, der keine Datei eindeutig meint
+/// oder sich nicht an git übergeben lässt, endet als <see cref="Diffausgang.NameNichtLesbar"/>; ein Patch, der der Zählung der Dateiliste
+/// widerspricht, als <see cref="Diffausgang.NichtLesbar"/> — nie als leerer Patch.
 /// </summary>
 internal sealed class DiffLesenInteractor(Commitzeilen commits, GemerkteDateiquelle dateien, IDiffquelle diffquelle, StderrProtokoll protokoll)
 {
@@ -47,36 +49,55 @@ internal sealed class DiffLesenInteractor(Commitzeilen commits, GemerkteDateique
             protokoll.Melde(Protokollstufe.Fehler, Fehlerkontext, $"Dateiliste von Commit {hash} für den Diff nicht lesbar: {fehler.Message}");
             return Differgebnis.NichtLesbar;
         }
-        var datei = DateiMitPfad(dateienDesCommits, anfrage.Pfad);
+        var treffer = Namenspruefung.Pruefe(dateienDesCommits, anfrage.Pfad);
+        var datei = treffer.Datei;
         if (datei is null)
         {
-            protokoll.Melde(Protokollstufe.Debug, Anfragekontext, $"Diff von Commit {hash} abgewiesen: Pfad steht nicht in der Dateiliste (Länge {anfrage.Pfad.Length})");
-            return Differgebnis.NichtGefunden;
+            return Abgewiesen(hash, anfrage, treffer.Fall);
         }
         protokoll.Melde(Protokollstufe.Debug, Anfragekontext, $"GET /api/commits/{hash}/diff Datei {datei.Pfad}{WahlText(anfrage)}");
+        DiffAntwort antwort;
         try
         {
-            return Differgebnis.Gelesen(AntwortFuer(hash, anfrage, datei));
+            antwort = AntwortFuer(hash, anfrage, datei);
         }
         catch (GitFehler fehler)
         {
             protokoll.Melde(Protokollstufe.Fehler, Fehlerkontext, $"Diff von Commit {hash}, Datei {datei.Pfad} nicht lesbar: {fehler.Message}");
             return Differgebnis.NichtLesbar;
         }
+        return GelesenWennDerPatchZurZaehlungPasst(hash, datei, antwort);
     }
 
-    /// <summary>Genau gleich, Groß- und Kleinschreibung beachtet: ein Ordner, ein Muster oder eine andere Schreibweise ist keine Datei der Liste.</summary>
-    private static Dateiaenderung? DateiMitPfad(Dateiaenderungen dateienDesCommits, string pfad)
+    private Differgebnis GelesenWennDerPatchZurZaehlungPasst(string hash, Dateiaenderung datei, DiffAntwort antwort)
     {
-        foreach (var datei in dateienDesCommits)
+        var widersprichtDerZaehlung = antwort.Art == Diffaufbereitung.ArtText && !Patchzaehlung.PasstZurDateiliste(antwort.Patch, datei);
+        if (widersprichtDerZaehlung)
         {
-            var istGesuchterPfad = string.Equals(datei.Pfad, pfad, StringComparison.Ordinal);
-            if (istGesuchterPfad)
-            {
-                return datei;
-            }
+            protokoll.Melde(Protokollstufe.Fehler, Fehlerkontext,
+                $"Diff von Commit {hash}, Datei {datei.Pfad} nicht lesbar: der Patch trägt nicht die gezählten +{datei.Plus} −{datei.Minus} Zeilen");
+            return Differgebnis.NichtLesbar;
         }
-        return null;
+        return Differgebnis.Gelesen(antwort);
+    }
+
+    /// <summary>Die Debug-Zeile nennt nur die Länge des Namens: er kommt aus der Anfrage und ist hier keiner Datei zugeordnet.</summary>
+    private Differgebnis Abgewiesen(string hash, Diffanfrage anfrage, Namensfall fall)
+    {
+        switch (fall)
+        {
+            case Namensfall.NichtGefunden:
+                protokoll.Melde(Protokollstufe.Debug, Anfragekontext, $"Diff von Commit {hash} abgewiesen: Pfad steht nicht in der Dateiliste (Länge {anfrage.Pfad.Length})");
+                return Differgebnis.NichtGefunden;
+            case Namensfall.NichtEindeutig:
+                protokoll.Melde(Protokollstufe.Debug, Anfragekontext, $"Diff von Commit {hash} abgewiesen: mehrere Dateien tragen den Namen (Länge {anfrage.Pfad.Length})");
+                return Differgebnis.NameNichtLesbar;
+            case Namensfall.NichtUebergebbar:
+                protokoll.Melde(Protokollstufe.Debug, Anfragekontext, $"Diff von Commit {hash} abgewiesen: Name mit ungültigem Byte und Zeilenende lässt sich nicht an git übergeben (Länge {anfrage.Pfad.Length})");
+                return Differgebnis.NameNichtLesbar;
+            default:
+                throw new InvalidOperationException($"Unbekannter Namensfall {fall}");
+        }
     }
 
     /// <summary>Die Debug-Zeile nennt die Wahl des Menschen: „als Text“ bei einer Binärdatei, „ganze Datei“ für die Ansicht.</summary>

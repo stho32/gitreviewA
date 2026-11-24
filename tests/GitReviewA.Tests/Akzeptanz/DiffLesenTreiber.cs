@@ -61,7 +61,7 @@ internal sealed class DiffLesenTreiber
 
 /// <summary>
 /// Was der Diff-Bereich aus einer Antwort zeigt, in Patch-Schreibweise: `Zeilen` ohne Abschnittsköpfe (` z01`, `-z03`, `+Z03`, `\ No newline …`),
-/// `Ausgang` `gelesen`, `nicht gefunden` oder `nicht lesbar`.
+/// `Ausgang` `gelesen`, `nicht gefunden`, `nicht lesbar` oder `name nicht lesbar`.
 /// </summary>
 internal sealed record Dateiansicht(string Ausgang, string? Pfad, string? Art, string[] Abschnittskoepfe, string[] Zeilen)
 {
@@ -74,6 +74,10 @@ internal sealed record Dateiansicht(string Ausgang, string? Pfad, string? Art, s
             if (ergebnis.Ausgang == Diffausgang.NichtGefunden)
             {
                 ausgang = "nicht gefunden";
+            }
+            if (ergebnis.Ausgang == Diffausgang.NameNichtLesbar)
+            {
+                ausgang = "name nicht lesbar";
             }
             return new Dateiansicht(ausgang, null, null, [], []);
         }
