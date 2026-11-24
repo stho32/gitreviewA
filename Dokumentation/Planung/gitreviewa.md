@@ -13,9 +13,9 @@ zuletzt: 2026-11-24
 
 | ID | Ebene | Eltern | Name | Status | Fertig-Kriterium | Eingabe → Ausgabe | Aufwand | Ausbaustufe | Braucht | Requirement | Notiz |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| A0001 | Application | — | gitreviewA | rot | alle Dialogs gruen | | | | | | Leitplanken aus R00000: .NET 10, nur localhost, nur RAM, git-CLI, stdout = Ergebnis, Logging stderr, Lastprofil |
-| D0001 | Dialog | A0001 | Lauf starten | rot | alle Interactions gruen | | | | | | CLI-Aufruf bis zur offenen Oberfläche |
-| I0001 | Interaction | D0001 | Mit Commit-Hashes aufrufen | rot | `gitreviewA <hash…>` im Repo startet auf freiem localhost-Port, öffnet den Browser mit den Commits, der Prozess wartet | | | | | R00001 | aus Vision; Gerüst; kein Feature noetig; Bubbles Hypothese 20-28 h ungemessen |
+| A0001 | Application | — | gitreviewA | gelb | alle Dialogs gruen | | | | | | Leitplanken aus R00000: .NET 10, nur localhost, nur RAM, git-CLI, stdout = Ergebnis, Logging stderr, Lastprofil |
+| D0001 | Dialog | A0001 | Lauf starten | gelb | alle Interactions gruen | | | | | | CLI-Aufruf bis zur offenen Oberfläche |
+| I0001 | Interaction | D0001 | Mit Commit-Hashes aufrufen | gruen | `gitreviewA <hash…>` im Repo startet auf freiem localhost-Port, öffnet den Browser mit den Commits, der Prozess wartet | | | | | R00001 | aus Vision; Gerüst; kein Feature noetig; Bubbles Hypothese 20-28 h ungemessen |
 | B0001 | Bubble | I0001 | Lösungsgerüst | gruen | | — → `gitreviewA.sln`, `src/GitReviewA` (net10.0), `tests/GitReviewA.Tests` (NUnit), `Directory.Build.props` (warnaserror); `dotnet build -warnaserror` und `dotnet test` grün | 2 | | | |  |
 | B0002 | Bubble | I0001 | Wegwerf-Repo für Tests | gruen | | Commit-Betreffe → Temp-Repo mit Commits (`WegwerfRepo`: Hashes, Pfad, Aufräumen) | 2 | | | | Hilfsklasse für Integration und Vorlage für E2E |
 | B0003 | Bubble | I0001 | Aufruf lesen | gruen | | `string[] args` → `Aufruf` (Hashes, Port, KeinBrowser, Stufe) oder Aufrufsfehler; Hash gegen 4–64 Hexziffern | 2 | | | | Operation, rein; Sicherheit |
