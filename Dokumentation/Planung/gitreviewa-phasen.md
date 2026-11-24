@@ -18,3 +18,4 @@ zuletzt: 2026-11-24
 
 | Arbeitspaket | Phase | Datum | Ergebnis | Wer | Beleg |
 |---|---|---|---|---|---|
+| I0001 | Entwicklertest | 2026-11-24 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | US-1 bis US-10 (R00001), Karte #1 |

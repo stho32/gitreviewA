@@ -13,3 +13,4 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-24 | #1 | Reviews | security-reviewer | befund | 4 min | 1 Muss: Code-Ausführung über log.showSignature + gpg.program des geprüften Repos · claude · sonnet · Lauf 1-security-reviewer-1 · 0,50 $ · Karte gesamt 8,95 $ |
 | 2026-11-24 | #1 | Reviews | code-reviewer | bestanden | 6 min | kein Muss; 3 Sollte (stummer Öffner-Fehler, fehlendes git → Absturz, keine git-Zeitgrenze) · claude · sonnet · Lauf 1-code-reviewer-1 · 0,67 $ · Karte gesamt 9,62 $ |
 | 2026-11-24 | #1 | Nacharbeit | entwickler | bestanden | 4 min | Muss behoben (GitStart mit -c log.showSignature=false), Sollte 2 behoben, 1 und 3 verworfen; Gate 84/84, 18/18 · claude · opus · Lauf 1-entwickler-2 · 1,38 $ · Karte gesamt 11,00 $ |
+| 2026-11-24 | #1 | Entwicklertest | entwicklertester | bestanden | 4 min | Szenarien 1–10 bestanden, keine Befunde · claude · sonnet · Lauf 1-entwicklertester-1 · 0,32 $ · Karte gesamt 11,32 $ |
