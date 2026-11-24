@@ -2,7 +2,7 @@ namespace GitReviewA.Haken;
 
 /// <summary>
 /// Liest die Übersicht beim ersten Zugriff einmal und hält sie für den Lauf (Commits sind unveränderlich). Ein Fehler wird nicht gemerkt:
-/// der nächste Zugriff — etwa nach dem Neuladen der Seite — liest erneut.
+/// der nächste Zugriff — etwa nach dem Neuladen der Seite — liest erneut. Nur das Lesen steht unter der Sperre; das Ergebnis wartet nie auf git.
 /// </summary>
 internal sealed class GemerkteUebersicht(IUebersichtsquelle quelle)
 {
@@ -15,22 +15,23 @@ internal sealed class GemerkteUebersicht(IUebersichtsquelle quelle)
         {
             if (gemerkt is null)
             {
-                gemerkt = quelle.Lesen();
+                Volatile.Write(ref gemerkt, quelle.Lesen());
             }
             return gemerkt;
         }
     }
 
-    /// <summary>Für das Ergebnis: liest nie selbst. Ohne gelesene Übersicht gibt es auch keinen Haken.</summary>
+    /// <summary>
+    /// Für das Ergebnis: liest nie selbst und wartet nicht auf eine laufende Lesung. Ohne gemerkte Übersicht gibt es auch keinen Haken —
+    /// ein Haken wird erst nach der Lesung gesetzt.
+    /// </summary>
     public Dateiuebersicht GemerktOderLeer()
     {
-        lock (sperre)
+        var bisherGemerkt = Volatile.Read(ref gemerkt);
+        if (bisherGemerkt is null)
         {
-            if (gemerkt is null)
-            {
-                return new Dateiuebersicht([], []);
-            }
-            return gemerkt;
+            return new Dateiuebersicht([], []);
         }
+        return bisherGemerkt;
     }
 }
