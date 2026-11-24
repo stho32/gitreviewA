@@ -20,6 +20,7 @@ test.describe('Baustein Sprache und Grenze', () => {
     expect(spracheZuPfad('SRC/GROSS.RS')).toBe('rust');
     expect(spracheZuPfad('a.b/c.Py')).toBe('python');
     expect(spracheZuPfad('a.js.txt')).toBeNull();
+    expect(spracheZuPfad('bibliothek.min.js')).toBe('javascript');
     expect(spracheZuPfad('ordner.js/Makefile')).toBeNull();
   });
 
