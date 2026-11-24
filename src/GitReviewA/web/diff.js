@@ -46,11 +46,8 @@
     };
   }
 
-  /** Ohne Worker im Browser bleibt jede Datei ungefärbt. */
+  /** Ohne Worker im Browser wirft der Aufruf; die Schlange lässt die Datei dann still ungefärbt. */
   function faerbeWorkerAnlegen() {
-    if (typeof Worker !== 'function') {
-      return null;
-    }
     return new Worker('faerben.js');
   }
 
