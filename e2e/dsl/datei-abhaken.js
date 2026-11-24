@@ -9,6 +9,8 @@ const seite = require('../treiber/oberflaeche.js');
 const haken = require('../treiber/haken-oberflaeche.js');
 const schnittstelle = require('../treiber/haken-schnittstelle.js');
 const beobachtung = require('../treiber/beobachtung.js');
+const fremdeNamen = require('../treiber/fremde-namen-repo.js');
+const diffSeite = require('../treiber/diff-oberflaeche.js');
 
 const NAME_MIT_ZEILENUMBRUCH = 'ab\ncd‮.txt';
 const NAME_MIT_HTML = '<b>x</b>.txt';
@@ -31,6 +33,10 @@ function repoAnlegen(gr, art) {
     case 'g': {
       const repo = gr.repoMitGrossemCommit(2000);
       return { ordner: repo.ordner, startordner: repo.ordner, hashes: { g: repo.u } };
+    }
+    case 'Repo N mit v': {
+      const repo = fremdeNamen.repoNMitV(path.join(gr.eigenerOrdner(), 'repo'));
+      return { ordner: repo.ordner, startordner: repo.ordner, hashes: repo.hashes };
     }
     case 'fremde Konfiguration': {
       return gr.gemerktesRepo(fremdKonfiguriertesRepo());
@@ -111,6 +117,13 @@ function abhakenSprache(gr, page) {
     /** Feste Frist, in der nichts mehr geschehen darf — prüft eine Abwesenheit (kein weiteres Senden), wartet nicht auf ein Ereignis. */
     ruhezeitAbwarten: ms => page.waitForTimeout(ms),
     abhaken: name => haken.kaestchenBetaetigen(page, name),
+    /** Die `nummer`-te Zeile (ab 0) mit genau diesem Pfad, auch bei zwei Zeilen gleichen Namens (R00014). */
+    dateizeileAnsehen: (pfad, nummer = 0) => seite.dateizeileMitPfadWaehlen(page, pfad, nummer),
+    diffNichtLesbar: text => diffSeite.pruefeFehlerOhneZeilen(page, text),
+    hakenAnfragenMitschreiben: () => haken.hakenAnfragenZaehlen(page),
+    gesperrtesKaestchenBetaetigen: (pfad, nummer = 0) => haken.gesperrtesKaestchenBetaetigen(page, pfad, nummer),
+    istGesperrt: (pfad, nummer, grund) => haken.pruefeGesperrt(page, pfad, nummer, grund),
+    istBedienbar: (pfad, nummer = 0) => haken.pruefeBedienbar(page, pfad, nummer),
     perTastaturAbhaken: name => haken.perTastaturAbhaken(page, name),
     fortschritt: text => haken.pruefeFortschritt(page, text),
     balkenanteil: anteil => haken.pruefeBalkenanteil(page, anteil),

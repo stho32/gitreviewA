@@ -45,6 +45,41 @@ async function perTastaturAbhaken(page, name) {
   throw new Error(`Kästchen von ${name} nach ${TAB_HOECHSTENS}-mal Tab nicht erreicht`);
 }
 
+/** Das Kästchen der `nummer`-ten Zeile (ab 0) mit genau diesem Pfad (`data-pfad`), auch wenn zwei Zeilen ihn tragen. */
+async function kaestchenDerZeile(page, pfad, nummer) {
+  const zeilen = page.locator(DATEIZEILE);
+  const stellenMitPfad = () => zeilen.evaluateAll((elemente, gesucht) => elemente.flatMap((element, index) => {
+    if (element.dataset.pfad === gesucht) {
+      return [index];
+    }
+    return [];
+  }), pfad);
+  await expect.poll(async () => (await stellenMitPfad()).length, `Dateizeilen mit dem Pfad ${JSON.stringify(pfad)}`).toBeGreaterThan(nummer);
+  const stellen = await stellenMitPfad();
+  return zeilen.nth(stellen[nummer]);
+}
+
+/** Klick (am gesperrten Kästchen ohne Bedienbarkeitsprüfung, denn `aria-disabled` hält Playwright sonst zurück) und danach die Leertaste. */
+async function gesperrtesKaestchenBetaetigen(page, pfad, nummer) {
+  const zeile = await kaestchenDerZeile(page, pfad, nummer);
+  const kaestchenElement = zeile.locator('input.haken');
+  await kaestchenElement.click({ force: true });
+  await kaestchenElement.focus();
+  await page.keyboard.press('Space');
+}
+
+/** Zählt die POST-Anfragen an api/haken ab jetzt; liefert eine Funktion, die die Zahl nennt. */
+function hakenAnfragenZaehlen(page) {
+  let anzahl = 0;
+  page.on('request', anfrage => {
+    const istHakenSetzen = anfrage.method() === 'POST' && new URL(anfrage.url()).pathname === '/api/haken';
+    if (istHakenSetzen) {
+      anzahl += 1;
+    }
+  });
+  return () => anzahl;
+}
+
 /** Antwortet auf das Setzen eines Hakens mit `status` (nach einer Verzögerung, die Zeichnen dazwischen erlaubt) oder bricht ab. */
 async function hakenSetzenScheitert(page, { status, abbrechen = false }) {
   await page.route('**/api/haken', async route => {
@@ -123,6 +158,26 @@ async function pruefeKaestchenGesperrt(page) {
   await expect(zaehler(page)).toHaveText('');
 }
 
+/** Gesperrt: nicht abgehakt, `aria-disabled`, fokussierbar, Grund als Text neben der Zeile, Name „Abgehakt: …“ mit dem Grund. */
+async function pruefeGesperrt(page, pfad, nummer, grund) {
+  const zeile = await kaestchenDerZeile(page, pfad, nummer);
+  const kaestchenElement = zeile.locator('input.haken');
+  await expect(kaestchenElement).toHaveAttribute('aria-disabled', 'true');
+  await expect(kaestchenElement).not.toBeChecked();
+  await expect(kaestchenElement).not.toHaveAttribute('disabled', /.*/);
+  await expect(zeile.locator('.haken-grund')).toHaveText(grund);
+  await expect(zeile.locator('.haken-grund')).toBeVisible();
+  await expect(kaestchenElement).toHaveAccessibleName(new RegExp(`^Abgehakt: .*${grund}$`));
+}
+
+async function pruefeBedienbar(page, pfad, nummer) {
+  const zeile = await kaestchenDerZeile(page, pfad, nummer);
+  const kaestchenElement = zeile.locator('input.haken');
+  await expect(kaestchenElement).toBeEnabled();
+  await expect(kaestchenElement).toHaveAttribute('aria-disabled', 'false');
+  await expect(zeile.locator('.haken-grund')).toHaveText('');
+}
+
 /** Die Fläche des Kästchens (sein Bezeichnungsrahmen) ist mindestens so hoch und breit wie das Ziel der übrigen Bedienelemente. */
 async function pruefeKaestchenflaeche(page, name) {
   const masse = await kaestchen(page, name).evaluate(element => {
@@ -143,5 +198,5 @@ async function zeitBisFortschritt(page, text, startMs) {
 module.exports = {
   kaestchen, kaestchenBetaetigen, perTastaturAbhaken, hakenSetzenScheitert, hakenSetzenVerzoegern, standLesenScheitert,
   pruefeFortschritt, pruefeBalkenanteil, pruefeAbgehakt, pruefeKaestchenName, pruefeFokusAufKaestchen, pruefeHakenMeldung, pruefeKaestchenGesperrt,
-  pruefeKaestchenflaeche, zeitBisFortschritt,
+  pruefeKaestchenflaeche, zeitBisFortschritt, gesperrtesKaestchenBetaetigen, hakenAnfragenZaehlen, pruefeGesperrt, pruefeBedienbar,
 };

@@ -1,5 +1,5 @@
 'use strict';
-// Treiber Repository für R00013: Repo N der User Story (Commits b, n, w) mit Namen aus ungültigem UTF-8, angelegt mit dem Skript der Story.
+// Treiber Repository für R00013 und R00014: Repo N der User Story (Commits b, n, w; R00014 dazu v) mit Namen aus ungültigem UTF-8, angelegt mit dem Skript der Story.
 // Gleicher Inhalt wie tests/GitReviewA.Tests/Akzeptanz/FremdeNamenRepo.cs; nur unter Linux.
 const { execFileSync } = require('child_process');
 const fs = require('fs');
@@ -34,4 +34,16 @@ function repoN(ordner) {
   return { ordner, hashes };
 }
 
-module.exports = { repoN };
+const SKRIPT_V = String.raw`set -e
+printf 'literal\nliteral2\n' > 'f⟨0xFF⟩.txt'
+git add 'f⟨0xFF⟩.txt' && git commit -q -m "Wörtlicher Name allein"
+`;
+
+/** Repo N mit dem vierten Commit `v` aus der User Story R00014: `v` ändert nur die wörtlich so benannte Datei `f⟨0xFF⟩.txt`. */
+function repoNMitV(ordner) {
+  const repo = repoN(ordner);
+  execFileSync('bash', ['-c', SKRIPT_V], { cwd: ordner, env: GIT_UMGEBUNG, stdio: ['ignore', 'ignore', 'pipe'] });
+  return { ordner, hashes: { ...repo.hashes, v: git(ordner, 'rev-parse', 'HEAD') } };
+}
+
+module.exports = { repoN, repoNMitV };
