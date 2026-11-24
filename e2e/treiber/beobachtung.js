@@ -20,9 +20,18 @@ function gitZaehlerAnlegen(ordner) {
   return { ordner, aufrufe };
 }
 
-/** Zahl der git-Aufrufe je Unterbefehl, z. B. `{ log: 1, show: 2 }`; Unterbefehle, die nicht genannt sind, zählen nicht mit. */
+/**
+ * Zahl der git-Aufrufe je Unterbefehl, z. B. `{ log: 1, show: 2 }`; Unterbefehle, die nicht genannt sind, zählen nicht mit.
+ * `uebersicht` ist das `git log --numstat` der Übersicht aller Dateien (R00011); `log` zählt nur die übrigen `git log` (Commit-Leiste).
+ */
 async function pruefeGitAufrufe(zaehler, erwartet) {
-  const zaehle = unterbefehl => zaehler.aufrufe().filter(aufruf => aufruf.split(' ').includes(unterbefehl)).length;
+  const istUebersicht = aufruf => aufruf.split(' ').includes('log') && aufruf.split(' ').includes('--numstat');
+  const zaehle = unterbefehl => zaehler.aufrufe().filter(aufruf => {
+    if (unterbefehl === 'uebersicht') {
+      return istUebersicht(aufruf);
+    }
+    return aufruf.split(' ').includes(unterbefehl) && !istUebersicht(aufruf);
+  }).length;
   for (const [unterbefehl, anzahl] of Object.entries(erwartet)) {
     await expect.poll(() => zaehle(unterbefehl), `git ${unterbefehl}`).toBe(anzahl);
   }
