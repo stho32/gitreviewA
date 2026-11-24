@@ -31,3 +31,6 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-24 | #21 | Reviews | security-reviewer | bestanden | 1 min | Kurzblick: Angriffsfläche unverändert · claude · sonnet · Lauf 21-security-reviewer-1 · 0,15 $ · Karte gesamt 2,95 $ |
 | 2026-11-24 | #21 | Reviews | code-reviewer | bestanden | 1 min | kein Muss; 3 Sollte (ATDD: Prüfungen im Spec, US-5 racy, Testname) · claude · sonnet · Lauf 21-code-reviewer-1 · 0,28 $ · Karte gesamt 3,23 $ |
 | 2026-11-24 | #5 | Entwicklung | entwickler | bestanden | 31 min | Build 0 Warnungen, NUnit 234, Playwright 58; Lastprofil 485–552 ms / 110–142 ms · claude · opus · Lauf 5-entwickler-1 · 1,45 $ · Karte gesamt 1,59 $ |
+| 2026-11-24 | #5 | Reviews | product-owner | bestanden | 1 min | AK 4 eingeengt; Gelesen erneut ohne gemeinsam/ (3. Mal trotz Auftrag) · claude · sonnet · Lauf 5-product-owner-2 · 0,15 $ · Karte gesamt 1,74 $ |
+| 2026-11-24 | #5 | Reviews | code-reviewer | bestanden | 3 min | kein Muss; Sollte u. a. Abwahl beim Commit-Wechsel ohne Ereignis (Anschluss I0006) · claude · sonnet · Lauf 5-code-reviewer-1 · 0,57 $ · Karte gesamt 2,31 $ |
+| 2026-11-24 | #21 | Entwicklertest | entwicklertester | befund | 7 min | 1 Muss: SIGINT im nicht-interaktiven Hintergrundstart ignoriert, Prozess hängt · claude · sonnet · Lauf 21-entwicklertester-1 · 0,50 $ · Karte gesamt 3,73 $ |
