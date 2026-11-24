@@ -133,4 +133,5 @@ function repoEntfernen(ordner) {
 module.exports = {
   repoAnlegen, repoEntfernen, repoMitVorbereitungAnlegen, repoMitDateienAnlegen, repoMitFremdemTextAnlegen, repoMitVielenCommitsAnlegen, repoMitUnterordnerAnlegen,
   leeresRepoAnlegen, dateiSchreiben, commitAnlegen, commitObjektEntfernen,
+  git, GIT_UMGEBUNG,
 };
