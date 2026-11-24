@@ -41,6 +41,17 @@ public class StdinHashesTests
         Assert.That(hashes.AlsArray(), Is.EqualTo(new[] { HashC, HashA }));
     }
 
+    [TestCase("")]
+    [TestCase("\n\r\n\n")]
+    public void Wenn_Eingabe_ohne_Hash_dann_Fehler_statt_einer_leeren_Auswahl(string eingabetext)
+    {
+        var eingabe = new StringReader(eingabetext);
+
+        var fehler = Assert.ThrowsAsync<AuswahlFehler>(() => StdinHashes.LesenAsync(eingabe, istTerminal: false, Frist));
+
+        Assert.That(fehler.Message, Does.Contain("ein Hash je Zeile"));
+    }
+
     [Test]
     public void Wenn_Zeile_2_kein_Hash_dann_nennt_der_Fehler_die_Zeile_und_nicht_ihren_Text()
     {
