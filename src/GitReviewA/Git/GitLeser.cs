@@ -15,14 +15,7 @@ internal static class GitLeser
 
     private static ProcessStartInfo GitLogStart(CommitHashes hashes, string arbeitsordner)
     {
-        var start = new ProcessStartInfo("git")
-        {
-            WorkingDirectory = arbeitsordner,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            StandardOutputEncoding = Encoding.UTF8,
-            StandardErrorEncoding = Encoding.UTF8,
-        };
+        var start = GitStart.Im(arbeitsordner);
         start.ArgumentList.Add("log");
         start.ArgumentList.Add("--no-walk=unsorted");
         start.ArgumentList.Add("--no-color");
@@ -33,7 +26,6 @@ internal static class GitLeser
         {
             start.ArgumentList.Add(hash);
         }
-        start.Environment["GIT_TERMINAL_PROMPT"] = "0";
         return start;
     }
 
