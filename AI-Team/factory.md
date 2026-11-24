@@ -55,7 +55,7 @@ Wie die Dienste des Projekts starten und geprüft werden. Gilt für den Director
 ## Rechnerlast
 
 - Höchstens etwa 75 % Systemlast, immer; vor jedem Start einer Rolle, eines Builds oder des Gates prüfen.
-- **Höchstens 3 Karten gleichzeitig in Arbeit** (Betreiber 2026-11-24, statt Grenzen je Rolle): gezählt werden alle Karten in den Team-Spalten von „Detailplanung“ bis „Entwicklertest“ einschließlich „Nacharbeit“; eine neue Karte zieht erst nach „Detailplanung“, wenn eine andere nach „Erledigt“ (oder „Ohne Mensch nicht lösbar“) gegangen ist. Innerhalb einer Karte laufen Rollen parallel, soweit der Ablauf es erlaubt. Zuerst fertig machen, dann neu beginnen.
+- **Höchstens 3 Karten gleichzeitig in Arbeit** (Betreiber 2026-11-24, statt Grenzen je Rolle): gezählt wird jede Karte in einer Team-Spalte, an der schon gearbeitet wird — erkennbar am eigenen Worktree (`board.py worktree <nr>`); die übrigen freigegebenen Karten in „Detailplanung“ sind die Warteschlange und zählen nicht. Eine Karte aus der Warteschlange wird erst begonnen (erster Lauf, meist planer), wenn eine andere nach „Erledigt“ (oder „Ohne Mensch nicht lösbar“) gegangen ist. Innerhalb einer Karte laufen Rollen parallel, soweit der Ablauf es erlaubt. Zuerst fertig machen, dann neu beginnen.
 - Tag- und Nachtbetrieb: keine feste Zahl je Rolle mehr; es gilt nur die Lastgrenze oben (Nacht zusätzlich Builds mit `nice`).
 - Last- und Dauerproben nur auf ausdrücklichen Auftrag des Betreibers, nie nachts.
 
