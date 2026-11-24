@@ -270,25 +270,6 @@ function welt() {
     return lauf.stdout;
   }
 
-  /** Ein `git` vorne in PATH, das je Aufruf seine Argumente in eine Datei schreibt und dann das echte git ausführt. */
-  function gitZaehler() {
-    const ordner = eigenerOrdner();
-    const protokoll = path.join(ordner, 'aufrufe.txt');
-    const echtesGit = require('child_process').execFileSync('which', ['git'], { encoding: 'utf8' }).trim();
-    fs.writeFileSync(path.join(ordner, 'git'), `#!/bin/sh\necho "$*" >> '${protokoll}'\nexec '${echtesGit}' "$@"\n`, { mode: 0o755 });
-    const aufrufe = () => {
-      if (!fs.existsSync(protokoll)) {
-        return [];
-      }
-      return fs.readFileSync(protokoll, 'utf8').split('\n').filter(zeile => zeile.length > 0);
-    };
-    return { ordner, aufrufe };
-  }
-
-  function dateienAbfragen(lauf, hashOderText) {
-    return anfrage(lauf.adresse, `/api/commits/${encodeURIComponent(hashOderText)}/dateien`);
-  }
-
   async function aufraeumen() {
     for (const schliessen of offeneVerbindungen) {
       schliessen();
@@ -314,8 +295,7 @@ function welt() {
     beendetMeldung: oberflaeche.beendetMeldung,
     beendenFehler: oberflaeche.beendenFehler,
     beendenScheitertMit: oberflaeche.beendenScheitertMit,
-    gitZaehler, dateienAbfragen,
-    repoMitVorbereitung, repoMitDateien, repoMitFremdemText, repoMitVielenCommits, repoMitGrossemCommit, commitObjektEntfernen,
+    eigenerOrdner, repoMitVorbereitung, repoMitDateien, repoMitFremdemText, repoMitVielenCommits, repoMitGrossemCommit, commitObjektEntfernen,
     oberflaecheOeffnen: (page, lauf) => page.goto(lauf.adresse),
     ...oberflaeche,
   };
@@ -335,4 +315,4 @@ function kurz(hash) {
   return hash.slice(0, 7);
 }
 
-module.exports = { test, expect: base.expect, kurz };
+module.exports = { test, expect: base.expect, kurz, welt };

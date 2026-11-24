@@ -1,5 +1,6 @@
 'use strict';
-// Treiber Oberfläche: der einzige Ort, der Selektoren der Seite kennt.
+// Treiber Oberfläche: der einzige Ort, der Selektoren der Seite kennt; die Prüfungen der Oberfläche sitzen hier.
+const { expect } = require('@playwright/test');
 const ZEILE = '#commit-liste .commit-zeile';
 const DATEILISTE = '#dateiliste';
 const LISTENEINTRAG = '#datei-zeilen > li';
@@ -144,7 +145,114 @@ async function formatierungsElementeZaehlen(page) {
   return page.locator('main b, main strong, main i, main em, main script').count();
 }
 
+/* ── Prüfungen ── */
+
+/** Die Leiste hat genau diese Zeilen in dieser Reihenfolge; je Zeile werden nur die genannten Angaben verglichen. */
+async function pruefeLeiste(page, erwarteteZeilen) {
+  await expect(commitZeilen(page)).toHaveCount(erwarteteZeilen.length);
+  const zeilen = await commitDetailsLesen(page);
+  erwarteteZeilen.forEach((erwartet, index) => expect(zeilen[index], `Zeile ${index + 1}`).toMatchObject(erwartet));
+}
+
+async function pruefeMessageVerborgen(page, kurzHash) {
+  await expect(messageSchalter(page, kurzHash)).toHaveAttribute('aria-expanded', 'false');
+  await expect(rumpf(page, kurzHash)).toBeHidden();
+}
+
+async function pruefeMessage(page, kurzHash, text) {
+  await expect(messageSchalter(page, kurzHash)).toHaveAttribute('aria-expanded', 'true');
+  await expect(rumpf(page, kurzHash)).toBeVisible();
+  await expect(rumpf(page, kurzHash)).toHaveText(text);
+}
+
+async function pruefeOhneMessage(page, kurzHash) {
+  await expect(commitZeile(page, kurzHash)).toHaveCount(1);
+  await expect(messageSchalter(page, kurzHash)).toHaveCount(0);
+}
+
+async function pruefeKeineFormatierung(page) {
+  expect(await formatierungsElementeZaehlen(page)).toBe(0);
+}
+
+async function pruefeGewaehlterCommit(page, kurzHash) {
+  await expect(page.locator(`${ZEILE}[aria-current="true"] .kurz-hash`)).toHaveText([kurzHash]);
+}
+
+/** Summe und Einträge der Dateiliste (je Eintrag nur die genannten Angaben); `reihenfolgeEgal` vergleicht nach Namen sortiert. */
+async function pruefeDateiliste(page, { summe, eintraege, reihenfolgeEgal = false }) {
+  await expect(dateiSumme(page)).toHaveText(summe);
+  await expect(page.locator(LISTENEINTRAG)).toHaveCount(eintraege.length);
+  let gelesen = await dateilisteLesen(page);
+  let erwartet = eintraege;
+  if (reihenfolgeEgal) {
+    gelesen = [...gelesen].sort((a, b) => a.name.localeCompare(b.name));
+    erwartet = [...eintraege].sort((a, b) => a.name.localeCompare(b.name));
+  }
+  expect(gelesen).toMatchObject(erwartet);
+}
+
+async function pruefeDateilistenMeldung(page, text) {
+  await expect(dateilistenMeldung(page)).toHaveText(text);
+  await expect(dateizeilen(page)).toHaveCount(0);
+}
+
+async function pruefeGewaehlteDateien(page, namen) {
+  await expect(page.locator(`${DATEIZEILE}[aria-selected="true"] .pfad`)).toHaveText(namen);
+}
+
+async function pruefeDateiwahlen(page, erwartet) {
+  expect(await gesammelteDateiwahlen(page)).toEqual(erwartet);
+}
+
+/** Wartet ereignisgenau auf `anzahl` Zeilen der Leiste und prüft die Frist ab `startMs`; liefert den Messwert. */
+async function pruefeZeilenBinnen(page, anzahl, startMs, fristMs) {
+  await aufZeilenWarten(page, anzahl);
+  const dauerMs = Date.now() - startMs;
+  expect(dauerMs, `${anzahl} Zeilen nach ${dauerMs} ms`).toBeLessThanOrEqual(fristMs);
+  return dauerMs;
+}
+
+/** Klickt den Commit und misst bis `anzahl` Dateizeilen sichtbar sind; liefert den Messwert. */
+async function pruefeDateizeilenBinnenNachKlick(page, kurzHash, anzahl, fristMs) {
+  const klickUmMs = Date.now();
+  await commitWaehlen(page, kurzHash);
+  await aufDateizeilenWarten(page, anzahl);
+  const dauerMs = Date.now() - klickUmMs;
+  expect(dauerMs, `${anzahl} Dateizeilen nach ${dauerMs} ms`).toBeLessThanOrEqual(fristMs);
+  return dauerMs;
+}
+
+/** Hält die Antwort auf die Dateiliste des Commits zurück, bis die gelieferte Funktion sie freigibt (und wartet, bis sie gezeichnet sein könnte). */
+async function dateienAntwortZurueckhalten(page, hash) {
+  let freigeben;
+  const frei = new Promise(weiter => { freigeben = weiter; });
+  await page.route(`**/api/commits/${hash}/dateien`, async route => {
+    await frei;
+    await route.continue();
+  });
+  return async () => {
+    const antwort = page.waitForResponse(`**/api/commits/${hash}/dateien`);
+    freigeben();
+    await antwort;
+    await page.evaluate(() => new Promise(fertig => requestAnimationFrame(() => requestAnimationFrame(fertig))));
+  };
+}
+
+/** Zählt Dialoge der Seite ab jetzt; die gelieferte Prüfung erwartet keinen und belegt mit einer Positivkontrolle, dass gezählt wird. */
+function dialogeZaehlen(page) {
+  let dialoge = 0;
+  page.on('dialog', dialog => { dialoge += 1; dialog.dismiss(); });
+  return async () => {
+    expect(dialoge).toBe(0);
+    await page.evaluate(() => alert('Positivkontrolle'));
+    expect(dialoge).toBe(1);
+  };
+}
+
 module.exports = {
+  pruefeLeiste, pruefeMessageVerborgen, pruefeMessage, pruefeOhneMessage, pruefeKeineFormatierung, pruefeGewaehlterCommit, pruefeDateiliste,
+  pruefeDateilistenMeldung, pruefeGewaehlteDateien, pruefeDateiwahlen, pruefeZeilenBinnen, pruefeDateizeilenBinnenNachKlick,
+  dateienAntwortZurueckhalten, dialogeZaehlen,
   commitZeilenLesen, commitDetailsLesen, commitZeilen, aufZeilenWarten, commitWaehlen, gewaehlteCommits, messageSchalter, messageUmschalten, rumpf,
   dateilisteLesen, dateizeilen, aufDateizeilenWarten, dateiSumme, dateilistenMeldung, darstellungWaehlen, dateiWaehlen, gewaehlteDateien,
   dateiwahlenSammeln, gesammelteDateiwahlen, formatierungsElementeZaehlen,
