@@ -45,7 +45,7 @@ internal sealed class Webserver : IAsyncDisposable
         BildeEndpunkte(anwendung, commits, oberflaeche);
         var dateien = new GemerkteDateiquelle(dateiquelle);
         anwendung.MapGet(DateienEndpunkt.Muster, DateienEndpunkt.Fuer(commits, dateien, protokoll));
-        anwendung.MapGet(DiffEndpunkt.Muster, DiffEndpunkt.Fuer(commits, dateien, diffquelle, protokoll));
+        anwendung.MapGet(DiffEndpunkt.Muster, DiffEndpunkt.Fuer(new DiffLesenInteractor(commits, dateien, diffquelle, protokoll)));
         BildeRueckkanal(anwendung, commits, anmerkungen, protokoll);
         await anwendung.StartAsync();
         lauscherPort.Wert = TatsaechlicherPort(anwendung);
