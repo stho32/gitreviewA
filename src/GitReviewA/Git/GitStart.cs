@@ -8,7 +8,7 @@ namespace GitReviewA.Git;
 /// seine Ersatzrefs (refs/replace) keinen anderen Inhalt unter einem angezeigten Hash unterschieben
 /// und seine Einstellungen und Attribute keine Dateien kürzen oder Änderungen als binär verbergen (Attribute weder aus dem Baum
 /// noch aus `core.attributesFile`; nur `.git/info/attributes` lässt sich nicht abschalten — dafür „als Text zeigen“ im Diff).
-/// Bytes außerhalb von UTF-8 stehen in der Ausgabe als Marke (<see cref="FremdeBytes"/>).
+/// Die Ausgabe kommt immer als UTF-8 (auch gegen `i18n.logOutputEncoding`); Bytes außerhalb von UTF-8 stehen als Marke (<see cref="FremdeBytes"/>).
 /// Der Aufrufer hängt nur noch Unterbefehl und Argumente an.
 /// </summary>
 internal static class GitStart
@@ -27,6 +27,8 @@ internal static class GitStart
         };
         start.ArgumentList.Add("-c");
         start.ArgumentList.Add("log.showSignature=false");
+        start.ArgumentList.Add("-c");
+        start.ArgumentList.Add("i18n.logOutputEncoding=UTF-8");
         start.ArgumentList.Add("-c");
         start.ArgumentList.Add("diff.relative=false");
         start.ArgumentList.Add("-c");

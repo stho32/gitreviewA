@@ -94,6 +94,19 @@ public class GitLeserUebersichtTests
         Assert.That(stellen, Is.EqualTo(OrakelAusDenDateilisten([hash], repo.Ordner)));
     }
 
+    [TestCase("UTF-16")]
+    [TestCase("ISO-8859-1")]
+    public void Wenn_das_fremde_Repo_eine_andere_Ausgabekodierung_fuer_log_setzt_dann_bleibt_die_Uebersicht_lesbar(string kodierung)
+    {
+        using var repo = WegwerfRepo.MitCommits();
+        var commits = VorbereitungMitMerge(repo);
+        repo.Git("config", "i18n.logOutputEncoding", kodierung);
+
+        var stellen = GitLeser.UebersichtLesen(new CommitHashes([commits.P, commits.Q]), repo.Ordner).AlsArray();
+
+        Assert.That(stellen, Has.Length.EqualTo(8));
+    }
+
     [Test]
     public void Wenn_aus_einem_Unterordner_gelesen_wird_dann_stehen_die_Pfade_ab_der_Wurzel()
     {
