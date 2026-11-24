@@ -18,7 +18,7 @@ zuletzt: 2026-11-24
 | I0001 | Interaction | D0001 | Mit Commit-Hashes aufrufen | rot | `gitreviewA <hash…>` im Repo startet auf freiem localhost-Port, öffnet den Browser mit den Commits, der Prozess wartet | | | | | | aus Vision, kein Requirement; Gerüst |
 | I0002 | Interaction | D0001 | Bereiche und stdin | rot | `a..b` und `-` (Hashes über stdin) ergeben dieselbe Commit-Liste wie `git rev-list` | | | | I0001 | | aus Vision, kein Requirement |
 | I0003 | Interaction | D0001 | Ungültiger Aufruf | rot | kein Repo, unbekannter Hash oder leere Auswahl: Fehlermeldung auf stderr, Exit-Code ≠ 0, kein Server | | | | I0001 | | aus Vision, kein Requirement |
-| I0004 | Interaction | D0001 | Als dotnet tool installieren | rot | `dotnet tool install` aus dem gebauten Paket macht `gitreviewA` aufrufbar; Single-File-Build je Plattform entsteht | | | | I0001 | | aus Vision, kein Requirement |
+| I0004 | Interaction | D0001 | Als eine Datei veröffentlichen | rot | `dotnet publish` erzeugt je Plattform genau eine ausführbare Datei ohne Begleitdateien (frameworkabhängig, Oberfläche eingebettet), die mit installierter .NET-10-Runtime startet | | | | I0001 | | aus Vision, kein Requirement; Betreiber 2026-11-24 |
 | D0002 | Dialog | A0001 | Commits durchsehen | rot | alle Interactions gruen | | | | | | Hauptansicht |
 | I0005 | Interaction | D0002 | Commits und Dateien sehen | rot | Commit-Leiste (Hash, Autor, Datum, Betreff, Message) und Dateiliste mit A/M/D/R und +/− je gewähltem Commit | | | | I0001 | | aus Vision, kein Requirement |
 | I0006 | Interaction | D0002 | Diff einer Datei lesen | rot | Datei wählen zeigt unified Diff wie `git show`, Zeilenumbruch umschaltbar, Diff wird erst bei Auswahl geladen | | | | I0005 | | aus Vision, kein Requirement |
