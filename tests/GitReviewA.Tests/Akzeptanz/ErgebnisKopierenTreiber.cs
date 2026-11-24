@@ -15,8 +15,10 @@ namespace GitReviewA.Tests.Akzeptanz;
 [UnsupportedOSPlatform("windows")]
 internal sealed class ErgebnisKopierenTreiber : IAsyncDisposable
 {
-    private static readonly TimeSpan Startfrist = TimeSpan.FromSeconds(20);
-    private static readonly TimeSpan Endfrist = TimeSpan.FromSeconds(20);
+    private const int Fristsekunden = 20;
+    private const int Puffergroesse = 4096;
+    private static readonly TimeSpan Startfrist = TimeSpan.FromSeconds(Fristsekunden);
+    private static readonly TimeSpan Endfrist = TimeSpan.FromSeconds(Fristsekunden);
     private static readonly Regex Startzeile = new(@"http://127\.0\.0\.1:(?<port>\d+)/");
 
     private readonly Process prozess;
@@ -151,7 +153,7 @@ internal sealed class ErgebnisKopierenTreiber : IAsyncDisposable
 
     private async Task LiesStandardausgabeAsync(Process lauf)
     {
-        var puffer = new byte[4096];
+        var puffer = new byte[Puffergroesse];
         var quelle = lauf.StandardOutput.BaseStream;
         while (true)
         {
