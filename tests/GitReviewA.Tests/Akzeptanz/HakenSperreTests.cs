@@ -176,6 +176,77 @@ public class HakenSperreTests
         Assert.That((haken.Ausgang, haken.Grund), Is.EqualTo(("ungültig", NichtUebergebbar)));
     }
 
+    [Test]
+    [Description("R00014 Kriterium 6")]
+    public void Wenn_an_das_Paar_annotiert_werden_soll_dann_abgelehnt_ohne_Nummer_und_lesbare_Stellen_bekommen_1_und_2()
+    {
+        using var repo = FremdeNamenRepo.NMitV();
+        var gr = HakenSperreSprache.Aufruf(repo, "n", "v");
+
+        var paar = gr.Annotiere("n", Paar, 1);
+        var nachDemPaar = gr.Anmerkungen();
+        var a = gr.Annotiere("n", "a⟨0xFF⟩.sh", 1);
+        var inV = gr.Annotiere("v", Paar, 2);
+        var zeilenumbruch = gr.Annotiere("n", MitZeilenumbruch, 1);
+        var ergebnis = gr.Beenden();
+
+        Assert.That((paar.Ausgang, paar.Nummer, paar.Grund), Is.EqualTo(("ungültig", (int?)null, NichtEindeutig)));
+        Assert.That(nachDemPaar, Is.Empty);
+        Assert.That((a.Ausgang, a.Nummer), Is.EqualTo(("angelegt", (int?)1)));
+        Assert.That((inV.Ausgang, inV.Nummer), Is.EqualTo(("angelegt", (int?)2)));
+        Assert.That((zeilenumbruch.Ausgang, zeilenumbruch.Nummer), Is.EqualTo(("ungültig", (int?)null)), "schon die Formprüfung weist den Zeilenumbruch ab (R00002)");
+        Assert.That(gr.Anmerkungen(), Is.EqualTo(new[] { "1. a⟨0xFF⟩.sh:1", "2. f⟨0xFF⟩.txt:2" }));
+        var ueberschriften = ergebnis.Split('\n').Where(zeile => zeile.StartsWith("## ", StringComparison.Ordinal)).ToArray();
+        Assert.That(ueberschriften, Is.EqualTo(new[] { "## 1. a⟨0xFF⟩.sh:1", "## 2. f⟨0xFF⟩.txt:2" }));
+    }
+
+    [Test]
+    [Description("R00014 Kriterium 6")]
+    public void Wenn_eine_Anmerkung_an_eine_gesperrte_Stelle_abgelehnt_wird_dann_nennt_das_Protokoll_den_Grund_und_nie_den_Namen()
+    {
+        using var repo = FremdeNamenRepo.NMitV();
+        var gr = HakenSperreSprache.Aufruf(repo, "n", "v");
+
+        gr.Annotiere("n", Paar, 1);
+
+        Assert.That(gr.Protokollzeilen(), Has.One.EndsWith("[Anmerkung] abgelehnt: " + NichtEindeutig));
+        Assert.That(gr.Protokollzeilen(), Has.None.Contains("f⟨0xFF⟩"));
+    }
+
+    [Test]
+    [Description("R00014 Kriterium 6")]
+    public void Wenn_an_eine_Umbenennung_mit_nicht_uebergebbarem_altem_Namen_annotiert_werden_soll_dann_abgelehnt_mit_Name_nicht_uebergebbar()
+    {
+        using var repo = FremdeNamenRepo.N();
+        repo.CommitAnlegen("s", FremdeNamenRepo.SkriptAlterNameNichtUebergebbar);
+        repo.CommitAnlegen("u", FremdeNamenRepo.SkriptUmbenennungAufLesbarenNamen);
+        var gr = HakenSperreSprache.Aufruf(repo, "u");
+
+        var anmerkung = gr.Annotiere("u", "u.txt", 8);
+
+        Assert.That((anmerkung.Ausgang, anmerkung.Grund), Is.EqualTo(("ungültig", NichtUebergebbar)));
+        Assert.That(gr.Anmerkungen(), Is.Empty);
+    }
+
+    [Test]
+    [Description("R00014 Kriterium 7")]
+    public void Wenn_die_Uebersicht_nicht_lesbar_ist_dann_Anmerkung_angelegt_Haken_abgelehnt_und_Ergebnis_ohne_Dateien()
+    {
+        using var repo = FremdeNamenRepo.NMitV();
+        var gr = HakenSperreSprache.AufrufMitUnlesbarerUebersicht(repo, "n", "v");
+
+        var anmerkung = gr.Annotiere("n", "g.txt", 1);
+        var haken = gr.Hake("n", "g.txt");
+        var ergebnis = gr.Beenden();
+
+        Assert.That((anmerkung.Ausgang, anmerkung.Nummer), Is.EqualTo(("angelegt", (int?)1)));
+        Assert.That((haken.Ausgang, haken.Grund), Is.EqualTo(("nicht lesbar", "Fortschritt konnte nicht gelesen werden")));
+        Assert.That(gr.Protokollzeilen(), Has.Some.Contains("[Anmerkung]").And.Contains("Übersicht der Dateien nicht lesbar").And.Contains("fatal: bad object"));
+        Assert.That(gr.Protokollzeilen(), Has.Some.Contains("[Haken]").And.Contains("Übersicht der Dateien nicht lesbar"));
+        Assert.That(ergebnis, Does.StartWith($"# Ergebnis manueller Review\n\nAnmerkungen: 1\n\n## 1. g.txt:1\n\nCommit: {gr.Hash("n")}\n\n> Prüfen\n"));
+        Assert.That(ergebnis, Does.Not.Contain("## Dateien"));
+    }
+
     private static bool IstAbgelehnterHaken(string protokollzeile)
     {
         return protokollzeile.Contains("[Haken]", StringComparison.Ordinal) && protokollzeile.Contains("abgelehnt", StringComparison.Ordinal);

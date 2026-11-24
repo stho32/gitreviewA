@@ -29,6 +29,22 @@ public class AnmerkungsEndpunktTests
         Assert.That(gespeichert.Select(a => (a.Nummer, a.Datei, a.Zeile, a.Text)), Is.EqualTo(new[] { (1, "src/Foo.cs", (int?)42, "Null-Prüfung fehlt"), (2, "README.md", (int?)null, "veraltet") }));
     }
 
+    [Test]
+    [Description("R00014 Kriterium 6")]
+    public async Task Wenn_eine_Anmerkung_an_eine_gesperrte_Stelle_gesendet_dann_400_mit_Sperrgrund_und_die_naechste_bekommt_Nummer_1()
+    {
+        await using var server = await StarteServer(TestUebersichtsquelle.MitSperre(HashA, "f.txt", "Diff nicht lesbar: Name nicht eindeutig", "g.txt"));
+        using var client = new HttpClient();
+
+        var gesperrt = await Sende(client, server, "api/anmerkungen", "{\"commit\":\"" + HashA + "\",\"datei\":\"f.txt\",\"zeile\":1,\"text\":\"t\"}");
+        var lesbar = await Sende(client, server, "api/anmerkungen", "{\"commit\":\"" + HashA + "\",\"datei\":\"g.txt\",\"zeile\":1,\"text\":\"t\"}");
+
+        Assert.That(gesperrt.Status, Is.EqualTo(HttpStatusCode.BadRequest));
+        Assert.That(gesperrt.Json.GetProperty("meldung").GetString(), Is.EqualTo("Diff nicht lesbar: Name nicht eindeutig"));
+        Assert.That((lesbar.Status, lesbar.Json.GetProperty("nummer").GetInt32()), Is.EqualTo((HttpStatusCode.Created, 1)));
+        Assert.That(server.Anmerkungen.Schnappschuss().Anzahl, Is.EqualTo(1));
+    }
+
     [TestCase("kein json")]
     [TestCase("")]
     [TestCase("null")]
@@ -226,11 +242,16 @@ public class AnmerkungsEndpunktTests
         Assert.That(uhr.Elapsed, Is.LessThan(TimeSpan.FromSeconds(1)));
     }
 
-    private static async Task<Webserver> StarteServer()
+    private static Task<Webserver> StarteServer()
+    {
+        return StarteServer(TestUebersichtsquelle.Leer());
+    }
+
+    private static async Task<Webserver> StarteServer(TestUebersichtsquelle quelle)
     {
         var commits = new Commitzeilen([new Commitzeile(HashA, "Testperson", "2026-01-01T09:00:00+00:00", "Erster Commit", "")]);
         var protokoll = new StderrProtokoll(new StringWriter(), TimeProvider.System, Protokollstufe.Warnung);
-        return await Webserver.StartenAsync(0, commits, TestDateiquelle.Leer(), TestDiffquelle.Leer(), TestUebersichtsquelle.Leer(), Oberflaeche.AusDemProgramm(), protokoll);
+        return await Webserver.StartenAsync(0, commits, TestDateiquelle.Leer(), TestDiffquelle.Leer(), quelle, Oberflaeche.AusDemProgramm(), protokoll);
     }
 
     private static async Task<(HttpStatusCode Status, JsonElement Json)> Sende(HttpClient client, Webserver server, string pfad, string koerper, string? origin = null, string? host = null, string inhaltstyp = "application/json")

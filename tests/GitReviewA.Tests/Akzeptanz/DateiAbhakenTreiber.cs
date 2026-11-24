@@ -45,7 +45,7 @@ internal sealed class DateiAbhakenTreiber
         var protokoll = new StderrProtokoll(protokollziel, TimeProvider.System, Protokollstufe.Debug);
         var speicher = new Hakenspeicher();
         var quelle = new ZaehlendeUebersichtsquelle(innereQuelle);
-        var interactor = new DateiAbhakenInteractor(quelle, speicher, protokoll);
+        var interactor = new DateiAbhakenInteractor(new GemerkteUebersicht(quelle), speicher, protokoll);
         return new DateiAbhakenTreiber(interactor, speicher, quelle, protokollziel);
     }
 

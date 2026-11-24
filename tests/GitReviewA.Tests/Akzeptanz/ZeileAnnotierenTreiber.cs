@@ -24,10 +24,12 @@ internal sealed class ZeileAnnotierenTreiber
     public static ZeileAnnotierenTreiber Starten(string startordner, IEnumerable<string> hashes)
     {
         var commits = GitLeser.Lesen(new CommitHashes(hashes), startordner);
+        var arbeitsordner = GitLeser.WurzelLesen(startordner);
         var protokollziel = new StringWriter();
         var protokoll = new StderrProtokoll(protokollziel, TimeProvider.System, Protokollstufe.Debug);
         var speicher = new Anmerkungsspeicher();
-        var interactor = new ZeileAnnotierenInteractor(speicher, new CommitAuswahl(commits), protokoll);
+        var sperre = new Stellensperre(new GemerkteUebersicht(new GitUebersichtsquelle(commits, arbeitsordner)), protokoll);
+        var interactor = new ZeileAnnotierenInteractor(speicher, new CommitAuswahl(commits), sperre, protokoll);
         return new ZeileAnnotierenTreiber(interactor, speicher, protokollziel);
     }
 

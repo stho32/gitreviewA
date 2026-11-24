@@ -19,9 +19,9 @@ internal sealed class DateiAbhakenInteractor
     private readonly Hakenspeicher speicher;
     private readonly StderrProtokoll protokoll;
 
-    public DateiAbhakenInteractor(IUebersichtsquelle quelle, Hakenspeicher speicher, StderrProtokoll protokoll)
+    public DateiAbhakenInteractor(GemerkteUebersicht uebersicht, Hakenspeicher speicher, StderrProtokoll protokoll)
     {
-        uebersicht = new GemerkteUebersicht(quelle);
+        this.uebersicht = uebersicht;
         this.speicher = speicher;
         this.protokoll = protokoll;
     }

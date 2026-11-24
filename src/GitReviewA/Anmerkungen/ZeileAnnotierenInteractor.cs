@@ -1,13 +1,14 @@
 using System.Globalization;
+using GitReviewA.Haken;
 using GitReviewA.Protokoll;
 
 namespace GitReviewA.Anmerkungen;
 
 /// <summary>
-/// Interaction „Zeile annotieren“: prüft die Anfrage (Auswahl, Datei, Zeile, Text), legt die Anmerkung im Speicher an oder lehnt ab
+/// Interaction „Zeile annotieren“: prüft die Anfrage (Auswahl, Datei, Zeile, Text) und die Sperre der Stelle (R00014), legt die Anmerkung im Speicher an oder lehnt ab
 /// und listet die Anmerkungen des Laufs. Das Protokoll nennt Nummer und Textlänge, nie den Text.
 /// </summary>
-internal sealed class ZeileAnnotierenInteractor(Anmerkungsspeicher speicher, CommitAuswahl auswahl, StderrProtokoll protokoll)
+internal sealed class ZeileAnnotierenInteractor(Anmerkungsspeicher speicher, CommitAuswahl auswahl, Stellensperre sperre, StderrProtokoll protokoll)
 {
     private const string Kontext = "Anmerkung";
     private const string BeendetGrund = "Review ist beendet — keine Anmerkung mehr möglich";
@@ -19,6 +20,13 @@ internal sealed class ZeileAnnotierenInteractor(Anmerkungsspeicher speicher, Com
         {
             protokoll.Melde(Protokollstufe.Debug, Kontext, $"abgelehnt: {pruefung.Ablehnungsgrund}");
             return new AnnotierenErgebnis(Annotierenausgang.Ungueltig, null, pruefung.Ablehnungsgrund);
+        }
+        var sperrgrund = sperre.SperrgrundVon(pruefung.Anmerkung.Commit, pruefung.Anmerkung.Datei);
+        var istGesperrt = sperrgrund.Length > 0;
+        if (istGesperrt)
+        {
+            protokoll.Melde(Protokollstufe.Debug, Kontext, $"abgelehnt: {sperrgrund}");
+            return new AnnotierenErgebnis(Annotierenausgang.Ungueltig, null, sperrgrund);
         }
         if (!speicher.VersucheAnzuhaengen(pruefung.Anmerkung, out var angelegt))
         {

@@ -27,6 +27,24 @@ internal sealed class HakenSperreSprache
         return new HakenSperreSprache(repo, treiber, commits);
     }
 
+    /// <summary>Wie <see cref="Aufruf"/>, aber die Übersicht der Dateien lässt sich nicht lesen.</summary>
+    public static HakenSperreSprache AufrufMitUnlesbarerUebersicht(FremdeNamenRepo repo, params string[] commits)
+    {
+        var treiber = HakenSperreTreiber.MitUnlesbarerUebersicht(repo.Ordner, commits.Select(repo.Hash));
+        return new HakenSperreSprache(repo, treiber, commits);
+    }
+
+    public Anlegeantwort Annotiere(string commit, string datei, int zeile)
+    {
+        return treiber.LegeAn(repo.Hash(commit), datei, zeile, "Prüfen");
+    }
+
+    /// <summary>„Nummer. Datei:Zeile“ je Anmerkung.</summary>
+    public string[] Anmerkungen()
+    {
+        return treiber.Anmerkungsstellen();
+    }
+
     public Hakenantwort Hake(string commit, string datei)
     {
         return treiber.Setze(repo.Hash(commit), datei, true);

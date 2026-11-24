@@ -43,7 +43,8 @@ internal sealed class Webserver : IAsyncDisposable
         var anwendung = BaueAnwendung(port, protokoll);
         var anmerkungen = new Anmerkungsspeicher();
         var haken = new Hakenspeicher();
-        var dateiAbhaken = new DateiAbhakenInteractor(uebersichtsquelle, haken, protokoll);
+        var uebersicht = new GemerkteUebersicht(uebersichtsquelle);
+        var dateiAbhaken = new DateiAbhakenInteractor(uebersicht, haken, protokoll);
         var lauscherPort = new LauscherPort();
         anwendung.Use(SchuetzeVorFremdemHost(lauscherPort, protokoll));
         anwendung.Use(SetzeSchutzkoepfe);
@@ -52,7 +53,7 @@ internal sealed class Webserver : IAsyncDisposable
         var dateien = new GemerkteDateiquelle(dateiquelle);
         anwendung.MapGet(DateienEndpunkt.Muster, DateienEndpunkt.Fuer(commits, dateien, protokoll));
         anwendung.MapGet(DiffEndpunkt.Muster, DiffEndpunkt.Fuer(new DiffLesenInteractor(commits, dateien, diffquelle, protokoll)));
-        BildeRueckkanal(anwendung, commits, anmerkungen, haken, dateiAbhaken, protokoll);
+        BildeRueckkanal(anwendung, commits, anmerkungen, haken, dateiAbhaken, new Stellensperre(uebersicht, protokoll), protokoll);
         await anwendung.StartAsync();
         lauscherPort.Wert = TatsaechlicherPort(anwendung);
         return new Webserver(anwendung, lauscherPort.Wert, anmerkungen, dateiAbhaken);
@@ -133,9 +134,9 @@ internal sealed class Webserver : IAsyncDisposable
         anwendung.MapGet("/{**pfad}", (string pfad) => Oberflaechendatei(oberflaeche, pfad));
     }
 
-    private static void BildeRueckkanal(WebApplication anwendung, Commitzeilen commits, Anmerkungsspeicher anmerkungen, Hakenspeicher haken, DateiAbhakenInteractor dateiAbhaken, StderrProtokoll protokoll)
+    private static void BildeRueckkanal(WebApplication anwendung, Commitzeilen commits, Anmerkungsspeicher anmerkungen, Hakenspeicher haken, DateiAbhakenInteractor dateiAbhaken, Stellensperre sperre, StderrProtokoll protokoll)
     {
-        var interactor = new ZeileAnnotierenInteractor(anmerkungen, new CommitAuswahl(commits), protokoll);
+        var interactor = new ZeileAnnotierenInteractor(anmerkungen, new CommitAuswahl(commits), sperre, protokoll);
         var anlegen = AnmerkungsEndpunkt.Fuer(interactor, protokoll);
         anwendung.MapGet("/api/anmerkungen", AnmerkungenListeEndpunkt.Fuer(interactor));
         anwendung.Map("/api/anmerkungen", GeschuetzterEndpunkt.Mit(anlegen, protokoll));
