@@ -13,7 +13,7 @@ const KLASSE_JE_ROLLE = {
 const LANGE_AUFGABE_MS = 150;
 
 /** Vor dem Laden der Seite: Long Tasks, jeder Wechsel von `data-farbe` mit Zeitpunkt, je Aufgabe die Zahl der in Textzellen eingefügten
-    Knoten (eine Mitteilung des MutationObserver je Aufgabe) und die Zeilen unmittelbar nach dem Zeichnen, vor der Farbe (der erste Zustand
+    Knoten und Zeilen (eine Mitteilung des MutationObserver je Aufgabe) und die Zeilen unmittelbar nach dem Zeichnen, vor der Farbe (der erste Zustand
     nach dem Zeichnen: `laeuft` oder gleich `nein`). */
 async function mitschriftEinrichten(page) {
   const meldungen = { konsole: [], seitenfehler: [] };
@@ -32,13 +32,15 @@ async function mitschriftEinrichten(page) {
     mitschrift.aufgabenEinholen = () => aufgabenAufnehmen(aufgabenBeobachter.takeRecords());
     new MutationObserver(eintraege => {
       let knoten = 0;
+      let zeilen = 0;
       for (const eintrag of eintraege) {
         if (eintrag.target.nodeType === Node.ELEMENT_NODE && eintrag.target.matches('td.c')) {
           knoten += eintrag.addedNodes.length;
+          zeilen += 1;
         }
       }
       if (knoten > 0) {
-        mitschrift.auflagen.push({ zeitMs: performance.now(), knoten });
+        mitschrift.auflagen.push({ zeitMs: performance.now(), knoten, zeilen });
       }
     }).observe(document, { subtree: true, childList: true });
     const zeilenLesen = () => Array.from(document.querySelectorAll(zeilenSelektor), zeile => ({
@@ -196,7 +198,7 @@ async function pruefeKeineLangeAufgabeSeitText(page) {
 }
 
 /** Das Färbefenster der zuletzt gezeigten Datei, vom letzten `laeuft` bis zum folgenden `ja` oder `nein` (das Zeichnen davor zählt nicht):
-    Aufgaben über 150 ms, die darin beginnen, die längste Aufgabe, die Zahl der Aufgaben mit Auflage und ihre meisten Knoten, dazu die
+    Aufgaben über 150 ms, die darin beginnen, die längste Aufgabe, die Zahl der Aufgaben mit Auflage und ihre meisten Knoten und Zeilen, dazu die
     Elemente mit Rolle im Bereich. Ohne `laeuft` (gleich `nein`) ist das Fenster leer. */
 async function faerbefensterMessen(page) {
   await page.evaluate(() => new Promise(fertig => setTimeout(() => requestAnimationFrame(() => fertig()), 0)));
@@ -208,7 +210,7 @@ async function faerbefensterMessen(page) {
     const rollenElemente = document.querySelectorAll(`${bereichSelektor} [class*="tk-"]`).length;
     const anfang = wechsel.map(eintrag => eintrag.zustand).lastIndexOf('laeuft');
     if (anfang < 0) {
-      return { zustand, langeAufgaben: [], laengsteAufgabeMs: 0, aufgaben: 0, meisteKnoten: 0, rollenElemente };
+      return { zustand, langeAufgaben: [], laengsteAufgabeMs: 0, aufgaben: 0, meisteKnoten: 0, meisteZeilen: 0, rollenElemente };
     }
     const vonMs = wechsel[anfang].zeitMs;
     const ende = wechsel.slice(anfang + 1).find(eintrag => eintrag.zustand === 'ja' || eintrag.zustand === 'nein');
@@ -222,6 +224,7 @@ async function faerbefensterMessen(page) {
       laengsteAufgabeMs: Math.round(Math.max(0, ...aufgaben.map(aufgabe => aufgabe.dauerMs))),
       aufgaben: auflagen.length,
       meisteKnoten: Math.max(0, ...auflagen.map(auflage => auflage.knoten)),
+      meisteZeilen: Math.max(0, ...auflagen.map(auflage => auflage.zeilen)),
       rollenElemente,
     };
   }, [LANGE_AUFGABE_MS, ROLLBEREICH]);

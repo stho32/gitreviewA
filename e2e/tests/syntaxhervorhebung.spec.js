@@ -250,6 +250,7 @@ test.describe('Dichte Inhalte', () => {
         expect(['ja', 'nein'], zelle).toContain(messung.zustand);
         expect(messung.langeAufgaben, `Aufgaben über 150 ms in ${zelle}`).toEqual([]);
         expect(messung.meisteKnoten, `neue Knoten je Aufgabe in ${zelle}`).toBeLessThanOrEqual(KNOTEN_JE_AUFGABE_HOECHSTENS);
+        expect(messung.meisteZeilen, `Zeilen je Aufgabe in ${zelle}`).toBeLessThanOrEqual(500);
         if (pfad === DICHT_GEFAERBT.pfad) {
           expect(messung.zustand, zelle).toBe('ja');
           expect(messung.rollenElemente, `Elemente mit Rolle in ${zelle}`).toBeGreaterThanOrEqual(DICHT_GEFAERBT.mindestensRollen);
@@ -257,6 +258,17 @@ test.describe('Dichte Inhalte', () => {
       }
     });
   }
+
+  test('soll höchstens 500 Zeilen je Aufgabe auflegen, auch wenn jede Zeile nur ein Stück trägt (Kriterium 7, zahlen.js)', async ({ farbe }) => {
+    await farbe.starten({ vorbereitung: 'Repo D' });
+
+    const fenster = await farbe.inZelleWaehlen('zahlen.js', { ansicht: NUR_AENDERUNGEN, umbruch: false });
+
+    expect(fenster.zustand).toBe('ja');
+    expect(fenster.rollenElemente).toBe(2000);
+    expect(fenster.meisteZeilen, 'Zeilen je Aufgabe').toBeLessThanOrEqual(500);
+    expect(fenster.aufgaben, 'Aufgaben mit Auflage').toBeGreaterThanOrEqual(4);
+  });
 });
 
 test.describe('Fremder Text', () => {

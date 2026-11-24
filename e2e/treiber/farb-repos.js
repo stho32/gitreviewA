@@ -60,7 +60,8 @@ echo 'fn gut() {}' > gut.rs
 git add -A && git commit -q -m "Last und Grenzen"
 `;
 
-/** Dichte Inhalte (Befund B1 der Reviews zu #8): je Zeile bis zu 998 Farbstücke, alle Dateien knapp innerhalb der Grenzen. */
+/** Dichte Inhalte (Befund B1 der Reviews zu #8): je Zeile bis zu 998 Farbstücke, alle Dateien knapp innerhalb der Grenzen; dazu
+    `zahlen.js` mit 2000 Zeilen zu je einem Stück. */
 const REPO_D = String.raw`
 git init -q -b main .
 git config user.name "Anna Beispiel"; git config user.email anna@example.org
@@ -75,6 +76,7 @@ z 256 998 '"' > dicht.php
 z 256 499 '1,' > dicht.toml
 eintraege=$(wiederhole 260 '1,'); for ((i = 0; i < 480; i++)); do printf 'var a%d=[%s];\n' "$i" "$eintraege"; done > dicht2.js
 einsen=$(wiederhole 250 '1 '); for ((i = 0; i < 500; i++)); do printf 'x = %s;\n' "$einsen"; done > dicht3.js
+seq 2000 | sed 's/.*/1/' > zahlen.js
 git add -A && git commit -q -m "Dichte Inhalte"
 `;
 
