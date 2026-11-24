@@ -123,6 +123,11 @@ async function dateiWaehlen(page, name) {
   await page.locator(DATEIZEILE).filter({ has: page.locator('.pfad', { hasText: name, exact: true }) }).click();
 }
 
+/** Klick auf die Dateizeile mit genau diesem Pfad (ein Name kann Teil eines anderen sein: `beispiel.cs` in `beispiel.css`). */
+async function dateiMitPfadWaehlen(page, pfad) {
+  await page.locator(`${DATEIZEILE}[data-pfad="${pfad}"]`).click();
+}
+
 /** Namen der Dateizeilen mit `aria-selected="true"`. */
 async function gewaehlteDateien(page) {
   return page.locator(`${DATEIZEILE}[aria-selected="true"] .pfad`).allTextContents();
@@ -257,6 +262,7 @@ function dialogeZaehlen(page) {
 }
 
 module.exports = {
+  dateiMitPfadWaehlen,
   pruefeLeiste, pruefeMessageVerborgen, pruefeMessage, pruefeOhneMessage, pruefeKeineFormatierung, pruefeGewaehlterCommit, pruefeDateiliste,
   pruefeDateilistenMeldung, pruefeRichtungszeichenNurAlsMarke, pruefeGewaehlteDateien, pruefeDateiwahlen, pruefeZeilenBinnen, pruefeDateizeilenBinnenNachKlick,
   dateienAntwortZurueckhalten, dialogeZaehlen,
