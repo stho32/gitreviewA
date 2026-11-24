@@ -21,7 +21,8 @@ internal static class GitLeser
         start.ArgumentList.Add("--no-walk=unsorted");
         start.ArgumentList.Add("--no-color");
         start.ArgumentList.Add("--encoding=UTF-8");
-        start.ArgumentList.Add("--format=%H%x1f%s");
+        start.ArgumentList.Add("-z");
+        start.ArgumentList.Add("--format=%H%x1f%an%x1f%aI%x1f%s%x1f%b");
         start.ArgumentList.Add("--end-of-options");
         foreach (var hash in hashes)
         {

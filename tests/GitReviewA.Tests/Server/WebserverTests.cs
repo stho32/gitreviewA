@@ -121,7 +121,10 @@ public class WebserverTests
 
     private static async Task<Webserver> StarteServer(StringWriter ziel, Protokollstufe mindeststufe)
     {
-        var commits = new Commitzeilen([new Commitzeile(HashC, "<script>alert(1)</script>"), new Commitzeile(HashA, "Erster Commit")]);
+        var commits = new Commitzeilen([
+            new Commitzeile(HashC, "<i>Mallory</i>", "2026-03-05T18:30:00+01:00", "<script>alert(1)</script>", "Zeile eins\nZeile zwei"),
+            new Commitzeile(HashA, "Anna Beispiel", "2026-03-04T09:15:00+01:00", "Erster Commit", ""),
+        ]);
         var protokoll = new StderrProtokoll(ziel, TimeProvider.System, mindeststufe);
         return await Webserver.StartenAsync(0, commits, Oberflaeche.AusDemProgramm(), protokoll);
     }

@@ -20,7 +20,7 @@ public class GitLeserFremdeKonfigurationTests
 
         var zeilen = GitLeser.Lesen(new CommitHashes([signierterHash]), repo.Ordner).AlsArray();
 
-        Assert.That(zeilen, Is.EqualTo(new[] { new Commitzeile(signierterHash, "Erster Commit") }));
+        Assert.That(zeilen.Select(zeile => (zeile.Hash, zeile.Betreff)), Is.EqualTo(new[] { (signierterHash, "Erster Commit") }));
         Assert.That(File.Exists(marker), Is.False, "das Programm aus der Konfiguration des Repos lief");
         repo.Git("log", "--no-walk", "--format=%H", signierterHash);
         Assert.That(File.Exists(marker), Is.True, "Kontrolle: das Marker-Programm ist über git log aufrufbar");

@@ -13,11 +13,11 @@ public class GitLeserTests
 
         var zeilen = GitLeser.Lesen(new CommitHashes([repo.Hashes[0], repo.Hashes[2], repo.Hashes[1]]), repo.Ordner).AlsArray();
 
-        Assert.That(zeilen, Is.EqualTo(new[]
+        Assert.That(zeilen.Select(zeile => (zeile.Hash, zeile.Betreff)), Is.EqualTo(new[]
         {
-            new Commitzeile(repo.Hashes[0], "Erster Commit"),
-            new Commitzeile(repo.Hashes[2], "Dritter Commit"),
-            new Commitzeile(repo.Hashes[1], "Zweiter Commit"),
+            (repo.Hashes[0], "Erster Commit"),
+            (repo.Hashes[2], "Dritter Commit"),
+            (repo.Hashes[1], "Zweiter Commit"),
         }));
     }
 
@@ -29,7 +29,23 @@ public class GitLeserTests
 
         var zeilen = GitLeser.Lesen(new CommitHashes([abgekuerzt]), repo.Ordner).AlsArray();
 
-        Assert.That(zeilen, Is.EqualTo(new[] { new Commitzeile(repo.Hashes[1], "Zweiter Commit") }));
+        Assert.That(zeilen.Select(zeile => (zeile.Hash, zeile.Betreff)), Is.EqualTo(new[] { (repo.Hashes[1], "Zweiter Commit") }));
+    }
+
+    [Test]
+    public void Wenn_Commit_Autor_Datum_und_Rumpf_hat_dann_alle_gelesen_mit_Zeitzone_des_Autors()
+    {
+        using var repo = WegwerfRepo.MitCommits();
+        var mitRumpf = repo.Committe("Dateien ändern", "Bernd Beispiel", "2026-03-05T18:30:00+01:00", "Zeile eins\nZeile zwei");
+        var ohneRumpf = repo.Committe("Start", "Anna Beispiel", "2026-03-04T09:15:00-05:00", "");
+
+        var zeilen = GitLeser.Lesen(new CommitHashes([mitRumpf, ohneRumpf]), repo.Ordner).AlsArray();
+
+        Assert.That(zeilen, Is.EqualTo(new[]
+        {
+            new Commitzeile(mitRumpf, "Bernd Beispiel", "2026-03-05T18:30:00+01:00", "Dateien ändern", "Zeile eins\nZeile zwei"),
+            new Commitzeile(ohneRumpf, "Anna Beispiel", "2026-03-04T09:15:00-05:00", "Start", ""),
+        }));
     }
 
     [Test]

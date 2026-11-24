@@ -32,6 +32,28 @@ internal sealed class WegwerfRepo : IDisposable
         }
     }
 
+    /// <summary>Committet den Stand des Arbeitsordners (auch leer) mit eigenem Autor, Autordatum und Rumpf.</summary>
+    public string Committe(string betreff, string autor, string datum, string rumpf)
+    {
+        Git("add", "-A");
+        var angaben = new Dictionary<string, string> { ["GIT_AUTHOR_NAME"] = autor, ["GIT_AUTHOR_DATE"] = datum, ["GIT_COMMITTER_DATE"] = datum };
+        var nachricht = new List<string> { "commit", "-q", "--allow-empty", "-m", betreff };
+        var hatRumpf = rumpf.Length > 0;
+        if (hatRumpf)
+        {
+            nachricht.AddRange(["-m", rumpf]);
+        }
+        Ausfuehren(nachricht.ToArray(), angaben);
+        return Git("rev-parse", "HEAD");
+    }
+
+    public void SchreibeDatei(string pfad, string inhalt)
+    {
+        var ziel = new FileInfo(Path.Combine(Ordner, pfad));
+        ziel.Directory?.Create();
+        File.WriteAllText(ziel.FullName, inhalt);
+    }
+
     public string Git(params string[] argumente)
     {
         return Ausfuehren(argumente, new Dictionary<string, string>());
