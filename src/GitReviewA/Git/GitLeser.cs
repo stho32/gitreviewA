@@ -153,15 +153,8 @@ internal static class GitLeser
     /// </summary>
     public static string NettoDiffLesen(string basis, string spitze, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner)
     {
-        var start = GitDiffStdinStart(umfang, arbeitsordner, alsText: false);
+        var start = GitDiffStdinStart(umfang, arbeitsordner);
         return AusfuehrenMitEingabe(start, NettoEingabe(basis, spitze, datei), $"git diff --stdin {Kurz(basis)}..{Kurz(spitze)} -- {datei.Pfad}");
-    }
-
-    /// <summary>Wie <see cref="NettoDiffLesen"/>, aber mit `--text`: zeigt auch eine als binär eingestufte Datei mit allen Bytes.</summary>
-    public static string NettoDiffAlsTextLesen(string basis, string spitze, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner)
-    {
-        var start = GitDiffStdinStart(umfang, arbeitsordner, alsText: true);
-        return AusfuehrenMitEingabe(start, NettoEingabe(basis, spitze, datei), $"git diff --stdin --text {Kurz(basis)}..{Kurz(spitze)} -- {datei.Pfad}");
     }
 
     /// <summary>Zeilen für `git diff --stdin`: Basis (leer = leerer Baum), Spitze, `--`, der Pfad und bei einer Umbenennung der alte Pfad, je als Bytes.</summary>
@@ -562,7 +555,7 @@ internal static class GitLeser
     /// Wie <see cref="GitShowDiffStart"/>, aber Revisionen und Pfade kommen über stdin (<c>git diff --stdin</c>): .NET kann ein Byte
     /// außerhalb von UTF-8 nicht als Argument übergeben, und ein Pfad aus der Anfrage darf nie Argument werden.
     /// </summary>
-    private static ProcessStartInfo GitDiffStdinStart(Diffumfang umfang, string arbeitsordner, bool alsText)
+    private static ProcessStartInfo GitDiffStdinStart(Diffumfang umfang, string arbeitsordner)
     {
         var start = GitStart.Im(arbeitsordner);
         start.ArgumentList.Add("--literal-pathspecs");
@@ -579,10 +572,6 @@ internal static class GitLeser
         start.ArgumentList.Add("--inter-hunk-context=0");
         start.ArgumentList.Add("--submodule=short");
         start.ArgumentList.Add("--no-relative");
-        if (alsText)
-        {
-            start.ArgumentList.Add("--text");
-        }
         return start;
     }
 
