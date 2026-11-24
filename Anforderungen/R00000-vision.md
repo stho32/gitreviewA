@@ -38,6 +38,15 @@ an die KI zurückzugeben.
 - **Einzeln oder zusammen**: jeden Commit für sich oder alle gewählten Änderungen je
   Datei zusammen — als Netto-Diff, wo die Commits eine lückenlose Kette bilden, sonst je
   Commit beschriftet.
+- **Zusammen ist der Standard, die Dateien führen**: Nach dem Start steht links die Liste der
+  Dateien der ganzen Auswahl, rechts der Diff der gewählten Datei in voller Höhe; die Commits
+  sind eine zugeklappte Zeile über den Dateien. „Einzeln“ mit Commit-Wähler ist ein bewusster
+  Wechsel. Der Haken gilt in „Zusammen“ je Datei, in „Einzeln“ je Stelle (Commit und Datei);
+  das Ergebnis nennt weiter jede Stelle.
+- **Beenden und Abbrechen im Kopf**: beide stehen im Kopf der Oberfläche und fragen vor der
+  Wirkung nach. „Beenden“ nennt die Zahl der Anmerkungen und die Dateien, die ungeprüft bleiben;
+  „Abbrechen“ wirkt wie Strg+C (nichts auf stdout, „Review abgebrochen“ auf stderr, Exit 130)
+  und warnt, dass alle Anmerkungen verloren gehen.
 - **Checkliste im Kopf entlasten**: Dateien abhaken, Fortschritt sehen, zur nächsten
   ungeprüften springen; alles per Tastatur.
 - **Sprung in den Editor**: jede Stelle öffnet sich per Klick in VS Code, mit Hinweis,
@@ -103,3 +112,4 @@ an die KI zurückzugeben.
 | 2026-11-24 | Richtungsfrage „Urteil neben den Anmerkungen“ entschieden: kein Gesamturteil, Exit 0 bei „Beenden“ (Betreiber, Empfehlung des product-owner) |
 | 2026-11-24 | Richtungsfrage „Lauf ohne Beenden“ entschieden: Tab zu wartet weiter, Abbruch ohne Ergebnis mit „Review abgebrochen“ auf stderr und Exit 130, kein Zeitlimit (Betreiber, Empfehlung des product-owner) |
 | 2026-11-24 | Richtungsfrage „Format des Ergebnisses“ entschieden: nur Markdown, JSON erst bei konkretem Bedarf (Empfehlung des product-owner; Betreiber: „Nimm einfach immer die Empfehlung vom Product Owner“) |
+| 2026-11-24 | Zielbild ergänzt um „Zusammen ist der Standard, die Dateien führen“ und „Beenden und Abbrechen im Kopf“ (Betreiber: „Die Dateien bitte über den Commits (sind wichtiger) und die Default-Anzeige ist ‚alle Änderungen zusammen‘.“, „Ja, Fassung 2 bitte einplanen.“; Entscheidungen des product-owner zu #27) |
