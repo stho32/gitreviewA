@@ -20,4 +20,4 @@ Keine aus der Factory.
 
 ## Gelerntes
 
-- (noch keine)
+- 2026-11-24 (#1, #5): User Stories liegen unter `Anforderungen/user-stories/RXXXXX.md` (Ablageort der Anforderungs-Familie, `./user-stories/` relativ zur Anforderung) — nicht im Repo-Root.
