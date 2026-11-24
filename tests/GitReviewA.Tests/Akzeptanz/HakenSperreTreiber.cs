@@ -6,6 +6,7 @@ using GitReviewA.Diff;
 using GitReviewA.Git;
 using GitReviewA.Haken;
 using GitReviewA.Protokoll;
+using GitReviewA.Tests.Hilfen;
 
 namespace GitReviewA.Tests.Akzeptanz;
 
@@ -55,7 +56,7 @@ internal sealed class HakenSperreTreiber
         var protokoll = new StderrProtokoll(protokollziel, TimeProvider.System, Protokollstufe.Debug);
         var uebersicht = new GemerkteUebersicht(uebersichtsquelle);
         var hakenspeicher = new Hakenspeicher();
-        var haken = new DateiAbhakenInteractor(uebersicht, hakenspeicher, protokoll);
+        var haken = new DateiAbhakenInteractor(uebersicht, hakenspeicher, TestNettoDateiliste.Leer(), protokoll);
         var anmerkungsspeicher = new Anmerkungsspeicher();
         var annotieren = new ZeileAnnotierenInteractor(anmerkungsspeicher, new CommitAuswahl(commits), new Stellensperre(uebersicht, protokoll), protokoll);
         var dateien = new GemerkteDateiquelle(new GitDateiquelle(arbeitsordner));

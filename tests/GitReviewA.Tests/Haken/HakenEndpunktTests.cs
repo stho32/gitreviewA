@@ -175,7 +175,7 @@ public class HakenEndpunktTests
         var speicher = new Hakenspeicher();
         speicher.VersucheZuSiegeln();
         var protokoll = new StderrProtokoll(new StringWriter(), TimeProvider.System, Protokollstufe.Warnung);
-        var interactor = new DateiAbhakenInteractor(new GemerkteUebersicht(TestUebersichtsquelle.Mit(HashA, "alt.txt")), speicher, protokoll);
+        var interactor = new DateiAbhakenInteractor(new GemerkteUebersicht(TestUebersichtsquelle.Mit(HashA, "alt.txt")), speicher, TestNettoDateiliste.Leer(), protokoll);
 
         var antwort = HakenEndpunkt.AlsAntwort(interactor.Setze(new Hakenanfrage(HashA, "alt.txt", true)));
 

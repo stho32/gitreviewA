@@ -37,8 +37,31 @@ internal static class HakenPruefer
         return true;
     }
 
-    public static bool GehoertZurAuswahl(Stelle stelle, Dateiuebersicht uebersicht, out string grund)
+    /// <summary>Ein Stapelwunsch trägt die Datei der Netto-Liste und einen Zielzustand, keinen Commit.</summary>
+    public static bool IstStapel(Hakenanfrage? anfrage, [NotNullWhen(true)] out Stapelwunsch? stapel, out string grund)
     {
+        stapel = null;
+        if (anfrage is null)
+        {
+            grund = "Körper ist kein JSON-Objekt eines Hakens";
+            return false;
+        }
+        if (anfrage.Datei is not { Length: > 0 } datei)
+        {
+            grund = "datei fehlt";
+            return false;
+        }
+        if (anfrage.Abgehakt is not { } abgehakt)
+        {
+            grund = "abgehakt fehlt (true oder false)";
+            return false;
+        }
+        stapel = new Stapelwunsch(datei, abgehakt);
+        grund = string.Empty;
+        return true;
+    }
+
+    public static bool GehoertZurAuswahl(Stelle stelle, Dateiuebersicht uebersicht, out string grund)    {
         var istCommitDerAuswahl = uebersicht.EnthaeltCommit(stelle.Commit);
         if (!istCommitDerAuswahl)
         {

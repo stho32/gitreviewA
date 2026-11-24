@@ -13,6 +13,7 @@ internal sealed class ZusammenRepo : IDisposable
 {
     private readonly WegwerfRepo repo;
     private readonly Dictionary<string, string> hashNachName = new(StringComparer.Ordinal);
+    private readonly List<string> reihenfolge = [];
     private int weitereCommits;
 
     private ZusammenRepo(WegwerfRepo repo)
@@ -65,6 +66,29 @@ internal sealed class ZusammenRepo : IDisposable
         return z;
     }
 
+    /// <summary>Das Lastprofil der Vision: 200 Commits, davon einer mit 2 000 Dateien, dazu eine Datei mit 20 000 Zeilen.</summary>
+    public static ZusammenRepo Gross()
+    {
+        var z = new ZusammenRepo(WegwerfRepo.MitCommits());
+        for (var nummer = 1; nummer <= 2000; nummer++)
+        {
+            z.Schreibe($"viele/datei-{nummer:D4}.txt", $"Zeile {nummer}\n");
+        }
+        z.Schreibe("gross.txt", string.Concat(Enumerable.Range(1, 20000).Select(nummer => $"zeile {nummer:D5}\n")));
+        z.Committe("g1", "2 000 Dateien");
+        for (var nummer = 1; nummer <= 199; nummer++)
+        {
+            z.Leerer($"leer-{nummer:D3}");
+        }
+        return z;
+    }
+
+    /// <summary>Alle Commitnamen in der Reihenfolge der Anlage.</summary>
+    public string[] Commitnamen()
+    {
+        return reihenfolge.ToArray();
+    }
+
     private void Schreibe(string pfad, string inhalt)
     {
         repo.SchreibeDatei(pfad, inhalt);
@@ -80,6 +104,17 @@ internal sealed class ZusammenRepo : IDisposable
     {
         weitereCommits++;
         var zeitpunkt = new DateTimeOffset(2026, 3, 4, 9, 15, 0, TimeSpan.FromHours(1)).AddMinutes(weitereCommits);
-        hashNachName[name] = repo.Committe(betreff, "Anna Beispiel", zeitpunkt.ToString("yyyy-MM-ddTHH:mm:sszzz"), "");
+        Merke(name, repo.Committe(betreff, "Anna Beispiel", zeitpunkt.ToString("yyyy-MM-ddTHH:mm:sszzz"), ""));
+    }
+
+    private void Leerer(string name)
+    {
+        Merke(name, repo.LeererCommit($"Leer {name}"));
+    }
+
+    private void Merke(string name, string hash)
+    {
+        hashNachName[name] = hash;
+        reihenfolge.Add(name);
     }
 }

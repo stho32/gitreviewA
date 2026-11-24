@@ -11,7 +11,7 @@ namespace GitReviewA.Zusammen;
 /// unveränderlich) sowie je Datei den Diff (bei Bedarf). Lückenlos ist der Diff netto gegen den Elternstand des ältesten Commits,
 /// sonst je Commit ein Abschnitt in Auswahlreihenfolge. Die Übersicht der Dateien ist dieselbe gemerkte wie für Haken und Anmerkung.
 /// </summary>
-internal sealed class ZusammenLesenInteractor
+internal sealed class ZusammenLesenInteractor : INettoDateiliste
 {
     private const string Kontext = "Zusammen";
     private const string Anfragekontext = "Anfrage";
@@ -43,6 +43,13 @@ internal sealed class ZusammenLesenInteractor
             gemerkt ??= Lesen();
             return gemerkt;
         }
+    }
+
+    /// <summary>Für den Stapel-Haken: die Einträge der Netto-Liste mit diesem Anzeigepfad; nicht lesbar, wenn der Stand nicht lesbar ist.</summary>
+    public NettoDateitreffer DateienMitAnzeigepfad(string anzeigepfad)
+    {
+        var stand = Stand();
+        return new NettoDateitreffer(stand.IstLesbar, stand.Dateien.MitAnzeigepfad(anzeigepfad));
     }
 
     public ZusammenDiffergebnis Diff(Zusammenanfrage anfrage)

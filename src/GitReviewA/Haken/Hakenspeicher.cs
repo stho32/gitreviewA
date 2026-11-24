@@ -28,6 +28,30 @@ internal sealed class Hakenspeicher
         }
     }
 
+    /// <summary>Ein Stapel setzt oder entnimmt alle Stellen unter einer Sperre — ganz oder gar nicht.</summary>
+    public bool VersucheZuSetzen(IEnumerable<Stelle> stellen, bool abgehakt)
+    {
+        lock (sperre)
+        {
+            if (istGesiegelt)
+            {
+                return false;
+            }
+            foreach (var stelle in stellen)
+            {
+                if (abgehakt)
+                {
+                    this.abgehakt.Add(stelle);
+                }
+                else
+                {
+                    this.abgehakt.Remove(stelle);
+                }
+            }
+            return true;
+        }
+    }
+
     public bool VersucheZuSiegeln()
     {
         lock (sperre)

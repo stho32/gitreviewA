@@ -45,8 +45,8 @@ internal sealed class Webserver : IAsyncDisposable
         var anmerkungen = new Anmerkungsspeicher();
         var haken = new Hakenspeicher();
         var uebersicht = new GemerkteUebersicht(uebersichtsquelle);
-        var dateiAbhaken = new DateiAbhakenInteractor(uebersicht, haken, protokoll);
         var zusammen = new ZusammenLesenInteractor(commits, uebersicht, zusammenquelle, diffquelle, protokoll);
+        var dateiAbhaken = new DateiAbhakenInteractor(uebersicht, haken, zusammen, protokoll);
         var lauscherPort = new LauscherPort();
         anwendung.Use(SchuetzeVorFremdemHost(lauscherPort, protokoll));
         anwendung.Use(SetzeSchutzkoepfe);

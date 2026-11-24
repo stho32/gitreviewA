@@ -131,13 +131,26 @@ public class DateiAbhakenTests
         var antworten = new[]
         {
             treiber.SetzeOhneKoerper(),
-            treiber.Setze(null, "alt.txt", true),
+            treiber.Setze(null, null, true),
             treiber.Setze(repo.Hash("p"), null, true),
             treiber.Setze(repo.Hash("p"), "alt.txt", null),
         };
 
         Assert.That(antworten.Select(antwort => antwort.Ausgang), Is.All.EqualTo("ungültig"));
         Assert.That(treiber.Uebersichtslesungen(), Is.Zero);
+    }
+
+    [Test]
+    [Description("R00015 Kriterium 9: ohne `commit` ist es der Stapel; die Datei muss in der Netto-Liste stehen")]
+    public void Wenn_ohne_commit_aber_mit_datei_dann_ist_es_der_Stapel_ueber_die_Netto_Liste()
+    {
+        using var repo = AbhakenRepo.Vorbereitung();
+        var treiber = DateiAbhakenTreiber.Starten(repo.Ordner, [repo.Hash("p")]);
+
+        var ohneDateiInDerListe = treiber.Setze(null, "alt.txt", true);
+
+        Assert.That((ohneDateiInDerListe.Ausgang, ohneDateiInDerListe.Grund), Is.EqualTo(("ungültig", "Datei steht nicht in der Netto-Liste")));
+        Assert.That(treiber.Uebersichtslesungen(), Is.EqualTo(1), "der Stapel prüft die Sperre an der Übersicht");
     }
 
     [Test]
