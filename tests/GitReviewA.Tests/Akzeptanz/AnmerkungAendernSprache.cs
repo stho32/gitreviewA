@@ -47,6 +47,12 @@ internal sealed class AnmerkungAendernSprache
         return treiber.AendereOhneWunsch();
     }
 
+    /// <summary>Der Zwischenzustand „Anmerkung zwischen Finden und Ersetzen weggefallen“ (Löschen, I0024) — ohne Wettlauf.</summary>
+    public Aenderantwort AendereMitVerschwundenerAnmerkung(int nummer, string text)
+    {
+        return treiber.AendereMitVerschwundenerAnmerkung(nummer, text);
+    }
+
     public Listeneintrag[] Anmerkungen()
     {
         return treiber.Liste();

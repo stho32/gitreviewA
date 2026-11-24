@@ -74,6 +74,28 @@ internal sealed class AnmerkungAendernTreiber
         return AlsAntwort(new AnmerkungAendernInteractor(speicher, sperre, protokoll).Aendere(null));
     }
 
+    /// <summary>Wie <see cref="Aendere"/>, aber mit einem Speicher, der das Ersetzen als „nicht gefunden“ meldet — der Zwischenzustand, in dem die
+        /// Anmerkung zwischen Finden und Ersetzen wegfällt (Löschen, I0024). Die Probe stellt ihn ohne Wettlauf deterministisch.</summary>
+    public Aenderantwort AendereMitVerschwundenerAnmerkung(int nummer, string text)
+    {
+        var stolpernd = new SpeicherOhneErsetzen();
+        foreach (var anmerkung in speicher.Schnappschuss())
+        {
+            stolpernd.VersucheAnzuhaengen(new GepruefteAnmerkung(anmerkung.Commit, anmerkung.Datei, anmerkung.Zeile, anmerkung.Text), out _);
+        }
+        return AlsAntwort(new AnmerkungAendernInteractor(stolpernd, sperre, protokoll).Aendere(new Aenderungswunsch(nummer, text)));
+    }
+
+    /// <summary>Ein Speicher, in dem die Anmerkung beim Ersetzen fehlt — ohne den Löschweg (I0024).</summary>
+    private sealed class SpeicherOhneErsetzen : Anmerkungsspeicher
+    {
+        public override Aenderungsausgang VersucheZuAendern(int nummer, string text, out Anmerkung? geaendert)
+        {
+            geaendert = null;
+            return Aenderungsausgang.NichtGefunden;
+        }
+    }
+
     public Listeneintrag[] Liste()
     {
         var eintraege = new List<Listeneintrag>();

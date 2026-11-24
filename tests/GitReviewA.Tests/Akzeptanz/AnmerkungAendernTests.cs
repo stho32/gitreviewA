@@ -113,6 +113,19 @@ public class AnmerkungAendernTests
     }
 
     [Test]
+    public void Wenn_die_Anmerkung_zwischen_Finden_und_Ersetzen_wegfaellt_dann_NichtGefunden_mit_Nummer_statt_Beendet()
+    {
+        using var repo = DiffRepo.A();
+        var gr = AnmerkungAendernSprache.Aufruf(repo, ["q", "p"]);
+        gr.LegeAn("q", "lang.txt", 18, "alt");
+
+        var antwort = gr.AendereMitVerschwundenerAnmerkung(1, "neu");
+
+        Assert.That((antwort.Ausgang, antwort.Grund), Is.EqualTo(("nicht gefunden", "Anmerkung 1 gibt es nicht")));
+        Assert.That(gr.Anmerkungen(), Is.EqualTo(new[] { gr.Anmerkung(1, "q", "lang.txt", 18, "alt") }));
+    }
+
+    [Test]
     public void Wenn_der_Lauf_beendet_ist_dann_abgelehnt_als_Beendet_und_das_Ergebnis_bleibt()
     {
         using var repo = DiffRepo.A();

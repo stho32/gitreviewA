@@ -40,7 +40,7 @@ internal sealed class AnmerkungAendernInteractor(Anmerkungsspeicher speicher, St
         var ausgang = speicher.VersucheZuAendern(nummer, text, out var geaenderte);
         if (ausgang is not Aenderungsausgang.Geaendert)
         {
-            return Abgelehnt(ausgang, AnmerkungMeldungen.Beendet);
+            return Abgelehnt(ausgang, GrundFuer(ausgang, nummer));
         }
         MeldeGeaendert(geaenderte!);
         return new Aenderungsergebnis(Aenderungsausgang.Geaendert, geaenderte, string.Empty);
@@ -62,5 +62,15 @@ internal sealed class AnmerkungAendernInteractor(Anmerkungsspeicher speicher, St
     private static string NichtGefundenGrund(int nummer)
     {
         return $"Anmerkung {nummer.ToString(CultureInfo.InvariantCulture)} gibt es nicht";
+    }
+
+    /// <summary>Der Grund eines Nicht-Erfolgs aus dem Speicher: beendet, oder die Nummer ist zwischen Finden und Ersetzen weggefallen (Löschen).</summary>
+    private static string GrundFuer(Aenderungsausgang ausgang, int nummer)
+    {
+        if (ausgang is Aenderungsausgang.Beendet)
+        {
+            return AnmerkungMeldungen.Beendet;
+        }
+        return NichtGefundenGrund(nummer);
     }
 }

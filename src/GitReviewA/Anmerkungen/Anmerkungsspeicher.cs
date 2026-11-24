@@ -7,7 +7,7 @@ namespace GitReviewA.Anmerkungen;
 /// was nach dem Abschluss kommt, wird abgelehnt und kann nicht still aus dem Ergebnis fallen.
 /// Jede Anmerkung bekommt eine stabile Nummer aus einem Zähler, die nie wiederverwendet wird (Ändern und Löschen adressieren über sie).
 /// </summary>
-internal sealed class Anmerkungsspeicher
+internal class Anmerkungsspeicher
 {
     private readonly Lock sperre = new();
     private readonly List<Anmerkung> anmerkungen = [];
@@ -50,8 +50,9 @@ internal sealed class Anmerkungsspeicher
         }
     }
 
-    /// <summary>Ersetzt allein den Text; Nummer, Stelle und Position in der Liste bleiben. Nach dem Abschluss wird abgelehnt.</summary>
-    public Aenderungsausgang VersucheZuAendern(int nummer, string text, out Anmerkung? geaendert)
+    /// <summary>Ersetzt allein den Text; Nummer, Stelle und Position in der Liste bleiben. Nach dem Abschluss wird abgelehnt.
+        /// Virtuell, damit eine Probe den Zwischenzustand „zwischen Finden und Ersetzen weggefallen“ (Löschen) deterministisch stellen kann.</summary>
+    public virtual Aenderungsausgang VersucheZuAendern(int nummer, string text, out Anmerkung? geaendert)
     {
         lock (sperre)
         {
