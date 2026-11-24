@@ -12,20 +12,35 @@ const KLASSE_JE_ROLLE = {
 };
 const LANGE_AUFGABE_MS = 150;
 
-/** Vor dem Laden der Seite: Long Tasks, jeder Wechsel von `data-farbe` und die Zeilen unmittelbar nach dem Zeichnen, vor der Farbe
-    (der erste Zustand nach dem Zeichnen: `laeuft` oder gleich `nein`). */
+/** Vor dem Laden der Seite: Long Tasks, jeder Wechsel von `data-farbe` mit Zeitpunkt, je Aufgabe die Zahl der in Textzellen eingefügten
+    Knoten (eine Mitteilung des MutationObserver je Aufgabe) und die Zeilen unmittelbar nach dem Zeichnen, vor der Farbe (der erste Zustand
+    nach dem Zeichnen: `laeuft` oder gleich `nein`). */
 async function mitschriftEinrichten(page) {
   const meldungen = { konsole: [], seitenfehler: [] };
   page.on('console', nachricht => meldungen.konsole.push(nachricht.text()));
   page.on('pageerror', fehler => meldungen.seitenfehler.push(String(fehler)));
   await page.addInitScript(zeilenSelektor => {
-    const mitschrift = { langeAufgaben: [], farbzustaende: [], zeilenVorDerFarbe: null, textStehtUm: null };
+    const mitschrift = { langeAufgaben: [], farbzustaende: [], farbwechsel: [], auflagen: [], zeilenVorDerFarbe: null, textStehtUm: null };
     window.farbMitschrift = mitschrift;
-    new PerformanceObserver(liste => {
-      for (const eintrag of liste.getEntries()) {
+    const aufgabenAufnehmen = eintraege => {
+      for (const eintrag of eintraege) {
         mitschrift.langeAufgaben.push({ startMs: eintrag.startTime, dauerMs: eintrag.duration });
       }
-    }).observe({ type: 'longtask', buffered: true });
+    };
+    const aufgabenBeobachter = new PerformanceObserver(liste => aufgabenAufnehmen(liste.getEntries()));
+    aufgabenBeobachter.observe({ type: 'longtask', buffered: true });
+    mitschrift.aufgabenEinholen = () => aufgabenAufnehmen(aufgabenBeobachter.takeRecords());
+    new MutationObserver(eintraege => {
+      let knoten = 0;
+      for (const eintrag of eintraege) {
+        if (eintrag.target.nodeType === Node.ELEMENT_NODE && eintrag.target.matches('td.c')) {
+          knoten += eintrag.addedNodes.length;
+        }
+      }
+      if (knoten > 0) {
+        mitschrift.auflagen.push({ zeitMs: performance.now(), knoten });
+      }
+    }).observe(document, { subtree: true, childList: true });
     const zeilenLesen = () => Array.from(document.querySelectorAll(zeilenSelektor), zeile => ({
       art: zeile.dataset.art, alt: zeile.dataset.alt, neu: zeile.dataset.neu, text: zeile.lastElementChild.textContent,
     }));
@@ -33,6 +48,7 @@ async function mitschriftEinrichten(page) {
       for (const eintrag of eintraege) {
         const zustand = eintrag.target.getAttribute('data-farbe');
         mitschrift.farbzustaende.push(zustand);
+        mitschrift.farbwechsel.push({ zustand, zeitMs: performance.now() });
         const frischGezeichnet = eintrag.oldValue === null && zustand !== null;
         if (frischGezeichnet) {
           mitschrift.textStehtUm = performance.now();
@@ -177,6 +193,38 @@ async function pruefeKeineLangeAufgabeSeitText(page) {
     return mitschrift.langeAufgaben.filter(aufgabe => aufgabe.startMs + aufgabe.dauerMs >= mitschrift.textStehtUm && aufgabe.dauerMs > grenzeMs);
   }, LANGE_AUFGABE_MS);
   expect(lange).toEqual([]);
+}
+
+/** Das Färbefenster der zuletzt gezeigten Datei, vom letzten `laeuft` bis zum folgenden `ja` oder `nein` (das Zeichnen davor zählt nicht):
+    Aufgaben über 150 ms, die darin beginnen, die längste Aufgabe, die Zahl der Aufgaben mit Auflage und ihre meisten Knoten, dazu die
+    Elemente mit Rolle im Bereich. Ohne `laeuft` (gleich `nein`) ist das Fenster leer. */
+async function faerbefensterMessen(page) {
+  await page.evaluate(() => new Promise(fertig => setTimeout(() => requestAnimationFrame(() => fertig()), 0)));
+  return page.evaluate(([grenzeMs, bereichSelektor]) => {
+    const mitschrift = window.farbMitschrift;
+    mitschrift.aufgabenEinholen();
+    const wechsel = mitschrift.farbwechsel;
+    const zustand = document.querySelector(bereichSelektor).getAttribute('data-farbe');
+    const rollenElemente = document.querySelectorAll(`${bereichSelektor} [class*="tk-"]`).length;
+    const anfang = wechsel.map(eintrag => eintrag.zustand).lastIndexOf('laeuft');
+    if (anfang < 0) {
+      return { zustand, langeAufgaben: [], laengsteAufgabeMs: 0, aufgaben: 0, meisteKnoten: 0, rollenElemente };
+    }
+    const vonMs = wechsel[anfang].zeitMs;
+    const ende = wechsel.slice(anfang + 1).find(eintrag => eintrag.zustand === 'ja' || eintrag.zustand === 'nein');
+    const bisMs = ende ? ende.zeitMs : Infinity;
+    const imFenster = zeitMs => zeitMs >= vonMs && zeitMs <= bisMs;
+    const aufgaben = mitschrift.langeAufgaben.filter(aufgabe => imFenster(aufgabe.startMs));
+    const auflagen = mitschrift.auflagen.filter(auflage => imFenster(auflage.zeitMs));
+    return {
+      zustand,
+      langeAufgaben: aufgaben.filter(aufgabe => aufgabe.dauerMs > grenzeMs).map(aufgabe => Math.round(aufgabe.dauerMs)),
+      laengsteAufgabeMs: Math.round(Math.max(0, ...aufgaben.map(aufgabe => aufgabe.dauerMs))),
+      aufgaben: auflagen.length,
+      meisteKnoten: Math.max(0, ...auflagen.map(auflage => auflage.knoten)),
+      rollenElemente,
+    };
+  }, [LANGE_AUFGABE_MS, ROLLBEREICH]);
 }
 
 /** Farben der Rollen in einer Zeile je Art, in sRGB über eine Leinwand gerechnet, dazu der sichtbare Hintergrund der Textzelle (der erste
@@ -360,7 +408,7 @@ async function pruefeFarbeLaeuftOhneRolle(page) {
 
 module.exports = {
   workerAntwortenZurueckhalten, gehalteneAntwortenAbwarten, antwortFreigeben, pruefeFarbeLaeuftOhneRolle, pruefeBeendeteWorker,
-  mitschriftEinrichten, farbeAbwarten, rollenDerStelle, pruefeRolle, pruefeUngefaerbt, pruefeRollenNurImText, pruefeKeineMeldung, pruefeTextWieVorDerFarbe,
+  mitschriftEinrichten, farbeAbwarten, faerbefensterMessen, rollenDerStelle, pruefeRolle, pruefeUngefaerbt, pruefeRollenNurImText, pruefeKeineMeldung, pruefeTextWieVorDerFarbe,
   zeilentexte, pruefeZeilenanzahl, farbzustaendeLeeren, pruefeFarbeLiefNeu, pruefeKeineLangeAufgabeSeitText, rollenfarbenMessen, pruefeRollenfarben,
   farbschemaSetzen, prismNichtAbrufbar, prismWirft, ohneWorker, pruefeOhneWorker, pruefeKeinPrismAufDerSeite, pruefeKonsoleLeer, anfragenMitschreiben,
   pruefeNurEigenerHost, pruefeKeinElement,

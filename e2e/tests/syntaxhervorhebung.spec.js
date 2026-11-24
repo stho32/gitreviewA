@@ -206,6 +206,39 @@ test.describe('Wo nicht gefärbt wird', () => {
   });
 });
 
+/** Befund B1 der Reviews zu #8: je Zeile bis zu 998 Farbstücke; jede Datei in jeder Ansicht mit und ohne Umbruch (Kriterium 7). */
+const DICHTE_DATEIEN = ['dicht.js', 'dicht.php', 'dicht.toml', 'dicht2.js', 'dicht3.js'];
+const ZELLEN = [NUR_AENDERUNGEN, GANZE_DATEI].flatMap(ansicht => [false, true].map(umbruch => ({ ansicht, umbruch })));
+/** Positivkontrolle: diese Datei wird gefärbt und trägt so viele Elemente mit Rolle — der Test misst wirklich das Auflegen. */
+const DICHT_GEFAERBT = { pfad: 'dicht.toml', mindestensRollen: 125000 };
+
+test.describe('Dichte Inhalte', () => {
+  for (const pfad of DICHTE_DATEIEN) {
+    test(`soll ${pfad} in jeder Ansicht mit und ohne Umbruch ohne Aufgabe über 150 ms färben, Text gleich, nur der Text trägt Rollen (Kriterium 7)`, async ({ farbe }) => {
+      await farbe.starten({ vorbereitung: 'Repo D' });
+      const messungen = [];
+
+      for (const zelle of ZELLEN) {
+        const fenster = await farbe.inZelleWaehlen(pfad, zelle);
+        messungen.push({ ...zelle, ...fenster });
+        await farbe.textWieVorDerFarbe();
+        await farbe.nurDerTextTraegtRollen();
+      }
+
+      test.info().annotations.push({ type: `Färbefenster ${pfad}`, description: JSON.stringify(messungen) });
+      for (const messung of messungen) {
+        const zelle = `${messung.ansicht}, Umbruch ${messung.umbruch}`;
+        expect(['ja', 'nein'], zelle).toContain(messung.zustand);
+        expect(messung.langeAufgaben, `Aufgaben über 150 ms in ${zelle}`).toEqual([]);
+        if (pfad === DICHT_GEFAERBT.pfad) {
+          expect(messung.zustand, zelle).toBe('ja');
+          expect(messung.rollenElemente, `Elemente mit Rolle in ${zelle}`).toBeGreaterThanOrEqual(DICHT_GEFAERBT.mindestensRollen);
+        }
+      }
+    });
+  }
+});
+
 test.describe('Fremder Text', () => {
   for (const ansicht of [NUR_AENDERUNGEN, GANZE_DATEI]) {
     test(`soll fremden Inhalt in „${ansicht}“ als Text färben, ohne Markup und mit Marke (Kriterium 8)`, async ({ farbe }) => {

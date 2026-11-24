@@ -14,6 +14,7 @@ const ZEILE_FRIST_MS = 1000;
 const VORBEREITUNGEN = {
   'Repo F': { anlegen: repos.repoF, commits: ['f', 'e'] },
   'Repo L': { anlegen: repos.repoL, commits: ['l'] },
+  'Repo D': { anlegen: repos.repoD, commits: ['d'] },
 };
 
 /** Ausfälle der Färbung (Kriterium 6), je vor dem Laden der Seite eingerichtet. */
@@ -31,6 +32,7 @@ function farbSprache(gr, page) {
   let dialogePruefen;
   let ausfall = null;
   let gewaehlterPfad = null;
+  let umbruchAn = false;
 
   /** Startet gitreviewA im Repo der Vorbereitung und öffnet die Seite (Fenster 1280 × 800); `ausfall` aus AUSFAELLE. */
   async function starten({ vorbereitung = 'Repo F', ausfall: gewaehlterAusfall = null } = {}) {
@@ -38,6 +40,7 @@ function farbSprache(gr, page) {
     const repo = art.anlegen(path.join(gr.eigenerOrdner(), 'repo'));
     lauf = await gr.gitreviewAStarten(repo, art.commits.map(name => repo.hashes[name]));
     ausfall = gewaehlterAusfall;
+    umbruchAn = false;
     meldungen = await farbe.mitschriftEinrichten(page);
     anfragen = farbe.anfragenMitschreiben(page);
     if (ausfall) {
@@ -63,8 +66,24 @@ function farbSprache(gr, page) {
     return farbe.farbeAbwarten(page, gewaehlterPfad);
   }
 
+  /** Erst `ok.js`, dort Ansicht und Umbruch einstellen, dann `pfad` wählen: das Färbefenster gehört allein `pfad`. */
+  async function inZelleWaehlen(pfad, { ansicht, umbruch }) {
+    await waehlen('ok.js');
+    await ansichtWaehlen(ansicht);
+    if (umbruchAn !== umbruch) {
+      await diffSeite.umbruchUmschalten(page);
+      umbruchAn = umbruch;
+    }
+    await waehlen(pfad);
+    return farbe.faerbefensterMessen(page);
+  }
+
   return {
     starten,
+    /** Wählt `pfad` in Ansicht und Umbruch der Zelle; liefert das Färbefenster (Zustand, Aufgaben über 150 ms, Aufgaben mit Auflage, Rollen). */
+    inZelleWaehlen,
+    /** Das Färbefenster der zuletzt gezeigten Datei. */
+    faerbefenster: () => farbe.faerbefensterMessen(page),
     /** Wählt die Datei und wartet auf das Ende ihrer Färbung; liefert `ja` oder `nein`. */
     waehlen,
     /** Schaltet die Ansicht um und wartet auf das Ende der neuen Färbung. */

@@ -60,6 +60,24 @@ echo 'fn gut() {}' > gut.rs
 git add -A && git commit -q -m "Last und Grenzen"
 `;
 
+/** Dichte Inhalte (Befund B1 der Reviews zu #8): je Zeile bis zu 998 Farbstücke, alle Dateien knapp innerhalb der Grenzen. */
+const REPO_D = String.raw`
+git init -q -b main .
+git config user.name "Anna Beispiel"; git config user.email anna@example.org
+git config gc.auto 0; git config maintenance.auto false
+echo 'Basis' > LIESMICH
+git add -A && git commit -q -m "Basis"
+echo 'function ok() {}' > ok.js
+wiederhole() { local i; for ((i = 0; i < $1; i++)); do printf '%s' "$2"; done; }
+z() { local zeile; zeile=$(wiederhole "$2" "$3"); for ((i = 0; i < $1; i++)); do printf '%s\n' "$zeile"; done; }
+z 256 998 '${'`'}' > dicht.js
+z 256 998 '"' > dicht.php
+z 256 499 '1,' > dicht.toml
+eintraege=$(wiederhole 260 '1,'); for ((i = 0; i < 480; i++)); do printf 'var a%d=[%s];\n' "$i" "$eintraege"; done > dicht2.js
+einsen=$(wiederhole 250 '1 '); for ((i = 0; i < 500; i++)); do printf 'x = %s;\n' "$einsen"; done > dicht3.js
+git add -A && git commit -q -m "Dichte Inhalte"
+`;
+
 /** Repo F: `e` „Start“, `f` „Farbige Dateien“; Aufruf `f e`. */
 function repoF(ordner) {
   skriptAusfuehren(ordner, REPO_F);
@@ -77,4 +95,10 @@ function skriptAusfuehren(ordner, skript) {
   execFileSync('bash', ['-e', '-c', skript], { cwd: ordner, env: GIT_UMGEBUNG, stdio: ['ignore', 'ignore', 'pipe'] });
 }
 
-module.exports = { repoF, repoL };
+/** Repo D: „Basis“, dann `d` „Dichte Inhalte“ mit ok.js; Aufruf `d`. */
+function repoD(ordner) {
+  skriptAusfuehren(ordner, REPO_D);
+  return { ordner, hashes: { d: git(ordner, 'rev-parse', 'HEAD') } };
+}
+
+module.exports = { repoF, repoL, repoD };
