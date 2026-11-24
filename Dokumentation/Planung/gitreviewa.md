@@ -72,6 +72,7 @@ zuletzt: 2026-11-24
 | B0106 | Bubble | I0019 | Beenden-Ablauf | gruen | | POST /api/beenden → Einmal-Schalter, Antwort 200, Ergebnis nach stdout (UTF-8 ohne BOM, Flush), Host stoppen, Exit-Code 0 | 2-4 | | | | Integration; stdout nur Ergebnis; sicherheit |
 | B0107 | Bubble | I0019 | Beenden in der Oberfläche | gruen | | Betätigung von „Beenden“ → Anforderung an den Server → Meldung „Review beendet“ statt Bedienung | 2 | | | | Integration; Stil kanbanD |
 | I0020 | Interaction | D0004 | Befunde kopieren | rot | Knopf kopiert dasselbe Ergebnis als Markdown in die Zwischenablage, ohne den Lauf zu beenden | | | | I0019 | | aus Vision, kein Requirement |
+| I0021 | Interaction | D0004 | Review abbrechen | rot | Strg+C oder SIGTERM während des Reviews: stdout bleibt leer, stderr meldet „Review abgebrochen“, Exit 130; geschlossener Tab beendet den Lauf nicht | | | | I0019 | | aus Vision (Richtungsfrage entschieden 2026-11-24), kein Requirement |
 
 ## Offene Fragen
 

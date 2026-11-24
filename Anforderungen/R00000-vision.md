@@ -44,6 +44,9 @@ an die KI zurückzugeben.
   wenn die Datei sich seit dem Commit geändert hat.
 - **Anmerkungen an Stellen**: Notizen und Hinweise an Zeilen oder Dateien; Ausblendmuster
   und Suche helfen, das Wesentliche zu finden.
+- **Abbruch erkennbar**: wird der Review ohne „Beenden“ abgebrochen (Strg+C, Signal), erscheint
+  kein Ergebnis auf stdout, sondern „Review abgebrochen“ auf stderr und Exit 130; ein
+  geschlossener Tab beendet nichts, ein Zeitlimit gibt es nicht.
 - **Ergebnis als Rückkanal**: „Beenden“ schließt den Lauf; das Ergebnis manueller Review
   mit allen Anmerkungen und Stellenangaben (Commit, Datei, Zeile) steht auf stdout, so
   geformt, dass eine KI es direkt als Arbeitsauftrag lesen kann.
@@ -87,8 +90,6 @@ an die KI zurückzugeben.
 
 ## Offene Richtungsfragen
 
-- **Lauf ohne „Beenden“**: Was gilt, wenn der Tab geschlossen oder der Prozess
-  abgebrochen wird — Ergebnis bis dahin ausgeben, Abbruch melden, Zeitlimit?
 - **Format des Ergebnisses**: Markdown für Mensch und KI zugleich, oder wahlweise
   zusätzlich JSON?
 - **Anbindung an kanbanD**: die Commits einer Karte direkt laden (`--karte <nr>`) —
@@ -101,3 +102,4 @@ an die KI zurückzugeben.
 | 2026-11-24 | Vision angelegt (Review-Rückkanal Mensch → KI, .NET 10, nur RAM, stdout = Ergebnis, Lastprofil, MIT) |
 | 2026-11-24 | Leitplanke Auslieferung: eine ausführbare Datei je Plattform statt `dotnet tool` + Single-File (Betreiber: „als 1 executable, nicht als Ordner“, „kann aber frameworkabhängig sein“) |
 | 2026-11-24 | Richtungsfrage „Urteil neben den Anmerkungen“ entschieden: kein Gesamturteil, Exit 0 bei „Beenden“ (Betreiber, Empfehlung des product-owner) |
+| 2026-11-24 | Richtungsfrage „Lauf ohne Beenden“ entschieden: Tab zu wartet weiter, Abbruch ohne Ergebnis mit „Review abgebrochen“ auf stderr und Exit 130, kein Zeitlimit (Betreiber, Empfehlung des product-owner) |
