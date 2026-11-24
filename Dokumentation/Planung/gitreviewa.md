@@ -2,7 +2,7 @@
 application: gitreviewA
 system: gitreviewA
 vision: Anforderungen/R00000-vision.md
-wireframes: keine — schlichte Oberfläche ohne eigenes Design; Gestaltung prüft das UX-Review am gebauten Stand (Betreiber wünscht zügiges Ergebnis, 2026-11-24)
+wireframes: keine — Gestaltung und Review-Seite aus kanbanD übernommen (web/kd-*.css, diff.js, review-uebersicht.js); Betreiber 2026-11-24
 sprache: de
 zuletzt: 2026-11-24
 ---
@@ -41,7 +41,7 @@ zuletzt: 2026-11-24
 
 ## Offene Fragen
 
-- Oberfläche ohne Wireframes entschieden (`still`, Wunsch nach Tempo) — Betreiber kann `/wireframe entwerfen` nachholen.
+- Oberfläche ohne Wireframes: Design aus kanbanD (Betreiber 2026-11-24).
 - Vision, Offene Richtungsfragen: Gesamturteil/Exit-Code, Lauf ohne „Beenden“ (Tab zu, Abbruch), Ergebnisformat Markdown/JSON, Anbindung an kanbanD — je nach Entscheidung neue Interactions unter D0004 bzw. D0001.
 - Phasen nach der Abnahme: im Modus `still` nur das Standardmodell.
 - Reihenfolge der ersten Pakete: Gerüst I0001 + I0019 (Aufruf → Beenden → stdout), dann I0005, I0006, I0017 — der kleinste durchgehende Rückkanal.

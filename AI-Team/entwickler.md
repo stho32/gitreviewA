@@ -10,6 +10,8 @@ Ergänzt die Rolle `entwickler` der Factory für dieses Projekt. Gilt für Proje
 - Im Worktree nur betroffene Tests und `dotnet build -warnaserror`; volles Gate macht der Director auf `main`.
 - Stilkatalog vor dem Schreiben: Skill `csharp-stil`, Skill `javascript-stil`.
 
+- Design und Review-Code aus kanbanD übernehmen: factory.md, „Gestaltung und Vorlage kanbanD“ — erst dort nachsehen, dann neu schreiben.
+
 ## Spezialisierungen
 
 - csharp — C#-Hausstil und Vorlagen

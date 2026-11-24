@@ -72,6 +72,11 @@ Aus der Vision (Betreiber 2026-11-24): **stdout gehört allein dem Ergebnis manu
 
 Angriffsfläche: Aufruf von `git` mit Argumenten aus der Befehlszeile, stdin und der Oberfläche (Argument-Injection, Pfade außerhalb des Repos), der lokale HTTP-Server (nur 127.0.0.1, fremde Origins und DNS-Rebinding), Annotationstexte in der Oberfläche (XSS), `vscode://`-Links mit Pfaden aus dem Repo.
 
+### Gestaltung und Vorlage kanbanD (Betreiber 2026-11-24: „Design kann auch aus kanbanD kommen“, Code darf übernommen werden)
+
+- **Design**: Tokens, Grundstil und Schriften aus kanbanD übernehmen — `~/Projekte/kanbanD/web/kd-tokens.css`, `kd-base.css`, `kd-app.css`, `web/fonts/` (Präfix in gitreviewA frei). Keine Wireframes; der Stil von kanbanD ist der Maßstab.
+- **Review-Code**: kanbanD hat bereits eine Commit-Review-Seite (R00207, ADR-0033) — `web/diff.js` (Diff-Rechnung, im Browser und in Node testbar), `web/review-uebersicht.js` (Dateiarten, Gruppen, `vscodeLink`, `sprungZeile`, `linkErlaubt`), `web/commits.js`, `web/tastatur.js`, `web/markdown.js`. JavaScript direkt übernehmen und anpassen; Server-Teile (Rust, `src/`) nach C# übertragen. Herkunft im Commit nennen.
+
 ### Durchsatz (Betreiber 2026-11-24: „kleine schnelle Factory, Ergebnis zügig“)
 
 - Ein volles Gate je Karte: im Worktree nur die betroffenen Tests, das volle Gate einmal in der Merge-Wache auf `main`.

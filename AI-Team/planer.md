@@ -8,6 +8,8 @@ Ergänzt die Rolle `planer` der Factory für dieses Projekt. Gilt für Projektge
 - Offene Richtungsfragen der Vision nicht beantworten — als Frage an den product-owner.
 - Wenige, prüfbare Kriterien je Karte (Betreiber will Tempo); jedes Kriterium ist ein möglicher Befund.
 
+- Kriterien zur Oberfläche am Stil von kanbanD messen (factory.md, „Gestaltung und Vorlage kanbanD“), keine eigenen Gestaltungsvorgaben erfinden.
+
 ## Spezialisierungen
 
 Keine aus der Factory.
