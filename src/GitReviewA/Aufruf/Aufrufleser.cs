@@ -1,10 +1,9 @@
 using System.Globalization;
-using System.Text.RegularExpressions;
 using GitReviewA.Protokoll;
 
 namespace GitReviewA.Aufruf;
 
-internal static partial class Aufrufleser
+internal static class Aufrufleser
 {
     public const int FreierPort = 0;
     private const int HoechsterPort = 65535;
@@ -64,10 +63,10 @@ internal static partial class Aufrufleser
 
     private static string? LeseHash(string argument, int position, Aufrufsammlung sammlung)
     {
-        var istCommitHash = CommitHashMuster().IsMatch(argument);
+        var istCommitHash = CommitHashForm.IstCommitHash(argument);
         if (!istCommitHash)
         {
-            return $"Argument {position + 1} ist weder eine bekannte Option noch ein Commit-Hash (4 bis 64 Hexziffern).";
+            return $"Argument {position + 1} ist weder eine bekannte Option noch ein Commit-Hash ({CommitHashForm.Beschreibung}).";
         }
         sammlung.Hashes.Add(argument);
         return null;
@@ -101,9 +100,6 @@ internal static partial class Aufrufleser
         }
         return Protokollstufe.Warnung;
     }
-
-    [GeneratedRegex(@"^[0-9a-fA-F]{4,64}\z", RegexOptions.CultureInvariant)]
-    private static partial Regex CommitHashMuster();
 
     private sealed class Aufrufsammlung
     {
