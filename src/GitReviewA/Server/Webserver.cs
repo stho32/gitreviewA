@@ -144,6 +144,7 @@ internal sealed class Webserver : IAsyncDisposable
         anwendung.Map("/api/haken", GeschuetzterEndpunkt.Mit(HakenEndpunkt.Setzen(dateiAbhaken, protokoll), protokoll));
         var beenden = BeendenEndpunkt.Fuer(anmerkungen, haken, anwendung.Lifetime, protokoll);
         anwendung.Map("/api/beenden", GeschuetzterEndpunkt.Mit(beenden, protokoll));
+        anwendung.MapGet("/api/ergebnis", ErgebnisKopierenEndpunkt.Fuer(new ErgebnisKopierenInteractor(anmerkungen, dateiAbhaken), protokoll));
     }
 
     private static List<CommitAntwort> AlsAntworten(Commitzeilen commits)
