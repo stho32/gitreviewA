@@ -4,6 +4,7 @@ using System.Text;
 using GitReviewA.Git;
 using GitReviewA.Protokoll;
 using GitReviewA.Server;
+using GitReviewA.Tests.Hilfen;
 
 namespace GitReviewA.Tests.Beenden;
 
@@ -77,7 +78,7 @@ public class BeendenEndpunktTests
     {
         var commits = new Commitzeilen([new Commitzeile(HashA, "Testperson", "2026-01-01T09:00:00+00:00", "Erster Commit", "")]);
         var protokoll = new StderrProtokoll(protokollziel, TimeProvider.System, Protokollstufe.Information);
-        return await Webserver.StartenAsync(0, commits, Oberflaeche.AusDemProgramm(), protokoll);
+        return await Webserver.StartenAsync(0, commits, TestDateiquelle.Leer(), Oberflaeche.AusDemProgramm(), protokoll);
     }
 
     private static async Task<HttpResponseMessage> Beende(HttpClient client, Webserver server)

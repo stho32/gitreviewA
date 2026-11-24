@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json;
 using GitReviewA.Anmerkungen;
 using GitReviewA.Beenden;
+using GitReviewA.Dateien;
 using GitReviewA.Git;
 using GitReviewA.Protokoll;
 using Microsoft.AspNetCore.Hosting.Server;
@@ -32,7 +33,7 @@ internal sealed class Webserver : IAsyncDisposable
 
     public Anmerkungsspeicher Anmerkungen { get; }
 
-    public static async Task<Webserver> StartenAsync(int port, Commitzeilen commits, Oberflaeche oberflaeche, StderrProtokoll protokoll)
+    public static async Task<Webserver> StartenAsync(int port, Commitzeilen commits, IDateiquelle dateiquelle, Oberflaeche oberflaeche, StderrProtokoll protokoll)
     {
         var anwendung = BaueAnwendung(port, protokoll);
         var anmerkungen = new Anmerkungsspeicher();
@@ -41,6 +42,7 @@ internal sealed class Webserver : IAsyncDisposable
         anwendung.Use(SetzeSchutzkoepfe);
         anwendung.Use(ProtokolliereAnfrage(protokoll));
         BildeEndpunkte(anwendung, commits, oberflaeche);
+        anwendung.MapGet(DateienEndpunkt.Muster, DateienEndpunkt.Fuer(commits, dateiquelle, protokoll));
         BildeRueckkanal(anwendung, commits, anmerkungen, protokoll);
         await anwendung.StartAsync();
         lauscherPort.Wert = TatsaechlicherPort(anwendung);
@@ -135,7 +137,7 @@ internal sealed class Webserver : IAsyncDisposable
         var antworten = new List<CommitAntwort>();
         foreach (var commit in commits)
         {
-            antworten.Add(new CommitAntwort(commit.Hash, commit.KurzHash, commit.Betreff));
+            antworten.Add(new CommitAntwort(commit.Hash, commit.KurzHash, commit.Autor, commit.Datum, commit.Betreff, commit.Rumpf));
         }
         return antworten;
     }
