@@ -18,9 +18,16 @@ internal static class DateiaenderungenParser
     {
         var teile = ausgabe.Split(Nul);
         var position = 0;
+        var dateien = LiesDateienEinesCommits(teile, ref position);
+        PruefeVollstaendigGelesen(teile, position);
+        return dateien;
+    }
+
+    /// <summary>Liest ab <paramref name="position"/> die Datensätze eines Commits und lässt die Position hinter seinem letzten Teil stehen.</summary>
+    public static Dateiaenderungen LiesDateienEinesCommits(string[] teile, ref int position)
+    {
         var rohdaten = LiesRohdaten(teile, ref position);
         var zahlen = LiesZahlen(teile, ref position, rohdaten.Count);
-        PruefeVollstaendigGelesen(teile, position);
         return new Dateiaenderungen(rohdaten.Select((roh, index) => roh with { Plus = zahlen[index].Plus, Minus = zahlen[index].Minus }));
     }
 
@@ -77,7 +84,7 @@ internal static class DateiaenderungenParser
         return zahlen;
     }
 
-    private static void PruefeVollstaendigGelesen(string[] teile, int position)
+    public static void PruefeVollstaendigGelesen(string[] teile, int position)
     {
         var nurDasLetzteLeereTeilBleibt = position >= teile.Length - 1;
         if (!nurDasLetzteLeereTeilBleibt)

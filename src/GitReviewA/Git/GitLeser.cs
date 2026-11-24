@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;
 using GitReviewA.Aufruf;
+using GitReviewA.Haken;
 
 namespace GitReviewA.Git;
 
@@ -22,6 +23,15 @@ internal static class GitLeser
         var start = GitShowDateienStart(hash, arbeitsordner);
         var ausgabe = Ausfuehren(start, $"git show {hash}");
         return DateiaenderungenParser.Parse(ausgabe);
+    }
+
+    /// <summary>Alle Dateien der Auswahl mit einem Aufruf, auf derselben Basis wie <see cref="DateienLesen"/>.</summary>
+    public static Dateiuebersicht UebersichtLesen(CommitHashes auswahl, string arbeitsordner)
+    {
+        var start = GitLogUebersichtStart(auswahl, arbeitsordner);
+        var anzahl = auswahl.Anzahl.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var ausgabe = Ausfuehren(start, $"git log (Übersicht von {anzahl} Commits)");
+        return UebersichtParser.Parse(ausgabe, auswahl);
     }
 
     /// <summary>Pfade der Dateiliste sind wurzelrelativ; jeder weitere git-Aufruf läuft deshalb in der Wurzel des Arbeitsbaums.</summary>
@@ -241,6 +251,31 @@ internal static class GitLeser
         start.ArgumentList.Add("-z");
         start.ArgumentList.Add("--end-of-options");
         start.ArgumentList.Add(hash);
+        return start;
+    }
+
+    private static ProcessStartInfo GitLogUebersichtStart(CommitHashes auswahl, string arbeitsordner)
+    {
+        var start = GitStart.Im(arbeitsordner);
+        start.ArgumentList.Add("log");
+        start.ArgumentList.Add("--no-walk=unsorted");
+        start.ArgumentList.Add("--format=%x1e%H");
+        start.ArgumentList.Add("--no-color");
+        start.ArgumentList.Add("--no-ext-diff");
+        start.ArgumentList.Add("--no-textconv");
+        start.ArgumentList.Add("--ignore-submodules=none");
+        HaengeBasisAn(start);
+        start.ArgumentList.Add("-M");
+        start.ArgumentList.Add("--raw");
+        start.ArgumentList.Add("--numstat");
+        start.ArgumentList.Add("--no-abbrev");
+        start.ArgumentList.Add("-z");
+        start.ArgumentList.Add("--end-of-options");
+        foreach (var hash in auswahl)
+        {
+            start.ArgumentList.Add(hash);
+        }
+        start.ArgumentList.Add("--");
         return start;
     }
 
