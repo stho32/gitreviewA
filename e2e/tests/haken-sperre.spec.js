@@ -87,4 +87,22 @@ test.describe('Haken bei nicht lesbarem Diff gesperrt', () => {
       + `- z⟨U+000A⟩⟨0xFF⟩.txt (Commit ${n}) — ${NICHT_UEBERGEBBAR}\n- f⟨0xFF⟩.txt (Commit ${v})\n`);
     expect(programm.stderr()).not.toContain('f⟨0xFF⟩.txt abgehakt');
   });
+
+  test('soll eine Anmerkung am gesperrten Namen mit Markenform mit 400 abweisen und die Kontrollpaare annehmen (Kriterium 6, Programm)', async ({ programm }) => {
+    await programm.starten({ vorbereitung: 'Repo N mit v', commits: ['n', 'v'], ohneSeite: true });
+    const gesperrt = await programm.ueberDieSchnittstelleAnnotieren('n', 'z⟨U+000A⟩⟨0xFF⟩.txt', 1, 'x');
+    const kontrolleA = await programm.ueberDieSchnittstelleAnnotieren('n', 'a⟨0xFF⟩.sh', 1, 'x');
+    const kontrolleF = await programm.ueberDieSchnittstelleAnnotieren('v', 'f⟨0xFF⟩.txt', 1, 'x');
+
+    await programm.beendenAnfordern();
+    const exitCode = await programm.aufEnde();
+
+    expect([gesperrt.status, gesperrt.meldung]).toEqual([400, NICHT_UEBERGEBBAR]);
+    expect([kontrolleA.status, kontrolleA.nummer]).toEqual([201, 1]);
+    expect([kontrolleF.status, kontrolleF.nummer]).toEqual([201, 2]);
+    expect(exitCode).toBe(0);
+    const ueberschriften = programm.ergebnis().split('\n').filter(zeile => zeile.startsWith('## '));
+    expect(ueberschriften).toEqual(['## 1. a⟨0xFF⟩.sh:1', '## 2. f⟨0xFF⟩.txt:1']);
+    expect(programm.ergebnis()).not.toContain('## 1. z⟨U+000A⟩⟨0xFF⟩.txt');
+  });
 });

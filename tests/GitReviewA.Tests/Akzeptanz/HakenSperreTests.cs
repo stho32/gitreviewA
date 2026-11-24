@@ -201,6 +201,29 @@ public class HakenSperreTests
     }
 
     [Test]
+    [Description("R00014 Kriterium 6 — Nacharbeit Karte 29: Sperre und Ergebnis vergleichen denselben kanonischen Namen")]
+    public void Wenn_an_die_gesperrte_Stelle_mit_ihrer_Markenform_annotiert_werden_soll_dann_400_ohne_Nummer_und_lesbare_Stellen_bekommen_1_und_2()
+    {
+        using var repo = FremdeNamenRepo.NMitV();
+        var gr = HakenSperreSprache.Aufruf(repo, "n", "v");
+        const string Markenform = "z⟨U+000A⟩⟨0xFF⟩.txt";
+
+        var gesperrt = gr.Annotiere("n", Markenform, 1);
+        var nachGesperrt = gr.Anmerkungen();
+        var a = gr.Annotiere("n", "a⟨0xFF⟩.sh", 1);
+        var fInV = gr.Annotiere("v", "f⟨0xFF⟩.txt", 1);
+        var ergebnis = gr.Beenden();
+
+        Assert.That((gesperrt.Ausgang, gesperrt.Nummer, gesperrt.Grund), Is.EqualTo(("ungültig", (int?)null, NichtUebergebbar)));
+        Assert.That(nachGesperrt, Is.Empty, "nichts gespeichert");
+        Assert.That((a.Ausgang, a.Nummer), Is.EqualTo(("angelegt", (int?)1)), "Kontrolle: keine Nummer verbraucht");
+        Assert.That((fInV.Ausgang, fInV.Nummer), Is.EqualTo(("angelegt", (int?)2)), "Kontrolle: keine Nummer verbraucht");
+        Assert.That(gr.Anmerkungen(), Is.EqualTo(new[] { "1. a⟨0xFF⟩.sh:1", "2. f⟨0xFF⟩.txt:1" }));
+        var ueberschriften = ergebnis.Split('\n').Where(zeile => zeile.StartsWith("## ", StringComparison.Ordinal)).ToArray();
+        Assert.That(ueberschriften, Is.EqualTo(new[] { "## 1. a⟨0xFF⟩.sh:1", "## 2. f⟨0xFF⟩.txt:1" }), "keine Anmerkung an der gesperrten Stelle");
+    }
+
+    [Test]
     [Description("R00014 Kriterium 6")]
     public void Wenn_eine_Anmerkung_an_eine_gesperrte_Stelle_abgelehnt_wird_dann_nennt_das_Protokoll_den_Grund_und_nie_den_Namen()
     {

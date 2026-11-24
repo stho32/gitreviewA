@@ -45,6 +45,21 @@ public class AnmerkungsEndpunktTests
         Assert.That(server.Anmerkungen.Schnappschuss().Anzahl, Is.EqualTo(1));
     }
 
+    [Test]
+    [Description("R00014 Kriterium 6 — Nacharbeit Karte 29: Sperre und Ergebnis vergleichen denselben kanonischen Namen")]
+    public async Task Wenn_die_Anmerkung_die_Markenform_des_gesperrten_Namens_traegt_dann_400_mit_Sperrgrund_und_keine_Nummer()
+    {
+        await using var server = await StarteServer(TestUebersichtsquelle.MitSperre(HashA, "z\n⟨0xFF⟩.txt", "Diff nicht lesbar: Name nicht übergebbar", "a⟨0xFF⟩.sh"));
+        using var client = new HttpClient();
+
+        var gesperrt = await Sende(client, server, "api/anmerkungen", "{\"commit\":\"" + HashA + "\",\"datei\":\"z⟨U+000A⟩⟨0xFF⟩.txt\",\"zeile\":1,\"text\":\"x\"}");
+        var lesbar = await Sende(client, server, "api/anmerkungen", "{\"commit\":\"" + HashA + "\",\"datei\":\"a⟨0xFF⟩.sh\",\"zeile\":1,\"text\":\"x\"}");
+
+        Assert.That((gesperrt.Status, gesperrt.Json.GetProperty("meldung").GetString()), Is.EqualTo((HttpStatusCode.BadRequest, "Diff nicht lesbar: Name nicht übergebbar")));
+        Assert.That((lesbar.Status, lesbar.Json.GetProperty("nummer").GetInt32()), Is.EqualTo((HttpStatusCode.Created, 1)));
+        Assert.That(server.Anmerkungen.Schnappschuss().Anzahl, Is.EqualTo(1), "nichts gespeichert, keine Nummer verbraucht");
+    }
+
     [TestCase("kein json")]
     [TestCase("")]
     [TestCase("null")]

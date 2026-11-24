@@ -1,3 +1,5 @@
+using GitReviewA.Fremdtext;
+
 namespace GitReviewA.Haken;
 
 /// <summary>
@@ -8,6 +10,7 @@ internal sealed class Dateiuebersicht
 {
     private readonly Stelle[] stellen;
     private readonly Dictionary<Stelle, string> sperrgrundNachStelle;
+    private readonly Dictionary<Stelle, string> sperrgrundNachAngezeigtemNamen;
     private readonly HashSet<string> commits;
 
     public Dateiuebersicht(IEnumerable<string> commits, IEnumerable<Uebersichtsstelle> stellen)
@@ -16,9 +19,11 @@ internal sealed class Dateiuebersicht
         var eintraege = stellen.ToArray();
         this.stellen = eintraege.Select(eintrag => eintrag.Stelle).ToArray();
         sperrgrundNachStelle = [];
+        sperrgrundNachAngezeigtemNamen = [];
         foreach (var eintrag in eintraege)
         {
             sperrgrundNachStelle[eintrag.Stelle] = eintrag.Sperrgrund;
+            sperrgrundNachAngezeigtemNamen[Angezeigt(eintrag.Stelle)] = eintrag.Sperrgrund;
         }
     }
 
@@ -32,12 +37,15 @@ internal sealed class Dateiuebersicht
     /// <summary>Leer, wenn der Diff der Stelle lesbar ist oder die Übersicht die Stelle nicht kennt.</summary>
     public string SperrgrundVon(Stelle stelle)
     {
-        var istBekannt = sperrgrundNachStelle.TryGetValue(stelle, out var sperrgrund);
-        if (!istBekannt || sperrgrund is null)
+        if (sperrgrundNachStelle.TryGetValue(stelle, out var sperrgrund) && sperrgrund is not null)
         {
-            return string.Empty;
+            return sperrgrund;
         }
-        return sperrgrund;
+        if (sperrgrundNachAngezeigtemNamen.TryGetValue(Angezeigt(stelle), out var angezeigterSperrgrund) && angezeigterSperrgrund is not null)
+        {
+            return angezeigterSperrgrund;
+        }
+        return string.Empty;
     }
 
     public bool EnthaeltCommit(string hash)
@@ -48,5 +56,11 @@ internal sealed class Dateiuebersicht
     public IEnumerator<Stelle> GetEnumerator()
     {
         return ((IEnumerable<Stelle>)stellen).GetEnumerator();
+    }
+
+    /// <summary>Derselbe Name, wie ihn das Ergebnis zeigt: Rohbytes als Marke, Steuerzeichen als `⟨U+XXXX⟩`.</summary>
+    private static Stelle Angezeigt(Stelle stelle)
+    {
+        return stelle with { Pfad = UnsichtbareZeichen.AlsMarken(stelle.Pfad) };
     }
 }

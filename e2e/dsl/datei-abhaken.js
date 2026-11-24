@@ -102,8 +102,13 @@ function abhakenSprache(gr, page) {
     return schnittstelle.hakenSetzen(lauf.adresse, { commit: hash(commit), datei, abgehakt }, optionen);
   }
 
+  async function ueberDieSchnittstelleAnnotieren(commit, datei, zeile, text) {
+    return gr.anmerkungAnlegen(lauf, { commit: hash(commit), datei, zeile, text });
+  }
+
   return {
     starten,
+    ueberDieSchnittstelleAnnotieren,
     hash,
     kurz,
     commitAnsehen: commit => seite.commitWaehlen(page, kurz(commit)),
