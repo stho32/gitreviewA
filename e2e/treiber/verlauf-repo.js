@@ -112,11 +112,16 @@ function signiertenCommitAnStelleVonHeadSetzen(ordner) {
   return signiert;
 }
 
+/** Legt einen Tag (`art` 'tag') oder Zweig (`art` 'branch') namens `name` auf dem Commit `ziel` an. */
+function refAnlegen(ordner, art, name, ziel) {
+  git(ordner, art, name, ziel);
+}
+
 /** Die Liste, die `git rev-list <bereich>` im Repo ausgibt. */
 function revList(ordner, bereich) {
   return git(ordner, 'rev-list', bereich).split('\n').filter(zeile => zeile.length > 0);
 }
 
 module.exports = {
-  verlaufAbisEAnlegen, verlaufMitMergeAnlegen, zweigNebenMainAnlegen, verlaufMitCommitsAnlegen, verlaufMitSignaturMarkerAnlegen, revList,
+  verlaufAbisEAnlegen, verlaufMitMergeAnlegen, zweigNebenMainAnlegen, verlaufMitCommitsAnlegen, verlaufMitSignaturMarkerAnlegen, refAnlegen, revList,
 };

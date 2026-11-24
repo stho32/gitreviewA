@@ -71,9 +71,26 @@ function auswahlWelt(gr) {
     verlaufMitCommits: anzahl => merken(verlauf.verlaufMitCommitsAnlegen(anzahl)),
     verlaufMitSignaturMarker: () => merken(verlauf.verlaufMitSignaturMarkerAnlegen()),
 
+    /** Tag oder Zweig, der wie die ersten vier Zeichen von `a` heißt und auf `e` zeigt; `praefix` ist der Name. */
+    verlaufMitRefWieHashPraefix({ art, grossbuchstaben }) {
+      const angelegt = merken(verlauf.verlaufAbisEAnlegen());
+      let praefix = angelegt.a.slice(0, 4);
+      if (grossbuchstaben) {
+        praefix = praefix.toUpperCase();
+      }
+      verlauf.refAnlegen(angelegt.ordner, art, praefix, angelegt.e);
+      return { ...angelegt, praefix };
+    },
+
     listeVonGit: (repo, bereich) => verlauf.revList(repo.ordner, bereich),
 
     bereicheReviewen: (repo, bereiche) => startzeileAbwarten(starten(repo, bereiche)),
+
+    einzelcommitsReviewen: (repo, hashes) => startzeileAbwarten(starten(repo, hashes)),
+
+    einzelcommitsAufrufen: (repo, hashes) => ende(starten(repo, hashes)),
+
+    ueberStdinAufrufen: (repo, zeilen) => ende(starten(repo, ['-'], { eingabe: { text: stdinText(zeilen) } })),
 
     ueberStdinReviewen: (repo, zeilen, { zeilenende } = {}) => startzeileAbwarten(starten(repo, ['-'], { eingabe: { text: stdinText(zeilen, zeilenende) } })),
 
