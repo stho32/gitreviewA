@@ -113,6 +113,22 @@ test.describe('Umschalter und Wahl', () => {
     await diff.diffZeigt(GANZ_VON_LANG);
   });
 
+  test('soll nach dem Wechsel des Commits beim Umschalten nichts laden, bis eine Datei gewählt ist', async ({ diff }) => {
+    await diff.starten({ verbose: true });
+    await diff.dateiAnsehen('src/b.txt');
+    await diff.diffZeigt(AENDERUNGEN_VON_B);
+    await diff.commitAnsehen('p');
+    await diff.commitAnsehen('q');
+    await diff.fordertZurWahlAuf();
+
+    await diff.ansichtWaehlen(GANZE_DATEI);
+    await diff.fordertZurWahlAuf();
+    await diff.dateiAnsehen('lang.txt');
+
+    await diff.diffZeigt(GANZ_VON_LANG);
+    await diff.diffsGelesen('q', 2);
+  });
+
   test('soll den Umbruch in beiden Ansichten wirken lassen und beim Umschalten behalten', async ({ diff }) => {
     await diff.starten();
     await diff.ansichtWaehlen(GANZE_DATEI);
@@ -194,14 +210,16 @@ test.describe('Ganze Datei laden', () => {
 
     await diff.ansichtWaehlen(GANZE_DATEI);
     await diff.diffMeldetFehler('src/b.txt', 'Diff konnte nicht gelesen werden');
+    await diff.diffsGelesen('q', 2);
+    diff.fehlerProtokolliertFuer('q', 'src/b.txt');
     await diff.ansichtWaehlen(NUR_AENDERUNGEN);
     await diff.ansichtIst(NUR_AENDERUNGEN);
+    await diff.diffsGelesen('q', 3);
     await diff.ansichtWaehlen(GANZE_DATEI);
     await diff.commitAnsehen('p');
     await diff.dateiAnsehen('src/b.txt');
 
     await diff.diffZeigt({ pfad: 'src/b.txt', zeilen: [{ plus: 'eins', neu: 1 }, { plus: 'zwei', neu: 2 }] });
-    diff.fehlerProtokolliertFuer('q', 'src/b.txt');
     diff.ergebnisBleibtLeer();
   });
 });

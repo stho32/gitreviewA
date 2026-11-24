@@ -44,7 +44,13 @@
   <section id="diff" class="gr-diff" aria-label="Diff der gewählten Datei">
     <div class="diff-kopf">
       <h2 class="diff-pfad mono"></h2>
-      <label class="ru-sch"><input type="checkbox" class="umbruch-schalter">Umbruch</label>
+      <div class="diff-schalter">
+        <div class="seg diffansicht-wahl" role="radiogroup" aria-label="Ansicht">
+          <label><input type="radio" name="diffansicht" value="aenderungen" autocomplete="off" checked>nur Änderungen</label>
+          <label><input type="radio" name="diffansicht" value="ganz" autocomplete="off">ganze Datei</label>
+        </div>
+        <label class="ru-sch"><input type="checkbox" class="umbruch-schalter">Umbruch</label>
+      </div>
     </div>
     <p class="diff-meldung gr-status muted" role="status"></p>
     <div class="diff-wahl">

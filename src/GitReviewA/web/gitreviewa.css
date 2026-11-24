@@ -68,6 +68,13 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .dz tr.hinweis .c{color:var(--kd-muted);font-style:italic}
 .mk-z{display:inline-flex;align-items:center;margin:0 1px;padding:0 3px;border:1px solid var(--kd-status-warn-ink);background:var(--kd-status-warn-bg);color:var(--kd-status-warn-ink);font:600 11px/1.3 var(--kd-mono);white-space:nowrap}
 .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+.diff-schalter{display:flex;flex-wrap:wrap;align-items:center;gap:var(--kd-s2) var(--kd-s4)}
+/* Ansicht nach kanbanD kd-base.css (.seg, gewählte Stellung .an): Segmente als Bezeichnung eines verborgenen, fokussierbaren Optionsfelds */
+.diffansicht-wahl>label{position:relative;display:flex;align-items:center;block-size:26px;padding:0 var(--kd-s3);font-size:12.5px;white-space:nowrap;cursor:pointer;background:var(--kd-surface)}
+.diffansicht-wahl>label+label{border-left:1px solid var(--kd-line-strong)}
+.diffansicht-wahl>label:has(:checked){background:var(--kd-text);color:var(--kd-surface)}
+.diffansicht-wahl>label:has(:focus-visible){outline:2px solid var(--kd-accent);outline-offset:2px}
+.diffansicht-wahl input{position:absolute;inset:0;inline-size:100%;block-size:100%;margin:0;opacity:0;cursor:pointer}
 /* Umbrechen nach kanbanD kd-app.css (.ru-sch, .umbr): Schalter mit Daumen links (aus) bzw. rechts auf gefüllter Fläche (an) */
 .ru-sch{display:inline-flex;align-items:center;gap:6px;min-block-size:var(--kd-ziel);font-size:12.5px;color:var(--kd-text);white-space:nowrap;cursor:pointer}
 .ru-sch input{appearance:none;flex:none;box-sizing:border-box;inline-size:32px;block-size:18px;margin:0;border:2px solid var(--kd-muted);border-radius:9px;background:radial-gradient(circle,var(--kd-muted) 0 5px,transparent 5.5px) 1px 50%/14px 14px no-repeat var(--kd-surface);cursor:pointer}

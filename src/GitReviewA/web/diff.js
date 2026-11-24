@@ -1,5 +1,6 @@
 /* gitreviewA — Diff-Bereich: liest den Diff einer Datei erst bei ihrer Wahl (Ereignis `datei-gewaehlt`) und zeigt ihn mit Nummern
-   alt und neu; der Wechsel des Commits (`commit-gewaehlt`) hebt die Wahl auf und fordert zum Wählen auf. Zeilenaufbau nach kanbanD
+   alt und neu, als „nur Änderungen“ oder „ganze Datei“ (Diffansicht); der Wechsel des Commits (`commit-gewaehlt`) hebt die Wahl auf
+   und fordert zum Wählen auf. Zeilenaufbau nach kanbanD
    web/diff.js (zeileHtml), aber als DOM-Knoten mit textContent: Diff-Text, Pfade und Hunk-Titel sind fremder Text. */
 (function () {
   'use strict';
@@ -10,13 +11,18 @@
   const LESETEXT = { plus: 'hinzugefügt: ', minus: 'entfernt: ' };
   const VORZEICHEN = { plus: '+', minus: '−', kontext: '' };
 
-  /** `datei`: die gewählte Datei; `zugeklappt`: Zeilen eines langen Textes, die erst „Trotzdem laden“ zeichnet. */
-  const zustand = { letzteLadung: 0, datei: null, zugeklappt: null };
+  /** `datei`: die gewählte Datei, `alsText` ihre Wahl „Als Text zeigen“; `diffansicht`: `aenderungen` oder `ganz`, nur im Speicher der Seite
+      (nach Neuladen wieder „nur Änderungen“); `zugeklappt`: Zeilen eines langen Textes, die erst „Trotzdem laden“ zeichnet. */
+  const zustand = { letzteLadung: 0, datei: null, alsText: false, diffansicht: 'aenderungen', zugeklappt: null };
 
   function init() {
     const ansicht = ansichtElemente();
     zeigeAufforderungZurWahl(ansicht);
     ansicht.umbruchElement.addEventListener('change', () => schalteUmbruch(ansicht));
+    for (const diffansichtElement of ansicht.diffansichtElemente) {
+      diffansichtElement.checked = diffansichtElement.value === zustand.diffansicht;
+      diffansichtElement.addEventListener('change', () => schalteDiffansicht(ansicht, diffansichtElement.value));
+    }
     ansicht.alsTextElement.addEventListener('click', () => ladeDiff(ansicht, zustand.datei, true));
     ansicht.trotzdemLadenElement.addEventListener('click', () => klappeAuf(ansicht));
     document.addEventListener('commit-gewaehlt', () => verwerfeWahl(ansicht));
@@ -28,6 +34,7 @@
     return {
       wurzelElement,
       umbruchElement: wurzelElement.querySelector('.umbruch-schalter'),
+      diffansichtElemente: wurzelElement.querySelectorAll('input[name="diffansicht"]'),
       pfadElement: wurzelElement.querySelector('.diff-pfad'),
       meldungElement: wurzelElement.querySelector('.diff-meldung'),
       alsTextElement: wurzelElement.querySelector('.als-text'),
@@ -41,9 +48,19 @@
     ansicht.wurzelElement.classList.toggle('umbr', ansicht.umbruchElement.checked);
   }
 
+  /** Wie der Umbruch liegt die Diffansicht am Bereich: sie gilt für jede weitere Datei, auch wenn noch keine gewählt ist. */
+  function schalteDiffansicht(ansicht, diffansicht) {
+    zustand.diffansicht = diffansicht;
+    if (!zustand.datei) {
+      return;
+    }
+    ladeDiff(ansicht, zustand.datei, zustand.alsText);
+  }
+
   /** Ein Commit-Wechsel verdrängt auch eine noch laufende Ladung: deren Antwort wird verworfen. */
   function verwerfeWahl(ansicht) {
     zustand.letzteLadung += 1;
+    zustand.datei = null;
     zeigeAufforderungZurWahl(ansicht);
   }
 
@@ -52,17 +69,19 @@
     zeigeMeldung(ansicht, HINWEIS_ZUR_WAHL, false);
   }
 
-  /** Die jüngste Wahl gewinnt: eine Antwort zählt nur, wenn seit ihrer Anfrage keine andere Datei und kein anderer Commit gewählt wurde.
-      `alsText`: der Mensch hat bei einer Binärdatei „Als Text zeigen“ gewählt — nur dann liest der Server ihre Bytes. */
+  /** Die jüngste Wahl gewinnt: eine Antwort zählt nur, wenn seit ihrer Anfrage keine andere Datei, kein anderer Commit und keine andere
+      Diffansicht gewählt wurde. `alsText`: der Mensch hat bei einer Binärdatei „Als Text zeigen“ gewählt — nur dann liest der Server ihre Bytes. */
   async function ladeDiff(ansicht, datei, alsText) {
     const ladung = zustand.letzteLadung + 1;
     zustand.letzteLadung = ladung;
     zustand.datei = datei;
+    zustand.alsText = alsText;
+    const diffansicht = zustand.diffansicht;
     ansicht.pfadElement.replaceChildren(...sichtbarTeile(datei.pfad).map(teilKnoten));
     zeigeMeldung(ansicht, 'Diff wird geladen …', false);
     let antwort;
     try {
-      antwort = await diffAbrufen(datei, alsText);
+      antwort = await diffAbrufen(datei, alsText, diffansicht);
     } catch {
       if (ladung === zustand.letzteLadung) {
         zeigeMeldung(ansicht, 'Diff konnte nicht gelesen werden', true);
@@ -72,13 +91,17 @@
     if (ladung !== zustand.letzteLadung) {
       return;
     }
-    zeichneAntwort(ansicht, antwort, alsText);
+    zeichneAntwort(ansicht, antwort, alsText, diffansicht);
   }
 
-  async function diffAbrufen(datei, alsText) {
+  /** Die ganze Datei liest der Server nur auf ausdrückliche Wahl der Diffansicht. */
+  async function diffAbrufen(datei, alsText, diffansicht) {
     const abfrage = new URLSearchParams({ pfad: datei.pfad });
     if (alsText) {
       abfrage.set('alsText', 'true');
+    }
+    if (diffansicht === 'ganz') {
+      abfrage.set('umfang', 'ganz');
     }
     const adresse = `api/commits/${encodeURIComponent(datei.commit)}/diff?${abfrage}`;
     const antwort = await fetch(adresse, { headers: { Accept: 'application/json' } });
@@ -98,13 +121,13 @@
     zustand.zugeklappt = null;
   }
 
-  function zeichneAntwort(ansicht, antwort, alsText) {
+  function zeichneAntwort(ansicht, antwort, alsText, diffansicht) {
     const binaerOhneWahl = antwort.art === 'binaer' && !alsText;
     if (binaerOhneWahl) {
       zeigeBinaerdatei(ansicht, antwort.grund);
       return;
     }
-    const zeilen = patchZeilen(antwort.patch);
+    const zeilen = zeilenDerDiffansicht(antwort.patch, diffansicht);
     if (zeilen.length === 0) {
       zeigeMeldung(ansicht, KEINE_ZEILENAENDERUNGEN, false);
       return;
@@ -115,6 +138,13 @@
       return;
     }
     zeichneZeilen(ansicht, antwort.pfad, zeilen);
+  }
+
+  function zeilenDerDiffansicht(patch, diffansicht) {
+    if (diffansicht === 'ganz') {
+      return ganzeDateiZeilen(patch);
+    }
+    return patchZeilen(patch);
   }
 
   /** Ohne Wahl kein Byte-Inhalt: Hinweis mit Grund und der Schalter, der den Text erst auf Wunsch lädt (Entscheidung des PO). */
