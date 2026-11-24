@@ -8,7 +8,7 @@ const base = require('@playwright/test');
 const { repoAnlegen, repoEntfernen } = require('../treiber/wegwerf-repo.js');
 const { imHintergrundStarten, pruefeSigintIgnoriert } = require('../treiber/hintergrund-start.js');
 const { programmStarten, adresseAbwarten, programmBeenden, lauschendeAdressen } = require('../treiber/programm.js');
-const { anfrage, senden } = require('../treiber/http.js');
+const { anfrage, senden, halbSenden } = require('../treiber/http.js');
 const oberflaeche = require('../treiber/oberflaeche.js');
 const { fremdeSeiteStarten } = require('../treiber/fremde-seite.js');
 
@@ -20,6 +20,7 @@ function welt() {
   const ordnerZumAufraeumen = [];
   const laeufe = [];
   const fremdeSeiten = [];
+  const offeneVerbindungen = [];
 
   function repoMitCommits(betreffe = DREI_COMMITS) {
     const repo = repoAnlegen(betreffe);
@@ -198,6 +199,12 @@ function welt() {
     return { status: antwort.status, ...jsonOderLeer(antwort.koerper) };
   }
 
+  /** Beginnt eine Anfrage an `pfad` und sendet vom Körper nur `{` (angekündigt: 1000 Bytes); die Verbindung bleibt offen. */
+  async function anfrageHalbGesendet(lauf, pfad) {
+    const schliessen = await halbSenden(lauf.adresse, pfad, { laenge: 1000, teil: '{' });
+    offeneVerbindungen.push(schliessen);
+  }
+
   function jsonOderLeer(text) {
     try {
       return JSON.parse(text);
@@ -227,6 +234,9 @@ function welt() {
   }
 
   async function aufraeumen() {
+    for (const schliessen of offeneVerbindungen) {
+      schliessen();
+    }
     for (const seite of fremdeSeiten) {
       await seite.stoppen();
     }
@@ -242,7 +252,7 @@ function welt() {
     repoMitCommits, gitreviewAStarten, gitreviewAImHintergrundStarten, gitreviewAAufrufen, aufrufBeendet, aufEndeWarten, laeuftNoch, bisSekundenNachStart, laufAbbrechen,
     zustandAbfragen, commitsAbfragen, commitsStatusOderNull, freierPort, startseiteAbfragen, stderrZeilen, portVon, hostDesLaufs,
     lauschendeAdressen, aufzeichnenderBrowser, gitAttrappe, aufraeumen,
-    anmerkungAnlegen, beendenAnfordern, beendenUndDauerMessen, fremdeSeite, ergebnis,
+    anmerkungAnlegen, beendenAnfordern, anfrageHalbGesendet, beendenUndDauerMessen, fremdeSeite, ergebnis,
     beendenBetaetigen: oberflaeche.beendenBetaetigen,
     beendenKnopf: oberflaeche.beendenKnopf,
     beendetMeldung: oberflaeche.beendetMeldung,

@@ -65,6 +65,21 @@ test.describe('Review abbrechen', () => {
     });
   }
 
+  for (const { name, pfad } of [
+    { name: 'Beenden', pfad: '/api/beenden' },
+    { name: 'Anmerkung', pfad: '/api/anmerkungen' },
+  ]) {
+    test(`soll bei Strg+C trotz halb gesendeter Anfrage (${name}) binnen 5 s ohne Ergebnis mit 130 enden`, async ({ gr, abbruch }) => {
+      const repo = gr.repoMitCommits();
+      const lauf = await gr.gitreviewAStarten(repo, [repo.hashes[0]]);
+      await gr.anfrageHalbGesendet(lauf, pfad);
+
+      abbruch.mitStrgCAbbrechen(lauf);
+
+      await abbruch.sollOhneErgebnisAbgebrochenSein(lauf);
+    });
+  }
+
   test('soll nach geschlossenem Tab weiterlaufen und beim Beenden die Anmerkung liefern (US-4)', async ({ gr, abbruch, context, page }) => {
     const repo = gr.repoMitCommits();
     const [a] = repo.hashes;
