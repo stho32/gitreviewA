@@ -79,7 +79,8 @@ internal sealed class FremdeNamenRepo : IDisposable
         Directory.Delete(Ordner, recursive: true);
     }
 
-    private string Bash(string befehle)
+    /// <summary>Weitere Schritte im Repo als bash-Befehle (Namen aus Bytes mit <c>$'a\xff'</c>); liefert die Ausgabe ohne letztes Zeilenende.</summary>
+    public string Bash(string befehle)
     {
         var start = new ProcessStartInfo("bash")
         {

@@ -250,7 +250,7 @@ public class GitLeserDiffTests
             Binaerausgabe.Einstellen(repo, quelle);
         }
 
-        var attribut = GitLeser.DiffAttributLesen("-x\ny.txt", repo.Ordner);
+        var attribut = GitLeser.DiffAttributLesen(new Dateiaenderung("A", "-x\ny.txt", null, null, null), repo.Ordner);
 
         Assert.That(attribut, Is.EqualTo(erwartet));
     }

@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;
 using GitReviewA.Aufruf;
+using GitReviewA.Fremdtext;
 using GitReviewA.Haken;
 
 namespace GitReviewA.Git;
@@ -51,6 +52,12 @@ internal static class GitLeser
     /// </summary>
     public static string DiffLesen(string hash, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner)
     {
+        var traegtRohbytes = TraegtRohbytes(datei);
+        if (traegtRohbytes)
+        {
+            var mitRohbytes = GitLogStdinDiffStart(umfang, arbeitsordner, alsText: false);
+            return AusfuehrenMitEingabe(mitRohbytes, DiffEingabe(hash, datei), $"git log --stdin {hash} -- {datei.Pfad}");
+        }
         var start = GitShowDiffStart(hash, datei, umfang, arbeitsordner, alsText: false);
         return Ausfuehren(start, $"git show {hash} -- {datei.Pfad}");
     }
@@ -58,6 +65,12 @@ internal static class GitLeser
     /// <summary>Wie <see cref="DiffLesen"/>, aber mit `--text`: zeigt auch eine als binär eingestufte Datei mit allen Bytes.</summary>
     public static string DiffAlsTextLesen(string hash, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner)
     {
+        var traegtRohbytes = TraegtRohbytes(datei);
+        if (traegtRohbytes)
+        {
+            var mitRohbytes = GitLogStdinDiffStart(umfang, arbeitsordner, alsText: true);
+            return AusfuehrenMitEingabe(mitRohbytes, DiffEingabe(hash, datei), $"git log --stdin --text {hash} -- {datei.Pfad}");
+        }
         var start = GitShowDiffStart(hash, datei, umfang, arbeitsordner, alsText: true);
         return Ausfuehren(start, $"git show --text {hash} -- {datei.Pfad}");
     }
@@ -66,22 +79,37 @@ internal static class GitLeser
     /// Der Wert des `diff`-Attributs (`unspecified`, `set`, `unset` oder ein Treibername) unter denselben Schutzoptionen wie der Diff:
     /// nur `.git/info/attributes` wirkt noch. Mit `-z` übersteht jeder Pfad die Ausgabe: Pfad NUL `diff` NUL Wert NUL.
     /// </summary>
-    public static string DiffAttributLesen(string pfad, string arbeitsordner)
+    public static string DiffAttributLesen(Dateiaenderung datei, string arbeitsordner)
     {
-        var start = GitStart.Im(arbeitsordner);
-        start.ArgumentList.Add("check-attr");
-        start.ArgumentList.Add("-z");
-        start.ArgumentList.Add("diff");
-        start.ArgumentList.Add("--");
-        start.ArgumentList.Add(pfad);
+        var pfad = datei.Pfad;
         var aufruf = $"git check-attr diff -- {pfad}";
-        var felder = Ausfuehren(start, aufruf).Split('\0');
+        var felder = AttributAusgabe(datei, arbeitsordner, aufruf).Split('\0');
         var istEinEintrag = felder.Length == 4 && felder[0] == pfad && felder[1] == "diff" && felder[3].Length == 0;
         if (!istEinEintrag)
         {
             throw new GitFehler($"{aufruf} lieferte keinen einzelnen Eintrag");
         }
         return felder[2];
+    }
+
+    /// <summary>Ein Name mit Rohbytes geht über stdin an git (NUL-getrennt mit `-z`); die Ausgabe nennt ihn mit Marke wie die Dateiliste.</summary>
+    private static string AttributAusgabe(Dateiaenderung datei, string arbeitsordner, string aufruf)
+    {
+        var start = GitStart.Im(arbeitsordner);
+        start.ArgumentList.Add("check-attr");
+        start.ArgumentList.Add("-z");
+        var rohpfad = datei.Rohpfad;
+        if (rohpfad is not null)
+        {
+            start.ArgumentList.Add("--stdin");
+            start.ArgumentList.Add("diff");
+            var eingabe = new List<byte>(rohpfad.Bytes.ToArray()) { 0 };
+            return AusfuehrenMitEingabe(start, eingabe.ToArray(), aufruf);
+        }
+        start.ArgumentList.Add("diff");
+        start.ArgumentList.Add("--");
+        start.ArgumentList.Add(datei.Pfad);
+        return Ausfuehren(start, aufruf);
     }
 
 
@@ -313,6 +341,71 @@ internal static class GitLeser
         return start;
     }
 
+    private static bool TraegtRohbytes(Dateiaenderung datei)
+    {
+        return datei.Rohpfad is not null || datei.RohAlterPfad is not null;
+    }
+
+    /// <summary>
+    /// Wie <see cref="GitShowDiffStart"/>, aber Hash und Pfade kommen über stdin (<see cref="DiffEingabe"/>): .NET kann ein Byte außerhalb
+    /// von UTF-8 nicht als Argument übergeben. `log.follow` des fremden Repos würde bei einem Pfad einer Umbenennung folgen, die die Dateiliste nicht zeigt.
+    /// </summary>
+    private static ProcessStartInfo GitLogStdinDiffStart(Diffumfang umfang, string arbeitsordner, bool alsText)
+    {
+        var start = GitStart.Im(arbeitsordner);
+        start.ArgumentList.Add("--literal-pathspecs");
+        start.ArgumentList.Add("-c");
+        start.ArgumentList.Add("diff.suppressBlankEmpty=false");
+        start.ArgumentList.Add("-c");
+        start.ArgumentList.Add("log.follow=false");
+        start.ArgumentList.Add("log");
+        start.ArgumentList.Add("--stdin");
+        start.ArgumentList.Add("--no-walk");
+        start.ArgumentList.Add("-p");
+        start.ArgumentList.Add("--format=");
+        start.ArgumentList.Add("--no-color");
+        start.ArgumentList.Add("--no-ext-diff");
+        start.ArgumentList.Add("--no-textconv");
+        start.ArgumentList.Add("--ignore-submodules=none");
+        HaengeBasisAn(start);
+        start.ArgumentList.Add("-M");
+        start.ArgumentList.Add(KontextFuer(umfang));
+        start.ArgumentList.Add("--inter-hunk-context=0");
+        start.ArgumentList.Add("--submodule=short");
+        start.ArgumentList.Add("--no-relative");
+        if (alsText)
+        {
+            start.ArgumentList.Add("--text");
+        }
+        return start;
+    }
+
+    /// <summary>Zeilen für `git log --stdin`: der volle Hash, `--`, der Pfad und bei einer Umbenennung der alte Pfad, je als Bytes.</summary>
+    private static byte[] DiffEingabe(string hash, Dateiaenderung datei)
+    {
+        var eingabe = new List<byte>();
+        eingabe.AddRange(Encoding.ASCII.GetBytes($"{hash}\n--\n"));
+        eingabe.AddRange(NameAlsBytes(datei.Pfad, datei.Rohpfad));
+        eingabe.Add((byte)'\n');
+        var alterPfad = datei.AlterPfad;
+        if (alterPfad is not null)
+        {
+            eingabe.AddRange(NameAlsBytes(alterPfad, datei.RohAlterPfad));
+            eingabe.Add((byte)'\n');
+        }
+        return eingabe.ToArray();
+    }
+
+    /// <summary>Ein Name ohne Rohbytes ist gültiges UTF-8 und steht Zeichen für Zeichen im angezeigten Namen.</summary>
+    private static byte[] NameAlsBytes(string name, Rohname? rohname)
+    {
+        if (rohname is null)
+        {
+            return Encoding.UTF8.GetBytes(name);
+        }
+        return rohname.Bytes.ToArray();
+    }
+
     /// <summary>
     /// Merges gegen den ersten Elternteil, Wurzelcommits gegen den leeren Baum — ausdrücklich, weil `log.diffMerges` und `log.showRoot`
     /// des fremden Repos sonst den Merge bzw. den Wurzelcommit ohne Dateien zeigen.
@@ -342,6 +435,20 @@ internal static class GitLeser
     private static string Ausfuehren(ProcessStartInfo start, string aufruf)
     {
         var lauf = WarteAufEnde(Starte(start));
+        PruefeErfolg(lauf, aufruf);
+        return lauf.Ausgabe;
+    }
+
+    /// <summary>Die Eingabe geht als Bytes an stdin; sie ist kurz (ein Hash und bis zu zwei Namen) und vollständig geschrieben, bevor git ausgibt.</summary>
+    private static string AusfuehrenMitEingabe(ProcessStartInfo start, byte[] eingabe, string aufruf)
+    {
+        start.RedirectStandardInput = true;
+        var gestartet = Starte(start);
+        using (var stdin = gestartet.StandardInput.BaseStream)
+        {
+            stdin.Write(eingabe);
+        }
+        var lauf = WarteAufEnde(gestartet);
         PruefeErfolg(lauf, aufruf);
         return lauf.Ausgabe;
     }

@@ -18,7 +18,7 @@ internal sealed class GitDiffquelle(string arbeitsordner) : IDiffquelle
 
     public string BinaerGrund(string hash, Dateiaenderung datei)
     {
-        var attribut = GitLeser.DiffAttributLesen(datei.Pfad, arbeitsordner);
+        var attribut = GitLeser.DiffAttributLesen(datei, arbeitsordner);
         return Diffaufbereitung.BinaerGrundAus(attribut);
     }
 }
