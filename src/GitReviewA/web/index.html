@@ -19,16 +19,19 @@
 <script src="anmerkungen-werte.js" defer></script>
 <script src="anmerkungen.js" defer></script>
 <script src="commits.js" defer></script>
+<script src="ergebnis-kopieren.js" defer></script>
 <script src="beenden.js" defer></script>
 </head>
 <body>
 <header class="kz">
   <div class="kz-z1">gitreviewA</div>
   <div class="gr-kopfaktionen">
+    <button type="button" id="ergebnis-kopieren" class="kz-btn">Ergebnis kopieren</button>
     <button type="button" id="beenden" class="kz-btn">Beenden</button>
   </div>
 </header>
 <main class="gr-inhalt">
+  <p id="kopieren-status" class="gr-status" role="status"></p>
   <p id="beenden-status" class="gr-status fehler" role="alert"></p>
   <div class="gr-ansicht">
     <section class="gr-leiste" aria-label="Commits">

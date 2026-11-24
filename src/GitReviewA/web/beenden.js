@@ -40,6 +40,7 @@
     hinweisElement.className = 'gr-beendet-hinweis muted';
     hinweisElement.textContent = 'Das Ergebnis steht in der Konsole. Dieses Fenster kann geschlossen werden.';
     knopfElement.remove();
+    document.getElementById('ergebnis-kopieren')?.remove();
     document.querySelector('main').replaceChildren(meldungElement, hinweisElement);
   }
 

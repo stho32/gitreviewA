@@ -41,6 +41,33 @@ function beendenKnopf(page) {
   return page.getByRole('button', { name: 'Beenden' });
 }
 
+function ergebnisKopierenKnopf(page) {
+  return page.getByRole('button', { name: 'Ergebnis kopieren' });
+}
+
+async function ergebnisKopierenBetaetigen(page) {
+  await ergebnisKopierenKnopf(page).click({ timeout: 5000 });
+}
+
+function kopierenStatus(page) {
+  return page.locator('#kopieren-status');
+}
+
+/** Hält die Antwort auf `GET /api/ergebnis` zurück, bis die gelieferte Funktion sie freigibt. */
+async function ergebnisAntwortZurueckhalten(page) {
+  let freigeben;
+  const frei = new Promise(weiter => { freigeben = weiter; });
+  await page.route('**/api/ergebnis', async route => {
+    await frei;
+    await route.continue();
+  });
+  return async () => {
+    const antwort = page.waitForResponse('**/api/ergebnis');
+    freigeben();
+    await antwort;
+  };
+}
+
 async function beendenBetaetigen(page) {
   await beendenKnopf(page).click({ timeout: 5000 });
 }
@@ -284,4 +311,5 @@ module.exports = {
   dateilisteLesen, dateizeilen, aufDateizeilenWarten, dateiSumme, dateilistenMeldung, darstellungWaehlen, dateiWaehlen, gewaehlteDateien,
   dateiwahlenSammeln, gesammelteDateiwahlen, formatierungsElementeZaehlen,
   beendenKnopf, beendenBetaetigen, beendetMeldung, beendenFehler, beendenScheitertMit,
+  ergebnisKopierenKnopf, ergebnisKopierenBetaetigen, kopierenStatus, ergebnisAntwortZurueckhalten,
 };
