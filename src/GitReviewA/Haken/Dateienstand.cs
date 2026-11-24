@@ -1,6 +1,6 @@
 namespace GitReviewA.Haken;
 
-/// <summary>Jede Stelle der Übersicht mit ihrem Haken, in der Reihenfolge der Übersicht.</summary>
+/// <summary>Jede Stelle der Übersicht mit ihrem Haken und Sperrgrund, in der Reihenfolge der Übersicht.</summary>
 internal sealed class Dateienstand
 {
     private readonly Stellenstand[] stellen;
@@ -20,7 +20,7 @@ internal sealed class Dateienstand
         var stellen = new List<Stellenstand>(uebersicht.Anzahl);
         foreach (var stelle in uebersicht)
         {
-            stellen.Add(new Stellenstand(stelle.Commit, stelle.Pfad, haken.IstAbgehakt(stelle)));
+            stellen.Add(new Stellenstand(stelle.Commit, stelle.Pfad, haken.IstAbgehakt(stelle), uebersicht.SperrgrundVon(stelle)));
         }
         return new Dateienstand(stellen);
     }

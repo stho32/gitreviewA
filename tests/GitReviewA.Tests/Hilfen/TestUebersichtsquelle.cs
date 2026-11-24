@@ -16,6 +16,13 @@ internal sealed class TestUebersichtsquelle(Dateiuebersicht? uebersicht) : IUebe
         return new TestUebersichtsquelle(new Dateiuebersicht([hash], pfade.Select(pfad => new Uebersichtsstelle(new Stelle(hash, pfad), string.Empty))));
     }
 
+    /// <summary>Eine gesperrte Stelle mit <paramref name="sperrgrund"/>, danach eine lesbare.</summary>
+    public static TestUebersichtsquelle MitSperre(string hash, string gesperrterPfad, string sperrgrund, string lesbarerPfad)
+    {
+        var stellen = new[] { new Uebersichtsstelle(new Stelle(hash, gesperrterPfad), sperrgrund), new Uebersichtsstelle(new Stelle(hash, lesbarerPfad), string.Empty) };
+        return new TestUebersichtsquelle(new Dateiuebersicht([hash], stellen));
+    }
+
     public static TestUebersichtsquelle Scheiternd()
     {
         return new TestUebersichtsquelle(null);

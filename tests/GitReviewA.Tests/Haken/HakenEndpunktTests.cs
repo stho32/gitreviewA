@@ -28,8 +28,24 @@ public class HakenEndpunktTests
         Assert.That(antwort.Status, Is.EqualTo(HttpStatusCode.OK));
         Assert.That((antwort.Json.GetProperty("abgehakt").GetInt32(), antwort.Json.GetProperty("gesamt").GetInt32()), Is.EqualTo((1, 2)));
         Assert.That(stand.Status, Is.EqualTo(HttpStatusCode.OK));
-        Assert.That(stand.Text, Is.EqualTo("{\"stellen\":[{\"commit\":\"" + HashA + "\",\"datei\":\"alt.txt\",\"abgehakt\":true},{\"commit\":\"" + HashA + "\",\"datei\":\"src/b.txt\",\"abgehakt\":false}],\"abgehakt\":1,\"gesamt\":2}"));
+        Assert.That(stand.Text, Is.EqualTo("{\"stellen\":[{\"commit\":\"" + HashA + "\",\"datei\":\"alt.txt\",\"abgehakt\":true,\"sperrgrund\":\"\"},{\"commit\":\"" + HashA + "\",\"datei\":\"src/b.txt\",\"abgehakt\":false,\"sperrgrund\":\"\"}],\"abgehakt\":1,\"gesamt\":2}"));
         Assert.That(stand.Koepfe, Has.None.StartsWith("Access-Control-"));
+    }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public async Task Wenn_eine_gesperrte_Stelle_gesetzt_oder_entnommen_werden_soll_dann_400_mit_Sperrgrund_und_der_Stand_nennt_ihn(bool abgehakt)
+    {
+        await using var server = await StarteServer(TestUebersichtsquelle.MitSperre(HashA, "f.txt", "Diff nicht lesbar: Name nicht eindeutig", "g.txt"));
+        using var client = new HttpClient();
+        var anfrage = "{\"commit\":\"" + HashA + "\",\"datei\":\"f.txt\",\"abgehakt\":" + abgehakt.ToString().ToLowerInvariant() + "}";
+
+        var antwort = await Sende(client, server, anfrage);
+        var stand = await Hole(client, server, host: null);
+
+        Assert.That(antwort.Status, Is.EqualTo(HttpStatusCode.BadRequest));
+        Assert.That(antwort.Json.GetProperty("meldung").GetString(), Is.EqualTo("Diff nicht lesbar: Name nicht eindeutig"));
+        Assert.That(stand.Text, Is.EqualTo("{\"stellen\":[{\"commit\":\"" + HashA + "\",\"datei\":\"f.txt\",\"abgehakt\":false,\"sperrgrund\":\"Diff nicht lesbar: Name nicht eindeutig\"},{\"commit\":\"" + HashA + "\",\"datei\":\"g.txt\",\"abgehakt\":false,\"sperrgrund\":\"\"}],\"abgehakt\":0,\"gesamt\":2}"));
     }
 
     [TestCase("kein json")]

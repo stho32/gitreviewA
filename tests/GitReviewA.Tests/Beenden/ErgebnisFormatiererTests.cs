@@ -159,7 +159,7 @@ public class ErgebnisFormatiererTests
     [Test]
     public void Wenn_ein_Pfad_Zeilenumbruch_Richtungs_Nullbreiten_und_Tag_Zeichen_traegt_dann_steht_er_mit_Marken_in_einer_Zeile()
     {
-        var dateien = new Dateienstand([new Stellenstand(HashP, "ab\ncd\u202E\u200B\U000E0041\u001b.txt", true)]);
+        var dateien = new Dateienstand([new Stellenstand(HashP, "ab\ncd\u202E\u200B\U000E0041\u001b.txt", true, string.Empty)]);
 
         var ergebnis = ErgebnisFormatierer.Formatiere(new Anmerkungsliste([]), dateien);
 
@@ -169,7 +169,7 @@ public class ErgebnisFormatiererTests
     [Test]
     public void Wenn_2000_Stellen_und_1000_abgehakt_dann_je_1000_Zeilen_und_die_Zeit_steht_im_Testprotokoll()
     {
-        var stellen = Enumerable.Range(1, 2000).Select(nummer => new Stellenstand(HashP, $"viele/datei-{nummer:D4}.txt", nummer % 2 == 0));
+        var stellen = Enumerable.Range(1, 2000).Select(nummer => new Stellenstand(HashP, $"viele/datei-{nummer:D4}.txt", nummer % 2 == 0, string.Empty));
         var dateien = new Dateienstand(stellen);
         var uhr = System.Diagnostics.Stopwatch.StartNew();
 
@@ -192,6 +192,6 @@ public class ErgebnisFormatiererTests
             ("q", "LIESMICH.md"), ("q", "alt.txt"), ("q", "logo.bin"), ("q", "src/b.txt"),
         };
         var hashNachName = new Dictionary<string, string> { ["p"] = HashP, ["q"] = HashQ };
-        return new Dateienstand(stellen.Select(stelle => new Stellenstand(hashNachName[stelle.Item1], stelle.Item2, abgehakt.Contains(stelle))));
+        return new Dateienstand(stellen.Select(stelle => new Stellenstand(hashNachName[stelle.Item1], stelle.Item2, abgehakt.Contains(stelle), string.Empty)));
     }
 }
