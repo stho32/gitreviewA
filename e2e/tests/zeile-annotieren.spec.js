@@ -191,6 +191,30 @@ test.describe('Zeile annotieren', () => {
     expect(ergebnis).toContain('> <img src=x onerror=alert(1)>\n> <b>fett</b>\n> **fett**\n');
   });
 
+  test('Klicks auf dieselbe Zeile: zweimal, doppelt auf den Text und doppelt auf die Nummer öffnen genau ein Feld mit Fokus, ein Feld an anderer Zeile bleibt', async ({ anm }) => {
+    await anm.starten();
+    await anm.dateiAnsehen('lang.txt');
+    await anm.zeileAnklicken({ neu: 1 });
+    await anm.textSchreiben('lang.txt', 1, 'bleibt stehen');
+
+    await anm.zeileAnklicken(Z19);
+    await anm.zeileAnklicken(Z19);
+    await anm.zeileDoppeltAnklicken(Z19, 'text');
+    await anm.zeileDoppeltAnklicken(Z19, 'nummer');
+
+    await anm.anzahlFelder('lang.txt', 18, 1);
+    await anm.feldOffenMitFokus('lang.txt', 18);
+    await anm.anzahlFelder('lang.txt', 1, 1);
+    await anm.feldEnthaelt('lang.txt', 1, 'bleibt stehen');
+    await anm.textSchreiben('lang.txt', 18, 'einmal');
+    await anm.speichern('lang.txt', 18);
+    await anm.feldZu('lang.txt', 18);
+    await anm.zeileAnklicken(Z19);
+    await anm.anzahlFelder('lang.txt', 18, 1);
+    await anm.feldOffenMitFokus('lang.txt', 18);
+    await anm.anmerkungenUnter('lang.txt', Z19, ['einmal']);
+  });
+
   test('Dateiname mit U+202E: in der Oberfläche annotiert, auf stdout steht die Marke statt des Zeichens', async ({ anm }) => {
     const sichtbarerName = 'a⟨U+202E⟩b.txt';
     await anm.starten({ vorbereitung: 'Repo B' });

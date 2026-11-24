@@ -79,6 +79,9 @@ function annotierSprache(gr, page) {
 
     annotieren,
     zeileAnklicken: ziel => anmerkungSeite.zeileAnklicken(page, ziel),
+    zeileDoppeltAnklicken: (ziel, zelle) => anmerkungSeite.zeileDoppeltAnklicken(page, ziel, zelle),
+    anzahlFelder: (datei, neu, anzahl) => anmerkungSeite.pruefeAnzahlFelder(page, feldname(datei, neu), anzahl),
+    feldEnthaelt: (datei, neu, text) => anmerkungSeite.pruefeFeldtext(page, feldname(datei, neu), text),
     feldOffenMitFokus: (datei, neu) => anmerkungSeite.pruefeFeldOffenMitFokus(page, feldname(datei, neu)),
     textSchreiben: (datei, neu, text) => anmerkungSeite.textSchreiben(page, feldname(datei, neu), text),
     speichern: (datei, neu) => anmerkungSeite.speichern(page, feldname(datei, neu)),

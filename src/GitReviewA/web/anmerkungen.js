@@ -146,7 +146,7 @@
     }
     if (ziel.art === 'annotierbar') {
       setzeZeilenfokus(zeileElement, false);
-      oeffneFeld(ansicht, zeileElement, ziel.neu);
+      oeffneOderFokussiereFeld(ansicht, zeileElement, ziel.neu);
     }
   }
 
@@ -206,6 +206,28 @@
   }
 
   /* ── Notizfeld: öffnen, speichern, abbrechen ── */
+
+  /** Je Zeile höchstens ein offenes Feld: ein weiterer Klick oder Doppelklick gibt dem offenen Feld den Fokus. */
+  function oeffneOderFokussiereFeld(ansicht, zeileElement, nummerNeu) {
+    const offenesEingabeElement = offeneEingabeDerZeile(zeileElement);
+    if (offenesEingabeElement) {
+      offenesEingabeElement.focus();
+      return;
+    }
+    oeffneFeld(ansicht, zeileElement, nummerNeu);
+  }
+
+  /** Die Zeilen unter einer Diff-Zeile bis zur nächsten Diff-Zeile gehören zu ihr: Anmerkungen und höchstens ein Notizfeld. */
+  function offeneEingabeDerZeile(zeileElement) {
+    let naechsteElement = zeileElement.nextElementSibling;
+    while (naechsteElement && !naechsteElement.matches(DIFFZEILE)) {
+      if (naechsteElement.matches('tr.anm-feld')) {
+        return naechsteElement.querySelector('textarea');
+      }
+      naechsteElement = naechsteElement.nextElementSibling;
+    }
+    return null;
+  }
 
   function oeffneFeld(ansicht, zeileElement, nummerNeu) {
     const gezeichnet = zustand.gezeichnet;

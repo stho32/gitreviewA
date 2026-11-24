@@ -26,6 +26,15 @@ async function zeileAnklicken(page, ziel) {
   await diffzeile(page, ziel).locator('td').last().click();
 }
 
+/** Doppelklick auf die Textzelle (`'text'`) oder die Nummernzelle neu (`'nummer'`) der Zeile. */
+async function zeileDoppeltAnklicken(page, ziel, zelle) {
+  let zelleLocator = diffzeile(page, ziel).locator('td.c');
+  if (zelle === 'nummer') {
+    zelleLocator = diffzeile(page, ziel).locator('td.n.neu');
+  }
+  await zelleLocator.dblclick();
+}
+
 function feld(page, name) {
   return page.locator(ROLLBEREICH).getByRole('textbox', { name, exact: true });
 }
@@ -51,6 +60,14 @@ async function zweimalSpeichern(page, name) {
   const knopf = feldzeile(page, name).getByRole('button', { name: 'Speichern', exact: true });
   await knopf.click();
   await knopf.click({ force: true });
+}
+
+async function pruefeAnzahlFelder(page, name, anzahl) {
+  await expect(feld(page, name)).toHaveCount(anzahl);
+}
+
+async function pruefeFeldtext(page, name, text) {
+  await expect(feld(page, name)).toHaveValue(text);
 }
 
 async function pruefeFeldZu(page, name) {
@@ -202,7 +219,7 @@ async function sichtbarerAnmerkungstext(page) {
 }
 
 module.exports = {
-  zeileAnklicken, pruefeFeldOffenMitFokus, textSchreiben, speichern, zweimalSpeichern, pruefeFeldZu, pruefeKeinFeld, pruefeFeldmeldung,
+  zeileAnklicken, zeileDoppeltAnklicken, pruefeAnzahlFelder, pruefeFeldtext, pruefeFeldOffenMitFokus, textSchreiben, speichern, zweimalSpeichern, pruefeFeldZu, pruefeKeinFeld, pruefeFeldmeldung,
   pruefeAnmerkungenUnter, pruefeAnzahlAnmerkungszeilen, pruefeAnmerkungszeilenSindKeineDiffzeilen,
   pruefeHinweisEntfernt, pruefeKeinHinweisEntfernt, pruefeHinweisAusserhalb, pruefeKeinHinweisAusserhalb,
   inDenDiffTabben, pfeilAbBis, taste, pruefeFokusAufZeile, anlegenAntwortetEinmal, anlegenVerzoegern, pruefeAnmerkungenBinnen,
