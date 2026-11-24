@@ -8,7 +8,7 @@ namespace GitReviewA.Diff;
 /// Interaction „Diff einer Datei lesen“: git bekommt nur einen vollen Hash der Auswahl und einen Pfad, der genau so in der Dateiliste
 /// dieses Commits steht — alles andere endet vorher als <see cref="Diffausgang.NichtGefunden"/>. Ein Name, der keine Datei eindeutig meint
 /// oder sich nicht an git übergeben lässt, endet als <see cref="Diffausgang.NameNichtLesbar"/>; ein Patch, der der Zählung der Dateiliste
-/// widerspricht, als <see cref="Diffausgang.NichtLesbar"/> — nie als leerer Patch.
+/// widerspricht oder den Kopf einer zweiten Datei trägt, als <see cref="Diffausgang.NichtLesbar"/> — nie als leerer oder fremder Patch.
 /// </summary>
 internal sealed class DiffLesenInteractor(Commitzeilen commits, GemerkteDateiquelle dateien, IDiffquelle diffquelle, StderrProtokoll protokoll)
 {
@@ -66,11 +66,17 @@ internal sealed class DiffLesenInteractor(Commitzeilen commits, GemerkteDateique
             protokoll.Melde(Protokollstufe.Fehler, Fehlerkontext, $"Diff von Commit {hash}, Datei {datei.Pfad} nicht lesbar: {fehler.Message}");
             return Differgebnis.NichtLesbar;
         }
-        return GelesenWennDerPatchZurZaehlungPasst(hash, datei, antwort);
+        return GelesenWennDerPatchZurDateiPasst(hash, datei, antwort);
     }
 
-    private Differgebnis GelesenWennDerPatchZurZaehlungPasst(string hash, Dateiaenderung datei, DiffAntwort antwort)
+    private Differgebnis GelesenWennDerPatchZurDateiPasst(string hash, Dateiaenderung datei, DiffAntwort antwort)
     {
+        var zeigtMehrAlsDieseDatei = !Patcheinheit.ZeigtEineDatei(antwort.Patch);
+        if (zeigtMehrAlsDieseDatei)
+        {
+            protokoll.Melde(Protokollstufe.Fehler, Fehlerkontext, $"Diff von Commit {hash}, Datei {datei.Pfad} nicht lesbar: der Patch trägt den Kopf einer zweiten Datei");
+            return Differgebnis.NichtLesbar;
+        }
         var widersprichtDerZaehlung = antwort.Art == Diffaufbereitung.ArtText && !Patchzaehlung.PasstZurDateiliste(antwort.Patch, datei);
         if (widersprichtDerZaehlung)
         {
