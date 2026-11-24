@@ -159,3 +159,9 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Lehre (Security): Sperre und Ergebnis vergleichen denselben kanonischen Namen; „dritte Form?“ entscheidet die Anzeigefunktion.
 - Offen, älter als die Karte: Der Stand liefert LF im Namen roh; als Pflichtpunkt an I0010/I0027 gegeben.
 - Gate: Lauf 2 mit 1 rotem Playwright-Test unter Last (paralleler Bau #10), Lauf 1 und 3 grün 312/312 — Name nicht erfasst. Lehre: Gate-Läufe mit `--reporter=line` fahren, damit ein einzelner roter Test benannt ist.
+
+## Retrospektive #14 I0014 Große Diffs (2026-11-24)
+- Durchlauf ganz über opencode: planer, product-owner (4 Grenzwerte), Bau 21 min, Security ohne Muss, Code-Review ohne Muss mit 2 Fragen → product-owner (Blockgrenze nachschärfen, Positivkontrolle als Knotenzähler) → planer (AK) → Nacharbeit 20 min, vom Director am Diff geprüft → Entwicklertest 9 Szenarien ohne Befund. Karte gesamt 1,40 $.
+- Wirkung: 52-MB-Datei → +50 MB Server-RSS statt 1,6 GB; „zu groß“ in allen drei Textpfaden; Blöcke ≤ 5 000 Knoten.
+- Lehre: Eine Positivkontrolle, die im headless-Browser nicht erzeugbar ist, früh als Kriterium einengen (Messgröße selbst zählen) statt sie im Bau zu suchen.
+- Gate: NUnit 816/816, Playwright 320/320 zweimal.
