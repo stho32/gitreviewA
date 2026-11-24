@@ -20,6 +20,7 @@ internal static class DateiaenderungenParser
         var position = 0;
         var rohdaten = LiesRohdaten(teile, ref position);
         var zahlen = LiesZahlen(teile, ref position, rohdaten.Count);
+        PruefeVollstaendigGelesen(teile, position);
         return new Dateiaenderungen(rohdaten.Select((roh, index) => roh with { Plus = zahlen[index].Plus, Minus = zahlen[index].Minus }));
     }
 
@@ -74,6 +75,15 @@ internal static class DateiaenderungenParser
             position++;
         }
         return zahlen;
+    }
+
+    private static void PruefeVollstaendigGelesen(string[] teile, int position)
+    {
+        var nurDasLetzteLeereTeilBleibt = position >= teile.Length - 1;
+        if (!nurDasLetzteLeereTeilBleibt)
+        {
+            throw new GitFehler($"unerwartete Ausgabe von git show ({teile.Length - 1 - position} Teile nach der Dateiliste)");
+        }
     }
 
     private static int? Zahl(string feld)

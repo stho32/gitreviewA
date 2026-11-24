@@ -89,6 +89,15 @@ public class DateiaenderungenParserTests
         Assert.Throws<GitFehler>(() => DateiaenderungenParser.Parse(ausgabe));
     }
 
+    [Test]
+    public void Wenn_nach_den_Zahlen_weitere_Datensaetze_folgen_dann_GitFehler_statt_sie_zu_verschweigen()
+    {
+        var ersterElternteil = Roh(Ohne, Blob1, "A") + "a.txt\0" + "1\t0\ta.txt\0";
+        var zweiterElternteil = Roh(Ohne, Blob2, "A") + "b.txt\0" + "1\t0\tb.txt\0";
+
+        Assert.Throws<GitFehler>(() => DateiaenderungenParser.Parse(ersterElternteil + zweiterElternteil));
+    }
+
     private static string Roh(string vorher, string nachher, string status)
     {
         return $":100644 100644 {vorher} {nachher} {status}\0";
