@@ -108,6 +108,52 @@ public class GitLeserFremdeAnzeigeTests
         }
     }
 
+    [TestCase("ohne Abschaltung")]
+    [TestCase(".gitattributes -diff")]
+    [TestCase(".gitattributes binary")]
+    [TestCase("config core.bigFileThreshold=1")]
+    public void Wenn_das_Repo_Textdateien_als_binaer_ausgibt_dann_zeigt_die_Dateiliste_trotzdem_die_Zeilenzahlen(string abschaltung)
+    {
+        using var repo = WegwerfRepo.MitCommits();
+        repo.SchreibeDatei("a.txt", "eins\n");
+        repo.Committe("Erster", "A", "2026-03-04T09:15:00+01:00", "");
+        repo.SchreibeDatei("a.txt", "eins\nzwei\n");
+        var hash = repo.Committe("Zweiter", "A", "2026-03-04T09:16:00+01:00", "");
+        StelleBinaerausgabeEin(repo, abschaltung);
+
+        var dateien = GitLeser.DateienLesen(hash, repo.Ordner).AlsArray();
+
+        Assert.That(dateien, Is.EqualTo(new[] { new Dateiaenderung("M", "a.txt", null, 1, 0) }));
+    }
+
+    [Test]
+    public void Wenn_eine_Datei_wirklich_binaer_ist_dann_zeigt_die_Dateiliste_weiter_keine_Zeilenzahlen()
+    {
+        using var repo = WegwerfRepo.MitCommits();
+        File.WriteAllBytes(Path.Combine(repo.Ordner, "logo.bin"), [0, 1, 2, 3, 0, 255]);
+        var hash = repo.Committe("Bild", "A", "2026-03-04T09:15:00+01:00", "");
+
+        var dateien = GitLeser.DateienLesen(hash, repo.Ordner).AlsArray();
+
+        Assert.That(dateien, Is.EqualTo(new[] { new Dateiaenderung("A", "logo.bin", null, null, null) }));
+    }
+
+    private static void StelleBinaerausgabeEin(WegwerfRepo repo, string abschaltung)
+    {
+        if (abschaltung == ".gitattributes -diff")
+        {
+            repo.SchreibeDatei(".gitattributes", "*.txt -diff\n");
+        }
+        if (abschaltung == ".gitattributes binary")
+        {
+            repo.SchreibeDatei(".gitattributes", "*.txt binary\n");
+        }
+        if (abschaltung == "config core.bigFileThreshold=1")
+        {
+            repo.Git("config", "core.bigFileThreshold", "1");
+        }
+    }
+
     private static void StelleAusblendungEin(WegwerfRepo repo, string ausblendung)
     {
         if (ausblendung == "config submodule.sub.ignore=all")
