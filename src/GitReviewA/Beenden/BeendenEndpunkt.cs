@@ -6,8 +6,9 @@ using GitReviewA.Server;
 namespace GitReviewA.Beenden;
 
 /// <summary>
-/// Beenden wirkt genau einmal: die erste Anforderung schließt den Speicher ab, bekommt ihre Antwort vollständig
-/// und stoppt erst danach den Server. Das Ergebnis schreibt der Hauptablauf, wenn der Server steht.
+/// Beenden wirkt genau einmal: die erste vollständig empfangene Anforderung schließt den Speicher ab, bekommt ihre
+/// Antwort vollständig und stoppt erst danach den Server. Eine Anforderung, deren Körper nie ganz ankommt, ist kein
+/// Beenden — ein Abbruch in dieser Zeit bleibt ein Abbruch. Das Ergebnis schreibt der Hauptablauf, wenn der Server steht.
 /// </summary>
 internal static class BeendenEndpunkt
 {
@@ -18,6 +19,11 @@ internal static class BeendenEndpunkt
     {
         return async kontext =>
         {
+            var istVollstaendigEmpfangen = await LiesKoerperBisZumEndeAsync(kontext);
+            if (!istVollstaendigEmpfangen)
+            {
+                return;
+            }
             var istErsteAnforderung = speicher.VersucheAbzuschliessen();
             await JsonAntwort.SendeAsync(kontext, StatusCodes.Status200OK, Beendet);
             if (!istErsteAnforderung)
@@ -29,5 +35,22 @@ internal static class BeendenEndpunkt
             await kontext.Response.CompleteAsync();
             lebensdauer.StopApplication();
         };
+    }
+
+    private static async Task<bool> LiesKoerperBisZumEndeAsync(HttpContext kontext)
+    {
+        try
+        {
+            await kontext.Request.Body.CopyToAsync(Stream.Null, kontext.RequestAborted);
+            return true;
+        }
+        catch (IOException)
+        {
+            return false;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
     }
 }

@@ -17,6 +17,8 @@ internal sealed class Webserver : IAsyncDisposable
 
     private static readonly JsonSerializerOptions JsonOptionen = new(JsonSerializerDefaults.Web);
 
+    private static readonly TimeSpan HoechsteWartezeitAufOffeneAnfragen = TimeSpan.FromSeconds(2);
+
     private readonly WebApplication anwendung;
 
     private Webserver(WebApplication anwendung, int port, Anmerkungsspeicher anmerkungen)
@@ -66,6 +68,7 @@ internal sealed class Webserver : IAsyncDisposable
             kestrel.Listen(IPAddress.Loopback, port);
         });
         builder.Services.AddRoutingCore();
+        builder.Services.Configure<HostOptions>(optionen => optionen.ShutdownTimeout = HoechsteWartezeitAufOffeneAnfragen);
         builder.Logging.SetMinimumLevel(LogLevel.Warning);
         builder.Logging.AddProvider(new ProtokollLoggerProvider(protokoll));
         return builder.Build();
