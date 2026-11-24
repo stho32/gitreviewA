@@ -173,6 +173,26 @@ public class GitLeserDiffTests
         Assert.That(Diffaufbereitung.PatchAbErstemHunk(ausgabe), Is.EqualTo(erwartet));
     }
 
+    [TestCase(Binaerausgabe.OhneAbschaltung)]
+    [TestCase(".gitattributes -diff")]
+    [TestCase(".gitattributes binary")]
+    [TestCase(".gitattributes Treiber mit binary=true")]
+    [TestCase("config core.bigFileThreshold=1")]
+    [TestCase("config core.attributesFile")]
+    public void Wenn_das_Repo_Textdateien_als_binaer_ausgibt_dann_zeigt_der_Diff_trotzdem_die_Zeilen(string abschaltung)
+    {
+        using var repo = WegwerfRepo.MitCommits();
+        repo.SchreibeDatei("y.txt", "eins\n");
+        repo.Committe("p", "A", Zeitpunkt, "");
+        repo.SchreibeDatei("y.txt", "eins\nsteal();\n");
+        var q = repo.Committe("q", "A", Zeitpunkt, "");
+        Binaerausgabe.Einstellen(repo, abschaltung);
+
+        var patch = PatchLesen(repo, q, new Dateiaenderung("M", "y.txt", null, 1, 0));
+
+        Assert.That(patch, Is.EqualTo("@@ -1 +1,2 @@\n eins\n+steal();\n"));
+    }
+
     [Test]
     public void Wenn_das_Commit_Objekt_fehlt_dann_GitFehler_mit_Hash_und_Pfad()
     {

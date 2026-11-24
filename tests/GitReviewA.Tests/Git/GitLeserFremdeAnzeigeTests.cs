@@ -111,7 +111,9 @@ public class GitLeserFremdeAnzeigeTests
     [TestCase("ohne Abschaltung")]
     [TestCase(".gitattributes -diff")]
     [TestCase(".gitattributes binary")]
+    [TestCase(".gitattributes Treiber mit binary=true")]
     [TestCase("config core.bigFileThreshold=1")]
+    [TestCase("config core.attributesFile")]
     public void Wenn_das_Repo_Textdateien_als_binaer_ausgibt_dann_zeigt_die_Dateiliste_trotzdem_die_Zeilenzahlen(string abschaltung)
     {
         using var repo = WegwerfRepo.MitCommits();
@@ -119,7 +121,7 @@ public class GitLeserFremdeAnzeigeTests
         repo.Committe("Erster", "A", "2026-03-04T09:15:00+01:00", "");
         repo.SchreibeDatei("a.txt", "eins\nzwei\n");
         var hash = repo.Committe("Zweiter", "A", "2026-03-04T09:16:00+01:00", "");
-        StelleBinaerausgabeEin(repo, abschaltung);
+        Binaerausgabe.Einstellen(repo, abschaltung);
 
         var dateien = GitLeser.DateienLesen(hash, repo.Ordner).AlsArray();
 
@@ -136,22 +138,6 @@ public class GitLeserFremdeAnzeigeTests
         var dateien = GitLeser.DateienLesen(hash, repo.Ordner).AlsArray();
 
         Assert.That(dateien, Is.EqualTo(new[] { new Dateiaenderung("A", "logo.bin", null, null, null) }));
-    }
-
-    private static void StelleBinaerausgabeEin(WegwerfRepo repo, string abschaltung)
-    {
-        if (abschaltung == ".gitattributes -diff")
-        {
-            repo.SchreibeDatei(".gitattributes", "*.txt -diff\n");
-        }
-        if (abschaltung == ".gitattributes binary")
-        {
-            repo.SchreibeDatei(".gitattributes", "*.txt binary\n");
-        }
-        if (abschaltung == "config core.bigFileThreshold=1")
-        {
-            repo.Git("config", "core.bigFileThreshold", "1");
-        }
     }
 
     private static void StelleAusblendungEin(WegwerfRepo repo, string ausblendung)
