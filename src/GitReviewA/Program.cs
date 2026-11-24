@@ -28,14 +28,16 @@ internal static class Program
         var startauftrag = aufruf.Startauftrag;
         var protokoll = NeuesProtokoll(startauftrag.Mindeststufe);
         using var abbruchsignale = Abbruchsignale.Abfangen();
+        var anfrage = new Aufrufanfrage(startauftrag, StandardeingabeDesProzesses(), Environment.CurrentDirectory);
+        var folge = await AufrufInteractor.StarteAsync(anfrage, protokoll);
+        if (!folge.IstErfolg)
+        {
+            MeldeAufruffehler(folge.Fehler, protokoll);
+            return folge.Fehler.ExitCode;
+        }
         try
         {
-            return await LaufeBisZumEnde(startauftrag, abbruchsignale, protokoll);
-        }
-        catch (AuswahlFehler fehler)
-        {
-            protokoll.Melde(Protokollstufe.Fehler, "Auswahl", fehler.Message);
-            return ExitUngueltigerAufruf;
+            return await LaufeBisZumEnde(startauftrag, folge.Commits, folge.Arbeitsbaumwurzel, abbruchsignale, protokoll);
         }
         catch (GitFehler fehler)
         {
@@ -49,12 +51,20 @@ internal static class Program
         }
     }
 
-    private static async Task<int> LaufeBisZumEnde(Startauftrag startauftrag, Abbruchsignale abbruchsignale, StderrProtokoll protokoll)
+    private static void MeldeAufruffehler(Aufruffehler fehler, StderrProtokoll protokoll)
     {
-        var commits = await CommitsDerAuswahl.LesenAsync(startauftrag.Auswahl, StandardeingabeDesProzesses(), Environment.CurrentDirectory, protokoll);
-        var arbeitsordner = GitLeser.WurzelLesen(Environment.CurrentDirectory);
-        var uebersichtsquelle = new GitUebersichtsquelle(commits, arbeitsordner);
-        await using var server = await Webserver.StartenAsync(startauftrag.Port, commits, new GitDateiquelle(arbeitsordner), new GitDiffquelle(arbeitsordner), uebersichtsquelle, Oberflaeche.AusDemProgramm(), protokoll);
+        protokoll.Melde(Protokollstufe.Fehler, "Aufruf", fehler.Meldung);
+        var hatDebugtext = fehler.Debugtext.Length > 0;
+        if (hatDebugtext)
+        {
+            protokoll.Melde(Protokollstufe.Debug, "Aufruf", fehler.Debugtext);
+        }
+    }
+
+    private static async Task<int> LaufeBisZumEnde(Startauftrag startauftrag, Commitzeilen commits, string arbeitsbaumwurzel, Abbruchsignale abbruchsignale, StderrProtokoll protokoll)
+    {
+        var uebersichtsquelle = new GitUebersichtsquelle(commits, arbeitsbaumwurzel);
+        await using var server = await Webserver.StartenAsync(startauftrag.Port, commits, new GitDateiquelle(arbeitsbaumwurzel), new GitDiffquelle(arbeitsbaumwurzel), uebersichtsquelle, Oberflaeche.AusDemProgramm(), protokoll);
         protokoll.MeldeStart(server.Adresse);
         if (startauftrag.BrowserOeffnen)
         {
