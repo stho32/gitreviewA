@@ -122,6 +122,14 @@ test.describe('Diff einer Datei lesen', () => {
     });
     await diff.fremderTextBleibtText();
   });
+
+  test('soll richtungsändernde Zeichen auch im Pfad über dem Diff als Marke zeigen', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Bidi im Dateinamen' });
+
+    await diff.dateiAnsehen('a\u202Eb.txt');
+
+    await diff.diffZeigt({ pfad: 'a⟨U+202E⟩b.txt', zeilen: [{ kopf: '@@ -0,0 +1 @@' }, { plus: 'x', neu: 1 }] });
+  });
 });
 
 test.describe('Diff erst bei Auswahl laden', () => {

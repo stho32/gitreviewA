@@ -17,6 +17,7 @@ const VORBEREITUNGEN = {
   'Diff-Programme': { anlegen: repos.repoAMitDiffProgrammen, commits: ['q', 'p'] },
   'fremde Einstellungen': { anlegen: repos.repoAMitFremdenEinstellungen, commits: ['q', 'p'] },
   Merge: { anlegen: repos.repoM, commits: ['m'] },
+  'Bidi im Dateinamen': { anlegen: repos.repoMitBidiPfad, commits: ['b'] },
   '20 000 Zeilen': { anlegen: repos.repoU, commits: ['u'] },
 };
 

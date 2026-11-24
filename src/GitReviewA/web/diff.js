@@ -50,7 +50,7 @@
   async function ladeDiff(ansicht, datei) {
     const ladung = zustand.letzteLadung + 1;
     zustand.letzteLadung = ladung;
-    ansicht.pfadElement.textContent = datei.pfad;
+    ansicht.pfadElement.replaceChildren(...sichtbarTeile(datei.pfad).map(teilKnoten));
     zeigeMeldung(ansicht, 'Diff wird geladen …', false);
     let antwort;
     try {

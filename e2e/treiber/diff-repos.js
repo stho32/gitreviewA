@@ -94,6 +94,13 @@ function repoM(ordner) {
   return { ordner, hashes: { m: git(ordner, 'rev-parse', 'HEAD') } };
 }
 
+/** Ein Commit `b` mit einer Datei, deren Name ein richtungsänderndes Zeichen trägt. */
+function repoMitBidiPfad(ordner) {
+  repoAnlegen(ordner);
+  dateiSchreiben(ordner, 'a\u202Eb.txt', 'x\n');
+  return { ordner, hashes: { b: commitAnlegen(ordner, { betreff: 'Bidi im Namen' }) } };
+}
+
 /** Repo U: ein Commit `u` mit `gross.txt` aus 20 000 Zeilen. */
 function repoU(ordner) {
   repoAnlegen(ordner);
@@ -101,4 +108,4 @@ function repoU(ordner) {
   return { ordner, hashes: { u: commitAnlegen(ordner, { betreff: '20 000 Zeilen' }) } };
 }
 
-module.exports = { repoA, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoMitBidiPfad, repoA, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, markerVorhanden, diffProgrammOhneSchutzStarten };
