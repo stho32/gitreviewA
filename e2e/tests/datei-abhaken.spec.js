@@ -105,25 +105,31 @@ test.describe('Datei abhaken', () => {
     });
   }
 
-  for (const fall of [{ klicks: 2, erwartet: [], zaehler: '0 von 8 abgehakt' }, { klicks: 3, erwartet: ['p:README.md'], zaehler: '1 von 8 abgehakt' }]) {
-    test(`soll bei ${fall.klicks} Klicks während einer um 1,5 s verzögerten Antwort und einem Wechsel genau den zuletzt gewünschten Zustand speichern (Kriterium 12)`, async ({ abhaken }) => {
+  for (const fall of [
+    { klicks: 2, gesendet: [true, false], erwartet: [], zaehler: '0 von 8 abgehakt' },
+    { klicks: 4, gesendet: [true, false], erwartet: [], zaehler: '0 von 8 abgehakt' },
+    { klicks: 3, gesendet: [true], erwartet: ['p:README.md'], zaehler: '1 von 8 abgehakt' },
+  ]) {
+    test(`soll bei ${fall.klicks} Klicks während einer um 800 ms verzögerten Antwort und einem Wechsel den letzten Wunsch nachsenden und genau ihn speichern (Kriterium 12)`, async ({ abhaken }) => {
       await abhaken.starten({ commits: PQR });
       await abhaken.dateienWarten(4);
       await abhaken.fortschritt('0 von 8 abgehakt');
-      const gesendet = await abhaken.hakenSetzenVerzoegern(1500);
+      const gesendet = await abhaken.hakenSetzenVerzoegern(800);
 
       for (let klick = 0; klick < fall.klicks; klick += 1) {
         await abhaken.abhaken('README.md');
       }
       await abhaken.commitAnsehen('q');
       await abhaken.dateienWarten(4);
-
-      await abhaken.fortschritt(fall.zaehler);
-      await test.expect.poll(() => abhaken.serverseitigAbgehakt(), { timeout: 8000 }).toEqual(fall.erwartet);
-      test.expect(gesendet.length, 'höchstens eine Anfrage je Antwort unterwegs').toBeLessThanOrEqual(2);
       await abhaken.commitAnsehen('p');
       await abhaken.dateienWarten(4);
+
+      await test.expect.poll(() => gesendet.map(g => g.abgehakt), { timeout: 8000 }).toEqual(fall.gesendet);
+      await abhaken.ruhezeitAbwarten(2000);
+      test.expect(gesendet.map(g => g.abgehakt), 'kein weiterer Haken nach dem letzten Wunsch').toEqual(fall.gesendet);
+      test.expect(await abhaken.serverseitigAbgehakt()).toEqual(fall.erwartet);
       await abhaken.istAbgehakt('README.md', fall.erwartet.length === 1);
+      await abhaken.fortschritt(fall.zaehler);
     });
   }
 

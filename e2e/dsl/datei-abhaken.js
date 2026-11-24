@@ -108,6 +108,8 @@ function abhakenSprache(gr, page) {
     keineDateiGewaehlt: async () => expect(await seite.gewaehlteDateien(page)).toEqual([]),
     gewaehlteDateien: namen => seite.pruefeGewaehlteDateien(page, namen),
     neuLaden: () => page.reload(),
+    /** Feste Frist, in der nichts mehr geschehen darf — prüft eine Abwesenheit (kein weiteres Senden), wartet nicht auf ein Ereignis. */
+    ruhezeitAbwarten: ms => page.waitForTimeout(ms),
     abhaken: name => haken.kaestchenBetaetigen(page, name),
     perTastaturAbhaken: name => haken.perTastaturAbhaken(page, name),
     fortschritt: text => haken.pruefeFortschritt(page, text),
