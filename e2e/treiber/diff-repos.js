@@ -30,7 +30,7 @@ function repoA(ordner) {
   dateiSchreiben(ordner, 'ende.txt', 'a\n');
   dateiSchreiben(ordner, 'k.txt', 'oben\n\nUNTEN\n');
   dateiSchreiben(ordner, 'breit.txt', `kurz\n${'0123456789'.repeat(30)}\n`);
-  dateiSchreiben(ordner, 'fremd.txt', '<img src=x onerror=alert(1)>\n<b>fett</b>\na‮b\n');
+  dateiSchreiben(ordner, 'fremd.txt', '<img src=x onerror=alert(1)>\n<b>fett</b>\na\u202Eb\n');
   fs.writeFileSync(path.join(ordner, 'logo.bin'), Buffer.from([0x41, 0, 0x42, 0, 1, 2]));
   const q = commitAnlegen(ordner, { betreff: 'Dateien ändern' });
   dateiSchreiben(ordner, '--output=pwn', 'x\n');
