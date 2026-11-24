@@ -11,7 +11,6 @@ function anzahlZeilen(text, zeile) {
 
 test.describe('Beenden mit Ergebnis', () => {
   test('US-1: Beenden in der Oberfläche ohne Anmerkungen — Meldung, leeres Ergebnis, Exit 0', async ({ gr, page }) => {
-    test.fail(true, 'erwartet rot: B0107 Knopf noch nicht gebaut');
     const repo = gr.repoMitCommits();
     const [a, b] = repo.hashes;
     const lauf = await gr.gitreviewAStarten(repo, [a, b]);
@@ -23,6 +22,22 @@ test.describe('Beenden mit Ergebnis', () => {
     await expect(gr.beendenKnopf(page)).toHaveCount(0);
     expect(await gr.aufEndeWarten(lauf)).toBe(0);
     expect(gr.ergebnis(lauf)).toBe(LEERES_ERGEBNIS);
+  });
+
+  test('Beenden scheitert — Fehlermeldung, Bedienung bleibt, Lauf geht weiter', async ({ gr, page }) => {
+    const repo = gr.repoMitCommits();
+    const [a] = repo.hashes;
+    const lauf = await gr.gitreviewAStarten(repo, [a]);
+    await gr.oberflaecheOeffnen(page, lauf);
+    await gr.beendenScheitertMit(page, 403);
+
+    await gr.beendenBetaetigen(page);
+
+    await expect(gr.beendenFehler(page)).toContainText('Beenden ist gescheitert');
+    await expect(gr.beendenKnopf(page)).toBeEnabled();
+    await expect(gr.beendetMeldung(page)).toHaveCount(0);
+    expect(gr.laeuftNoch(lauf)).toBe(true);
+    expect(gr.ergebnis(lauf)).toBe('');
   });
 
   test('US-2: zwei Anmerkungen — Nummern 1 und 2, Ergebnis Byte für Byte, Exit 0', async ({ gr }) => {

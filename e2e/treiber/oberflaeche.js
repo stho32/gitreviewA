@@ -30,4 +30,18 @@ function beendetMeldung(page) {
   return page.getByText('Review beendet', { exact: true });
 }
 
-module.exports = { commitZeilenLesen, commitZeilen, aufZeilenWarten, beendenKnopf, beendenBetaetigen, beendetMeldung };
+function beendenFehler(page) {
+  return page.locator('#beenden-status');
+}
+
+/** Lässt die Beenden-Anforderung mit `status` scheitern, nach einer Verzögerung, die Zeichnen dazwischen erlaubt. */
+async function beendenScheitertMit(page, status) {
+  await page.route('**/api/beenden', async route => {
+    await new Promise(weiter => setTimeout(weiter, 300));
+    await route.fulfill({ status, contentType: 'application/json', body: '{"meldung":"abgewiesen"}' });
+  });
+}
+
+module.exports = {
+  commitZeilenLesen, commitZeilen, aufZeilenWarten, beendenKnopf, beendenBetaetigen, beendetMeldung, beendenFehler, beendenScheitertMit,
+};

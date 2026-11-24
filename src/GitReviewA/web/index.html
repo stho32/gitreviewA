@@ -8,12 +8,17 @@
 <link rel="stylesheet" href="kd-base.css">
 <link rel="stylesheet" href="gitreviewa.css">
 <script src="commits.js" defer></script>
+<script src="beenden.js" defer></script>
 </head>
 <body>
 <header class="kz">
   <div class="kz-z1">gitreviewA</div>
+  <div class="gr-kopfaktionen">
+    <button type="button" id="beenden" class="kz-btn">Beenden</button>
+  </div>
 </header>
 <main class="gr-inhalt">
+  <p id="beenden-status" class="gr-status fehler" role="alert"></p>
   <p id="commit-status" class="gr-status muted" role="status">Commits werden geladen …</p>
   <ol id="commit-liste" class="gr-commits" aria-label="Commits der Auswahl"></ol>
 </main>

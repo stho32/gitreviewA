@@ -9,3 +9,7 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .commit-zeile+.commit-zeile{border-top:1px solid var(--kd-line)}
 .commit-zeile .kurz-hash{flex:none;color:var(--kd-muted)}
 .commit-zeile .betreff{font-size:13px;overflow-wrap:anywhere;min-width:0}
+.gr-kopfaktionen{margin-inline-start:auto;display:flex;align-items:center;padding:0 var(--kd-s5)}
+.kz-btn:disabled{opacity:.6;cursor:progress}
+.gr-beendet{margin:var(--kd-s5) 0 0;font-size:14px;font-weight:600}
+.gr-beendet-hinweis{margin:var(--kd-s2) 0 0;font-size:12px}

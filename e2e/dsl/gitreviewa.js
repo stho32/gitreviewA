@@ -236,6 +236,8 @@ function welt() {
     beendenBetaetigen: oberflaeche.beendenBetaetigen,
     beendenKnopf: oberflaeche.beendenKnopf,
     beendetMeldung: oberflaeche.beendetMeldung,
+    beendenFehler: oberflaeche.beendenFehler,
+    beendenScheitertMit: oberflaeche.beendenScheitertMit,
     oberflaecheOeffnen: (page, lauf) => page.goto(lauf.adresse),
     commitZeilenLesen: oberflaeche.commitZeilenLesen,
     commitZeilen: oberflaeche.commitZeilen,
