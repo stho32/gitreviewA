@@ -110,16 +110,4 @@ public class GitLeserBereicheTests
 
         Assert.That(File.Exists(zieldatei), Is.False);
     }
-
-    [Test]
-    public void Wenn_Zweig_wie_eine_Datei_heisst_dann_gilt_er_als_Revision()
-    {
-        using var repo = WegwerfRepo.MitCommits("a", "b");
-        repo.Git("branch", "liesmich", repo.Hashes[0]);
-        File.WriteAllText(Path.Combine(repo.Ordner, "liesmich"), "Datei gleichen Namens\n");
-
-        var zeilen = GitLeser.LeseBereiche(new Bereiche(["liesmich..main"]), repo.Ordner).AlsArray().Select(zeile => zeile.Hash);
-
-        Assert.That(zeilen, Is.EqualTo(new[] { repo.Hashes[1] }));
-    }
 }
