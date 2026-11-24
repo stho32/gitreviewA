@@ -39,7 +39,7 @@ public class GitLeserFremdeKonfigurationTests
         var zeilen = GitLeser.LeseBereiche(new Bereiche([$"{repo.Hashes[0]}..main"]), repo.Ordner).AlsArray();
         var ausZweiBereichen = GitLeser.LeseBereiche(new Bereiche([$"{repo.Hashes[0]}..main", "main~1..main"]), repo.Ordner).AlsArray();
 
-        Assert.That(zeilen, Is.EqualTo(new[] { new Commitzeile(signierterHash, "Signierter Commit") }));
+        Assert.That(zeilen.Select(zeile => (zeile.Hash, zeile.Betreff)), Is.EqualTo(new[] { (signierterHash, "Signierter Commit") }));
         Assert.That(ausZweiBereichen, Is.EqualTo(zeilen));
         Assert.That(File.Exists(marker), Is.False, "das Programm aus der Konfiguration des Repos lief");
         repo.Git("log", "--format=%H", $"{repo.Hashes[0]}..main");

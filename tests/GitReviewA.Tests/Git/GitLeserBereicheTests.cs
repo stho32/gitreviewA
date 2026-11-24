@@ -14,11 +14,11 @@ public class GitLeserBereicheTests
 
         var zeilen = GitLeser.LeseBereiche(new Bereiche([$"{b}..{e}"]), repo.Ordner).AlsArray();
 
-        Assert.That(zeilen, Is.EqualTo(new[]
+        Assert.That(zeilen.Select(zeile => (zeile.Hash, zeile.Betreff)), Is.EqualTo(new[]
         {
-            new Commitzeile(e, "Fünfter Commit"),
-            new Commitzeile(d, "Vierter Commit"),
-            new Commitzeile(c, "Dritter Commit"),
+            (e, "Fünfter Commit"),
+            (d, "Vierter Commit"),
+            (c, "Dritter Commit"),
         }));
     }
 
