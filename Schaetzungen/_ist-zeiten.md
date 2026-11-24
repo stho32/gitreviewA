@@ -20,3 +20,4 @@ Nie vom User erfragen.
 | 2026-11-24 | R00001 Mit Commit-Hashes aufrufen | B0008 Browser öffnen | Standard | 2h | 0,03h | 0,03h | autonom |
 | 2026-11-24 | R00001 Mit Commit-Hashes aufrufen | B0009 Hauptablauf | Standard | 2h | 0,01h | 0,01h | autonom |
 | 2026-11-24 | R00001 Mit Commit-Hashes aufrufen | Lauf R00001 | Nacharbeit | — | — | 0,1h | autonom |
+| 2026-11-24 | R00001 Mit Commit-Hashes aufrufen | Nacharbeit Security-Review (Signaturprüfer) und Code-Review (git fehlt) | Nacharbeit | — | 0,1h | 0,1h | autonom |
