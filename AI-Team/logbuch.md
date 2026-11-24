@@ -9,3 +9,4 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-24 | #19 | Detailplanung | product-owner | bestanden | 1 min | Fragen 1–3 entschieden (Kriterium 4 gestrichen), 3 Richtungsfragen an den Betreiber; Gelesen ohne gemeinsam/regeln.md · claude · sonnet · Lauf 19-product-owner-1 · 0,24 $ · Karte gesamt 0,56 $ |
 | 2026-11-24 | #5 | Detailplanung | planer | bestanden | 4 min | R00003 + User Story (14 Szenarien), I0005 bis Bubble B0201–B0209 · claude · sonnet · Lauf 5-planer-1 |
 | 2026-11-24 | #5 | Detailplanung | product-owner | bestanden | 0 min | 3 Fragen nach Empfehlung entschieden; Gelesen ohne gemeinsam/ (2. Mal) · claude · sonnet · Lauf 5-product-owner-1 · 0,14 $ · Karte gesamt 0,14 $ |
+| 2026-11-24 | #1 | Entwicklung | entwickler | bestanden | 33 min | Gate im Worktree grün auf 1a48479: Build 0 Warnungen, NUnit 81/81, E2E 18/18; Kriterium 6: 483–539 ms · claude · opus · Lauf 1-entwickler-1 · 7,93 $ · Karte gesamt 8,45 $ |
