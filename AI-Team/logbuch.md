@@ -23,3 +23,4 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-24 | #19 | Entwicklertest | planer | bestanden | 0 min | R00002: Kriterium 4 gestrichen, Kriterium 12 eingeengt, offene Fragen getrennt · claude · sonnet · Lauf 19-planer-2 · 1,29 $ · Karte gesamt 9,66 $ |
 | 2026-11-24 | #19 | Retrospektive | director | — | — | Bau 23 min/6,01 $, keine Nacharbeit; abhängige Karte auf karte/1 funktionierte, Rebase nach Merge ohne Konflikt; PO-Entscheidungen erst nach dem Bau eingearbeitet (planer-Nachlauf 1,29 $) — künftig Einarbeiten gleich nach der PO-Entscheidung |
 | 2026-11-24 | #6 | Detailplanung | planer | bestanden | 9 min | R00004 + User Story (16 Szenarien), I0006 bis Bubble B0301–B0308 · claude · sonnet · Lauf 6-planer-1 |
+| 2026-11-24 | #6 | Detailplanung | product-owner | bestanden | 1 min | 6 Fragen nach Empfehlung entschieden, keine Kriterien gestrichen · claude · sonnet · Lauf 6-product-owner-1 · 0,25 $ · Karte gesamt 0,25 $ |
