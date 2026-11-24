@@ -1,3 +1,4 @@
+using GitReviewA.Aufruf;
 using GitReviewA.Git;
 using GitReviewA.Tests.Hilfen;
 
@@ -33,6 +34,24 @@ public class GitLeserFremdeAnzeigeTests
         var dateien = GitLeser.DateienLesen(hash, repo.Ordner).AlsArray();
 
         Assert.That(dateien.Select(datei => (datei.Status, datei.Pfad)), Is.EquivalentTo(new[] { ("M", "a.txt"), ("M", "sub") }));
+    }
+
+    [Test]
+    public void Wenn_das_Repo_einen_Commit_per_refs_replace_ersetzt_dann_zeigen_Leiste_und_Dateiliste_den_echten_Commit()
+    {
+        using var repo = WegwerfRepo.MitCommits("Erster Commit");
+        repo.SchreibeDatei("evil.sh", "#!/bin/sh\n");
+        var echt = repo.Committe("Nur Doku", "Mallory", "2026-03-04T09:15:00+01:00", "");
+        repo.SchreibeDatei("README.md", "harmlos\n");
+        var falsch = repo.Committe("Fake", "Maintainer", "2026-03-04T09:16:00+01:00", "");
+        repo.Git("replace", "-f", echt, falsch);
+        Assert.That(repo.Git("log", "-1", "--format=%s / %an", echt), Is.EqualTo("Fake / Maintainer"), "Kontrolle: die Ersatzref wirkt für git");
+
+        var zeilen = GitLeser.Lesen(new CommitHashes([echt]), repo.Ordner).AlsArray();
+        var dateien = GitLeser.DateienLesen(echt, repo.Ordner).AlsArray();
+
+        Assert.That(zeilen.Select(zeile => (zeile.Hash, zeile.Betreff, zeile.Autor)), Is.EqualTo(new[] { (echt, "Nur Doku", "Mallory") }));
+        Assert.That(dateien.Select(datei => (datei.Status, datei.Pfad)), Is.EqualTo(new[] { ("A", "evil.sh") }));
     }
 
     private static void StelleAusblendungEin(WegwerfRepo repo, string ausblendung)

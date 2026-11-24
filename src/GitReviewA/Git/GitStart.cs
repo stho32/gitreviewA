@@ -4,7 +4,8 @@ using System.Text;
 namespace GitReviewA.Git;
 
 /// <summary>
-/// Jeder git-Aufruf beginnt hier: das geprüfte Repo ist fremd, und seine Konfiguration darf keine Programme starten.
+/// Jeder git-Aufruf beginnt hier: das geprüfte Repo ist fremd, seine Konfiguration darf keine Programme starten
+/// und seine Ersatzrefs (refs/replace) keinen anderen Inhalt unter einem angezeigten Hash unterschieben.
 /// Der Aufrufer hängt nur noch Unterbefehl und Argumente an.
 /// </summary>
 internal static class GitStart
@@ -22,6 +23,7 @@ internal static class GitStart
         start.ArgumentList.Add("-c");
         start.ArgumentList.Add("log.showSignature=false");
         start.Environment["GIT_TERMINAL_PROMPT"] = "0";
+        start.Environment["GIT_NO_REPLACE_OBJECTS"] = "1";
         return start;
     }
 }
