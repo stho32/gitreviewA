@@ -92,7 +92,8 @@ internal static class Program
             protokoll.Melde(Protokollstufe.Warnung, "Abbruch", "Review abgebrochen");
             return;
         }
-        StdoutErgebnis.Schreibe(ErgebnisFormatierer.Formatiere(server.Anmerkungen.Schnappschuss(), server.DateiAbhaken.Ergebnisstand()));
+        var kopie = new ErgebnisKopierenInteractor(server.Anmerkungen, server.DateiAbhaken).Erzeuge();
+        StdoutErgebnis.Schreibe(kopie.Ergebnis);
     }
 
     private static Standardeingabe StandardeingabeDesProzesses()
