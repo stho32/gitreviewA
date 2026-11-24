@@ -8,6 +8,38 @@ const kontext = (text, alt, neu) => ({ art: 'kontext', alt, neu, text });
 const plus = (text, neu) => ({ art: 'plus', alt: null, neu, text });
 const minus = (text, alt) => ({ art: 'minus', alt, neu: null, text });
 
+const VORZEICHEN_TEXT = { plus: '+', minus: '−' };
+
+/** DOM-Knoten einer Zeile, wie `diff.js` sie baut — Elemente und Textknoten, im dichtesten Fall ein Farbstück je Zeichen.
+    Grundlage der Schrankenprobe: die Blockgrenze soll auch für diesen dichtesten Fall halten. */
+function knotenReal(zeile) {
+  if (zeile.art === 'kopf') {
+    return 2 + inhaltKnoten(zeile.text);
+  }
+  let knoten = 5;
+  const hatLesetext = zeile.art === 'plus' || zeile.art === 'minus';
+  if (hatLesetext) {
+    knoten += 2;
+  }
+  if (zeile.alt !== null) {
+    knoten += 1;
+  }
+  if (zeile.neu !== null) {
+    knoten += 1;
+  }
+  if (VORZEICHEN_TEXT[zeile.art] !== undefined) {
+    knoten += 1;
+  }
+  return knoten + inhaltKnoten(zeile.text);
+}
+
+function inhaltKnoten(text) {
+  if (text === '') {
+    return 0;
+  }
+  return 2 * text.length;
+}
+
 test.describe('Baustein Diff-Werte', () => {
   test('soll Nummern alt und neu aus dem Hunk-Kopf zählen', () => {
     expect(patchZeilen('@@ -1,2 +1,3 @@\n eins\n-zwei\n+ZWEI\n+drei\n')).toEqual([
@@ -83,7 +115,7 @@ test.describe('Baustein Diff-Werte', () => {
   });
 
   test('soll Zeilen in Blöcke zu 500 teilen', () => {
-    const zeilen = Array.from({ length: 1201 }, (_, index) => plus('z', index + 1));
+    const zeilen = Array.from({ length: 1201 }, (_, index) => kontext('', index + 1, index + 1));
 
     const geteilt = bloecke(zeilen);
 
@@ -91,6 +123,17 @@ test.describe('Baustein Diff-Werte', () => {
     expect(geteilt.map(block => block.length)).toEqual([500, 500, 201]);
     expect(geteilt.flat()).toEqual(zeilen);
     expect(bloecke([])).toEqual([]);
+  });
+
+  test('soll die Blockgrenze als obere Schranke über echten DOM-Knoten halten (Elemente und Textknoten, Grundgerüst mitgezählt)', () => {
+    for (const laenge of [1, 2, 4, 11, 998]) {
+      const zeilen = Array.from({ length: laenge + 1200 }, (_, index) => plus('x'.repeat(laenge), index + 1));
+
+      const knotenzahlen = bloecke(zeilen).map(block => 3 + block.reduce((summe, zeile) => summe + knotenReal(zeile), 0));
+
+      expect(bloecke(zeilen).flat()).toEqual(zeilen);
+      expect(Math.max(...knotenzahlen), `Zeilenlänge ${laenge}: höchste Knotenzahl je Block`).toBeLessThanOrEqual(BLOCK_KNOTEN);
+    }
   });
 
   test('soll dichte Zeilen nach der Knotenzahl in kleinere Blöcke teilen, eine überlange Zeile steht allein (B1605)', () => {
