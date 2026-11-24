@@ -131,6 +131,7 @@ internal sealed class Webserver : IAsyncDisposable
     {
         var interactor = new ZeileAnnotierenInteractor(anmerkungen, new CommitAuswahl(commits), protokoll);
         var anlegen = AnmerkungsEndpunkt.Fuer(interactor, protokoll);
+        anwendung.MapGet("/api/anmerkungen", AnmerkungenListeEndpunkt.Fuer(interactor));
         anwendung.Map("/api/anmerkungen", GeschuetzterEndpunkt.Mit(anlegen, protokoll));
         var beenden = BeendenEndpunkt.Fuer(anmerkungen, anwendung.Lifetime, protokoll);
         anwendung.Map("/api/beenden", GeschuetzterEndpunkt.Mit(beenden, protokoll));

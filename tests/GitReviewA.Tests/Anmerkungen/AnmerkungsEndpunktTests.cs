@@ -115,9 +115,9 @@ public class AnmerkungsEndpunktTests
         Assert.That(server.Anmerkungen.Schnappschuss().Anzahl, Is.Zero);
     }
 
-    [TestCase("GET")]
+    [TestCase("DELETE")]
     [TestCase("PUT")]
-    public async Task Wenn_nicht_POST_dann_405_mit_Allow_POST(string methode)
+    public async Task Wenn_weder_POST_noch_GET_dann_405_mit_Allow_POST(string methode)
     {
         await using var server = await StarteServer();
         using var client = new HttpClient();
@@ -143,6 +143,73 @@ public class AnmerkungsEndpunktTests
 
         Assert.That(antwort.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
         Assert.That(antwort.Headers.Select(kopf => kopf.Key), Has.None.StartsWith("Access-Control-"));
+    }
+
+    [Test]
+    public async Task Wenn_zwei_angelegt_und_GET_mit_eigenem_Host_dann_200_mit_beiden_in_Anlegereihenfolge_ohne_CORS_Freigabe()
+    {
+        await using var server = await StarteServer();
+        using var client = new HttpClient();
+        await Sende(client, server, "api/anmerkungen", Gueltig);
+        await Sende(client, server, "api/anmerkungen", "{\"commit\":\"" + HashA + "\",\"datei\":\"lang.txt\",\"zeile\":18,\"text\":\"Klammer fehlt\"}");
+
+        var antwort = await Hole(client, server, host: null);
+
+        Assert.That(antwort.Status, Is.EqualTo(HttpStatusCode.OK));
+        Assert.That(antwort.Koepfe, Has.None.StartsWith("Access-Control-"));
+        var eintraege = antwort.Json.EnumerateArray().Select(eintrag => eintrag.GetRawText()).ToArray();
+        Assert.That(eintraege, Is.EqualTo(new[]
+        {
+            "{\"nummer\":1,\"commit\":\"" + HashA + "\",\"datei\":\"src/Foo.cs\",\"zeile\":42,\"text\":\"Null-Pr\\u00FCfung fehlt\"}",
+            "{\"nummer\":2,\"commit\":\"" + HashA + "\",\"datei\":\"lang.txt\",\"zeile\":18,\"text\":\"Klammer fehlt\"}",
+        }));
+    }
+
+    [Test]
+    public async Task Wenn_GET_ohne_Anmerkungen_dann_200_mit_leerer_Liste()
+    {
+        await using var server = await StarteServer();
+        using var client = new HttpClient();
+
+        var antwort = await Hole(client, server, host: null);
+
+        Assert.That((antwort.Status, antwort.Json.GetArrayLength()), Is.EqualTo((HttpStatusCode.OK, 0)));
+    }
+
+    [TestCase("localhost")]
+    [TestCase("evil.example")]
+    public async Task Wenn_GET_mit_fremdem_Host_dann_403_ohne_Anmerkung_im_Koerper(string host)
+    {
+        await using var server = await StarteServer();
+        using var client = new HttpClient();
+        await Sende(client, server, "api/anmerkungen", Gueltig);
+
+        var antwort = await Hole(client, server, host: $"{host}:{new Uri(server.Adresse).Port}");
+
+        Assert.That(antwort.Status, Is.EqualTo(HttpStatusCode.Forbidden));
+        Assert.That(antwort.Text, Does.Not.Contain("Null-Pr"));
+        Assert.That(antwort.Koepfe, Has.None.StartsWith("Access-Control-"));
+    }
+
+    [Test]
+    public async Task Wenn_500_Anmerkungen_dann_liefert_GET_alle_und_die_Antwortzeit_steht_im_Testprotokoll()
+    {
+        await using var server = await StarteServer();
+        using var client = new HttpClient();
+        var text = new string('x', 200);
+        for (var zeile = 1; zeile <= 500; zeile++)
+        {
+            await Sende(client, server, "api/anmerkungen", "{\"commit\":\"" + HashA + "\",\"datei\":\"gross.txt\",\"zeile\":" + zeile + ",\"text\":\"" + text + "\"}");
+        }
+        await Hole(client, server, host: null);
+
+        var uhr = System.Diagnostics.Stopwatch.StartNew();
+        var antwort = await Hole(client, server, host: null);
+        uhr.Stop();
+
+        TestContext.Out.WriteLine($"GET /api/anmerkungen mit 500 Anmerkungen: {uhr.Elapsed.TotalMilliseconds:F1} ms");
+        Assert.That(antwort.Json.GetArrayLength(), Is.EqualTo(500));
+        Assert.That(uhr.Elapsed, Is.LessThan(TimeSpan.FromSeconds(1)));
     }
 
     private static async Task<Webserver> StarteServer()
@@ -173,5 +240,24 @@ public class AnmerkungsEndpunktTests
             json = JsonDocument.Parse(text).RootElement.Clone();
         }
         return (antwort.StatusCode, json);
+    }
+
+    private static async Task<(HttpStatusCode Status, JsonElement Json, string Text, string[] Koepfe)> Hole(HttpClient client, Webserver server, string? host)
+    {
+        using var anfrage = new HttpRequestMessage(HttpMethod.Get, new Uri(new Uri(server.Adresse), "api/anmerkungen"));
+        if (host is not null)
+        {
+            anfrage.Headers.Host = host;
+        }
+        using var antwort = await client.SendAsync(anfrage);
+        var text = await antwort.Content.ReadAsStringAsync();
+        var json = default(JsonElement);
+        var istJson = antwort.StatusCode == HttpStatusCode.OK;
+        if (istJson)
+        {
+            json = JsonDocument.Parse(text).RootElement.Clone();
+        }
+        var koepfe = antwort.Headers.Concat(antwort.Content.Headers).Select(kopf => kopf.Key).ToArray();
+        return (antwort.StatusCode, json, text, koepfe);
     }
 }
