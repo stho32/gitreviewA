@@ -1,0 +1,210 @@
+'use strict';
+// Treiber Oberfläche der Zeilenanmerkungen (R00010): der einzige Ort, der Selektoren, Rollen und Antworten von /api/anmerkungen im Browser kennt.
+const { expect } = require('@playwright/test');
+
+const ROLLBEREICH = '#diff .df-sc';
+const DIFFZEILE = '#diff .dz tr[data-art]';
+const ANMERKUNGSZEILE = '#diff .dz tr.anm';
+const FELDZEILE = '#diff .dz tr.anm-feld';
+const HINWEIS_ENTFERNT = '#diff .anmerkung-hinweis';
+const HINWEIS_AUSSERHALB = '#diff .anmerkungen-ausserhalb';
+const ANLEGEN = '**/api/anmerkungen';
+const VERZOEGERUNG_MS = 1500;
+
+/** `ziel`: `{ neu }`, `{ alt }` (entfernte Zeile), `'kopf'` oder `'hinweis'` (`\ No newline at end of file`). */
+function diffzeile(page, ziel) {
+  if (ziel === 'kopf' || ziel === 'hinweis') {
+    return page.locator(`${DIFFZEILE}[data-art="${ziel}"]`).first();
+  }
+  if ('alt' in ziel) {
+    return page.locator(`${DIFFZEILE}[data-art="minus"][data-alt="${ziel.alt}"]`);
+  }
+  return page.locator(`${DIFFZEILE}[data-neu="${ziel.neu}"]`);
+}
+
+async function zeileAnklicken(page, ziel) {
+  await diffzeile(page, ziel).locator('td').last().click();
+}
+
+function feld(page, name) {
+  return page.locator(ROLLBEREICH).getByRole('textbox', { name, exact: true });
+}
+
+function feldzeile(page, name) {
+  return page.locator(FELDZEILE).filter({ has: page.getByRole('textbox', { name, exact: true }) });
+}
+
+async function pruefeFeldOffenMitFokus(page, name) {
+  await expect(feld(page, name)).toBeFocused();
+}
+
+async function textSchreiben(page, name, text) {
+  await feld(page, name).fill(text);
+}
+
+async function speichern(page, name) {
+  await feldzeile(page, name).getByRole('button', { name: 'Speichern', exact: true }).click();
+}
+
+/** Zwei Klicks kurz hintereinander auf „Speichern“, der zweite ohne Warten auf Bedienbarkeit. */
+async function zweimalSpeichern(page, name) {
+  const knopf = feldzeile(page, name).getByRole('button', { name: 'Speichern', exact: true });
+  await knopf.click();
+  await knopf.click({ force: true });
+}
+
+async function pruefeFeldZu(page, name) {
+  await expect(feld(page, name)).toHaveCount(0);
+}
+
+async function pruefeKeinFeld(page) {
+  await expect(page.locator(FELDZEILE)).toHaveCount(0);
+}
+
+async function pruefeFeldmeldung(page, name, meldung, text) {
+  await expect(feldzeile(page, name).getByRole('alert')).toHaveText(meldung);
+  await expect(feld(page, name)).toHaveValue(text);
+}
+
+/** Texte der Anmerkungszeilen direkt unter der Diff-Zeile, in ihrer Reihenfolge; ein offenes Notizfeld unterbricht die Folge nicht. */
+async function anmerkungenUnter(page, ziel) {
+  return diffzeile(page, ziel).evaluate(zeile => {
+    const texte = [];
+    let naechste = zeile.nextElementSibling;
+    while (naechste && !naechste.hasAttribute('data-art')) {
+      if (naechste.classList.contains('anm')) {
+        texte.push({ text: naechste.querySelector('.anm-text').textContent, stelle: naechste.querySelector('.anm-stelle').textContent });
+      }
+      naechste = naechste.nextElementSibling;
+    }
+    return texte;
+  });
+}
+
+async function pruefeAnmerkungenUnter(page, ziel, erwartet) {
+  await expect.poll(() => anmerkungenUnter(page, ziel), `Anmerkungen unter ${JSON.stringify(ziel)}`).toEqual(erwartet);
+}
+
+async function pruefeAnzahlAnmerkungszeilen(page, anzahl) {
+  await expect(page.locator(ANMERKUNGSZEILE)).toHaveCount(anzahl);
+}
+
+/** Positiv geprüft: die Anmerkungszeilen tragen keine Merkmale einer Diff-Zeile und keine Zeilenklassen der Färbung. */
+async function pruefeAnmerkungszeilenSindKeineDiffzeilen(page) {
+  const merkmale = await page.locator(ANMERKUNGSZEILE).evaluateAll(zeilen => zeilen.map(zeile => ({
+    klasse: zeile.className, art: zeile.hasAttribute('data-art'), alt: zeile.hasAttribute('data-alt'), neu: zeile.hasAttribute('data-neu'), textzelle: zeile.querySelector('.c') !== null,
+  })));
+  expect(merkmale.length).toBeGreaterThan(0);
+  for (const merkmal of merkmale) {
+    expect(merkmal).toEqual({ klasse: 'anm', art: false, alt: false, neu: false, textzelle: false });
+  }
+}
+
+async function pruefeHinweisEntfernt(page, text) {
+  await expect(page.locator(HINWEIS_ENTFERNT)).toHaveText(text);
+}
+
+async function pruefeKeinHinweisEntfernt(page) {
+  await expect(page.locator(HINWEIS_ENTFERNT)).toHaveText('');
+}
+
+async function pruefeHinweisAusserhalb(page, text) {
+  await expect(page.locator(HINWEIS_AUSSERHALB)).toHaveText(text);
+}
+
+async function pruefeKeinHinweisAusserhalb(page) {
+  await expect(page.locator(HINWEIS_AUSSERHALB)).toHaveCount(0);
+}
+
+/** Fokus auf den Diff-Bereich per Tab vom Umschalter „Umbruch“ aus — der Bereich ist der nächste Tab-Stopp. */
+async function inDenDiffTabben(page) {
+  await page.locator('#diff .umbruch-schalter').focus();
+  await page.keyboard.press('Tab');
+  await expect(page.locator(ROLLBEREICH)).toBeFocused();
+}
+
+/** Pfeil ab, bis die Zeile mit Nummer neu `neu` den Fokus hat (höchstens 40 Mal). */
+async function pfeilAbBis(page, neu) {
+  const zeile = diffzeile(page, { neu });
+  for (let versuch = 0; versuch < 40; versuch += 1) {
+    await page.keyboard.press('ArrowDown');
+    const hatFokus = await zeile.evaluate(element => element === document.activeElement);
+    if (hatFokus) {
+      return;
+    }
+  }
+  throw new Error(`Zeile ${neu} hat nach 40 Mal Pfeil ab keinen Fokus`);
+}
+
+async function taste(page, name) {
+  await page.keyboard.press(name);
+}
+
+async function pruefeFokusAufZeile(page, ziel) {
+  await expect(diffzeile(page, ziel)).toBeFocused();
+}
+
+/** Je Antwort auf das Anlegen: `{ status, meldung }` erfüllt sie ohne Server, `'netz'` bricht ab; danach wieder der echte Server. */
+async function anlegenAntwortetEinmal(page, antwort) {
+  let istBeantwortet = false;
+  await page.route(ANLEGEN, async route => {
+    const istErstesAnlegen = route.request().method() === 'POST' && !istBeantwortet;
+    if (!istErstesAnlegen) {
+      await route.fallback();
+      return;
+    }
+    istBeantwortet = true;
+    if (antwort === 'netz') {
+      await route.abort('failed');
+      return;
+    }
+    await route.fulfill({ status: antwort.status, contentType: 'application/json', body: JSON.stringify({ meldung: antwort.meldung }) });
+  });
+}
+
+/** Hält jedes Anlegen 1,5 s zurück; `eingetroffen` wartet auf die erste Antwort des Servers. */
+async function anlegenVerzoegern(page) {
+  await page.route(ANLEGEN, async route => {
+    const istAnlegen = route.request().method() === 'POST';
+    if (istAnlegen) {
+      await new Promise(weiter => setTimeout(weiter, VERZOEGERUNG_MS));
+    }
+    await route.fallback();
+  });
+  const antwort = page.waitForResponse(response => response.url().endsWith('/api/anmerkungen') && response.request().method() === 'POST');
+  return { eingetroffen: () => antwort };
+}
+
+/** Führt `waehlen` aus und misst bis zu dem Bild, in dem Zeile `letzteNeu`, die Anmerkung an `anmerkungNeu` und genau `anzahl` Anmerkungszeilen stehen. */
+async function pruefeAnmerkungenBinnen(page, waehlen, { letzteNeu, anmerkungNeu, anzahl }, fristMs) {
+  const klickUmMs = Date.now();
+  await waehlen();
+  await page.waitForFunction(([diffzeileSelektor, anmerkungSelektor, letzte, an, erwartet]) => {
+    const letzteZeile = document.querySelector(`${diffzeileSelektor}[data-neu="${letzte}"]`);
+    const zeileMitAnmerkung = document.querySelector(`${diffzeileSelektor}[data-neu="${an}"]`);
+    const anmerkungDarunter = zeileMitAnmerkung && zeileMitAnmerkung.nextElementSibling && zeileMitAnmerkung.nextElementSibling.matches(anmerkungSelektor);
+    return letzteZeile !== null && anmerkungDarunter && document.querySelectorAll(anmerkungSelektor).length === erwartet;
+  }, [DIFFZEILE, ANMERKUNGSZEILE, letzteNeu, anmerkungNeu, anzahl], { polling: 'raf', timeout: 10000 });
+  const dauerMs = Date.now() - klickUmMs;
+  expect(dauerMs, `${anzahl} Anmerkungen nach ${dauerMs} ms`).toBeLessThanOrEqual(fristMs);
+  return dauerMs;
+}
+
+/** Positiv geprüft: in den Anmerkungszeilen kein `img` und kein `b`, obwohl Anmerkungszeilen da sind. */
+async function pruefeAnmerkungOhneHtml(page) {
+  await expect(page.locator(ANMERKUNGSZEILE).first()).toBeVisible();
+  await expect(page.locator(`${ANMERKUNGSZEILE} img, ${ANMERKUNGSZEILE} b`)).toHaveCount(0);
+}
+
+/** Sichtbarer Text der ersten Anmerkung: Zeilenumbrüche als eigene Bildschirmzeilen (innerText), spitze Klammern und Sternchen als Text. */
+async function sichtbarerAnmerkungstext(page) {
+  return page.locator(`${ANMERKUNGSZEILE} .anm-text`).first().innerText();
+}
+
+module.exports = {
+  zeileAnklicken, pruefeFeldOffenMitFokus, textSchreiben, speichern, zweimalSpeichern, pruefeFeldZu, pruefeKeinFeld, pruefeFeldmeldung,
+  pruefeAnmerkungenUnter, pruefeAnzahlAnmerkungszeilen, pruefeAnmerkungszeilenSindKeineDiffzeilen,
+  pruefeHinweisEntfernt, pruefeKeinHinweisEntfernt, pruefeHinweisAusserhalb, pruefeKeinHinweisAusserhalb,
+  inDenDiffTabben, pfeilAbBis, taste, pruefeFokusAufZeile, anlegenAntwortetEinmal, anlegenVerzoegern, pruefeAnmerkungenBinnen,
+  pruefeAnmerkungOhneHtml, sichtbarerAnmerkungstext,
+};

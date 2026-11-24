@@ -173,6 +173,13 @@ function repoUMitV(ordner) {
   return { ordner, hashes: { ...hashes, v: commitAnlegen(ordner, { betreff: 'Eine Zeile in 20 000' }) } };
 }
 
+/** Repo X (R00010): ein Commit `x` fügt die Datei `<b>x</b>.txt` mit der Zeile `eins` hinzu. */
+function repoX(ordner) {
+  repoAnlegen(ordner);
+  dateiSchreiben(ordner, '<b>x</b>.txt', 'eins\n');
+  return { ordner, hashes: { x: commitAnlegen(ordner, { betreff: 'Seltsamer Name' }) } };
+}
+
 /** Repo K: ein Commit `k` mit Binärdateien aus Null-Bytes (100 KB, 500 KB, 3 MB) und 200 KB Zufall (fester Startwert) neben der kleinen `klein.txt`. */
 function repoK(ordner) {
   repoAnlegen(ordner);
@@ -194,4 +201,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoK, repoMitBidiPfad, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoX, repoK, repoMitBidiPfad, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, markerVorhanden, diffProgrammOhneSchutzStarten };
