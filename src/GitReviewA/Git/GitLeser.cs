@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;
 using GitReviewA.Aufruf;
@@ -31,11 +32,7 @@ internal static class GitLeser
 
     private static string Ausfuehren(ProcessStartInfo start)
     {
-        using var prozess = Process.Start(start);
-        if (prozess is null)
-        {
-            throw new GitFehler("git ließ sich nicht starten");
-        }
+        using var prozess = Starte(start);
         var fehler = new StringBuilder();
         prozess.ErrorDataReceived += (_, zeile) => fehler.AppendLine(zeile.Data);
         prozess.BeginErrorReadLine();
@@ -47,5 +44,23 @@ internal static class GitLeser
             throw new GitFehler($"git log endete mit {prozess.ExitCode}: {fehler.ToString().Trim()}");
         }
         return ausgabe;
+    }
+
+    private static Process Starte(ProcessStartInfo start)
+    {
+        Process? prozess;
+        try
+        {
+            prozess = Process.Start(start);
+        }
+        catch (Win32Exception fehler)
+        {
+            throw new GitFehler($"git ließ sich nicht starten — ist git installiert und im PATH? ({fehler.Message})");
+        }
+        if (prozess is null)
+        {
+            throw new GitFehler("git ließ sich nicht starten");
+        }
+        return prozess;
     }
 }
