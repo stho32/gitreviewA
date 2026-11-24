@@ -40,3 +40,5 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-24 | #2 | Reviews | security-reviewer | befund | 4 min | 1 Muss: Hash-Präfix wird von gleichnamigem Tag/Zweig umgelenkt · claude · sonnet · Lauf 2-security-reviewer-1 · 0,34 $ · Karte gesamt 8,17 $ |
 | 2026-11-24 | #2 | Reviews | code-reviewer | befund | 4 min | 1 Muss: Reihenfolge mehrerer Bereiche bei gleichen Commit-Zeiten · claude · sonnet · Lauf 2-code-reviewer-1 · 0,48 $ · Karte gesamt 8,65 $ |
 | 2026-11-24 | #6 | Entwicklung | entwickler | bestanden | 26 min | Build 0 Warnungen, NUnit 280, Playwright 84; 20 000 Zeilen 333–369 ms · claude · opus · Lauf 6-entwickler-1 · 1,56 $ · Karte gesamt 1,81 $ |
+| 2026-11-24 | #21 | Nacharbeit | entwickler | bestanden | 9 min | Muss behoben (SIGINT auf SIG_DFL), Sollte behoben (Beenden erst nach vollständigem Körper, ShutdownTimeout 2 s); NUnit 198, Playwright 41 · claude · opus · Lauf 21-entwickler-2 · 0,95 $ · Karte gesamt 4,68 $ |
+| 2026-11-24 | #6 | Reviews | code-reviewer | befund | 4 min | 1 Muss: Start aus Unterordner → leerer Diff · claude · sonnet · Lauf 6-code-reviewer-1 · 0,51 $ · Karte gesamt 2,32 $ |

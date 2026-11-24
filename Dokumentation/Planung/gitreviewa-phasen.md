@@ -20,3 +20,4 @@ zuletzt: 2026-11-24
 |---|---|---|---|---|---|
 | I0001 | Entwicklertest | 2026-11-24 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | US-1 bis US-10 (R00001), Karte #1 |
 | I0019 | Entwicklertest | 2026-11-24 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | US-1 bis US-11 (R00002), Karte #19 |
+| I0021 | Entwicklertest | 2026-11-24 | bestanden | Claude (autonom, entwicklertester + Director, Auftrag Stefan Hoffmann) | US-1 bis US-5 (R00005), Muss nach Nacharbeit vom Director nachgeprüft, Karte #21 |
