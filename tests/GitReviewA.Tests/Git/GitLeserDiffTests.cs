@@ -1,4 +1,5 @@
 using System.Runtime.Versioning;
+using System.Text;
 using GitReviewA.Diff;
 using GitReviewA.Git;
 using GitReviewA.Tests.Hilfen;
@@ -253,6 +254,24 @@ public class GitLeserDiffTests
         var attribut = GitLeser.DiffAttributLesen(new Dateiaenderung("A", "-x\ny.txt", null, null, null), repo.Ordner);
 
         Assert.That(attribut, Is.EqualTo(erwartet));
+    }
+
+    [Test]
+    public void Wenn_die_Ausgabe_genau_die_Grenze_erreicht_dann_liest_git_sie_noch_und_ein_Byte_darueber_nicht()
+    {
+        using var repo = WegwerfRepo.MitCommits();
+        repo.SchreibeDatei("src/b.txt", "eins\nzwei\n");
+        var p = repo.Committe("p", "A", Zeitpunkt, "");
+        var datei = new Dateiaenderung("A", "src/b.txt", null, 2, 0);
+
+        var vollstaendig = GitLeser.DiffLesen(p, datei, Diffumfang.Aenderungen, repo.Ordner, Ausgabegrenze.Standard);
+        var grenze = Encoding.UTF8.GetByteCount(vollstaendig);
+
+        var anDerGrenze = GitLeser.DiffLesen(p, datei, Diffumfang.Aenderungen, repo.Ordner, new Ausgabegrenze(grenze));
+
+        Assert.That(Encoding.UTF8.GetByteCount(anDerGrenze), Is.EqualTo(grenze), "die Ausgabe genau an der Grenze wird vollständig gelesen");
+        Assert.That(Diffaufbereitung.PatchAbErstemHunk(anDerGrenze), Is.EqualTo("@@ -0,0 +1,2 @@\n+eins\n+zwei\n"));
+        Assert.Throws<GitZuGross>(() => GitLeser.DiffLesen(p, datei, Diffumfang.Aenderungen, repo.Ordner, new Ausgabegrenze(grenze - 1)));
     }
 
     [Test]
