@@ -48,3 +48,9 @@ Nie vom User erfragen.
 | 2026-11-24 | R00013 Diff bei Name mit ungültigem Byte | B1204 Fehlerausgang und Anzeige | klar | 2h | 0,1h | 0,1h | autonom |
 | 2026-11-24 | R00013 Diff bei Name mit ungültigem Byte | B1205 E2E und Wegwerf-Repo Fremde Namen | unklar | 2-4h | 0,1h | 0,1h | autonom |
 | 2026-11-24 | R00013 Diff bei Name mit ungültigem Byte | Nacharbeit #28: Partnername mit Zeilenende, fsmonitor, Lazy-Fetch, zweiter Dateikopf | klar | 2h | 0,2h | 0,2h | autonom |
+| 2026-11-24 | R00014 Haken und Anmerkung bei nicht lesbarem Diff sperren | B1301 Eine Regel für „lesbar“ | klar | 2h | 0,05h | 0,05h | autonom |
+| 2026-11-24 | R00014 Haken und Anmerkung bei nicht lesbarem Diff sperren | B1302 Haken sperren und Stand | klar | 2h | 0,05h | 0,05h | autonom |
+| 2026-11-24 | R00014 Haken und Anmerkung bei nicht lesbarem Diff sperren | B1303 Ergebnis nennt den Grund | klar | 2h | 0,03h | 0,03h | autonom |
+| 2026-11-24 | R00014 Haken und Anmerkung bei nicht lesbarem Diff sperren | B1304 Anmerkung an gesperrter Stelle ablehnen | unklar | 2-4h | 0,05h | 0,05h | autonom |
+| 2026-11-24 | R00014 Haken und Anmerkung bei nicht lesbarem Diff sperren | B1305 Gesperrte Kästchen und Zähler | unklar | 2-4h | 0,05h | 0,05h | autonom |
+| 2026-11-24 | R00014 Haken und Anmerkung bei nicht lesbarem Diff sperren | B1306 E2E und Wegwerf-Repo mit Commit v | unklar | 2-4h | 0,03h | 0,03h | autonom |
