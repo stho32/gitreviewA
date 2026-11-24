@@ -63,6 +63,7 @@ Regeln:
 - Stellenangabe: `<Datei>:<Zeile>` mit Dateipfad wie von `git` geliefert (relativ, mit `/`), Zeile ab 1 im Stand nach dem Commit; ohne Zeilenbezug `<Datei> (ganze Datei)`.
 - Der Text steht als Zitat: jede Textzeile beginnt mit `> `, eine leere Textzeile mit `>`. So kann Text aus der Oberfläche keine Überschrift oder Struktur des Ergebnisses erzeugen.
 - Textzeilenenden werden zu LF vereinheitlicht; sonst bleibt der Text unverändert.
+- „Commit“ nennt den Stand, in dem `<Datei>:<Zeile>` gilt, nicht den Urheber der Zeile — den findet die KI mit `git blame <commit> -- <datei>`; das Format bleibt Byte für Byte gleich, auch wenn die Anmerkung in der Ansicht „Zusammen“ (R00012) entsteht und dem jüngsten Commit der Auswahl zugeordnet wird, der die Datei ändert.
 - **Reserviert** (hier nicht geliefert): Ein Abschnitt `## Dateien` mit „Abgehakt: …“ und „Ungeprüft: …“ folgt hinter den Anmerkungen, sobald Haken existieren (I0016). Ohne Haken fehlt der Abschnitt.
 - **Bewusst nicht enthalten**: ein Gesamturteil. „Keine Anmerkungen.“ bedeutet nur, dass der Mensch nichts angemerkt hat, nicht „freigegeben“ (offene Frage an den product-owner).
 
