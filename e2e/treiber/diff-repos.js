@@ -173,6 +173,20 @@ function repoUMitV(ordner) {
   return { ordner, hashes: { ...hashes, v: commitAnlegen(ordner, { betreff: 'Eine Zeile in 20 000' }) } };
 }
 
+/**
+ * Repo (R00017): ein Commit `w` fügt alle Prüfdateien hinzu — so erscheinen sie in beiden Ansichten gleich.
+ * `gross.txt` genau 20 000 Zeilen, `riesig.txt` 30 000 (über der Zuklappgrenze), `winzig.txt` drei Zeilen und
+ * `dicht.js` 200 dichte Zeilen zu ~1 000 Zeichen aus vielen kurzen JS-Token.
+ */
+function repoGross(ordner) {
+  repoAnlegen(ordner);
+  dateiSchreiben(ordner, 'gross.txt', zeilen(20000, nummer => `zeile ${String(nummer).padStart(5, '0')}`));
+  dateiSchreiben(ordner, 'riesig.txt', zeilen(30000, nummer => `zeile ${String(nummer).padStart(5, '0')}`));
+  dateiSchreiben(ordner, 'winzig.txt', 'eins\nzwei\ndrei\n');
+  dateiSchreiben(ordner, 'dicht.js', zeilen(200, () => 'a1=1;'.repeat(200)));
+  return { ordner, hashes: { w: commitAnlegen(ordner, { betreff: 'Große Diffs' }) } };
+}
+
 /** Repo X (R00010): ein Commit `x` fügt die Datei `<b>x</b>.txt` mit der Zeile `eins` hinzu. */
 function repoX(ordner) {
   repoAnlegen(ordner);
@@ -201,4 +215,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoX, repoK, repoMitBidiPfad, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoX, repoK, repoMitBidiPfad, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, markerVorhanden, diffProgrammOhneSchutzStarten };

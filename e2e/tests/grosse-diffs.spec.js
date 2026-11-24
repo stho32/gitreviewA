@@ -1,0 +1,98 @@
+'use strict';
+// Spezifikation R00017 „Große Diffs“, Browser-Eigenes: Zuklappen und „Trotzdem laden“, beide Ansichten, „zu groß“ in der Oberfläche,
+// Blockgrenze an der Knotenzahl und Long Tasks beim Scrollen. Die Ausgabegrenze selbst prüfen die Integrationstests
+// (tests/GitReviewA.Tests/Akzeptanz/GrosseDiffsTests.cs); hier geht es um das, was nur im Browser zu sehen ist.
+const { test, expect } = require('../dsl/diff-lesen.js');
+
+const NUR_AENDERUNGEN = 'nur Änderungen';
+const GANZE_DATEI = 'ganze Datei';
+const RIESIG_ZUGEKLAPPT = 'Sehr lang: 30.000 Zeilen — zugeklappt';
+const ZEILE_FRIST_MS = 1000;
+
+test.describe('Zuklappen und Trotzdem laden', () => {
+  test('soll riesig.txt zugeklappt zeigen und erst auf „Trotzdem laden“ die Zeilen', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Große Diffs', commits: ['w'] });
+
+    await diff.dateiAnsehen('riesig.txt');
+    await diff.zugeklappt('riesig.txt', RIESIG_ZUGEKLAPPT);
+    await diff.trotzdemLaden();
+
+    await diff.zeileZeigt(30000, 'zeile 30000');
+  });
+
+  test('soll gross.txt (genau 20 000 Diff-Zeilen) nicht zuklappen', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Große Diffs', commits: ['w'] });
+
+    await diff.dateiAnsehen('gross.txt');
+    await diff.zeileZeigt(20000, 'zeile 20000');
+  });
+
+  test('soll den Zuklappzustand in beiden Ansichten zeigen und beim Umschalten neu bewerten', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Große Diffs', commits: ['w'] });
+
+    await diff.ansichtWaehlen(GANZE_DATEI);
+    await diff.dateiAnsehen('riesig.txt');
+    await diff.zugeklappt('riesig.txt', RIESIG_ZUGEKLAPPT);
+
+    await diff.ansichtWaehlen(NUR_AENDERUNGEN);
+    await diff.zugeklappt('riesig.txt', RIESIG_ZUGEKLAPPT);
+    await diff.ansichtWaehlen(GANZE_DATEI);
+    await diff.zugeklappt('riesig.txt', RIESIG_ZUGEKLAPPT);
+  });
+
+  test('soll den Zuklappzustand an der Obergrenze spätestens 1 s nach dem Klick zeigen', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Große Diffs', commits: ['w'] });
+    await diff.dateiAnsehen('riesig.txt');
+    await diff.zugeklappt('riesig.txt', RIESIG_ZUGEKLAPPT);
+    await diff.dateiAnsehen('winzig.txt');
+    await diff.zeileZeigt(3, 'drei');
+
+    const dauerMs = await diff.zugeklapptNachKlick('riesig.txt', 'riesig.txt', RIESIG_ZUGEKLAPPT, ZEILE_FRIST_MS);
+    test.info().annotations.push({ type: 'Messwert', description: `Zuklappzustand nach ${dauerMs} ms (Grenze 1000 ms, Ziel 700 ms)` });
+
+    const dauerGross = await diff.zeileRechtzeitigNachKlick('gross.txt', { kopf: '@@ -0,0 +1,20000 @@', plus: 'zeile 20000', neu: 20000 });
+    test.info().annotations.push({ type: 'Messwert', description: `gross.txt nach ${dauerGross} ms (Grenze 1000 ms, Ziel 700 ms)` });
+  });
+});
+
+test.describe('Ausgabegrenze in der Oberfläche', () => {
+  test('soll „zu groß“ melden und Dateiliste und Commit-Leiste bedienbar lassen', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Große Diffs', commits: ['w'] });
+    const meldung = 'Diff zu groß — die Ausgabe von git überschreitet die Grenze von 1024 Byte';
+    await diff.antwortZuGross('riesig.txt', meldung);
+
+    await diff.dateiAnsehen('riesig.txt');
+    await diff.diffMeldet('riesig.txt', meldung);
+
+    await diff.dateiAnsehen('winzig.txt');
+    await diff.zeileZeigt(3, 'drei');
+  });
+});
+
+test.describe('Flüssiges Zeichnen (Blockgrenze)', () => {
+  test('soll riesig.txt über „Trotzdem laden“ in Blöcken zu höchstens etwa 5 000 Knoten zeigen', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Große Diffs', commits: ['w'] });
+
+    await diff.dateiAnsehen('riesig.txt');
+    await diff.zugeklappt('riesig.txt', RIESIG_ZUGEKLAPPT);
+    await diff.trotzdemLaden();
+    await diff.zeileZeigt(30000, 'zeile 30000');
+
+    const knoten = await diff.blockKnoten();
+    const meiste = Math.max(...knoten);
+    test.info().annotations.push({ type: 'Messwert', description: `${knoten.length} Blöcke, höchstens ${meiste} Knoten je Block (Grenze ~5000)` });
+    expect(meiste, 'Knoten je Block').toBeLessThanOrEqual(5000);
+    await diff.zeileZeigt(1, 'zeile 00001');
+  });
+
+  test('soll beim Scrollen durch dicht.js keine Aufgabe des Hauptfadens über 150 ms auslösen', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Große Diffs', commits: ['w'] });
+
+    await diff.dateiAnsehen('dicht.js');
+    await diff.warteAufFarbe();
+    const langeAufgaben = await diff.langeAufgabenBeimScrollen(24);
+
+    test.info().annotations.push({ type: 'Messwert', description: `Long Tasks beim Scrollen: ${JSON.stringify(langeAufgaben)}` });
+    expect(langeAufgaben.filter(a => a.dauerMs > 150), 'Aufgaben über 150 ms').toEqual([]);
+  });
+});

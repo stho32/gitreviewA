@@ -144,25 +144,34 @@
     return '';
   }
 
-  /** Höchstens so viele Zeichen Text hat ein Block, außer eine Zeile allein ist länger: jeder Block außerhalb des Bildes wird weder
-      ausgelegt noch gemalt (`content-visibility`), so kostet ein Bild auch bei dichtem Inhalt (bis zu 1000 Farbstücke je Zeile) nur die
-      Blöcke im Bild — ein Block zu 500 dichten Zeilen brauchte gefärbt je Bild über 150 ms (Befund B1 zu #8). */
-  const BLOCK_ZEICHEN = 25000;
+  /** Höchstens so viele geschätzte DOM-Knoten hat ein Block, außer eine Zeile allein ist dichter: jeder Block außerhalb des Bildes wird
+      weder ausgelegt noch gemalt (`content-visibility`), so kostet ein Bild auch bei dichtem Inhalt nur die Blöcke im Bild. Die Grenze
+      hängt an der Knotenzahl, nicht an den Zeichen (B1605): dichte gefärbte Blöcke kosteten früher bis 0,8 s je Block (Befund B1 zu #8). */
+  const BLOCK_KNOTEN = 5000;
 
-  /** Zeilen in Blöcke zu höchstens 500 Zeilen und höchstens `BLOCK_ZEICHEN` Zeichen. */
+  /** Geschätzte DOM-Knoten einer Zeile als obere Schranke: das Grundgerüst (tr und Zellen), ein Lesetext bei +/− und — im dichtesten
+      Fall — ein Farbstück samt Textknoten je Zeichen (bis zu 1000 Farbstücke je Zeile). Bewusst hoch angesetzt, damit kein Block die
+      Knotengrenze überschreitet; die Zeilengrenze 500 bleibt daneben bestehen. */
+  function knotenJeZeile(zeile) {
+    const geruest = zeile.art === 'kopf' ? 2 : 5;
+    const lesetext = zeile.art === 'plus' || zeile.art === 'minus' ? 1 : 0;
+    return geruest + lesetext + 2 * zeile.text.length;
+  }
+
+  /** Zeilen in Blöcke zu höchstens 500 Zeilen und höchstens `BLOCK_KNOTEN` geschätzten DOM-Knoten. */
   function bloecke(zeilen) {
     const aus = [];
     let block = [];
-    let zeichen = 0;
+    let knoten = 0;
     for (const zeile of zeilen) {
-      const blockVoll = block.length === BLOCK_ZEILEN || (block.length > 0 && zeichen + zeile.text.length > BLOCK_ZEICHEN);
+      const blockVoll = block.length === BLOCK_ZEILEN || (block.length > 0 && knoten + knotenJeZeile(zeile) > BLOCK_KNOTEN);
       if (blockVoll) {
         aus.push(block);
         block = [];
-        zeichen = 0;
+        knoten = 0;
       }
       block.push(zeile);
-      zeichen += zeile.text.length;
+      knoten += knotenJeZeile(zeile);
     }
     if (block.length > 0) {
       aus.push(block);
@@ -218,5 +227,5 @@
     return 1;
   }
 
-  Object.assign(ziel, { patchZeilen, ganzeDateiZeilen, sichtbarTeile, bloecke, blockBreite, zuLang, BLOCK_ZEILEN, BLOCK_ZEICHEN, ZEILEN_GRENZE, ZEICHEN_GRENZE, MARKEN_GRENZE });
+  Object.assign(ziel, { patchZeilen, ganzeDateiZeilen, sichtbarTeile, bloecke, blockBreite, zuLang, BLOCK_ZEILEN, BLOCK_KNOTEN, ZEILEN_GRENZE, ZEICHEN_GRENZE, MARKEN_GRENZE });
 })(typeof module !== 'undefined' ? module.exports : window);

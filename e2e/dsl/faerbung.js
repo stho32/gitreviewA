@@ -87,6 +87,12 @@ function farbSprache(gr, page) {
     faerbefenster: () => farbe.faerbefensterMessen(page),
     /** Wählt die Datei und wartet auf das Ende ihrer Färbung; liefert `ja` oder `nein`. */
     waehlen,
+    /** Wählt die Datei und erwartet den Zuklapphinweis `meldung` (über der Zuklappgrenze, R00017) statt einer Farbauflage. */
+    zugeklapptWaehlen: async (pfad, meldung) => {
+      await seite.dateiMitPfadWaehlen(page, pfad);
+      gewaehlterPfad = pfad;
+      await diffSeite.pruefeZugeklappt(page, pfad, meldung);
+    },
     /** Schaltet die Ansicht um und wartet auf das Ende der neuen Färbung. */
     ansichtWaehlen,
     ansichtIst: name => diffSeite.pruefeAnsicht(page, name),

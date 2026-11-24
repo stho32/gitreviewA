@@ -1,7 +1,7 @@
 'use strict';
 // Bausteintests (ohne Browser) der Diff-Rechnung: Zeilen mit Nummern aus den Hunk-Köpfen, sichtbare Marken, Blöcke.
 const { test, expect } = require('@playwright/test');
-const { patchZeilen, ganzeDateiZeilen, sichtbarTeile, bloecke, blockBreite, zuLang, BLOCK_ZEILEN, BLOCK_ZEICHEN, ZEICHEN_GRENZE, MARKEN_GRENZE, ZEILEN_GRENZE } = require('../../../src/GitReviewA/web/diff-werte.js');
+const { patchZeilen, ganzeDateiZeilen, sichtbarTeile, bloecke, blockBreite, zuLang, BLOCK_ZEILEN, BLOCK_KNOTEN, ZEICHEN_GRENZE, MARKEN_GRENZE, ZEILEN_GRENZE } = require('../../../src/GitReviewA/web/diff-werte.js');
 
 const kopf = text => ({ art: 'kopf', alt: null, neu: null, text });
 const kontext = (text, alt, neu) => ({ art: 'kontext', alt, neu, text });
@@ -83,7 +83,7 @@ test.describe('Baustein Diff-Werte', () => {
   });
 
   test('soll Zeilen in Blöcke zu 500 teilen', () => {
-    const zeilen = Array.from({ length: 1201 }, (_, index) => plus(`z${index}`, index + 1));
+    const zeilen = Array.from({ length: 1201 }, (_, index) => plus('z', index + 1));
 
     const geteilt = bloecke(zeilen);
 
@@ -93,16 +93,17 @@ test.describe('Baustein Diff-Werte', () => {
     expect(bloecke([])).toEqual([]);
   });
 
-  test('soll dichte Zeilen in Blöcke zu höchstens 25 000 Zeichen teilen, eine längere Zeile steht allein (Befund B1 zu #8)', () => {
+  test('soll dichte Zeilen nach der Knotenzahl in kleinere Blöcke teilen, eine überlange Zeile steht allein (B1605)', () => {
     const dicht = Array.from({ length: 256 }, (_, index) => plus('`'.repeat(998), index + 1));
+    const dichteBloecke = bloecke(dicht);
     const ueberlang = [plus('a', 1), plus('b'.repeat(25001), 2), plus('c', 3)];
-    const genau = [plus('d'.repeat(12500), 1), plus('e'.repeat(12500), 2), plus('f', 3)];
 
-    expect(BLOCK_ZEICHEN).toBe(25000);
-    expect(bloecke(dicht).map(block => block.length)).toEqual([...Array(10).fill(25), 6]);
-    expect(bloecke(dicht).flat()).toEqual(dicht);
+    expect(BLOCK_KNOTEN).toBe(5000);
+    expect(dichteBloecke.flat()).toEqual(dicht);
+    expect(bloecke(dicht).every(block => block.length <= 500)).toBe(true);
+    expect(dichteBloecke[0].length, 'dichte Zeilen → wenige Zeilen je Block').toBeLessThanOrEqual(3);
     expect(bloecke(ueberlang).map(block => block.length)).toEqual([1, 1, 1]);
-    expect(bloecke(genau).map(block => block.length)).toEqual([2, 1]);
+    expect(bloecke([plus('d'.repeat(12500), 1), plus('e'.repeat(12500), 2), plus('f', 3)]).map(block => block.length)).toEqual([1, 1, 1]);
   });
 
   test('soll die Breite eines Blocks nach seiner längsten Zeile schätzen', () => {

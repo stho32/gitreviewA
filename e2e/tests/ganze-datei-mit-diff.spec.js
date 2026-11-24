@@ -225,7 +225,7 @@ test.describe('Ganze Datei laden', () => {
 });
 
 test.describe('Lastprofil ganze Datei', () => {
-  test('soll 20 000 Zeilen spätestens 1 s nach dem Umschalten zeigen', async ({ diff }) => {
+  test('soll die ganze Datei über 20 000 Zeilen spätestens 1 s nach dem Umschalten zugeklappt zeigen (R00017)', async ({ diff }) => {
     await diff.starten({ vorbereitung: '20 000 Zeilen, eine geändert' });
     await diff.dateiAnsehen('gross.txt');
     await diff.diffZeigt({
@@ -237,17 +237,17 @@ test.describe('Lastprofil ganze Datei', () => {
       ],
     });
 
-    const dauerMs = await diff.kontextzeileRechtzeitigNachUmschalten(GANZE_DATEI, kontext('zeile 20000', 20000));
+    const dauerMs = await diff.zugeklapptNachUmschalten(GANZE_DATEI, 'gross.txt', 'Sehr lang: 20.001 Zeilen — zugeklappt', 1000);
 
-    test.info().annotations.push({ type: 'Messwert', description: `Zeile 20000 nach ${dauerMs} ms nach dem Umschalten (Grenze 1000 ms, Ziel 700 ms)` });
+    test.info().annotations.push({ type: 'Messwert', description: `Zuklappzustand nach ${dauerMs} ms nach dem Umschalten (Grenze 1000 ms, Ziel 700 ms)` });
   });
 
-  test('soll 20 000 Zeilen spätestens 1 s nach dem Klick zeigen, wenn „ganze Datei“ vorher gewählt ist', async ({ diff }) => {
+  test('soll die ganze Datei über 20 000 Zeilen spätestens 1 s nach dem Klick zugeklappt zeigen, wenn „ganze Datei“ vorher gewählt ist (R00017)', async ({ diff }) => {
     await diff.starten({ vorbereitung: '20 000 Zeilen, eine geändert' });
     await diff.ansichtWaehlen(GANZE_DATEI);
 
-    const dauerMs = await diff.kontextzeileRechtzeitigNachKlick('gross.txt', kontext('zeile 20000', 20000));
+    const dauerMs = await diff.zugeklapptNachKlick('gross.txt', 'gross.txt', 'Sehr lang: 20.001 Zeilen — zugeklappt', 1000);
 
-    test.info().annotations.push({ type: 'Messwert', description: `Zeile 20000 nach ${dauerMs} ms nach dem Klick (Grenze 1000 ms, Ziel 700 ms)` });
+    test.info().annotations.push({ type: 'Messwert', description: `Zuklappzustand nach ${dauerMs} ms nach dem Klick (Grenze 1000 ms, Ziel 700 ms)` });
   });
 });

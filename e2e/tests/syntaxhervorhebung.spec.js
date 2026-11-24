@@ -180,9 +180,8 @@ test.describe('Wo nicht gefärbt wird', () => {
     expect(await farbe.waehlen('drueber.js')).toBe('nein');
     await farbe.istUngefaerbt();
     await farbe.keineMeldung();
-    expect(await farbe.waehlen('zu-gross.js')).toBe('nein');
-    await farbe.istUngefaerbt();
-    await farbe.keineMeldung();
+    // R00017: über der Zeichengrenze wird die Datei zugeklappt statt ungefärbt gezeichnet (zuLang gilt für jede Textdatei)
+    await farbe.zugeklapptWaehlen('zu-gross.js', 'Sehr lang: 298.716 Zeichen — zugeklappt');
     expect(await farbe.waehlen('grenze.js')).toBe('ja');
 
     await farbe.traegt({ plus: 'function g() {}' }, 'function', 'Schlüsselwort');

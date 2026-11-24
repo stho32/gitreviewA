@@ -152,6 +152,10 @@
   }
 
   function zeichneAntwort(ansicht, antwort, alsText, diffansicht) {
+    if (antwort.zuGross) {
+      zeigeMeldung(ansicht, antwort.meldung, false);
+      return;
+    }
     const binaerOhneWahl = antwort.art === 'binaer' && !alsText;
     if (binaerOhneWahl) {
       zeigeBinaerdatei(ansicht, antwort.grund);
@@ -162,7 +166,7 @@
       zeigeMeldung(ansicht, KEINE_ZEILENAENDERUNGEN, false);
       return;
     }
-    const zuLangGrund = alsText ? zuLang(zeilen) : null;
+    const zuLangGrund = zuLang(zeilen);
     if (zuLangGrund) {
       zeigeZugeklappt(ansicht, antwort, zeilen, zuLangGrund);
       return;
@@ -188,7 +192,8 @@
     ansicht.alsTextElement.hidden = false;
   }
 
-  /** Über der Grenze bleibt der Text zugeklappt, bis der Mensch „Trotzdem laden“ wählt (vorläufig bis I0014). */
+  /** Über der Grenze bleibt der Text zugeklappt, bis der Mensch „Trotzdem laden“ wählt (B1604): der Hinweis nennt die überschrittene
+      Grenze und ihre Zahl, der Knopf zeichnet die bereits empfangenen Zeilen. */
   function zeigeZugeklappt(ansicht, antwort, zeilen, grund) {
     zeigeMeldung(ansicht, `Sehr lang: ${grund.anzahl.toLocaleString('de-DE')} ${grund.einheit} — zugeklappt`, false);
     zustand.zugeklappt = { antwort, zeilen };

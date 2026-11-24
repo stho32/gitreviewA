@@ -213,9 +213,66 @@ async function diffAntwortVerzoegern(page, pfad, umfang = null) {
   };
 }
 
+/** Beantwortet den Diff von `pfad` mit dem Ausgang „zu groß“ (Kennzeichen und Meldung), so wie der Server über der Ausgabegrenze. */
+async function diffAntwortZuGross(page, pfad, meldung) {
+  await page.route(url => {
+    const adresse = url.toString();
+    const abfrage = new URL(adresse).searchParams;
+    return adresse.includes('/diff?') && abfrage.get('pfad') === pfad;
+  }, route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ zuGross: true, meldung }) }));
+}
+
+/** Knotenzahl je Block (`.dz-b`): die Elemente des Blocks samt dem Block selbst. */
+async function blockKnoten(page) {
+  return page.evaluate(() => Array.from(document.querySelectorAll('#diff .df-sc .dz-b'), block => block.getElementsByTagName('*').length + 1));
+}
+
+/** Wartet, bis die Färbung fertig ist (`data-farbe` `ja` oder `nein`), damit die Scrollprobe nicht die Farbauflage misst. */
+async function warteAufFarbe(page) {
+  await page.waitForFunction(() => ['ja', 'nein'].includes(document.querySelector('#diff .df-sc').dataset.farbe), undefined, { polling: 'raf', timeout: 30000 });
+}
+
+/** Scrollt in `schritte` Sprüngen durch den Diff-Bereich und liefert die Aufgaben des Hauptfadens über 150 ms (Long Tasks). */
+async function langeAufgabenBeimScrollen(page, schritte = 24) {
+  return page.evaluate(async anzahl => {
+    const aufgaben = [];
+    const beobachter = new PerformanceObserver(liste => {
+      for (const eintrag of liste.getEntries()) {
+        aufgaben.push({ dauerMs: eintrag.duration });
+      }
+    });
+    beobachter.observe({ type: 'longtask' });
+    const roll = document.querySelector('#diff .df-sc');
+    const spanne = Math.max(0, roll.scrollHeight - roll.clientHeight);
+    for (let i = 1; i <= anzahl; i += 1) {
+      roll.scrollTop = Math.floor(spanne * i / anzahl);
+      await new Promise(fertig => requestAnimationFrame(() => requestAnimationFrame(fertig)));
+    }
+    beobachter.takeRecords().forEach(eintrag => aufgaben.push({ dauerMs: eintrag.duration }));
+    beobachter.disconnect();
+    return aufgaben;
+  }, schritte);
+}
+
+/** Wählt die Datei über `waehlen` und misst vom Klick, bis der Zuklapphinweis `meldung` im Dokument steht; liefert den Messwert. */
+async function zugeklapptRechtzeitigNachKlick(page, waehlen, pfad, meldung, fristMs) {
+  return zugeklapptRechtzeitigNachAktion(page, waehlen, pfad, meldung, fristMs);
+}
+
+/** Führt `aktion` aus und misst bis zum Zuklapphinweis `meldung`; liefert den Messwert. */
+async function zugeklapptRechtzeitigNachAktion(page, aktion, pfad, meldung, fristMs) {
+  const startUmMs = Date.now();
+  await aktion();
+  await page.waitForFunction(([selektor, text]) => document.querySelector(selektor).textContent === text, [MELDUNG, meldung], { polling: 'raf', timeout: 10000 });
+  const dauerMs = Date.now() - startUmMs;
+  expect(dauerMs, `Zuklappzustand nach ${dauerMs} ms`).toBeLessThanOrEqual(fristMs);
+  await expect(page.locator(PFAD)).toHaveText(pfad);
+  await expect(page.locator(BEREICH).getByRole('button', { name: TROTZDEM_LADEN })).toBeVisible();
+  return dauerMs;
+}
+
 /** Wählt die Datei über `waehlen` und misst vom Klick, bis die Zeile mit Nummer neu `neu` im Dokument steht; liefert den Messwert. */
-async function pruefeZeileBinnenNachKlick(page, waehlen, { kopf, plus, neu }, fristMs) {
-  const klickUmMs = Date.now();
+async function pruefeZeileBinnenNachKlick(page, waehlen, { kopf, plus, neu }, fristMs) {  const klickUmMs = Date.now();
   await waehlen();
   await page.waitForFunction(([selektor, nummer]) => document.querySelector(`${selektor}[data-neu="${nummer}"]`) !== null, [ZEILE, neu], { polling: 'raf', timeout: 10000 });
   const dauerMs = Date.now() - klickUmMs;
@@ -248,4 +305,5 @@ module.exports = {
   pruefeBedienbarNachAlsText, ansichtWaehlen, ansichtPerTastaturWechseln, pruefeAnsicht, zeilenfarbenLesen, pruefeZeilenfarben, pruefeKontextzeileBinnen,
   pruefeDiff, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, diffAntwortVerzoegern,
   pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
+  diffAntwortZuGross, blockKnoten, warteAufFarbe, langeAufgabenBeimScrollen, zugeklapptRechtzeitigNachKlick, zugeklapptRechtzeitigNachAktion,
 };

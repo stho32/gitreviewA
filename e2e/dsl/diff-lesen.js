@@ -26,6 +26,7 @@ const VORBEREITUNGEN = {
   'große Binärdateien': { anlegen: repos.repoK, commits: ['k'] },
   '20 000 Zeilen': { anlegen: repos.repoU, commits: ['u'] },
   '20 000 Zeilen, eine geändert': { anlegen: repos.repoUMitV, commits: ['v'] },
+  'Große Diffs': { anlegen: repos.repoGross, commits: ['w'] },
   'Repo N': { anlegen: fremdeNamen.repoN, commits: ['n', 'b'] },
 };
 
@@ -91,6 +92,10 @@ function diffSprache(gr, page) {
     alsTextZeigen: () => diffSeite.alsTextZeigen(page),
     zugeklappt: (pfad, meldung) => diffSeite.pruefeZugeklappt(page, pfad, meldung),
     trotzdemLaden: () => diffSeite.trotzdemLaden(page),
+    /** Wählt `datei` und misst vom Klick bis zum Zuklapphinweis `meldung`; liefert den Messwert. */
+    zugeklapptNachKlick: (datei, pfad, meldung, fristMs = 1000) => diffSeite.zugeklapptRechtzeitigNachKlick(page, () => seite.dateiWaehlen(page, datei), pfad, meldung, fristMs),
+    /** Schaltet auf `ansicht` und misst bis zum Zuklapphinweis `meldung`; liefert den Messwert. */
+    zugeklapptNachUmschalten: (ansicht, pfad, meldung, fristMs = 1000) => diffSeite.zugeklapptRechtzeitigNachAktion(page, () => diffSeite.ansichtWaehlen(page, ansicht), pfad, meldung, fristMs),
     zeileZeigt: (neu, text) => diffSeite.pruefeZeile(page, neu, text),
     alsTextGelesen: anzahl => schnittstelle.pruefeTextAufrufe(zaehler, anzahl),
     diffMeldet: (pfad, text) => diffSeite.pruefeMeldung(page, pfad, text, false),
@@ -105,6 +110,13 @@ function diffSprache(gr, page) {
     },
     antwortVerzoegern: pfad => diffSeite.diffAntwortVerzoegern(page, pfad),
     ganzeDateiVerzoegern: pfad => diffSeite.diffAntwortVerzoegern(page, pfad, 'ganz'),
+    /** Der Server meldet für `pfad` den Ausgang „zu groß“ mit `meldung` (über der Ausgabegrenze). */
+    antwortZuGross: (pfad, meldung) => diffSeite.diffAntwortZuGross(page, pfad, meldung),
+    /** Knotenzahl je Block des gezeigten Diffs. */
+    blockKnoten: () => diffSeite.blockKnoten(page),
+    warteAufFarbe: () => diffSeite.warteAufFarbe(page),
+    /** Aufgaben des Hauptfadens über 150 ms beim Scrollen durch den gezeigten Diff. */
+    langeAufgabenBeimScrollen: (schritte = 24) => diffSeite.langeAufgabenBeimScrollen(page, schritte),
 
     /** Ansicht „nur Änderungen“ oder „ganze Datei“ (R00008). */
     ansichtWaehlen: name => diffSeite.ansichtWaehlen(page, name),
