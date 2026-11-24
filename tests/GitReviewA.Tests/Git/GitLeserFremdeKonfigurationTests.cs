@@ -26,6 +26,26 @@ public class GitLeserFremdeKonfigurationTests
         Assert.That(File.Exists(marker), Is.True, "Kontrolle: das Marker-Programm ist über git log aufrufbar");
     }
 
+    [TestCase("PGP")]
+    [TestCase("SSH")]
+    public void Wenn_ein_Bereich_ueber_einen_signierten_Commit_laeuft_dann_startet_gitreviewA_das_Programm_des_Repos_nicht(string signaturart)
+    {
+        using var repo = WegwerfRepo.MitCommits("Basis", "Signierter Commit");
+        var marker = Path.Combine(repo.Ordner, ".git", "marker.txt");
+        LegeSignaturpruefungMitMarkerProgrammAn(repo, signaturart, marker);
+        var signierterHash = SigniertenCommitAnlegen(repo, signaturart);
+        repo.Git("update-ref", "refs/heads/main", signierterHash);
+
+        var zeilen = GitLeser.LeseBereiche(new Bereiche([$"{repo.Hashes[0]}..main"]), repo.Ordner).AlsArray();
+        var ausZweiBereichen = GitLeser.LeseBereiche(new Bereiche([$"{repo.Hashes[0]}..main", "main~1..main"]), repo.Ordner).AlsArray();
+
+        Assert.That(zeilen, Is.EqualTo(new[] { new Commitzeile(signierterHash, "Signierter Commit") }));
+        Assert.That(ausZweiBereichen, Is.EqualTo(zeilen));
+        Assert.That(File.Exists(marker), Is.False, "das Programm aus der Konfiguration des Repos lief");
+        repo.Git("log", "--format=%H", $"{repo.Hashes[0]}..main");
+        Assert.That(File.Exists(marker), Is.True, "Kontrolle: das Marker-Programm ist über git log mit Bereich aufrufbar");
+    }
+
     [TestCase("diff.x.textconv")]
     [TestCase("diff.x.command")]
     [TestCase("diff.external")]

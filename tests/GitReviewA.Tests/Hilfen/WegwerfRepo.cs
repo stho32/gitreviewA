@@ -15,6 +15,8 @@ internal sealed class WegwerfRepo : IDisposable
 
     public IReadOnlyList<string> Hashes { get; private set; } = [];
 
+    private int weitereCommits;
+
     public static WegwerfRepo MitCommits(params string[] betreffe)
     {
         var ordner = Directory.CreateTempSubdirectory("gitreviewa-test-").FullName;
@@ -54,9 +56,55 @@ internal sealed class WegwerfRepo : IDisposable
         File.WriteAllText(ziel.FullName, inhalt);
     }
 
+    /// <summary>Ein Basis-Commit und darüber <paramref name="anzahl"/> leere Commits, per <c>git fast-import</c>; Zeiten eine Minute auseinander.</summary>
+    public static WegwerfRepo MitVielenCommits(int anzahl)
+    {
+        var ordner = Directory.CreateTempSubdirectory("gitreviewa-test-").FullName;
+        var repo = new WegwerfRepo(ordner);
+        try
+        {
+            repo.Git("init", "-q", "-b", "main");
+            var befehle = new System.Text.StringBuilder();
+            for (var nummer = 0; nummer <= anzahl; nummer++)
+            {
+                var betreff = $"Commit Nummer {nummer}";
+                var sekunde = ErsterZeitpunkt.AddMinutes(nummer).ToUnixTimeSeconds();
+                befehle.Append($"commit refs/heads/main\ncommitter Testperson <test@example.invalid> {sekunde} +0000\ndata {betreff.Length}\n{betreff}\n\n");
+            }
+            repo.Ausfuehren(["fast-import", "--quiet"], new Dictionary<string, string>(), befehle.ToString());
+            repo.Hashes = repo.Git("rev-list", "--reverse", "HEAD").Split('\n');
+            return repo;
+        }
+        catch
+        {
+            repo.Dispose();
+            throw;
+        }
+    }
+
     public string Git(params string[] argumente)
     {
         return Ausfuehren(argumente, new Dictionary<string, string>());
+    }
+
+    /// <summary>Leerer Commit auf dem ausgecheckten Zweig, eine Minute nach dem vorigen; liefert seinen Hash.</summary>
+    public string LeererCommit(string betreff)
+    {
+        weitereCommits++;
+        var zeitpunkt = Zeitpunkt(Hashes.Count + weitereCommits);
+        var eigeneZeit = new Dictionary<string, string> { ["GIT_AUTHOR_DATE"] = zeitpunkt, ["GIT_COMMITTER_DATE"] = zeitpunkt };
+        Ausfuehren(["commit", "-q", "--allow-empty", "-m", betreff], eigeneZeit);
+        return Git("rev-parse", "HEAD");
+    }
+
+    /// <summary>Merge ohne Vorspulen, eine Minute nach dem vorigen Commit; liefert den Hash des Merges.</summary>
+    public string Merge(string zweig, string betreff)
+    {
+        weitereCommits++;
+        var zeitpunkt = Zeitpunkt(Hashes.Count + weitereCommits);
+        var eigeneZeit = new Dictionary<string, string> { ["GIT_AUTHOR_DATE"] = zeitpunkt, ["GIT_COMMITTER_DATE"] = zeitpunkt };
+        Ausfuehren(["merge", "-q", "--no-ff", "-m", betreff, zweig], eigeneZeit);
+        return Git("rev-parse", "HEAD");
     }
 
     public void Dispose()
@@ -68,19 +116,25 @@ internal sealed class WegwerfRepo : IDisposable
     {
         File.WriteAllText(Path.Combine(Ordner, "datei.txt"), $"Stand {index}\n");
         Git("add", "datei.txt");
-        var zeitpunkt = ErsterZeitpunkt.AddMinutes(index).ToString("yyyy-MM-ddTHH:mm:sszzz", System.Globalization.CultureInfo.InvariantCulture);
+        var zeitpunkt = Zeitpunkt(index);
         var eigeneZeit = new Dictionary<string, string> { ["GIT_AUTHOR_DATE"] = zeitpunkt, ["GIT_COMMITTER_DATE"] = zeitpunkt };
         Ausfuehren(["commit", "-q", "-m", betreff], eigeneZeit);
         return Git("rev-parse", "HEAD");
     }
 
-    private string Ausfuehren(string[] argumente, Dictionary<string, string> zusatzumgebung)
+    private static string Zeitpunkt(int minute)
+    {
+        return ErsterZeitpunkt.AddMinutes(minute).ToString("yyyy-MM-ddTHH:mm:sszzz", System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    private string Ausfuehren(string[] argumente, Dictionary<string, string> zusatzumgebung, string? eingabe = null)
     {
         var start = new ProcessStartInfo("git")
         {
             WorkingDirectory = Ordner,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            RedirectStandardInput = eingabe is not null,
         };
         foreach (var argument in argumente)
         {
@@ -95,6 +149,11 @@ internal sealed class WegwerfRepo : IDisposable
         var fehler = new System.Text.StringBuilder();
         prozess.ErrorDataReceived += (_, zeile) => fehler.AppendLine(zeile.Data);
         prozess.BeginErrorReadLine();
+        if (eingabe is not null)
+        {
+            prozess.StandardInput.Write(eingabe);
+            prozess.StandardInput.Close();
+        }
         var ausgabe = prozess.StandardOutput.ReadToEnd();
         prozess.WaitForExit();
         var gitIstGescheitert = prozess.ExitCode != 0;

@@ -12,6 +12,8 @@ internal sealed class Bereiche
 
     public int Anzahl => bereiche.Length;
 
+    public string this[int index] => bereiche[index];
+
     public IEnumerator<string> GetEnumerator()
     {
         return ((IEnumerable<string>)bereiche).GetEnumerator();
