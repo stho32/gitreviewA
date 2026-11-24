@@ -93,7 +93,12 @@ internal static class DateiaenderungenParser
         {
             return null;
         }
-        return int.Parse(feld, System.Globalization.CultureInfo.InvariantCulture);
+        var istZeilenzahl = int.TryParse(feld, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var zeilenzahl);
+        if (!istZeilenzahl)
+        {
+            throw new GitFehler("unerwartete Ausgabe von git show (Zeilenzahl ist keine Zahl)");
+        }
+        return zeilenzahl;
     }
 
     private static string Teil(string[] teile, int position)

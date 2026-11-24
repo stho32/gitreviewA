@@ -98,6 +98,17 @@ public class DateiaenderungenParserTests
         Assert.Throws<GitFehler>(() => DateiaenderungenParser.Parse(ersterElternteil + zweiterElternteil));
     }
 
+    [TestCase("x")]
+    [TestCase("")]
+    [TestCase("-1")]
+    [TestCase("99999999999")]
+    public void Wenn_eine_Zeilenzahl_keine_Zahl_ist_dann_GitFehler(string zeilenzahl)
+    {
+        var ausgabe = Roh(Ohne, Blob1, "A") + "neu.txt\0" + $"{zeilenzahl}\t0\tneu.txt\0";
+
+        Assert.Throws<GitFehler>(() => DateiaenderungenParser.Parse(ausgabe));
+    }
+
     private static string Roh(string vorher, string nachher, string status)
     {
         return $":100644 100644 {vorher} {nachher} {status}\0";
