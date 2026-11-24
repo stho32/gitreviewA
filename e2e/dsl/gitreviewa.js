@@ -11,6 +11,7 @@ const { imHintergrundStarten, pruefeSigintIgnoriert } = require('../treiber/hint
 const { programmStarten, adresseAbwarten, programmBeenden, lauschendeAdressen } = require('../treiber/programm.js');
 const { anfrage, senden, halbSenden } = require('../treiber/http.js');
 const oberflaeche = require('../treiber/oberflaeche.js');
+const hakenSchnittstelle = require('../treiber/haken-schnittstelle.js');
 const { fremdeSeiteStarten } = require('../treiber/fremde-seite.js');
 
 const STARTZEILE_FRIST_MS = 2000;
@@ -35,6 +36,11 @@ function welt() {
   /** Die Vorbereitung der Anforderung: Commits `p` (vier Dateien), `q` (M, D, R, Binärdatei, Rumpf), `r` (leer). */
   function repoMitVorbereitung() {
     return gemerkt(repos.repoMitVorbereitungAnlegen());
+  }
+
+  /** Die Vorbereitung der Anforderung R00020: Commits `k1` (a.txt, README.md) und `k2` (a.txt geändert). */
+  function repoK() {
+    return gemerkt(repos.repoKAnlegen());
   }
 
   /** Ein anderswo angelegtes Repo, das beim Aufräumen mit entfernt wird. */
@@ -230,6 +236,16 @@ function welt() {
     return { status: antwort.status, ...jsonOderLeer(antwort.koerper) };
   }
 
+  /** Setzt oder entnimmt einen Haken über `POST /api/haken`; Optionen wie beim Haken-Treiber (`origin`, `host`, `inhaltstyp`). */
+  async function hakenAnlegen(lauf, haken, optionen) {
+    return hakenSchnittstelle.hakenSetzen(lauf.adresse, haken, optionen);
+  }
+
+  /** `GET /api/ergebnis` (R00020); `host` setzt einen fremden Host-Kopf. */
+  function ergebnisAbfragen(lauf, { host, methode = 'GET' } = {}) {
+    return senden(lauf.adresse, '/api/ergebnis', { methode, host });
+  }
+
   /** `null` heißt: Anfrage ohne Content-Type. */
   function inhaltstypKopf(inhaltstyp) {
     if (inhaltstyp === null) {
@@ -299,10 +315,11 @@ function welt() {
   }
 
   return {
-    repoMitCommits, gitreviewAStarten, gitreviewAImHintergrundStarten, gitreviewAAufrufen, aufrufBeendet, aufEndeWarten, laeuftNoch, bisSekundenNachStart, laufAbbrechen,
+    repoMitCommits, repoK, gitreviewAStarten, gitreviewAImHintergrundStarten, gitreviewAAufrufen, aufrufBeendet, aufEndeWarten, laeuftNoch, bisSekundenNachStart, laufAbbrechen,
     zustandAbfragen, commitsAbfragen, dateienAbfragen, commitsStatusOderNull, freierPort, startseiteAbfragen, stderrZeilen, portVon, hostDesLaufs,
     lauschendeAdressen, aufzeichnenderBrowser, gitAttrappe, aufraeumen,
     anmerkungAnlegen, beendenAnfordern, anfrageHalbGesendet, beendenUndDauerMessen, fremdeSeite, ergebnis,
+    hakenAnlegen, ergebnisAbfragen,
     beendenBetaetigen: oberflaeche.beendenBetaetigen,
     beendenKnopf: oberflaeche.beendenKnopf,
     beendetMeldung: oberflaeche.beendetMeldung,

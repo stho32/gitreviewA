@@ -78,6 +78,17 @@ function repoMitVorbereitungAnlegen() {
   return { ordner, p, q, r };
 }
 
+/** Repo K der User Story R00020: `k1` legt `a.txt` (`eins`, `zwei`) und `README.md` (`Titel`) an, `k2` ändert `zwei` zu `ZWEI` und hängt `drei` an. */
+function repoKAnlegen() {
+  const ordner = leeresRepoAnlegen();
+  dateiSchreiben(ordner, 'a.txt', 'eins\nzwei\n');
+  dateiSchreiben(ordner, 'README.md', 'Titel\n');
+  const k1 = commitAnlegen(ordner, { betreff: 'Start', autor: 'Kim Beispiel', datum: '2026-03-04T09:15:00+01:00' });
+  dateiSchreiben(ordner, 'a.txt', 'eins\nZWEI\ndrei\n');
+  const k2 = commitAnlegen(ordner, { betreff: 'a ändern', autor: 'Kim Beispiel', datum: '2026-03-05T18:30:00+01:00' });
+  return { ordner, k1, k2 };
+}
+
 /** Ein Commit, dessen Dateien `dateien` (Pfad → Inhalt) hinzufügt. */
 function repoMitDateienAnlegen(dateien, betreff = 'Dateien') {
   const ordner = leeresRepoAnlegen();
@@ -132,6 +143,6 @@ function repoEntfernen(ordner) {
 
 module.exports = {
   repoAnlegen, repoEntfernen, repoMitVorbereitungAnlegen, repoMitDateienAnlegen, repoMitFremdemTextAnlegen, repoMitVielenCommitsAnlegen, repoMitUnterordnerAnlegen,
-  leeresRepoAnlegen, dateiSchreiben, commitAnlegen, commitObjektEntfernen,
+  leeresRepoAnlegen, dateiSchreiben, commitAnlegen, commitObjektEntfernen, repoKAnlegen,
   git, GIT_UMGEBUNG,
 };

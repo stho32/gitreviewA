@@ -1,7 +1,10 @@
 (function () {
   'use strict';
 
+  const KOPIERT = 'Ergebnis kopiert';
   const ABRUF_GESCHEITERT = 'Kopieren nicht möglich: Ergebnis nicht abrufbar';
+  const ZWISCHENABLAGE_FEHLT = 'Kopieren nicht möglich: Zwischenablage nicht verfügbar';
+  const ZWISCHENABLAGE_VERWEIGERT = 'Kopieren nicht möglich: Zwischenablage verweigert';
 
   function init() {
     const knopfElement = document.getElementById('ergebnis-kopieren');
@@ -11,13 +14,18 @@
   async function kopiereErgebnis(knopfElement) {
     const statusElement = document.getElementById('kopieren-status');
     knopfElement.disabled = true;
-    statusElement.classList.remove('fehler');
-    statusElement.textContent = '';
+    zeigeStatus(statusElement, '', false);
     try {
-      await fordereErgebnisAn();
+      const ergebnis = await fordereErgebnisAn();
+      const meldung = await schreibeInZwischenablage(ergebnis);
+      const istFehler = meldung.length > 0;
+      if (istFehler) {
+        zeigeStatus(statusElement, meldung, true);
+      } else {
+        zeigeStatus(statusElement, KOPIERT, false);
+      }
     } catch {
-      statusElement.classList.add('fehler');
-      statusElement.textContent = ABRUF_GESCHEITERT;
+      zeigeStatus(statusElement, ABRUF_GESCHEITERT, true);
     }
     knopfElement.disabled = false;
   }
@@ -31,6 +39,26 @@
     }
     const inhalt = await antwort.json();
     return inhalt.ergebnis;
+  }
+
+  /** Leer, wenn der Text in der Zwischenablage liegt; sonst die Meldung für den Menschen. */
+  async function schreibeInZwischenablage(text) {
+    const zwischenablage = navigator.clipboard;
+    const fehlt = !zwischenablage || typeof zwischenablage.writeText !== 'function';
+    if (fehlt) {
+      return ZWISCHENABLAGE_FEHLT;
+    }
+    try {
+      await zwischenablage.writeText(text);
+      return '';
+    } catch {
+      return ZWISCHENABLAGE_VERWEIGERT;
+    }
+  }
+
+  function zeigeStatus(statusElement, text, istFehler) {
+    statusElement.textContent = text;
+    statusElement.classList.toggle('fehler', istFehler);
   }
 
   document.addEventListener('DOMContentLoaded', init);
