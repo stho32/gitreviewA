@@ -13,6 +13,12 @@ const GIT_UMGEBUNG = {
   GIT_AUTHOR_EMAIL: 'test@example.invalid',
   GIT_COMMITTER_NAME: 'Testperson',
   GIT_COMMITTER_EMAIL: 'test@example.invalid',
+  // git commit startet sonst `git maintenance run --auto --detach`, das noch in .git schreibt, während der Test aufräumt
+  GIT_CONFIG_COUNT: '2',
+  GIT_CONFIG_KEY_0: 'maintenance.auto',
+  GIT_CONFIG_VALUE_0: 'false',
+  GIT_CONFIG_KEY_1: 'gc.auto',
+  GIT_CONFIG_VALUE_1: '0',
 };
 
 function git(ordner, ...argumente) {
@@ -23,7 +29,6 @@ function git(ordner, ...argumente) {
 function repoAnlegen(betreffe) {
   const ordner = fs.mkdtempSync(path.join(os.tmpdir(), 'gitreviewa-e2e-'));
   git(ordner, 'init', '-q', '-b', 'main');
-  git(ordner, 'config', 'gc.auto', '0');
   const hashes = betreffe.map((betreff, index) => {
     fs.writeFileSync(path.join(ordner, 'datei.txt'), `Stand ${index}\n`);
     git(ordner, 'add', 'datei.txt');
