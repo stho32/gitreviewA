@@ -5,7 +5,6 @@ const PROTOKOLLZEILE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}[+-]\d{2}:\d{
 
 test.describe('Logging nach Stufe', () => {
   test('Szenario 8, Standard: stderr hat genau die Startzeile mit Zeit, Stufe und Kontext', async ({ gr }) => {
-    test.fail(true, 'erwartet rot: R00001 im Bau');
     const repo = gr.repoMitCommits();
     const lauf = await gr.gitreviewAStarten(repo, [repo.hashes[0]]);
 
@@ -20,7 +19,6 @@ test.describe('Logging nach Stufe', () => {
   });
 
   test('Szenario 8, --quiet: stderr bleibt leer', async ({ gr }) => {
-    test.fail(true, 'erwartet rot: R00001 im Bau');
     const repo = gr.repoMitCommits();
     const port = await gr.freierPort();
     const lauf = gr.gitreviewAAufrufen(repo, [repo.hashes[0], '--quiet', '--port', String(port)]);
@@ -34,7 +32,6 @@ test.describe('Logging nach Stufe', () => {
   });
 
   test('Szenario 8, --verbose: Debug-Zeile je Anfrage', async ({ gr }) => {
-    test.fail(true, 'erwartet rot: R00001 im Bau');
     const repo = gr.repoMitCommits();
     const lauf = await gr.gitreviewAStarten(repo, [repo.hashes[0]], { zusatz: ['--verbose'] });
 

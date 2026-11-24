@@ -3,7 +3,6 @@ const { test, expect, kurz } = require('../dsl/gitreviewa.js');
 
 test.describe('Commit-Liste', () => {
   test('Szenario 2: die Oberfläche zeigt genau die übergebenen Commits in Aufrufreihenfolge', async ({ gr, page }) => {
-    test.fail(true, 'erwartet rot: R00001 im Bau');
     const repo = gr.repoMitCommits();
     const [a, , c] = repo.hashes;
     const lauf = await gr.gitreviewAStarten(repo, [c, a]);
@@ -18,7 +17,6 @@ test.describe('Commit-Liste', () => {
   });
 
   test('Szenario 3: Betreff mit HTML steht als Text, kein Skript läuft', async ({ gr, page }) => {
-    test.fail(true, 'erwartet rot: R00001 im Bau');
     const repo = gr.repoMitCommits(['Erster Commit', '<script>alert(1)</script>', '<img src=x onerror=alert(2)>']);
     const [, d, e] = repo.hashes;
     let dialoge = 0;
@@ -38,7 +36,6 @@ test.describe('Commit-Liste', () => {
   });
 
   test('Szenario 9: 200 Commits sind spätestens 2 s nach dem Prozessstart sichtbar', async ({ gr, page }) => {
-    test.fail(true, 'erwartet rot: R00001 im Bau');
     const betreffe = Array.from({ length: 200 }, (_, index) => `Commit Nummer ${index + 1}`);
     const repo = gr.repoMitCommits(betreffe);
     await page.goto('about:blank');
@@ -56,7 +53,6 @@ test.describe('Commit-Liste', () => {
   });
 
   test('Szenario 10: GET / liefert die eingebettete Oberfläche', async ({ gr }) => {
-    test.fail(true, 'erwartet rot: R00001 im Bau');
     const repo = gr.repoMitCommits();
     const lauf = await gr.gitreviewAStarten(repo, [repo.hashes[0]]);
 

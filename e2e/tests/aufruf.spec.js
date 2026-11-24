@@ -3,7 +3,6 @@ const { test, expect } = require('../dsl/gitreviewa.js');
 
 test.describe('Aufruf und Server', () => {
   test('Szenario 1: Start mit zwei Commits — Startzeile, Zustand 200, stdout leer, läuft nach 5 s', async ({ gr }) => {
-    test.fail(true, 'erwartet rot: R00001 im Bau');
     const repo = gr.repoMitCommits();
     const [a, , c] = repo.hashes;
 
@@ -17,7 +16,6 @@ test.describe('Aufruf und Server', () => {
   });
 
   test('Szenario 4: zwei Läufe ohne --port — verschiedene Ports, nur 127.0.0.1, fremder Host abgewiesen', async ({ gr }) => {
-    test.fail(true, 'erwartet rot: R00001 im Bau');
     const repo = gr.repoMitCommits();
     const [a] = repo.hashes;
 

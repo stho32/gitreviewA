@@ -3,7 +3,6 @@ const { test, expect } = require('../dsl/gitreviewa.js');
 
 test.describe('Browser', () => {
   test('Szenario 5: der Browserbefehl wird genau einmal mit der Adresse als einzigem Argument aufgerufen', async ({ gr }) => {
-    test.fail(true, 'erwartet rot: R00001 im Bau');
     const repo = gr.repoMitCommits();
     const browser = gr.aufzeichnenderBrowser();
 
@@ -15,7 +14,6 @@ test.describe('Browser', () => {
   });
 
   test('Szenario 6: Browser lässt sich nicht öffnen — Warnung, Startzeile, Server antwortet, Lauf geht weiter', async ({ gr }) => {
-    test.fail(true, 'erwartet rot: R00001 im Bau');
     const repo = gr.repoMitCommits();
 
     const lauf = await gr.gitreviewAStarten(repo, [repo.hashes[0]], { mitBrowser: true, browserBefehl: '/gibt/es/nicht/browser' });

@@ -6,7 +6,6 @@ const { test, expect } = require('../dsl/gitreviewa.js');
 test.describe('Eingabe an git', () => {
   for (const argument of ['--upload-pack=x', 'HEAD; touch pwn', 'zzzz', 'abc', 'a'.repeat(65), '-abcd']) {
     test(`Szenario 7: »${argument}« endet mit Fehler, ohne Server und ohne git`, async ({ gr }) => {
-      test.fail(true, 'erwartet rot: R00001 im Bau');
       const repo = gr.repoMitCommits();
       const attrappe = gr.gitAttrappe();
 
@@ -23,7 +22,6 @@ test.describe('Eingabe an git', () => {
   }
 
   test('Szenario 7, Positivkontrolle: ein gültiger Hash erreicht die git-Attrappe', async ({ gr }) => {
-    test.fail(true, 'erwartet rot: R00001 im Bau');
     const repo = gr.repoMitCommits();
     const attrappe = gr.gitAttrappe();
 
