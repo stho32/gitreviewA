@@ -90,6 +90,20 @@ test.describe('Baustein Farbschlange', () => {
     expect(a.antworten).toEqual([ANTWORT]);
   });
 
+  test('soll nach der Antwort keine Frist mehr laufen lassen: der Worker bleibt für den nächsten Auftrag', () => {
+    const { worker, uhr, schlange } = aufbau();
+    schlange.stellen(auftrag());
+    worker[0].bereitMelden();
+    worker[0].antworten(ANTWORT);
+
+    uhr.vorstellen(FRIST_MS * 2);
+    schlange.stellen(auftrag('rust'));
+
+    expect(worker[0].beendet).toBe(false);
+    expect(worker).toHaveLength(1);
+    expect(worker[0].auftraege().map(nachricht => nachricht.sprache)).toEqual(['javascript', 'rust']);
+  });
+
   test('soll einen Auftrag zur Zeit rechnen und denselben Worker weiter nutzen', () => {
     const { worker, schlange } = aufbau();
     const erster = auftrag();
