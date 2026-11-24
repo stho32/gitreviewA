@@ -30,6 +30,11 @@ function repoAnlegen(gr, art) {
       const repo = gr.repoMitDateien({ [PFAD_MIT_RICHTUNGSZEICHEN]: 'eins\n', 'o\u202Er/ä ö.txt': 'zwei\n' });
       return { ordner: repo.ordner, hashes: { v: repo.hash } };
     }
+    case 'Start im Unterordner': {
+      // gitreviewA läuft im Unterordner `unten`; das Repo will Pfade relativ dazu zeigen
+      const repo = gr.repoMitUnterordner();
+      return { ordner: repo.startordner, hashes: { w: repo.hash } };
+    }
     case '200 Commits': {
       const repo = gr.repoMitVielenCommits(200);
       const hashes = Object.fromEntries(repo.hashes.map((hash, index) => [`c${index + 1}`, hash]));

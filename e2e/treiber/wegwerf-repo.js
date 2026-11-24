@@ -88,6 +88,17 @@ function repoMitDateienAnlegen(dateien, betreff = 'Dateien') {
   return { ordner, hash };
 }
 
+/** Ein Commit mit `a.txt` und `unten/b.txt` in einem Repo, das Pfade relativ zum Startordner zeigen will (`diff.relative`);
+    `startordner` ist `unten`. */
+function repoMitUnterordnerAnlegen() {
+  const ordner = leeresRepoAnlegen();
+  dateiSchreiben(ordner, 'a.txt', 'eins\n');
+  dateiSchreiben(ordner, 'unten/b.txt', 'zwei\n');
+  const hash = commitAnlegen(ordner, { betreff: 'Zwei Ordner' });
+  git(ordner, 'config', 'diff.relative', 'true');
+  return { ordner, startordner: path.join(ordner, 'unten'), hash };
+}
+
 /** Ein Commit mit fremdem Text in Autor, Betreff und Rumpf. */
 function repoMitFremdemTextAnlegen({ autor, betreff, rumpf }) {
   const ordner = leeresRepoAnlegen();
@@ -120,6 +131,6 @@ function repoEntfernen(ordner) {
 }
 
 module.exports = {
-  repoAnlegen, repoEntfernen, repoMitVorbereitungAnlegen, repoMitDateienAnlegen, repoMitFremdemTextAnlegen, repoMitVielenCommitsAnlegen,
+  repoAnlegen, repoEntfernen, repoMitVorbereitungAnlegen, repoMitDateienAnlegen, repoMitFremdemTextAnlegen, repoMitVielenCommitsAnlegen, repoMitUnterordnerAnlegen,
   leeresRepoAnlegen, dateiSchreiben, commitAnlegen, commitObjektEntfernen,
 };

@@ -54,6 +54,60 @@ public class GitLeserFremdeAnzeigeTests
         Assert.That(dateien.Select(datei => (datei.Status, datei.Pfad)), Is.EqualTo(new[] { ("A", "evil.sh") }));
     }
 
+    [TestCase("Wurzel", false)]
+    [TestCase("Wurzel", true)]
+    [TestCase("unten", false)]
+    [TestCase("unten", true)]
+    public void Wenn_aus_einem_Ordner_des_Repos_gelesen_wird_dann_zeigt_die_Dateiliste_alle_Pfade_ab_der_Wurzel(string startordner, bool pfadeRelativ)
+    {
+        using var repo = WegwerfRepo.MitCommits();
+        repo.SchreibeDatei("a.txt", "eins\n");
+        repo.SchreibeDatei("unten/b.txt", "zwei\n");
+        var hash = repo.Committe("Zwei Ordner", "A", "2026-03-04T09:15:00+01:00", "");
+        repo.Git("config", "diff.relative", pfadeRelativ.ToString().ToLowerInvariant());
+        var arbeitsordner = repo.Ordner;
+        if (startordner == "unten")
+        {
+            arbeitsordner = Path.Combine(repo.Ordner, "unten");
+        }
+
+        var dateien = GitLeser.DateienLesen(hash, arbeitsordner).AlsArray();
+
+        Assert.That(dateien.Select(datei => datei.Pfad), Is.EquivalentTo(new[] { "a.txt", "unten/b.txt" }));
+    }
+
+    [TestCase("Wurzel")]
+    [TestCase("unten")]
+    [TestCase("unten/tiefer")]
+    public void Wenn_die_Wurzel_aus_einem_Ordner_des_Repos_gelesen_wird_dann_ist_es_der_oberste_Ordner_des_Arbeitsbaums(string startordner)
+    {
+        using var repo = WegwerfRepo.MitCommits("Erster Commit");
+        Directory.CreateDirectory(Path.Combine(repo.Ordner, "unten", "tiefer"));
+        var ordner = repo.Ordner;
+        if (startordner != "Wurzel")
+        {
+            ordner = Path.Combine(repo.Ordner, startordner);
+        }
+
+        var wurzel = GitLeser.WurzelLesen(ordner);
+
+        Assert.That(Path.GetFullPath(wurzel), Is.EqualTo(Path.GetFullPath(repo.Ordner)));
+    }
+
+    [Test]
+    public void Wenn_der_Ordner_in_keinem_Repo_liegt_dann_GitFehler()
+    {
+        var ordner = Directory.CreateTempSubdirectory("gitreviewa-kein-repo-").FullName;
+        try
+        {
+            Assert.Throws<GitFehler>(() => GitLeser.WurzelLesen(ordner));
+        }
+        finally
+        {
+            Directory.Delete(ordner, recursive: true);
+        }
+    }
+
     private static void StelleAusblendungEin(WegwerfRepo repo, string ausblendung)
     {
         if (ausblendung == "config submodule.sub.ignore=all")

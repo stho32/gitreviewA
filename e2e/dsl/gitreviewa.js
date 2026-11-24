@@ -45,6 +45,10 @@ function welt() {
     return gemerkt(repos.repoMitFremdemTextAnlegen(angaben));
   }
 
+  function repoMitUnterordner() {
+    return gemerkt(repos.repoMitUnterordnerAnlegen());
+  }
+
   function repoMitVielenCommits(anzahl) {
     return gemerkt(repos.repoMitVielenCommitsAnlegen(anzahl));
   }
@@ -295,7 +299,7 @@ function welt() {
     beendetMeldung: oberflaeche.beendetMeldung,
     beendenFehler: oberflaeche.beendenFehler,
     beendenScheitertMit: oberflaeche.beendenScheitertMit,
-    eigenerOrdner, repoMitVorbereitung, repoMitDateien, repoMitFremdemText, repoMitVielenCommits, repoMitGrossemCommit, commitObjektEntfernen,
+    eigenerOrdner, repoMitVorbereitung, repoMitDateien, repoMitFremdemText, repoMitUnterordner, repoMitVielenCommits, repoMitGrossemCommit, commitObjektEntfernen,
     oberflaecheOeffnen: (page, lauf) => page.goto(lauf.adresse),
     ...oberflaeche,
   };

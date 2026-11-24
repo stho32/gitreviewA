@@ -132,6 +132,16 @@ test.describe('Dateien eines Commits sehen', () => {
     ]);
   });
 
+  test('soll aus einem Unterordner gestartet alle Dateien des Commits mit Pfad ab der Wurzel zeigen', async ({ review }) => {
+    await review.starten({ vorbereitung: 'Start im Unterordner', commits: ['w'] });
+
+    await review.dateienZeigen({
+      summe: '2 Dateien · +2 −0',
+      reihenfolgeEgal: true,
+      eintraege: [{ status: 'A', name: 'a.txt', zahlen: '+1 −0' }, { status: 'A', name: 'unten/b.txt', zahlen: '+1 −0' }],
+    });
+  });
+
   test('soll die Dateien als Baum mit Ordnern vor Dateien zeigen und die Darstellung beim Commit-Wechsel behalten', async ({ review }) => {
     await review.starten({ commits: ['p', 'q', 'r'] });
     await review.commitAnsehen('q');

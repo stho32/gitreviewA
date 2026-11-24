@@ -22,6 +22,16 @@ internal static class GitLeser
         return DateiaenderungenParser.Parse(ausgabe);
     }
 
+    /// <summary>Pfade der Dateiliste sind wurzelrelativ; jeder weitere git-Aufruf läuft deshalb in der Wurzel des Arbeitsbaums.</summary>
+    public static string WurzelLesen(string startordner)
+    {
+        var start = GitStart.Im(startordner);
+        start.ArgumentList.Add("rev-parse");
+        start.ArgumentList.Add("--show-toplevel");
+        var ausgabe = Ausfuehren(start, "git rev-parse --show-toplevel");
+        return ausgabe.TrimEnd('\n');
+    }
+
     private static ProcessStartInfo GitLogStart(CommitHashes hashes, string arbeitsordner)
     {
         var start = GitStart.Im(arbeitsordner);
