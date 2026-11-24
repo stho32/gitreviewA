@@ -165,4 +165,25 @@ function repoU(ordner) {
   return { ordner, hashes: { u: commitAnlegen(ordner, { betreff: '20 000 Zeilen' }) } };
 }
 
-module.exports = { repoMitBidiPfad, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, markerVorhanden, diffProgrammOhneSchutzStarten };
+/** Repo K: ein Commit `k` mit Binärdateien aus Null-Bytes (100 KB, 500 KB, 3 MB) und 200 KB Zufall (fester Startwert) neben der kleinen `klein.txt`. */
+function repoK(ordner) {
+  repoAnlegen(ordner);
+  for (const [name, bytes] of Object.entries({ 'k100.bin': 100000, 'k500.bin': 500000, 'k3m.bin': 3000000 })) {
+    fs.writeFileSync(path.join(ordner, name), Buffer.alloc(bytes));
+  }
+  fs.writeFileSync(path.join(ordner, 'z200.bin'), zufallsBytes(200000));
+  dateiSchreiben(ordner, 'klein.txt', 'eins\n');
+  return { ordner, hashes: { k: commitAnlegen(ordner, { betreff: 'Große Binärdateien' }) } };
+}
+
+function zufallsBytes(anzahl) {
+  const bytes = Buffer.alloc(anzahl);
+  let zustand = 12345;
+  for (let stelle = 0; stelle < anzahl; stelle += 1) {
+    zustand = (Math.imul(zustand, 1103515245) + 12345) >>> 0;
+    bytes[stelle] = zustand >>> 24;
+  }
+  return bytes;
+}
+
+module.exports = { repoK, repoMitBidiPfad, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, markerVorhanden, diffProgrammOhneSchutzStarten };

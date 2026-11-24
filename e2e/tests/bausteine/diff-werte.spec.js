@@ -1,7 +1,7 @@
 'use strict';
 // Bausteintests (ohne Browser) der Diff-Rechnung: Zeilen mit Nummern aus den Hunk-Köpfen, sichtbare Marken, Blöcke.
 const { test, expect } = require('@playwright/test');
-const { patchZeilen, sichtbarTeile, bloecke, blockBreite, BLOCK_ZEILEN } = require('../../../src/GitReviewA/web/diff-werte.js');
+const { patchZeilen, sichtbarTeile, bloecke, blockBreite, zuLang, BLOCK_ZEILEN, ZEICHEN_GRENZE, MARKEN_GRENZE, ZEILEN_GRENZE } = require('../../../src/GitReviewA/web/diff-werte.js');
 
 const kopf = text => ({ art: 'kopf', alt: null, neu: null, text });
 const kontext = (text, alt, neu) => ({ art: 'kontext', alt, neu, text });
@@ -50,6 +50,36 @@ test.describe('Baustein Diff-Werte', () => {
     for (const zeichen of ['\u061C', '\u200E', '\u200F', '\u202A', '\u202B', '\u202C', '\u202D', '\u2066', '\u2067', '\u2068', '\u2069']) {
       expect(sichtbarTeile(zeichen)[0].marke, `U+${zeichen.codePointAt(0).toString(16)}`).toBe('bidi');
     }
+  });
+
+  test('soll gleiche Steuerzeichen in Folge zu einer Marke mit Anzahl zusammenfassen', () => {
+    expect(sichtbarTeile('a\u0000\u0000\u0000b')).toEqual([{ text: 'a' }, { marke: 'steuer', code: 'U+0000', text: '␀ U+0000 ×3', anzahl: 3 }, { text: 'b' }]);
+    expect(sichtbarTeile('\u0000\u0001\u0000')).toHaveLength(3);
+    expect(sichtbarTeile('\u202E\u202E')).toEqual([{ marke: 'bidi', code: 'U+202E', text: '⟨U+202E⟩ ×2', anzahl: 2 }]);
+    expect(sichtbarTeile('x\r\r')).toEqual([
+      { text: 'x' }, { marke: 'steuer', code: 'U+000D', text: '␍ U+000D' }, { marke: 'steuer', code: 'U+000D', text: '␍' },
+    ]);
+    const lang = sichtbarTeile('\u0000'.repeat(3000000));
+    expect(lang).toEqual([{ marke: 'steuer', code: 'U+0000', text: '␀ U+0000 ×3000000', anzahl: 3000000 }]);
+  });
+
+  test('soll einen Text über der Zeilen-, Zeichen- oder Markengrenze als zu lang melden und darunter nicht', () => {
+    const zeilen = anzahl => Array.from({ length: anzahl }, (_, index) => plus('x', index + 1));
+    expect([ZEILEN_GRENZE, ZEICHEN_GRENZE, MARKEN_GRENZE]).toEqual([20000, 262144, 10000]);
+    expect(zuLang(zeilen(20000))).toBeNull();
+    expect(zuLang([...zeilen(20000), plus('x', 20001)])).toEqual({ anzahl: 20001, einheit: 'Zeilen' });
+    expect(zuLang([plus('a'.repeat(ZEICHEN_GRENZE), 1)])).toBeNull();
+    expect(zuLang([plus('a'.repeat(ZEICHEN_GRENZE + 1), 1)])).toEqual({ anzahl: ZEICHEN_GRENZE + 1, einheit: 'Zeichen' });
+    expect(zuLang([kopf('@@ -0,0 +1 @@'), plus('\u0000'.repeat(ZEICHEN_GRENZE), 1)])).toBeNull();
+    expect(zuLang([plus('\u0000a'.repeat(MARKEN_GRENZE), 1)])).toBeNull();
+    expect(zuLang([plus('\u0000a'.repeat(MARKEN_GRENZE + 1), 1)])).toEqual({ anzahl: MARKEN_GRENZE + 1, einheit: 'Marken' });
+  });
+
+  test('soll große Eingaben schnell rechnen', () => {
+    const start = Date.now();
+    zuLang([plus('\u0000'.repeat(3000000), 1)]);
+    sichtbarTeile('\u0000'.repeat(3000000));
+    expect(Date.now() - start).toBeLessThan(500);
   });
 
   test('soll Zeilen in Blöcke zu 500 teilen', () => {

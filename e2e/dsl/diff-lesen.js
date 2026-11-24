@@ -22,6 +22,7 @@ const VORBEREITUNGEN = {
   'Binärausgabe des Repos': { anlegen: repos.repoMitBinaerausgabe, commits: ['w'] },
   Merge: { anlegen: repos.repoM, commits: ['m'] },
   'Bidi im Dateinamen': { anlegen: repos.repoMitBidiPfad, commits: ['b'] },
+  'große Binärdateien': { anlegen: repos.repoK, commits: ['k'] },
   '20 000 Zeilen': { anlegen: repos.repoU, commits: ['u'] },
 };
 
@@ -118,6 +119,8 @@ function diffSprache(gr, page) {
     keinDiffGelesen: () => schnittstelle.pruefeKeinDiffAufruf(zaehler),
     keineDateiAngelegt: name => beobachtung.pruefeDateiFehlt(repo.ordner, name),
 
+    /** Die Seite ist `fristMs` nach dem Klick auf „Als Text zeigen“ bedienbar: Zeilen oder „Trotzdem laden“ stehen, und ein Klick auf `andereDatei` wirkt. */
+    alsTextBleibtBedienbar: (datei, andereDatei, fristMs) => diffSeite.pruefeBedienbarNachAlsText(page, name => seite.dateiWaehlen(page, name), datei, andereDatei, fristMs),
     /** Zeile `neu` binnen 1 s nach dem Klick auf `datei`; liefert den Messwert. */
     zeileRechtzeitigNachKlick: (datei, erwartet) => diffSeite.pruefeZeileBinnenNachKlick(page, () => seite.dateiWaehlen(page, datei), erwartet, ZEILE_FRIST_MS),
   };

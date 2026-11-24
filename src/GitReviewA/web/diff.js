@@ -7,7 +7,6 @@
   const HINWEIS_ZUR_WAHL = 'Datei wählen, um ihren Diff zu sehen';
   const KEINE_ZEILENAENDERUNGEN = 'Keine Zeilenänderungen';
   const GRUND_TEXT = { nullbytes: 'enthält Null-Bytes', attribut: 'per Attribut als binär markiert' };
-  const TEXT_ZEILEN_GRENZE = 20000;
   const LESETEXT = { plus: 'hinzugefügt: ', minus: 'entfernt: ' };
   const VORZEICHEN = { plus: '+', minus: '−', kontext: '' };
 
@@ -110,10 +109,9 @@
       zeigeMeldung(ansicht, KEINE_ZEILENAENDERUNGEN, false);
       return;
     }
-    const textzeilen = zeilen.filter(zeile => zeile.art !== 'kopf').length;
-    const langerTextAufWahl = alsText && textzeilen > TEXT_ZEILEN_GRENZE;
-    if (langerTextAufWahl) {
-      zeigeZugeklappt(ansicht, antwort.pfad, zeilen, textzeilen);
+    const zuLangGrund = alsText ? zuLang(zeilen) : null;
+    if (zuLangGrund) {
+      zeigeZugeklappt(ansicht, antwort.pfad, zeilen, zuLangGrund);
       return;
     }
     zeichneZeilen(ansicht, antwort.pfad, zeilen);
@@ -131,8 +129,8 @@
   }
 
   /** Über der Grenze bleibt der Text zugeklappt, bis der Mensch „Trotzdem laden“ wählt (vorläufig bis I0014). */
-  function zeigeZugeklappt(ansicht, pfad, zeilen, textzeilen) {
-    zeigeMeldung(ansicht, `Sehr lang: ${textzeilen.toLocaleString('de-DE')} Zeilen — zugeklappt`, false);
+  function zeigeZugeklappt(ansicht, pfad, zeilen, grund) {
+    zeigeMeldung(ansicht, `Sehr lang: ${grund.anzahl.toLocaleString('de-DE')} ${grund.einheit} — zugeklappt`, false);
     zustand.zugeklappt = { pfad, zeilen };
     ansicht.trotzdemLadenElement.hidden = false;
   }
@@ -236,7 +234,11 @@
     }
     const markeElement = textElement(`mk-z mk-${teil.marke}`, teil.text);
     markeElement.setAttribute('role', 'img');
-    markeElement.setAttribute('aria-label', `sichtbar gemachtes Zeichen ${teil.code}`);
+    let mehrfach = '';
+    if (teil.anzahl) {
+      mehrfach = ` ×${teil.anzahl}`;
+    }
+    markeElement.setAttribute('aria-label', `sichtbar gemachtes Zeichen ${teil.code}${mehrfach}`);
     return markeElement;
   }
 

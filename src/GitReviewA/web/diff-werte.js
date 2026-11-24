@@ -53,7 +53,8 @@
   const UNSICHTBAR = new RegExp(`${BIDI.source}|${STEUER.source}`);
 
   /** Fremder Text → Teile; Unsichtbares wird sichtbar, nie entfernt („Trojan Source“): Bidi-Steuerzeichen als Marke `⟨U+202E⟩`,
-      Steuerzeichen außer Tab als Bildzeichen mit Code (ohne Bildzeichen nur der Code), ein `\r` am Ende als `␍`. */
+      Steuerzeichen außer Tab als Bildzeichen mit Code (ohne Bildzeichen nur der Code), ein `\r` am Ende als `␍`.
+      Gleiche Zeichen in Folge sind eine Marke mit Anzahl (`␀ U+0000 ×500000`): so bleibt eine Datei aus Null-Bytes ein einziger Knoten. */
   function sichtbarTeile(text) {
     if (!UNSICHTBAR.test(text)) {
       if (text === '') {
@@ -64,34 +65,62 @@
     const teile = [];
     let gewoehnlich = '';
     const zeichenfolge = Array.from(text);
-    zeichenfolge.forEach((zeichen, stelle) => {
+    let stelle = 0;
+    while (stelle < zeichenfolge.length) {
+      const zeichen = zeichenfolge[stelle];
       const istBidi = BIDI.test(zeichen);
       const istSteuer = STEUER.test(zeichen);
       if (!istBidi && !istSteuer) {
         gewoehnlich += zeichen;
-        return;
+        stelle += 1;
+        continue;
       }
       if (gewoehnlich) {
         teile.push({ text: gewoehnlich });
       }
       gewoehnlich = '';
-      teile.push(marke(zeichen, istBidi, stelle === zeichenfolge.length - 1));
-    });
+      const istLetztes = stelle === zeichenfolge.length - 1;
+      const anzahl = folgeLaenge(zeichenfolge, stelle, istLetztes);
+      teile.push(marke(zeichen, istBidi, istLetztes, anzahl));
+      stelle += anzahl;
+    }
     if (gewoehnlich) {
       teile.push({ text: gewoehnlich });
     }
     return teile;
   }
 
-  function marke(zeichen, istBidi, istLetztes) {
+  /** Länge der Folge gleicher Zeichen ab `stelle`; ein `\r` ganz am Ende bleibt für sich (`␍`). */
+  function folgeLaenge(zeichenfolge, stelle, istLetztes) {
+    if (istLetztes) {
+      return 1;
+    }
+    const zeichen = zeichenfolge[stelle];
+    let ende = stelle + 1;
+    while (ende < zeichenfolge.length && zeichenfolge[ende] === zeichen) {
+      ende += 1;
+    }
+    if (zeichen === '\r' && ende === zeichenfolge.length) {
+      ende -= 1;
+    }
+    return ende - stelle;
+  }
+
+  function marke(zeichen, istBidi, istLetztes, anzahl) {
     const code = codeVon(zeichen);
+    const mehrfach = anzahl > 1 ? ` ×${anzahl}` : '';
+    let ergebnis;
     if (istBidi) {
-      return { marke: 'bidi', code, text: `⟨${code}⟩` };
+      ergebnis = { marke: 'bidi', code, text: `⟨${code}⟩${mehrfach}` };
+    } else if (zeichen === '\r' && istLetztes) {
+      ergebnis = { marke: 'steuer', code, text: '␍' };
+    } else {
+      ergebnis = { marke: 'steuer', code, text: bildzeichen(zeichen) + code + mehrfach };
     }
-    if (zeichen === '\r' && istLetztes) {
-      return { marke: 'steuer', code, text: '␍' };
+    if (anzahl > 1) {
+      ergebnis.anzahl = anzahl;
     }
-    return { marke: 'steuer', code, text: bildzeichen(zeichen) + code };
+    return ergebnis;
   }
 
   function codeVon(zeichen) {
@@ -119,6 +148,29 @@
     return aus;
   }
 
+  /** Grenzen, über denen ein Text auf Wahl zugeklappt bleibt: Zeilen, Zeichen insgesamt und Marken (jede ein Knoten im Dokument). */
+  const ZEILEN_GRENZE = 20000;
+  const ZEICHEN_GRENZE = 262144;
+  const MARKEN_GRENZE = 10000;
+
+  /** `null`, solange der Text gezeichnet werden darf; sonst die erste überschrittene Grenze `{anzahl, einheit}`.
+      Zeichen werden vor den Marken gezählt: eine 3-MB-Datei wird nie erst in Marken zerlegt. */
+  function zuLang(zeilen) {
+    const textzeilen = zeilen.filter(zeile => zeile.art !== 'kopf');
+    if (textzeilen.length > ZEILEN_GRENZE) {
+      return { anzahl: textzeilen.length, einheit: 'Zeilen' };
+    }
+    const zeichen = textzeilen.reduce((summe, zeile) => summe + zeile.text.length, 0);
+    if (zeichen > ZEICHEN_GRENZE) {
+      return { anzahl: zeichen, einheit: 'Zeichen' };
+    }
+    const marken = textzeilen.reduce((summe, zeile) => summe + sichtbarTeile(zeile.text).filter(teil => teil.marke).length, 0);
+    if (marken > MARKEN_GRENZE) {
+      return { anzahl: marken, einheit: 'Marken' };
+    }
+    return null;
+  }
+
   /** Geschätzte Breite eines Blocks in px: ein Block außerhalb des Bildes wird nicht ausgelegt und hätte sonst keine Breite zum
       waagerechten Scrollen. Großzügig 8 px je Zeichen (Monospace 12 px, Tab 4, breite Zeichen 2), dazu Nummern und Vorzeichen. */
   function blockBreite(zeilen) {
@@ -144,5 +196,5 @@
     return 1;
   }
 
-  Object.assign(ziel, { patchZeilen, sichtbarTeile, bloecke, blockBreite, BLOCK_ZEILEN });
+  Object.assign(ziel, { patchZeilen, sichtbarTeile, bloecke, blockBreite, zuLang, BLOCK_ZEILEN, ZEILEN_GRENZE, ZEICHEN_GRENZE, MARKEN_GRENZE });
 })(typeof module !== 'undefined' ? module.exports : window);

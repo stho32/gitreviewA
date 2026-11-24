@@ -317,3 +317,15 @@ test.describe('Große Diffs', () => {
     test.info().annotations.push({ type: 'Messwert', description: `Zeile 20000 nach ${dauerMs} ms (Grenze 1000 ms, Ziel 700 ms)` });
   });
 });
+
+test.describe('Große Binärdateien als Text', () => {
+  test('soll nach „Als Text zeigen“ bei Null-Bytes und Zufall von 100 KB bis 3 MB spätestens 1 s später bedienbar sein', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'große Binärdateien', commits: ['k'] });
+
+    for (const datei of ['k100.bin', 'k500.bin', 'k3m.bin', 'z200.bin']) {
+      const dauerMs = await diff.alsTextBleibtBedienbar(datei, 'klein.txt', 1000);
+
+      test.info().annotations.push({ type: 'Messwert', description: `${datei}: bedienbar nach ${dauerMs} ms (Grenze 1000 ms)` });
+    }
+  });
+});

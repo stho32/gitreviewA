@@ -172,7 +172,27 @@ async function pruefeZeileBinnenNachKlick(page, waehlen, { kopf, plus, neu }, fr
   return dauerMs;
 }
 
+/** Wählt `datei` (über `dateiWaehlen`), klickt „Als Text zeigen“ und misst, bis Zeilen oder „Trotzdem laden“ stehen und zwei Bilder gezeichnet sind; dann muss ein Klick auf `andereDatei` ihren Diff zeigen. */
+async function pruefeBedienbarNachAlsText(page, dateiWaehlen, datei, andereDatei, fristMs) {
+  await dateiWaehlen(datei);
+  await expect(page.locator(BEREICH).getByRole('button', { name: ALS_TEXT })).toBeVisible();
+  const klickUmMs = Date.now();
+  await alsTextZeigen(page);
+  await page.waitForFunction(
+    ([zeile, bereich]) => document.querySelector(zeile) !== null || (document.querySelector(`${bereich} .trotzdem-laden`) && !document.querySelector(`${bereich} .trotzdem-laden`).hidden),
+    [`${ZEILE}`, BEREICH],
+    { polling: 'raf', timeout: 30000 },
+  );
+  await page.evaluate(() => new Promise(fertig => requestAnimationFrame(() => requestAnimationFrame(fertig))));
+  await dateiWaehlen(andereDatei);
+  await expect(page.locator(`${ZEILE}[data-neu="1"] .c`)).toHaveText('hinzugefügt: eins', { timeout: 30000 });
+  const dauerMs = Date.now() - klickUmMs;
+  expect(dauerMs, `${datei}: bedienbar nach ${dauerMs} ms`).toBeLessThanOrEqual(fristMs);
+  return dauerMs;
+}
+
 module.exports = {
+  pruefeBedienbarNachAlsText,
   pruefeDiff, pruefeMeldung, pruefeAufforderungZurWahl, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, diffAntwortVerzoegern,
   pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
 };
