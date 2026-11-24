@@ -45,3 +45,4 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-24 | #6 | Reviews | security-reviewer | befund | 6 min | 2 Muss: Änderung als Binärdatei verborgen; Diff still leer (Unterordner, diff.submodule, diff.relative) · claude · sonnet · Lauf 6-security-reviewer-1 · 0,79 $ · Karte gesamt 3,11 $ |
 | 2026-11-24 | #22 | Detailplanung | planer | bestanden | 6 min | R00008 + User Story (17 Szenarien), I0022 bis Bubble B0701–B0706 · claude · sonnet · Lauf 22-planer-1 · 1,11 $ · Karte gesamt 1,11 $ |
 | 2026-11-24 | #22 | Detailplanung | product-owner | bestanden | 0 min | 5 Fragen nach Empfehlung; Gelesen vollständig · claude · sonnet · Lauf 22-product-owner-1 · 0,25 $ · Karte gesamt 1,36 $ |
+| 2026-11-24 | #6 | Nacharbeit | product-owner | bestanden | 2 min | Binärdatei: Grund + Schalter „als Text zeigen“ · claude · sonnet · Lauf 6-product-owner-2 · 0,20 $ · Karte gesamt 3,31 $ |
