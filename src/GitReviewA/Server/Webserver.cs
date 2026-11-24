@@ -52,7 +52,7 @@ internal sealed class Webserver : IAsyncDisposable
         var dateien = new GemerkteDateiquelle(dateiquelle);
         anwendung.MapGet(DateienEndpunkt.Muster, DateienEndpunkt.Fuer(commits, dateien, protokoll));
         anwendung.MapGet(DiffEndpunkt.Muster, DiffEndpunkt.Fuer(new DiffLesenInteractor(commits, dateien, diffquelle, protokoll)));
-        BildeRueckkanal(anwendung, commits, anmerkungen, haken, protokoll);
+        BildeRueckkanal(anwendung, commits, anmerkungen, haken, dateiAbhaken, protokoll);
         await anwendung.StartAsync();
         lauscherPort.Wert = TatsaechlicherPort(anwendung);
         return new Webserver(anwendung, lauscherPort.Wert, anmerkungen, dateiAbhaken);
@@ -133,12 +133,14 @@ internal sealed class Webserver : IAsyncDisposable
         anwendung.MapGet("/{**pfad}", (string pfad) => Oberflaechendatei(oberflaeche, pfad));
     }
 
-    private static void BildeRueckkanal(WebApplication anwendung, Commitzeilen commits, Anmerkungsspeicher anmerkungen, Hakenspeicher haken, StderrProtokoll protokoll)
+    private static void BildeRueckkanal(WebApplication anwendung, Commitzeilen commits, Anmerkungsspeicher anmerkungen, Hakenspeicher haken, DateiAbhakenInteractor dateiAbhaken, StderrProtokoll protokoll)
     {
         var interactor = new ZeileAnnotierenInteractor(anmerkungen, new CommitAuswahl(commits), protokoll);
         var anlegen = AnmerkungsEndpunkt.Fuer(interactor, protokoll);
         anwendung.MapGet("/api/anmerkungen", AnmerkungenListeEndpunkt.Fuer(interactor));
         anwendung.Map("/api/anmerkungen", GeschuetzterEndpunkt.Mit(anlegen, protokoll));
+        anwendung.MapGet("/api/haken", HakenEndpunkt.Stand(dateiAbhaken));
+        anwendung.Map("/api/haken", GeschuetzterEndpunkt.Mit(HakenEndpunkt.Setzen(dateiAbhaken, protokoll), protokoll));
         var beenden = BeendenEndpunkt.Fuer(anmerkungen, haken, anwendung.Lifetime, protokoll);
         anwendung.Map("/api/beenden", GeschuetzterEndpunkt.Mit(beenden, protokoll));
     }
