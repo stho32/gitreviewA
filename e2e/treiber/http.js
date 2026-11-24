@@ -17,7 +17,7 @@ function senden(adresse, pfad, { methode, host, kopf = {}, koerper } = {}) {
     }
   }
   return new Promise((beantwortet, fehlgeschlagen) => {
-    const optionen = { host: ziel.hostname, port: ziel.port, path: ziel.pathname, method: methode, headers: kopfzeilen, agent: false };
+    const optionen = { host: ziel.hostname, port: ziel.port, path: `${ziel.pathname}${ziel.search}`, method: methode, headers: kopfzeilen, agent: false };
     const anfrageObjekt = http.request(optionen, antwort => {
       let antwortKoerper = '';
       antwort.setEncoding('utf8');
