@@ -7,8 +7,17 @@ const STARTZEILE_ADRESSE = /http:\/\/127\.0\.0\.1:(\d+)\//;
 const DOTNET = execFileSync('which', ['dotnet'], { encoding: 'utf8' }).trim();
 
 function programmStarten(ordner, argumente, umgebung) {
+  return prozessStarten(DOTNET, [programmPfad(), ...argumente], ordner, umgebung);
+}
+
+/** Startet eine veröffentlichte Einzeldatei direkt (ohne `dotnet`). */
+function programmDateiStarten(datei, ordner, argumente, umgebung) {
+  return prozessStarten(datei, argumente, ordner, umgebung);
+}
+
+function prozessStarten(befehl, argumente, ordner, umgebung) {
   const gestartetUmMs = Date.now();
-  const kind = spawn(DOTNET, [programmPfad(), ...argumente], {
+  const kind = spawn(befehl, argumente, {
     cwd: ordner,
     env: { ...process.env, ...umgebung },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -63,4 +72,4 @@ function lauschendeAdressen(lauf) {
   return eigeneZeilen.map(zeile => zeile.trim().split(/\s+/)[3]);
 }
 
-module.exports = { DOTNET, laufVerfolgen, programmStarten, adresseAbwarten, programmBeenden, lauschendeAdressen };
+module.exports = { DOTNET, laufVerfolgen, programmStarten, programmDateiStarten, adresseAbwarten, programmBeenden, lauschendeAdressen };
