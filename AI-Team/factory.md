@@ -95,17 +95,17 @@ Angriffsfläche: Aufruf von `git` mit Argumenten aus der Befehlszeile, stdin und
 
 ## Rollen
 
-Treiber `claude` läuft als Subagent des Directors. Ein leeres Modell nimmt das Modell aus dem Kopf der Rolle.
+Treiber `claude` läuft als Subagent des Directors, Treiber `opencode` über `werkzeuge/rolle_opencode.py` im Hintergrund. Seit 2026-11-24 (Betreiber: „alle Rollen bis auf den Director auf opencode / deepseek flash 4.1“) laufen alle Rollen über opencode; ein einzelner Lauf kann mit `beginne --treiber claude` abweichen, Grund im Zugkommentar.
 
 | Rolle | Kürzel | Treiber | Modell | Einsatz |
 |---|---|---|---|---|
-| planer | plan | claude | sonnet | Interaction bis Bubble verfeinern, Anforderung schreiben, Labels setzen |
-| entwickler | entw | claude | | bauen, Test zuerst, im Worktree der Karte; Sonnet, Opus nur bei schwierigen Karten nach der Prüfliste des Directors |
-| code-reviewer | crev | claude | sonnet | Korrektheit, Tests, Wartbarkeit je Arbeitspaket |
-| security-reviewer | srev | claude | sonnet | Angriffsfläche nach „Wissen/Sicherheit“, mit Probe; kurz bei Karten ohne neue Grenze |
-| entwicklertester | etst | claude | sonnet | User Story wörtlich im echten Programm, in einem Wegwerf-Repo |
-| product-owner | po | claude | sonnet | Rückfragen der Rollen im Sinne der Vision entscheiden, Protokoll `AI-Team/po-entscheidungen.md` |
-| realist-consultant | real | claude | sonnet | nur als Vorschlag, wenn die Schleifenbremse greift (`realist: vorschlagen`) |
+| planer | plan | opencode | openrouter/deepseek/deepseek-v4.1-flash | Interaction bis Bubble verfeinern, Anforderung schreiben, Labels setzen |
+| entwickler | entw | opencode | openrouter/deepseek/deepseek-v4.1-flash | bauen, Test zuerst, im Worktree der Karte (Betreiber 2026-11-24: alle Rollen über opencode/DeepSeek Flash) |
+| code-reviewer | crev | opencode | openrouter/deepseek/deepseek-v4.1-flash | Korrektheit, Tests, Wartbarkeit je Arbeitspaket |
+| security-reviewer | srev | opencode | openrouter/deepseek/deepseek-v4.1-flash | Angriffsfläche nach „Wissen/Sicherheit“, mit Probe; kurz bei Karten ohne neue Grenze |
+| entwicklertester | etst | opencode | openrouter/deepseek/deepseek-v4.1-flash | User Story wörtlich im echten Programm, in einem Wegwerf-Repo |
+| product-owner | po | opencode | openrouter/deepseek/deepseek-v4.1-flash | Rückfragen der Rollen im Sinne der Vision entscheiden, Protokoll `AI-Team/po-entscheidungen.md` |
+| realist-consultant | real | opencode | openrouter/deepseek/deepseek-v4.1-flash | nur als Vorschlag, wenn die Schleifenbremse greift (`realist: vorschlagen`) |
 
 ## Spalten
 
