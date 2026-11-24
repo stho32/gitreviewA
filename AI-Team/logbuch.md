@@ -165,3 +165,5 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Wirkung: 52-MB-Datei → +50 MB Server-RSS statt 1,6 GB; „zu groß“ in allen drei Textpfaden; Blöcke ≤ 5 000 Knoten.
 - Lehre: Eine Positivkontrolle, die im headless-Browser nicht erzeugbar ist, früh als Kriterium einengen (Messgröße selbst zählen) statt sie im Bau zu suchen.
 - Gate: NUnit 816/816, Playwright 320/320 zweimal.
+| 2026-11-24 | #23 | Detailplanung | planer | bestanden | 5 min | opencode: I0023 bis Bubble (B1701–B1706), R00018 + User Story, 3 Fragen an PO; 35f48ad · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 23-planer-1 · 0,20 $ · Karte gesamt 0,20 $ |
+| 2026-11-24 | #23 | Detailplanung | product-owner | bestanden | 1 min | opencode: 404, Nummer im Kopf ja, keine Marke geändert; 64b6a89 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 23-product-owner-1 · 0,020 $ · Karte gesamt 0,22 $ |
