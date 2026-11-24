@@ -32,6 +32,22 @@ public class ErgebnisFormatiererTests
     }
 
     [Test]
+    public void Wenn_stabile_Nummern_Luecken_haben_dann_zaehlen_die_Ueberschriften_nach_Position_1_2_3()
+    {
+        var anmerkungen = new Anmerkungsliste(
+        [
+            new Anmerkung(1, HashA, "a.txt", 1, "eins"),
+            new Anmerkung(3, HashA, "a.txt", 3, "drei"),
+            new Anmerkung(4, HashA, "a.txt", 4, "vier"),
+        ]);
+
+        var ergebnis = ErgebnisFormatierer.Formatiere(anmerkungen);
+
+        var ueberschriften = ergebnis.Split('\n').Where(zeile => zeile.StartsWith("## ", StringComparison.Ordinal));
+        Assert.That(ueberschriften, Is.EqualTo(new[] { "## 1. a.txt:1", "## 2. a.txt:3", "## 3. a.txt:4" }));
+    }
+
+    [Test]
     public void Wenn_zwei_Anmerkungen_dann_genau_das_Beispiel_der_Anforderung()
     {
         var anmerkungen = new Anmerkungsliste(

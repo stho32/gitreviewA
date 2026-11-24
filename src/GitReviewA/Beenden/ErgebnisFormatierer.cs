@@ -24,9 +24,11 @@ internal static class ErgebnisFormatierer
             return VerbindeAbschnitte(abschnitte);
         }
         abschnitte.Add(string.Create(CultureInfo.InvariantCulture, $"Anmerkungen: {anmerkungen.Anzahl}"));
+        var position = 0;
         foreach (var anmerkung in anmerkungen)
         {
-            abschnitte.Add(Stellenueberschrift(anmerkung));
+            position += 1;
+            abschnitte.Add(Stellenueberschrift(position, anmerkung));
             abschnitte.Add($"Commit: {anmerkung.Commit}");
             abschnitte.Add(AlsZitat(anmerkung.Text));
         }
@@ -38,9 +40,10 @@ internal static class ErgebnisFormatierer
         return string.Join(Zeilenende + Zeilenende, abschnitte) + Zeilenende;
     }
 
-    private static string Stellenueberschrift(Anmerkung anmerkung)
+    /// <summary>`## n.` ist die Position im Ergebnis (R00002), nicht die stabile Nummer der Anmerkung.</summary>
+    private static string Stellenueberschrift(int position, Anmerkung anmerkung)
     {
-        var nummer = anmerkung.Nummer.ToString(CultureInfo.InvariantCulture);
+        var nummer = position.ToString(CultureInfo.InvariantCulture);
         var datei = UnsichtbareZeichen.AlsMarken(anmerkung.Datei);
         if (anmerkung.Zeile is not { } zeile)
         {
