@@ -144,11 +144,28 @@
     return '';
   }
 
-  /** Zeilen in Blöcke zu höchstens 500. */
+  /** Höchstens so viele Zeichen Text hat ein Block, außer eine Zeile allein ist länger: jeder Block außerhalb des Bildes wird weder
+      ausgelegt noch gemalt (`content-visibility`), so kostet ein Bild auch bei dichtem Inhalt (bis zu 1000 Farbstücke je Zeile) nur die
+      Blöcke im Bild — ein Block zu 500 dichten Zeilen brauchte gefärbt je Bild über 150 ms (Befund B1 zu #8). */
+  const BLOCK_ZEICHEN = 25000;
+
+  /** Zeilen in Blöcke zu höchstens 500 Zeilen und höchstens `BLOCK_ZEICHEN` Zeichen. */
   function bloecke(zeilen) {
     const aus = [];
-    for (let anfang = 0; anfang < zeilen.length; anfang += BLOCK_ZEILEN) {
-      aus.push(zeilen.slice(anfang, anfang + BLOCK_ZEILEN));
+    let block = [];
+    let zeichen = 0;
+    for (const zeile of zeilen) {
+      const blockVoll = block.length === BLOCK_ZEILEN || (block.length > 0 && zeichen + zeile.text.length > BLOCK_ZEICHEN);
+      if (blockVoll) {
+        aus.push(block);
+        block = [];
+        zeichen = 0;
+      }
+      block.push(zeile);
+      zeichen += zeile.text.length;
+    }
+    if (block.length > 0) {
+      aus.push(block);
     }
     return aus;
   }
@@ -201,5 +218,5 @@
     return 1;
   }
 
-  Object.assign(ziel, { patchZeilen, ganzeDateiZeilen, sichtbarTeile, bloecke, blockBreite, zuLang, BLOCK_ZEILEN, ZEILEN_GRENZE, ZEICHEN_GRENZE, MARKEN_GRENZE });
+  Object.assign(ziel, { patchZeilen, ganzeDateiZeilen, sichtbarTeile, bloecke, blockBreite, zuLang, BLOCK_ZEILEN, BLOCK_ZEICHEN, ZEILEN_GRENZE, ZEICHEN_GRENZE, MARKEN_GRENZE });
 })(typeof module !== 'undefined' ? module.exports : window);

@@ -229,34 +229,52 @@
     });
   }
 
-  /** Je Aufgabe des Hauptfadens ein Block zu 500 Zeilen; ersetzt wird nur der Inhalt der Textzellen mit Farbstücken. Nur Zeilen mit
-      `data-art` sind Diff-Zeilen, in Reihenfolge der Liste `zeilen`. Eine neue Anzeige beendet die Auflage still. */
+  /** Ersetzt wird nur der Inhalt der Textzellen mit Farbstücken, in Häppchen je eine Aufgabe des Hauptfadens. Nur Zeilen mit `data-art`
+      sind Diff-Zeilen, in Reihenfolge der Liste `zeilen`. Eine neue Anzeige beendet die Auflage still. */
   function legeFarbeAuf(ansicht, zeilen, farbantwort, aktuell) {
     if (!farbantwort) {
       ansicht.rollElement.dataset.farbe = 'nein';
       return;
     }
-    const stueckeNachZeile = stueckeJeZeile(farbantwort);
-    const zeilenElemente = ansicht.rollElement.querySelectorAll('tr[data-art]');
-    const blockAuflegen = anfang => {
-      if (!aktuell()) {
-        return;
-      }
-      const ende = Math.min(anfang + BLOCK_ZEILEN, zeilen.length);
-      for (let index = anfang; index < ende; index += 1) {
-        if (stueckeNachZeile.has(index)) {
-          const zeile = zeilen[index];
-          const teile = farbteile(sichtbarTeile(zeile.text), stueckeNachZeile.get(index));
-          zeilenElemente[index].lastElementChild.replaceChildren(...textzellenInhalt(zeile, teile));
-        }
-      }
-      if (ende < zeilen.length) {
-        setTimeout(() => blockAuflegen(ende), 0);
-        return;
-      }
-      ansicht.rollElement.dataset.farbe = 'ja';
+    const auflage = {
+      ansicht,
+      zeilen,
+      aktuell,
+      stueckeNachZeile: stueckeJeZeile(farbantwort),
+      zeilenElemente: ansicht.rollElement.querySelectorAll('tr[data-art]'),
     };
-    blockAuflegen(0);
+    auflegenAb(auflage, 0);
+  }
+
+  function auflegenAb(auflage, anfang) {
+    if (!auflage.aktuell()) {
+      return;
+    }
+    const ende = haeppchenAuflegen(auflage, anfang);
+    if (ende < auflage.zeilen.length) {
+      setTimeout(() => auflegenAb(auflage, ende), 0);
+      return;
+    }
+    auflage.ansicht.rollElement.dataset.farbe = 'ja';
+  }
+
+  /** Ein Häppchen ab `anfang`: höchstens 500 Zeilen und nur so viele, bis rund 2000 Knoten neu sind — eine Zeile bringt bis zu rund 2000
+      Knoten mit (998 Stücke und der Text dazwischen), so bleibt jede Aufgabe weit unter 150 ms. Liefert die erste Zeile danach. */
+  function haeppchenAuflegen({ zeilen, stueckeNachZeile, zeilenElemente }, anfang) {
+    const KNOTEN_JE_HAEPPCHEN = 2000;
+    const ende = Math.min(anfang + BLOCK_ZEILEN, zeilen.length);
+    let neueKnoten = 0;
+    let index = anfang;
+    while (index < ende && neueKnoten < KNOTEN_JE_HAEPPCHEN) {
+      if (stueckeNachZeile.has(index)) {
+        const zeile = zeilen[index];
+        const inhalt = textzellenInhalt(zeile, farbteile(sichtbarTeile(zeile.text), stueckeNachZeile.get(index)));
+        zeilenElemente[index].lastElementChild.replaceChildren(...inhalt);
+        neueKnoten += inhalt.length;
+      }
+      index += 1;
+    }
+    return index;
   }
 
   /** Ein Block mit `content-visibility: auto` (Höhe vorab geschätzt), darin eine Tabelle: Spalten alt | neu | Vorzeichen | Text. */
