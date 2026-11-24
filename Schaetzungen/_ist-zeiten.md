@@ -47,3 +47,4 @@ Nie vom User erfragen.
 | 2026-11-24 | R00013 Diff bei Name mit ungültigem Byte | B1203 Namen und Zählung prüfen | klar | 2h | 0,1h | 0,1h | autonom |
 | 2026-11-24 | R00013 Diff bei Name mit ungültigem Byte | B1204 Fehlerausgang und Anzeige | klar | 2h | 0,1h | 0,1h | autonom |
 | 2026-11-24 | R00013 Diff bei Name mit ungültigem Byte | B1205 E2E und Wegwerf-Repo Fremde Namen | unklar | 2-4h | 0,1h | 0,1h | autonom |
+| 2026-11-24 | R00013 Diff bei Name mit ungültigem Byte | Nacharbeit #28: Partnername mit Zeilenende, fsmonitor, Lazy-Fetch, zweiter Dateikopf | klar | 2h | 0,2h | 0,2h | autonom |
