@@ -131,6 +131,26 @@ public class ZusammenEndpunktTests
         Assert.That(quelle.NettoDiffLesevorgaenge + diffquelle.Lesevorgaenge, Is.Zero);
     }
 
+    [Test]
+    public async Task Wenn_der_Anzeigename_ein_Zeilenende_traegt_dann_422_ohne_Diff_Lesevorgang()
+    {
+        var mitZeilenende = new Dateiaenderung("A", "harmlos\ngeheim.txt", null, 1, 0);
+        var uebersicht = TestUebersichtsquelle.MitDateien(new Commitdateien(HashP, new Dateiaenderungen([mitZeilenende])));
+        var quelle = new TestZusammenquelle
+        {
+            GegebeneElternfolge = new Elternfolge([new Elternzeile(HashP, "")]),
+            GegebeneNetto = new Dateiaenderungen([mitZeilenende]),
+            Patch = Patch,
+        };
+        var diffquelle = new TestDiffquelle(Patch);
+        await using var server = await StarteServer(uebersicht, quelle, diffquelle);
+
+        var antwort = await new HttpClient().GetAsync(new Uri(new Uri(server.Adresse), "api/zusammen/diff?pfad=" + Uri.EscapeDataString("harmlos⟨U+000A⟩geheim.txt")));
+
+        Assert.That(antwort.StatusCode, Is.EqualTo(HttpStatusCode.UnprocessableEntity));
+        Assert.That(quelle.NettoDiffLesevorgaenge + diffquelle.Lesevorgaenge, Is.Zero, "ein Name mit Zeilenende wird nicht an git gegeben");
+    }
+
     [TestCase("api/zusammen/diff")]
     [TestCase("api/zusammen/diff?umfang=ganz")]
     [TestCase("api/zusammen/diff?pfad=src%2Fa.txt&umfang=voll")]

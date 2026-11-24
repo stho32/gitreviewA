@@ -10,6 +10,7 @@ namespace GitReviewA.Zusammen;
 /// Interaction „Zusammen-Ansicht lesen“: für die Auswahl die Kette und die Netto-Dateiliste (einmal gelesen — Commits sind
 /// unveränderlich) sowie je Datei den Diff (bei Bedarf). Lückenlos ist der Diff netto gegen den Elternstand des ältesten Commits,
 /// sonst je Commit ein Abschnitt in Auswahlreihenfolge. Die Übersicht der Dateien ist dieselbe gemerkte wie für Haken und Anmerkung.
+/// Ein Name mit LF oder CR endet vor jedem git-Aufruf als „Name nicht lesbar“; über der Ausgabegrenze als „zu groß“ ohne Patch.
 /// </summary>
 internal sealed class ZusammenLesenInteractor : INettoDateiliste
 {
@@ -71,6 +72,12 @@ internal sealed class ZusammenLesenInteractor : INettoDateiliste
             return ZusammenDiffergebnis.NameNichtLesbar;
         }
         var datei = treffer[0];
+        var nameMitZeilenende = TraegtNamenMitZeilenende(datei);
+        if (nameMitZeilenende)
+        {
+            protokoll.Melde(Protokollstufe.Debug, Anfragekontext, $"Diff in Zusammen abgewiesen: Name mit Zeilenende lässt sich nicht an git übergeben (Länge {anfrage.Pfad.Length})");
+            return ZusammenDiffergebnis.NameNichtLesbar;
+        }
         protokoll.Melde(Protokollstufe.Debug, Anfragekontext, $"GET /api/zusammen/diff Datei {datei.Anzeigepfad}");
         try
         {
@@ -106,6 +113,17 @@ internal sealed class ZusammenLesenInteractor : INettoDateiliste
             protokoll.Melde(Protokollstufe.Fehler, Kontext, $"Zusammen-Ansicht nicht lesbar: {fehler.Message}");
             return new Zusammenstand(false, false, string.Empty, string.Empty, new NettoDateiliste(false, []));
         }
+    }
+
+    /// <summary>
+    /// Ein Name mit LF oder CR geht als stdin-Zeile an andere Pfade, als er meint; netto gehen alle Namen der Zeile über stdin,
+    /// ohne Kette der Name der Stelle (nur Rohbytes gehen dort über stdin) — dieselbe Regel wie im Einzel-Diff (<see cref="Namenspruefung"/>).
+    /// </summary>
+    private static bool TraegtNamenMitZeilenende(NettoDatei datei)
+    {
+        var dateiMitZeilenende = Namenspruefung.TraegtZeilenende(datei.Datei);
+        var stelleMitZeilenende = datei.Stellen.Any(stelle => Namenspruefung.TraegtZeilenende(stelle.Datei));
+        return dateiMitZeilenende || stelleMitZeilenende;
     }
 
     private ZusammenDiffAntwort Antwort(NettoDatei datei, Zusammenstand stand, Diffumfang umfang)

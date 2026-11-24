@@ -111,4 +111,22 @@ public class NamenspruefungTests
 
         Assert.That(treffer, Is.EqualTo(new Namenstreffer(Namensfall.Lesbar, mitZeilenumbruch)));
     }
+
+    [TestCase("ab\ncd.txt", true)]
+    [TestCase("ab\rcd.txt", true)]
+    [TestCase("abcd.txt", false)]
+    public void Wenn_der_Anzeigename_ein_Zeilenende_traegt_dann_passt_er_in_keine_stdinzeile(string name, bool traegtZeilenende)
+    {
+        var datei = new Dateiaenderung("A", name, null, 1, 0);
+
+        Assert.That(Namenspruefung.TraegtZeilenende(datei), Is.EqualTo(traegtZeilenende));
+    }
+
+    [Test]
+    public void Wenn_der_alte_Name_einer_Umbenennung_das_Zeilenende_traegt_dann_passt_die_Datei_in_keine_stdinzeile()
+    {
+        var umbenannt = new Dateiaenderung("R", "u.txt", "s\n⟨0xFE⟩.txt", 1, 1, null, new Rohname([0x73, 0x0A, 0xFE, 0x2E, 0x74, 0x78, 0x74]));
+
+        Assert.That(Namenspruefung.TraegtZeilenende(umbenannt), Is.True);
+    }
 }

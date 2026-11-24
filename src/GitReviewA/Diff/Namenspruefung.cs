@@ -63,7 +63,11 @@ internal static class Namenspruefung
         return datei.Rohpfad is not null || datei.RohAlterPfad is not null;
     }
 
-    private static bool TraegtZeilenende(Dateiaenderung datei)
+    /// <summary>
+    /// Ob einer der beiden Namen (neu und alt, angezeigt oder als Rohbytes) LF oder CR trägt. `git` trennt eine Zeile an LF und
+    /// schneidet CR ab: ein Zeilenende im Namen machte daraus andere Pfade — und den Patch einer anderen Datei.
+    /// </summary>
+    public static bool TraegtZeilenende(Dateiaenderung datei)
     {
         var pfadMitZeilenende = NameTraegtZeilenende(datei.Pfad, datei.Rohpfad);
         var alterPfadMitZeilenende = datei.AlterPfad is not null && NameTraegtZeilenende(datei.AlterPfad, datei.RohAlterPfad);
