@@ -23,3 +23,26 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .kz-btn:disabled{opacity:.6;cursor:progress}
 .gr-beendet{margin:var(--kd-s5) 0 0;font-size:14px;font-weight:600}
 .gr-beendet-hinweis{margin:var(--kd-s2) 0 0;font-size:12px}
+.gr-dateiliste{min-width:0}
+.dateien-kopf{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--kd-s2) var(--kd-s4);margin:0 0 var(--kd-s3)}
+.dateien-summe{margin:0;font-size:13px;font-weight:600}
+.darstellung{display:inline-flex;border:1px solid var(--kd-line-strong)}
+.darstellung button{font:inherit;font-size:12px;padding:0 var(--kd-s3);border:0;background:var(--kd-surface);color:var(--kd-text);cursor:pointer}
+.darstellung button+button{border-inline-start:1px solid var(--kd-line-strong)}
+.darstellung button[aria-pressed="true"]{background:var(--kd-accent);color:var(--kd-surface)}
+.gr-dateien{list-style:none;margin:0;padding:0;border:1px solid var(--kd-line);background:var(--kd-surface)}
+.gr-dateien:empty{display:none}
+.gr-dateien>li{display:flex;align-items:center;gap:var(--kd-s3);min-block-size:var(--kd-row);padding:var(--kd-s1) var(--kd-s3);padding-inline-start:calc(var(--kd-s3) + var(--tiefe,0) * var(--kd-s5));min-width:0;font-size:13px}
+.gr-dateien>li+li{border-top:1px solid var(--kd-line)}
+.ordner-zeile{color:var(--kd-muted);font-weight:600}
+.datei-zeile{cursor:pointer;border-inline-start:3px solid transparent}
+.datei-zeile:hover{background:var(--kd-sunken)}
+.datei-zeile[aria-selected="true"]{background:var(--kd-accent-weak);border-inline-start-color:var(--kd-accent)}
+.datei-zeile .pfad{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+.datei-zeile .status{flex:none;inline-size:18px;text-align:center;font:600 12px/18px var(--kd-mono);border:1px solid currentColor}
+.status-A{color:var(--kd-status-ok-ink)}.status-M{color:var(--kd-status-warn-ink)}.status-D{color:var(--kd-status-error-ink)}.status-R{color:var(--kd-accent)}
+.datei-zeile .zahlen{flex:none;min-inline-size:72px;text-align:end;color:var(--kd-muted)}
+/* Größenbalken nach kanbanD kd-app.css (.rv-gb): Länge aus --anteil, Mindestlänge 1px */
+.balken{--balken-laenge:44px;flex:none;display:flex;align-items:center;inline-size:var(--balken-laenge);block-size:6px}
+.balken>span{display:block;flex:none;block-size:6px;inline-size:max(1px,calc(var(--balken-laenge) * var(--anteil)))}
+.balken-plus{background:var(--kd-c-green-line)}.balken-minus{background:var(--kd-c-red-line)}

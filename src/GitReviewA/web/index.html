@@ -8,6 +8,8 @@
 <link rel="stylesheet" href="kd-base.css">
 <link rel="stylesheet" href="gitreviewa.css">
 <script src="commit-werte.js" defer></script>
+<script src="dateiliste-werte.js" defer></script>
+<script src="dateiliste.js" defer></script>
 <script src="commits.js" defer></script>
 <script src="beenden.js" defer></script>
 </head>
@@ -24,6 +26,17 @@
     <section class="gr-leiste" aria-label="Commits">
       <p id="commit-status" class="gr-status muted" role="status">Commits werden geladen …</p>
       <ol id="commit-liste" class="gr-commits" aria-label="Commits der Auswahl"></ol>
+    </section>
+    <section id="dateiliste" class="gr-dateiliste" aria-label="Dateien des gewählten Commits">
+      <div class="dateien-kopf">
+        <p class="dateien-summe"></p>
+        <div class="darstellung" role="group" aria-label="Darstellung der Dateiliste">
+          <button type="button" data-darstellung="flach" aria-pressed="true">flach</button>
+          <button type="button" data-darstellung="baum" aria-pressed="false">Baum</button>
+        </div>
+      </div>
+      <p class="dateien-meldung gr-status muted" role="status"></p>
+      <ul id="datei-zeilen" class="gr-dateien" role="listbox" aria-label="Dateien"></ul>
     </section>
   </div>
 </main>
