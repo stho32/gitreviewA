@@ -4,7 +4,6 @@ namespace GitReviewA.Anmerkungen;
 
 internal static class AnmerkungsPruefer
 {
-    private const int HoechsteTextlaengeInZeichen = 10_000;
     private const char Zeilentrenner = '\u2028';
     private const char Absatztrenner = '\u2029';
 
@@ -26,7 +25,7 @@ internal static class AnmerkungsPruefer
         {
             return Pruefergebnis.Abgelehnt(zeileGrund);
         }
-        if (!IstGueltigerText(neu.Text, out var textGrund))
+        if (!Anmerkungstext.IstGueltig(neu.Text, out var textGrund))
         {
             return Pruefergebnis.Abgelehnt(textGrund);
         }
@@ -84,23 +83,6 @@ internal static class AnmerkungsPruefer
         if (zeileLiegtVorDerErsten)
         {
             grund = "Zeile zählt ab 1";
-            return false;
-        }
-        return true;
-    }
-
-    private static bool IstGueltigerText([NotNullWhen(true)] string? text, out string grund)
-    {
-        grund = string.Empty;
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            grund = "Text fehlt";
-            return false;
-        }
-        var textIstZuLang = text.EnumerateRunes().Count() > HoechsteTextlaengeInZeichen;
-        if (textIstZuLang)
-        {
-            grund = $"Text ist länger als {HoechsteTextlaengeInZeichen} Zeichen";
             return false;
         }
         return true;
