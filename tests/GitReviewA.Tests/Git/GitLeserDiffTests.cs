@@ -99,11 +99,25 @@ public class GitLeserDiffTests
         repo.Git("config", "diff.context", "0");
         repo.Git("config", "diff.suppressBlankEmpty", "true");
         repo.Git("config", "color.ui", "always");
-        repo.Git("config", "diff.interHunkContext", "10");
 
         var patch = PatchLesen(repo, q, new Dateiaenderung("M", "k.txt", null, 1, 1));
 
         Assert.That(patch, Is.EqualTo("@@ -1,3 +1,3 @@\n oben\n \n-unten\n+UNTEN\n"));
+    }
+
+    [Test]
+    public void Wenn_das_Repo_nahe_Hunks_zusammenlegen_laesst_dann_bleiben_sie_wie_ohne_Einstellung_getrennt()
+    {
+        using var repo = WegwerfRepo.MitCommits();
+        repo.SchreibeDatei("lang.txt", Zeilen(1, 20));
+        repo.Committe("p", "A", Zeitpunkt, "");
+        repo.SchreibeDatei("lang.txt", Zeilen(1, 20).Replace("z03\n", "Z03\n").Replace("z18\n", ""));
+        var q = repo.Committe("q", "A", Zeitpunkt, "");
+        repo.Git("config", "diff.interHunkContext", "10");
+
+        var patch = PatchLesen(repo, q, new Dateiaenderung("M", "lang.txt", null, 1, 2));
+
+        Assert.That(patch, Does.StartWith("@@ -1,6 +1,6 @@\n").And.Contain("\n@@ -15,6 +15,5 @@ z14\n"));
     }
 
     [Test]
