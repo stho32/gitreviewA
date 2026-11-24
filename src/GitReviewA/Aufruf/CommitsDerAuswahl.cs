@@ -10,12 +10,29 @@ internal static class CommitsDerAuswahl
 
     public static async Task<Commitzeilen> LesenAsync(Auswahl auswahl, Standardeingabe stdin, string arbeitsordner, StderrProtokoll protokoll)
     {
-        var commits = await LeseCommitsAsync(auswahl, stdin, arbeitsordner);
-        PruefeGrenze(commits, protokoll);
+        var commits = await LeseMitGrundAsync(auswahl, stdin, arbeitsordner);
+        Beurteile(commits, protokoll);
         return commits;
     }
 
-    private static async Task<Commitzeilen> LeseCommitsAsync(Auswahl auswahl, Standardeingabe stdin, string arbeitsordner)
+    /// <summary>Ein gescheitertes Auflösen ist ein ungültiger Aufruf; der rohe git-Text wandert in den Debugtext.</summary>
+    private static async Task<Commitzeilen> LeseMitGrundAsync(Auswahl auswahl, Standardeingabe stdin, string arbeitsordner)
+    {
+        try
+        {
+            return await LeseRohAsync(auswahl, stdin, arbeitsordner);
+        }
+        catch (GitNichtGefunden fehler)
+        {
+            throw Aufruffehler.Fuer(Aufrufgrund.GitNichtGefunden, fehler.Message);
+        }
+        catch (GitFehler fehler)
+        {
+            throw Aufruffehler.Fuer(Aufrufgrund.AuswahlNichtAufloesbar, fehler.Message);
+        }
+    }
+
+    private static async Task<Commitzeilen> LeseRohAsync(Auswahl auswahl, Standardeingabe stdin, string arbeitsordner)
     {
         switch (auswahl.Art)
         {
@@ -38,16 +55,20 @@ internal static class CommitsDerAuswahl
         return commits;
     }
 
-    private static void PruefeGrenze(Commitzeilen commits, StderrProtokoll protokoll)
+    private static void Beurteile(Commitzeilen commits, StderrProtokoll protokoll)
     {
         var urteil = Auswahlgrenze.Pruefe(commits.Anzahl);
-        if (urteil == Auswahlurteil.Abgelehnt)
+        switch (urteil)
         {
-            throw new AuswahlFehler(Auswahlgrenze.Ablehnungsmeldung());
-        }
-        if (urteil == Auswahlurteil.MitWarnung)
-        {
-            protokoll.Melde(Protokollstufe.Warnung, Kontext, Auswahlgrenze.Warnmeldung(commits.Anzahl));
+            case Auswahlurteil.Leer:
+                throw Aufruffehler.Fuer(Aufrufgrund.LeereAuswahl, "Die gelesene Auswahl ergab keinen Commit.");
+            case Auswahlurteil.Abgelehnt:
+                throw new AuswahlFehler(Auswahlgrenze.Meldung(urteil, commits.Anzahl));
+            case Auswahlurteil.MitWarnung:
+                protokoll.Melde(Protokollstufe.Warnung, Kontext, Auswahlgrenze.Meldung(urteil, commits.Anzahl));
+                break;
+            case Auswahlurteil.Zulaessig:
+                break;
         }
     }
 }

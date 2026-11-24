@@ -43,13 +43,14 @@ public class StdinHashesTests
 
     [TestCase("")]
     [TestCase("\n\r\n\n")]
-    public void Wenn_Eingabe_ohne_Hash_dann_Fehler_statt_einer_leeren_Auswahl(string eingabetext)
+    public void Wenn_Eingabe_ohne_Hash_dann_leere_Auswahl(string eingabetext)
     {
         var eingabe = new StringReader(eingabetext);
 
-        var fehler = Assert.ThrowsAsync<AuswahlFehler>(() => StdinHashes.LesenAsync(eingabe, istTerminal: false, Frist));
+        var fehler = Assert.ThrowsAsync<Aufruffehler>(() => StdinHashes.LesenAsync(eingabe, istTerminal: false, Frist));
 
-        Assert.That(fehler.Message, Does.Contain("ein Hash je Zeile"));
+        Assert.That(fehler.Grund, Is.EqualTo(Aufrufgrund.LeereAuswahl));
+        Assert.That(fehler.Meldung, Does.Contain("leer"));
     }
 
     [Test]

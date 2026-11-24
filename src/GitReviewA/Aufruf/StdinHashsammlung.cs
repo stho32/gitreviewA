@@ -44,7 +44,7 @@ internal sealed class StdinHashsammlung
         var istLeer = hashes.Count == 0;
         if (istLeer)
         {
-            throw new AuswahlFehler($"stdin enthielt keinen Commit-Hash; erwartet wird ein Hash je Zeile ({CommitHashForm.Beschreibung}).");
+            throw Aufruffehler.Fuer(Aufrufgrund.LeereAuswahl, "stdin lieferte keinen Commit-Hash");
         }
         return new CommitHashes(hashes);
     }
