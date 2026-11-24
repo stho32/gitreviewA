@@ -1,30 +1,24 @@
 namespace GitReviewA.Haken;
 
 /// <summary>
-/// Alle Stellen der Auswahl: Commits in der Reihenfolge der Auswahl, je Commit die Dateien in der Reihenfolge von git.
-/// git nennt je Commit jeden Pfad einmal; nennt die Übersicht eine Stelle mehrfach, haben verschiedene Dateien denselben Namen
-/// (ein Doppelgänger einer Bytemarke) — eine solche Stelle ist nicht eindeutig und lässt sich nicht abhaken.
+/// Alle Stellen der Auswahl: Commits in der Reihenfolge der Auswahl, je Commit die Dateien in der Reihenfolge von git, je Stelle ihr
+/// Sperrgrund. Tragen zwei Dateien eines Commits denselben Namen, steht die Stelle zweimal da, beide Male gesperrt.
 /// </summary>
 internal sealed class Dateiuebersicht
 {
     private readonly Stelle[] stellen;
-    private readonly HashSet<Stelle> stellenmenge;
-    private readonly HashSet<Stelle> mehrdeutigeStellen;
+    private readonly Dictionary<Stelle, string> sperrgrundNachStelle;
     private readonly HashSet<string> commits;
 
-    public Dateiuebersicht(IEnumerable<string> commits, IEnumerable<Stelle> stellen)
+    public Dateiuebersicht(IEnumerable<string> commits, IEnumerable<Uebersichtsstelle> stellen)
     {
         this.commits = new HashSet<string>(commits, StringComparer.Ordinal);
-        this.stellen = stellen.ToArray();
-        stellenmenge = [];
-        mehrdeutigeStellen = [];
-        foreach (var stelle in this.stellen)
+        var eintraege = stellen.ToArray();
+        this.stellen = eintraege.Select(eintrag => eintrag.Stelle).ToArray();
+        sperrgrundNachStelle = [];
+        foreach (var eintrag in eintraege)
         {
-            var istSchonGenannt = !stellenmenge.Add(stelle);
-            if (istSchonGenannt)
-            {
-                mehrdeutigeStellen.Add(stelle);
-            }
+            sperrgrundNachStelle[eintrag.Stelle] = eintrag.Sperrgrund;
         }
     }
 
@@ -32,12 +26,18 @@ internal sealed class Dateiuebersicht
 
     public bool Enthaelt(Stelle stelle)
     {
-        return stellenmenge.Contains(stelle);
+        return sperrgrundNachStelle.ContainsKey(stelle);
     }
 
-    public bool IstEindeutig(Stelle stelle)
+    /// <summary>Leer, wenn der Diff der Stelle lesbar ist oder die Übersicht die Stelle nicht kennt.</summary>
+    public string SperrgrundVon(Stelle stelle)
     {
-        return !mehrdeutigeStellen.Contains(stelle);
+        var istBekannt = sperrgrundNachStelle.TryGetValue(stelle, out var sperrgrund);
+        if (!istBekannt || sperrgrund is null)
+        {
+            return string.Empty;
+        }
+        return sperrgrund;
     }
 
     public bool EnthaeltCommit(string hash)

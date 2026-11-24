@@ -77,7 +77,7 @@ public class DateiAbhakenFremdeBytesTests
     }
 
     [Test]
-    public void Wenn_ein_Name_woertlich_wie_die_Bytemarke_heisst_dann_sind_beide_nicht_abhakbar_und_bleiben_im_Ergebnis_ungeprueft()
+    public void Wenn_ein_Name_woertlich_wie_die_Bytemarke_heisst_dann_sind_beide_gesperrt_und_bleiben_im_Ergebnis_ungeprueft()
     {
         using var repo = AbhakenRepo.U(doppelgaenger: NameMitFF);
         var gr = DateiAbhakenSprache.Aufruf(repo, ["u"]);
@@ -87,7 +87,7 @@ public class DateiAbhakenFremdeBytesTests
         var ergebnis = gr.Beenden();
 
         Assert.That(mehrdeutig.Ausgang, Is.EqualTo("ungültig"));
-        Assert.That(mehrdeutig.Grund, Is.EqualTo("Datei ist im Commit nicht eindeutig"));
+        Assert.That(mehrdeutig.Grund, Is.EqualTo("Diff nicht lesbar: Name nicht eindeutig"));
         Assert.That((kontrolle.Ausgang, kontrolle.Abgehakt, kontrolle.Gesamt), Is.EqualTo(("gesetzt", 1, 3)));
         var zeilen = ergebnis.Split('\n');
         var zeileDesDoppelgaengers = gr.Ergebniszeile("u", NameMitFF);

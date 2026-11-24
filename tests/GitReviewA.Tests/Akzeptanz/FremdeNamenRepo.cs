@@ -5,7 +5,7 @@ namespace GitReviewA.Tests.Akzeptanz;
 
 /// <summary>
 /// Repo N der User Story R00013 (Commits `b`, `n`, `w`), angelegt mit dem Skript der Story: .NET legt nur Namen in gültigem UTF-8 an,
-/// bash schreibt die Bytes. Nach dem letzten Commit verlassen die Namen aus fremden Bytes den Arbeitsordner wieder, damit er sich löschen lässt.
+/// bash schreibt die Bytes. R00014 ergänzt den Commit `v`, der nur die wörtlich so benannte Datei `f⟨0xFF⟩.txt` ändert. Nach dem letzten Commit verlassen die Namen aus fremden Bytes den Arbeitsordner wieder, damit er sich löschen lässt.
 /// Gleicher Inhalt wie <c>e2e/treiber/fremde-namen-repo.js</c>.
 /// </summary>
 [UnsupportedOSPlatform("windows")]
@@ -32,6 +32,27 @@ internal sealed class FremdeNamenRepo : IDisposable
         printf 'woertlich\n' > 'w⟨0xFF⟩.txt'
         git add -A && git commit -q -m "Wörtliche Marke"
         rm -f -- $'a\xff.sh' $'f\xff.txt' $'t\xfe.txt' $'b\xff.bin' $'z\n\xff.txt'
+        """;
+
+    private const string SkriptV = """
+        set -e
+        printf 'literal\nliteral2\n' > 'f⟨0xFF⟩.txt'
+        git add 'f⟨0xFF⟩.txt' && git commit -q -m "Wörtlicher Name allein"
+        """;
+
+    /// <summary>Legt eine Datei an, deren Name ein Zeilenumbruch und das Byte FE trägt (Commit `s`).</summary>
+    public const string SkriptAlterNameNichtUebergebbar = """
+        set -e
+        printf 'z1\nz2\nz3\nz4\nz5\nz6\nz7\nz8\n' > $'s\n\xfe.txt'
+        git add -- $'s\n\xfe.txt' && git commit -q -m "Alter Name nicht übergebbar"
+        """;
+
+    /// <summary>Benennt sie in den lesbaren Namen `u.txt` um und ändert die letzte Zeile (Commit `u`).</summary>
+    public const string SkriptUmbenennungAufLesbarenNamen = """
+        set -e
+        git mv -- $'s\n\xfe.txt' u.txt
+        printf 'z1\nz2\nz3\nz4\nz5\nz6\nz7\nNEU\n' > u.txt
+        git add -- u.txt && git commit -q -m "Umbenannt auf lesbaren Namen"
         """;
 
     private readonly Dictionary<string, string> hashNachName = new(StringComparer.Ordinal);
@@ -77,6 +98,29 @@ internal sealed class FremdeNamenRepo : IDisposable
             repo.Dispose();
             throw;
         }
+    }
+
+    /// <summary>Repo N mit dem vierten Commit `v` aus der User Story R00014.</summary>
+    public static FremdeNamenRepo NMitV()
+    {
+        var n = N();
+        try
+        {
+            n.CommitAnlegen("v", SkriptV);
+            return n;
+        }
+        catch
+        {
+            n.Dispose();
+            throw;
+        }
+    }
+
+    /// <summary>Führt <paramref name="befehle"/> aus und merkt sich den neuen HEAD unter <paramref name="commit"/>; nur gezielt `git add`, der Arbeitsordner trägt die Löschungen der fremden Namen.</summary>
+    public void CommitAnlegen(string commit, string befehle)
+    {
+        Bash(befehle);
+        hashNachName[commit] = Bash("git rev-parse HEAD");
     }
 
     public string Git(params string[] argumente)

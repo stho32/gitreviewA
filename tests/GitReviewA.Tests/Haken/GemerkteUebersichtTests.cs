@@ -36,7 +36,7 @@ public class GemerkteUebersichtTests
         {
             Begonnen.Set();
             freigabe.Wait(Frist);
-            return new Dateiuebersicht([Hash], [new Stelle(Hash, "a.txt")]);
+            return new Dateiuebersicht([Hash], [new Uebersichtsstelle(new Stelle(Hash, "a.txt"), string.Empty)]);
         }
 
         public void Freigeben()

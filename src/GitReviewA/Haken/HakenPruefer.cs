@@ -4,7 +4,7 @@ namespace GitReviewA.Haken;
 
 /// <summary>
 /// Prüft eine Hakenanfrage in zwei Stufen: erst die Form (ohne die Übersicht zu lesen), dann die Stelle gegen die Übersicht —
-/// nur ein voller Hash der Auswahl und ein Pfad, den git für diesen Commit genau einmal geliefert hat, werden angenommen.
+/// nur ein voller Hash der Auswahl und ein Pfad dieses Commits, dessen Diff lesbar ist, werden angenommen (sonst der Sperrgrund).
 /// Die Gründe nennen nie den Wortlaut der Anfrage.
 /// </summary>
 internal static class HakenPruefer
@@ -51,10 +51,11 @@ internal static class HakenPruefer
             grund = "Datei kommt im Commit nicht vor";
             return false;
         }
-        var istEindeutig = uebersicht.IstEindeutig(stelle);
-        if (!istEindeutig)
+        var sperrgrund = uebersicht.SperrgrundVon(stelle);
+        var istGesperrt = sperrgrund.Length > 0;
+        if (istGesperrt)
         {
-            grund = "Datei ist im Commit nicht eindeutig";
+            grund = sperrgrund;
             return false;
         }
         grund = string.Empty;

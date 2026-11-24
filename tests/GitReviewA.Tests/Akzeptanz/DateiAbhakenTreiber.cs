@@ -131,7 +131,7 @@ internal sealed class DateiAbhakenTreiber
             {
                 throw new GitFehler($"git log (Übersicht von 1 Commits) endete mit 128: fatal: bad object {hash}");
             }
-            return new Dateiuebersicht([hash], [new Stelle(hash, "a.txt")]);
+            return new Dateiuebersicht([hash], [new Uebersichtsstelle(new Stelle(hash, "a.txt"), string.Empty)]);
         }
     }
 }

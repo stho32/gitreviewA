@@ -13,7 +13,7 @@ internal sealed class TestUebersichtsquelle(Dateiuebersicht? uebersicht) : IUebe
 
     public static TestUebersichtsquelle Mit(string hash, params string[] pfade)
     {
-        return new TestUebersichtsquelle(new Dateiuebersicht([hash], pfade.Select(pfad => new Stelle(hash, pfad))));
+        return new TestUebersichtsquelle(new Dateiuebersicht([hash], pfade.Select(pfad => new Uebersichtsstelle(new Stelle(hash, pfad), string.Empty))));
     }
 
     public static TestUebersichtsquelle Scheiternd()
