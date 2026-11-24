@@ -140,4 +140,89 @@ test.describe('Anmerkung ändern', () => {
     expect(ergebnis).toContain('> erste Fassung\n');
     expect(ergebnis).toContain('> zweite Fassung, berichtigt\n');
   });
+
+  test('Pfeil auf/ab im Änderungsfeld und auf seinen Knöpfen: Fokus und Caret bleiben; das Anlegefeld unverändert', async ({ anm }) => {
+    await anm.starten();
+    await anm.dateiAnsehen('lang.txt');
+    await anm.annotieren('lang.txt', 18, ALTER_TEXT);
+    await anm.aendern(1);
+
+    await anm.textSchreiben('lang.txt', 18, 'erste\nzweite');
+    const amEnde = await anm.caretPosition('lang.txt', 18);
+    await anm.taste('ArrowUp');
+    await anm.feldOffenMitFokus('lang.txt', 18);
+    expect(await anm.caretPosition('lang.txt', 18), 'Pfeil auf bewegt den Caret in die erste Zeile').toBeLessThan(amEnde);
+    await anm.taste('ArrowDown');
+    await anm.feldOffenMitFokus('lang.txt', 18);
+    expect(await anm.caretPosition('lang.txt', 18), 'Pfeil ab setzt den Caret zurück').toBe(amEnde);
+    await anm.feldEnthaelt('lang.txt', 18, 'erste\nzweite');
+
+    for (const knopf of ['Speichern', 'Abbrechen']) {
+      await anm.fokusAufKnopf('lang.txt', 18, knopf);
+      await anm.taste('ArrowDown');
+      await anm.knopfHatFokus('lang.txt', 18, knopf);
+      await anm.taste('ArrowUp');
+      await anm.knopfHatFokus('lang.txt', 18, knopf);
+    }
+    await anm.anzahlAenderungsfelder(1);
+
+    // Kontrollpaar: das Anlegefeld hält Fokus und Caret bereits.
+    await anm.zeileAnklicken({ neu: 19 });
+    await anm.textSchreiben('lang.txt', 19, 'eins\nzwei');
+    const anlegeEnde = await anm.caretPosition('lang.txt', 19);
+    await anm.taste('ArrowUp');
+    await anm.feldOffenMitFokus('lang.txt', 19);
+    expect(await anm.caretPosition('lang.txt', 19)).toBeLessThan(anlegeEnde);
+  });
+
+  test('Zwei offene Änderungsfelder: eines speichern lässt das andere samt Eingabe stehen', async ({ anm }) => {
+    await anm.starten();
+    await anm.dateiAnsehen('lang.txt');
+    await anm.annotieren('lang.txt', 18, 'erste Fassung');
+    await anm.annotieren('lang.txt', 18, 'zweite Fassung');
+
+    await anm.aendern(1);
+    await anm.aendern(2);
+    await anm.anzahlAenderungsfelder(2);
+    await anm.aenderungsfeldTextSchreiben(1, 'getippt-eins');
+    await anm.aenderungsfeldTextSchreiben(2, 'getippt-zwei');
+
+    await anm.aenderungsfeldSpeichern(2);
+    await anm.anzahlAenderungsfelder(1);
+    await anm.aenderungsfeldEnthaelt(1, 'getippt-eins');
+    await anm.anmerkungszeileEnthaelt(2, 'getippt-zwei');
+    await anm.anmerkungenUnter('lang.txt', Z19, ['erste Fassung', 'getippt-zwei']);
+  });
+
+  test('Offenes Änderungsfeld übersteht Dateiwechsel und zurück samt Eingabe (wie das Anlegefeld)', async ({ anm }) => {
+    await anm.starten();
+    await anm.dateiAnsehen('lang.txt');
+    await anm.annotieren('lang.txt', 18, ALTER_TEXT);
+    await anm.aendern(1);
+    await anm.aenderungsfeldTextSchreiben(1, 'noch nicht gespeichert');
+
+    await anm.dateiAnsehen('src/b.txt');
+    await anm.anzahlAenderungsfelder(0);
+    await anm.dateiAnsehen('lang.txt');
+    await anm.anzahlAenderungsfelder(1);
+    await anm.aenderungsfeldEnthaelt(1, 'noch nicht gespeichert');
+
+    await anm.aenderungsfeldSpeichern(1);
+    await anm.anzahlAenderungsfelder(0);
+    await anm.anmerkungenUnter('lang.txt', Z19, ['noch nicht gespeichert']);
+  });
+
+  test('Offenes Änderungsfeld bleibt, während eine neue Notiz gespeichert wird', async ({ anm }) => {
+    await anm.starten();
+    await anm.dateiAnsehen('lang.txt');
+    await anm.annotieren('lang.txt', 18, ALTER_TEXT);
+    await anm.aendern(1);
+    await anm.aenderungsfeldTextSchreiben(1, 'bleibt stehen');
+
+    await anm.annotieren('lang.txt', 19, 'eine neue Notiz');
+
+    await anm.anzahlAenderungsfelder(1);
+    await anm.aenderungsfeldEnthaelt(1, 'bleibt stehen');
+    await anm.anmerkungenUnter('lang.txt', { neu: 19 }, ['eine neue Notiz']);
+  });
 });

@@ -215,6 +215,40 @@ async function pruefeAnzahlAenderungsfelder(page, anzahl) {
   await expect(page.locator('#diff .dz tr.anm-aendern')).toHaveCount(anzahl);
 }
 
+/** Das offene Änderungsfeld über die stabile Nummer adressiert — zwei Felder an derselben Zeile tragen denselben Namen. */
+function aenderungsfeldziele(nummer) {
+  return `${ANMERKUNGSZEILE}[data-anmerkung="${nummer}"] + tr.anm-aendern`;
+}
+
+function aenderungsfeld(page, nummer) {
+  return page.locator(`${aenderungsfeldziele(nummer)} textarea`);
+}
+
+async function aenderungsfeldTextSchreiben(page, nummer, text) {
+  await aenderungsfeld(page, nummer).fill(text);
+}
+
+async function pruefeAenderungsfeldText(page, nummer, text) {
+  await expect(aenderungsfeld(page, nummer)).toHaveValue(text);
+}
+
+async function aenderungsfeldSpeichern(page, nummer) {
+  await page.locator(aenderungsfeldziele(nummer)).getByRole('button', { name: 'Speichern', exact: true }).click();
+}
+
+/** Caret-Stelle (`selectionStart`) des offenen Felds: prüft, dass die Pfeiltaste den Caret bewegt statt den Fokus zu reißen. */
+async function caretPosition(page, name) {
+  return feld(page, name).evaluate(element => element.selectionStart);
+}
+
+async function fokusAufKnopf(page, name, knopfname) {
+  await feldzeile(page, name).getByRole('button', { name: knopfname, exact: true }).focus();
+}
+
+async function pruefeKnopfHatFokus(page, name, knopfname) {
+  await expect(feldzeile(page, name).getByRole('button', { name: knopfname, exact: true })).toBeFocused();
+}
+
 /** Der alte Text steht während der Änderung weiter unter seiner Zeile in der Anmerkungszeile. */
 async function pruefeAnmerkungszeileEnthaelt(page, nummer, text) {
   await expect(anmerkungszeile(page, nummer).locator('.anm-text')).toHaveText(text);
@@ -295,4 +329,5 @@ module.exports = {
   pruefeAnmerkungOhneHtml, sichtbarerAnmerkungstext,
   aenderungOeffnen, pruefeKopfNenntNummer, pruefeFokusAufKopf, pruefeAnzahlAenderungsfelder, pruefeAnmerkungszeileEnthaelt, abbrechen, pruefeSpeichernGesperrt,
   aenderungAntwortetEinmal, aenderungVerzoegern,
+  aenderungsfeldTextSchreiben, pruefeAenderungsfeldText, aenderungsfeldSpeichern, caretPosition, fokusAufKnopf, pruefeKnopfHatFokus,
 };

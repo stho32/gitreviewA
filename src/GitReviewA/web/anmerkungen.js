@@ -65,7 +65,7 @@
   }
 
   /** Zeichnet die Anmerkungen des gezeigten Diffs neu: je Anmerkung eine Anmerkungszeile mit Kopf unter ihrer Diff-Zeile, darüber der Hinweis
-      auf Anmerkungen an Zeilen, die die Ansicht nicht zeigt. Offene Notizfelder bleiben stehen, offene Änderungsfelder nicht (ihre Zeile wird neu gezeichnet). */
+      auf Anmerkungen an Zeilen, die die Ansicht nicht zeigt. Offene Notiz- wie Änderungsfelder bleiben stehen und behalten ihre Eingabe. */
   function zeigeAnmerkungen(ansicht) {
     const gezeichnet = zustand.gezeichnet;
     const diffIstVerworfen = !gezeichnet || !gezeichnet.ersterBlockElement.isConnected;
@@ -73,10 +73,9 @@
       return;
     }
     const bereichElement = gezeichnet.bereichElement;
-    for (const altesElement of bereichElement.querySelectorAll('tr.anm, tr.anm-aendern, .anmerkungen-ausserhalb')) {
+    for (const altesElement of bereichElement.querySelectorAll('tr.anm, .anmerkungen-ausserhalb')) {
       altesElement.remove();
     }
-    zustand.aenderungen = [];
     const zeileNachNummerNeu = zeilenMitNummerNeu(bereichElement);
     const stand = anmerkungsstand(zustand.anmerkungen, gezeichnet.commit, gezeichnet.pfad, new Set(zeileNachNummerNeu.keys()));
     for (const [nummerNeu, anmerkungen] of stand.jeZeile) {
@@ -85,6 +84,19 @@
     const hinweis = hinweisAusserhalb(stand.ausserhalb);
     if (hinweis) {
       bereichElement.prepend(ausserhalbElement(hinweis));
+    }
+    haengeAenderungsfelderAn(ansicht);
+  }
+
+  /** Offene Änderungsfelder unter ihre neu gezeichnete Anmerkungszeile hängen; ein Feld, dessen Anmerkung nicht mehr existiert, fällt weg. Eine
+      Anmerkung außerhalb der Ansicht lässt ihr Feld losgelöst (die Eingabe bleibt erhalten), bis die Ansicht sie wieder zeigt. */
+  function haengeAenderungsfelderAn(ansicht) {
+    zustand.aenderungen = zustand.aenderungen.filter(feld => zustand.anmerkungen.some(anmerkung => anmerkung.nummer === feld.anmerkung.nummer));
+    for (const feld of zustand.aenderungen) {
+      const zeileElement = anmerkungszeile(ansicht, feld.anmerkung.nummer);
+      if (zeileElement && zeileElement.nextElementSibling !== feld.feldzeileElement) {
+        zeileElement.after(feld.feldzeileElement);
+      }
     }
   }
 
@@ -191,9 +203,10 @@
     return Number(text);
   }
 
-  /** Der Diff-Bereich ist ein Tab-Stopp; Pfeil auf/ab wandert durch die Diff-Zeilen, Enter wählt die Zeile. Eingaben im Notizfeld bleiben dort. */
+  /** Der Diff-Bereich ist ein Tab-Stopp; Pfeil auf/ab wandert durch die Diff-Zeilen, Enter wählt die Zeile. Ein offenes Notiz- oder Änderungsfeld
+      (samt seinen Knöpfen) behält seine eigene Tastatur: im Textfeld bewegt die Pfeiltaste den Caret, auf den Knöpfen bleibt der Fokus. */
   function bedieneZeilenPerTastatur(ansicht, ereignis) {
-    const istImFeld = ereignis.target.closest('.anm-feld') !== null;
+    const istImFeld = ereignis.target.closest('.anm-feld, .anm-aendern') !== null;
     if (istImFeld) {
       return;
     }

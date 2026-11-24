@@ -119,6 +119,14 @@ function annotierSprache(gr, page) {
     serverAntwortetBeimAendern: antwort => anmerkungSeite.aenderungAntwortetEinmal(page, antwort),
     aendernVerzoegern: () => anmerkungSeite.aenderungVerzoegern(page),
 
+    /** Offenes Änderungsfeld über die stabile Nummer (zwei Felder an derselben Zeile tragen denselben Namen). */
+    aenderungsfeldTextSchreiben: (nummer, text) => anmerkungSeite.aenderungsfeldTextSchreiben(page, nummer, text),
+    aenderungsfeldEnthaelt: (nummer, text) => anmerkungSeite.pruefeAenderungsfeldText(page, nummer, text),
+    aenderungsfeldSpeichern: nummer => anmerkungSeite.aenderungsfeldSpeichern(page, nummer),
+    caretPosition: (datei, neu) => anmerkungSeite.caretPosition(page, feldname(datei, neu)),
+    fokusAufKnopf: (datei, neu, knopfname) => anmerkungSeite.fokusAufKnopf(page, feldname(datei, neu), knopfname),
+    knopfHatFokus: (datei, neu, knopfname) => anmerkungSeite.pruefeKnopfHatFokus(page, feldname(datei, neu), knopfname),
+
     /** Anmerkung über die Schnittstelle (wie `curl`), am Commit `commit` mit vollem Hash; liefert die Antwort mit der Nummer. */
     ueberDieSchnittstelleAnlegen: async (commit, datei, zeile, text) => {
       const antwort = await gr.anmerkungAnlegen(lauf, { commit: hash(commit), datei, zeile, text });
