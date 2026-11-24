@@ -8,6 +8,7 @@ const beobachtung = require('../treiber/beobachtung.js');
 const LEISTE_FRIST_MS = 2000;
 const AUTOR_MIT_HTML = 'Mallory &lt;i&gt; &amp; Co';
 const DATEILISTE_FRIST_MS = 1000;
+const PFAD_MIT_RICHTUNGSZEICHEN = 'a\u202Eb\u2066c\u200F.txt';
 
 /** Repos je Vorbereitung; jedes liefert Ordner und die Hashes je Name. */
 function repoAnlegen(gr, art) {
@@ -24,6 +25,10 @@ function repoAnlegen(gr, art) {
     case 'Sonderzeichen': {
       const repo = gr.repoMitDateien({ 'ä ö.txt': 'eins\n', '<b>fett</b>.txt': 'zwei\n' });
       return { ordner: repo.ordner, hashes: { t: repo.hash } };
+    }
+    case 'Richtungszeichen': {
+      const repo = gr.repoMitDateien({ [PFAD_MIT_RICHTUNGSZEICHEN]: 'eins\n', 'o\u202Er/ä ö.txt': 'zwei\n' });
+      return { ordner: repo.ordner, hashes: { v: repo.hash } };
     }
     case '200 Commits': {
       const repo = gr.repoMitVielenCommits(200);
@@ -90,6 +95,7 @@ function reviewSprache(gr, page) {
     commitGewaehlt: commit => seite.pruefeGewaehlterCommit(page, kurz(commit)),
     dateienZeigen: erwartet => seite.pruefeDateiliste(page, erwartet),
     dateilisteMeldet: text => seite.pruefeDateilistenMeldung(page, text),
+    richtungszeichenNurAlsMarke: () => seite.pruefeRichtungszeichenNurAlsMarke(page),
     alsBaumZeigen: () => seite.darstellungWaehlen(page, 'baum'),
     flachZeigen: () => seite.darstellungWaehlen(page, 'flach'),
     dateiwahlenMitschreiben: () => seite.dateiwahlenSammeln(page),
@@ -127,4 +133,4 @@ const test = basis.extend({
   },
 });
 
-module.exports = { test, expect, AUTOR_MIT_HTML };
+module.exports = { test, expect, AUTOR_MIT_HTML, PFAD_MIT_RICHTUNGSZEICHEN };

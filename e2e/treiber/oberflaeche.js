@@ -191,6 +191,13 @@ async function pruefeDateiliste(page, { summe, eintraege, reihenfolgeEgal = fals
   expect(gelesen).toMatchObject(erwartet);
 }
 
+/** Der sichtbare Text der Dateiliste trägt richtungsändernde Zeichen nur als Marke `⟨U+…⟩`, nie roh (Positivkontrolle: eine Marke ist da). */
+async function pruefeRichtungszeichenNurAlsMarke(page) {
+  const sichtbarerText = await page.locator(DATEILISTE).textContent();
+  expect(sichtbarerText).toMatch(/⟨U\+(061C|200E|200F|202[A-E]|206[6-9])⟩/);
+  expect(sichtbarerText).not.toMatch(/[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/);
+}
+
 async function pruefeDateilistenMeldung(page, text) {
   await expect(dateilistenMeldung(page)).toHaveText(text);
   await expect(dateizeilen(page)).toHaveCount(0);
@@ -251,7 +258,7 @@ function dialogeZaehlen(page) {
 
 module.exports = {
   pruefeLeiste, pruefeMessageVerborgen, pruefeMessage, pruefeOhneMessage, pruefeKeineFormatierung, pruefeGewaehlterCommit, pruefeDateiliste,
-  pruefeDateilistenMeldung, pruefeGewaehlteDateien, pruefeDateiwahlen, pruefeZeilenBinnen, pruefeDateizeilenBinnenNachKlick,
+  pruefeDateilistenMeldung, pruefeRichtungszeichenNurAlsMarke, pruefeGewaehlteDateien, pruefeDateiwahlen, pruefeZeilenBinnen, pruefeDateizeilenBinnenNachKlick,
   dateienAntwortZurueckhalten, dialogeZaehlen,
   commitZeilenLesen, commitDetailsLesen, commitZeilen, aufZeilenWarten, commitWaehlen, gewaehlteCommits, messageSchalter, messageUmschalten, rumpf,
   dateilisteLesen, dateizeilen, aufDateizeilenWarten, dateiSumme, dateilistenMeldung, darstellungWaehlen, dateiWaehlen, gewaehlteDateien,

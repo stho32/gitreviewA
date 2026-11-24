@@ -1,6 +1,6 @@
 'use strict';
 // Spezifikation R00003 „Commits und Dateien sehen“ (User Story Szenarien 1–14). Commits heißen wie in der Vorbereitung der Anforderung.
-const { test, AUTOR_MIT_HTML } = require('../dsl/commits-und-dateien.js');
+const { test, AUTOR_MIT_HTML, PFAD_MIT_RICHTUNGSZEICHEN } = require('../dsl/commits-und-dateien.js');
 
 const DATEIEN_VON_P = {
   summe: '4 Dateien · +11 −0',
@@ -102,6 +102,34 @@ test.describe('Dateien eines Commits sehen', () => {
       eintraege: [{ status: 'A', name: 'ä ö.txt', zahlen: '+1 −0' }, { status: 'A', name: '<b>fett</b>.txt', zahlen: '+1 −0' }],
     });
     await review.fremderTextBleibtText();
+  });
+
+  test('soll richtungsändernde Zeichen in Pfaden flach und im Baum als Marke zeigen und die Datei mit ihrem echten Pfad melden', async ({ review }) => {
+    await review.starten({ vorbereitung: 'Richtungszeichen', commits: ['v'] });
+    await review.dateiwahlenMitschreiben();
+
+    await review.dateienZeigen({
+      summe: '2 Dateien · +2 −0',
+      reihenfolgeEgal: true,
+      eintraege: [{ status: 'A', name: 'a⟨U+202E⟩b⟨U+2066⟩c⟨U+200F⟩.txt' }, { status: 'A', name: 'o⟨U+202E⟩r/ä ö.txt' }],
+    });
+    await review.richtungszeichenNurAlsMarke();
+    await review.dateiAnsehen('a⟨U+202E⟩b⟨U+2066⟩c⟨U+200F⟩.txt');
+    await review.gewaehlteDateien(['a⟨U+202E⟩b⟨U+2066⟩c⟨U+200F⟩.txt']);
+
+    await review.alsBaumZeigen();
+    await review.dateienZeigen({
+      summe: '2 Dateien · +2 −0',
+      eintraege: [{ ordner: true, name: 'o⟨U+202E⟩r', tiefe: 0 }, { name: 'ä ö.txt', tiefe: 1 }, { name: 'a⟨U+202E⟩b⟨U+2066⟩c⟨U+200F⟩.txt', tiefe: 0 }],
+    });
+    await review.richtungszeichenNurAlsMarke();
+    await review.gewaehlteDateien(['a⟨U+202E⟩b⟨U+2066⟩c⟨U+200F⟩.txt']);
+    await review.dateiAnsehen('ä ö.txt');
+
+    await review.dateiwahlenWaren([
+      { commit: 'v', pfad: PFAD_MIT_RICHTUNGSZEICHEN, status: 'A' },
+      { commit: 'v', pfad: 'o\u202Er/ä ö.txt', status: 'A' },
+    ]);
   });
 
   test('soll die Dateien als Baum mit Ordnern vor Dateien zeigen und die Darstellung beim Commit-Wechsel behalten', async ({ review }) => {

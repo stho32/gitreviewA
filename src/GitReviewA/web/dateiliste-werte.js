@@ -45,8 +45,17 @@
     return { plus: anteil(datei.plus), minus: anteil(datei.minus) };
   }
 
+  /** Richtungsändernde Zeichen: Einbettungen und Isolierungen, dazu LRM, RLM und ALM. */
+  const RICHTUNGSZEICHEN = /[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g;
+
+  /** Fremder Pfad („Trojan Source“): richtungsändernde Zeichen würden den Namen umdrehen; sie bleiben sichtbar als Marke `⟨U+202E⟩`
+      wie im Diff. Nur der angezeigte Name ist markiert, `datei.pfad` bleibt roh für Auswahl und Anfragen. */
+  function sichtbarerName(name) {
+    return name.replace(RICHTUNGSZEICHEN, zeichen => `⟨U+${zeichen.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')}⟩`);
+  }
+
   function flacheZeilen(dateien) {
-    return dateien.map(datei => ({ art: 'datei', name: datei.pfad, tiefe: 0, datei }));
+    return dateien.map(datei => ({ art: 'datei', name: sichtbarerName(datei.pfad), tiefe: 0, datei }));
   }
 
   /** Ordner als eigene Zeilen über ihren Dateien; je Ebene Ordner vor Dateien, alphabetisch ohne Beachtung der Schreibweise. */
@@ -79,12 +88,12 @@
 
   function schreibeEbene(knoten, tiefe, zeilen) {
     for (const ordnername of [...knoten.ordner.keys()].sort(alphabetischOhneSchreibweise)) {
-      zeilen.push({ art: 'ordner', name: ordnername, tiefe });
+      zeilen.push({ art: 'ordner', name: sichtbarerName(ordnername), tiefe });
       schreibeEbene(knoten.ordner.get(ordnername), tiefe + 1, zeilen);
     }
     const dateien = [...knoten.dateien].sort((a, b) => alphabetischOhneSchreibweise(a.name, b.name));
     for (const { name, datei } of dateien) {
-      zeilen.push({ art: 'datei', name, tiefe, datei });
+      zeilen.push({ art: 'datei', name: sichtbarerName(name), tiefe, datei });
     }
   }
 

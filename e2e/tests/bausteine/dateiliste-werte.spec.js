@@ -58,4 +58,30 @@ test.describe('Baustein Dateiliste-Werte', () => {
 
     expect(dateizeile.datei).toBe(dateien[0]);
   });
+
+  test('soll richtungsändernde Zeichen in Pfaden flach und im Baum als Marke zeigen und den Pfad der Datei roh lassen', () => {
+    const roh = 'o\u202Er/a\u2066b\u200Fc\u200E\u061C.txt';
+    const dateien = [datei(roh), datei('ä ö.txt')];
+
+    const flach = flacheZeilen(dateien);
+    const baum = baumZeilen(dateien).map(({ art, name, tiefe }) => `${art}:${'  '.repeat(tiefe)}${name}`);
+
+    expect(flach.map(zeile => zeile.name)).toEqual(['o⟨U+202E⟩r/a⟨U+2066⟩b⟨U+200F⟩c⟨U+200E⟩⟨U+061C⟩.txt', 'ä ö.txt']);
+    expect(flach[0].datei.pfad).toBe(roh);
+    expect(baum).toEqual(['ordner:o⟨U+202E⟩r', 'datei:  a⟨U+2066⟩b⟨U+200F⟩c⟨U+200E⟩⟨U+061C⟩.txt', 'datei:ä ö.txt']);
+  });
+
+  test('soll jedes richtungsändernde Zeichen markieren und kein anderes', () => {
+    const richtungszeichen = [0x061C, 0x200E, 0x200F, 0x202A, 0x202B, 0x202C, 0x202D, 0x202E, 0x2066, 0x2067, 0x2068, 0x2069];
+    const nachbarn = [0x061B, 0x061D, 0x200D, 0x2010, 0x2029, 0x202F, 0x2065, 0x206A];
+
+    const markiert = code => flacheZeilen([datei(`x${String.fromCodePoint(code)}y`)])[0].name;
+
+    for (const code of richtungszeichen) {
+      expect(markiert(code)).toBe(`x⟨U+${code.toString(16).toUpperCase().padStart(4, '0')}⟩y`);
+    }
+    for (const code of nachbarn) {
+      expect(markiert(code)).toBe(`x${String.fromCodePoint(code)}y`);
+    }
+  });
 });
