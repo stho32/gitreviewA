@@ -140,6 +140,57 @@ public class GitLeserFremdeAnzeigeTests
         Assert.That(dateien, Is.EqualTo(new[] { new Dateiaenderung("A", "logo.bin", null, null, null) }));
     }
 
+    [TestCase("ohne Einstellung")]
+    [TestCase("log.showRoot=false")]
+    public void Wenn_das_Repo_den_Wurzelcommit_ohne_Diff_zeigen_will_dann_zeigen_Dateiliste_und_Diff_ihn_trotzdem(string einstellung)
+    {
+        using var repo = WegwerfRepo.MitCommits();
+        repo.SchreibeDatei("a.txt", "eins\n");
+        var wurzel = repo.Committe("Wurzel", "A", "2026-03-04T09:15:00+01:00", "");
+        StelleEin(repo, einstellung);
+
+        var dateien = GitLeser.DateienLesen(wurzel, repo.Ordner).AlsArray();
+        var diff = GitLeser.DiffLesen(wurzel, new Dateiaenderung("A", "a.txt", null, 1, 0), Diffumfang.Aenderungen, repo.Ordner);
+
+        Assert.That(dateien, Is.EqualTo(new[] { new Dateiaenderung("A", "a.txt", null, 1, 0) }));
+        Assert.That(diff, Does.Contain("+eins"));
+    }
+
+    [TestCase("ohne Einstellung")]
+    [TestCase("log.diffMerges=combined")]
+    [TestCase("log.diffMerges=dense-combined")]
+    [TestCase("log.diffMerges=remerge")]
+    [TestCase("log.diffMerges=separate")]
+    public void Wenn_das_Repo_Merges_anders_zeigen_will_dann_zeigen_Dateiliste_und_Diff_den_Merge_gegen_den_ersten_Elternteil(string einstellung)
+    {
+        using var repo = WegwerfRepo.MitCommits("Basis");
+        repo.Git("checkout", "-q", "-b", "seite");
+        repo.SchreibeDatei("seite.txt", "von der Seite\n");
+        repo.Committe("Seite", "A", "2026-03-06T08:00:00+01:00", "");
+        repo.Git("checkout", "-q", "main");
+        repo.SchreibeDatei("haupt.txt", "auf main\n");
+        repo.Committe("Haupt", "A", "2026-03-06T08:01:00+01:00", "");
+        var merge = repo.Merge("seite", "Merge");
+        StelleEin(repo, einstellung);
+
+        var dateien = GitLeser.DateienLesen(merge, repo.Ordner).AlsArray();
+        var diff = GitLeser.DiffLesen(merge, new Dateiaenderung("A", "seite.txt", null, 1, 0), Diffumfang.Aenderungen, repo.Ordner);
+
+        Assert.That(dateien, Is.EqualTo(new[] { new Dateiaenderung("A", "seite.txt", null, 1, 0) }));
+        Assert.That(diff, Does.Contain("+von der Seite"));
+    }
+
+    private static void StelleEin(WegwerfRepo repo, string einstellung)
+    {
+        var ohneEinstellung = einstellung == "ohne Einstellung";
+        if (ohneEinstellung)
+        {
+            return;
+        }
+        var teile = einstellung.Split('=');
+        repo.Git("config", teile[0], teile[1]);
+    }
+
     private static void StelleAusblendungEin(WegwerfRepo repo, string ausblendung)
     {
         if (ausblendung == "config submodule.sub.ignore=all")

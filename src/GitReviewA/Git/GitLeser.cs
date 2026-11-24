@@ -233,8 +233,7 @@ internal static class GitLeser
         start.ArgumentList.Add("--no-ext-diff");
         start.ArgumentList.Add("--no-textconv");
         start.ArgumentList.Add("--ignore-submodules=none");
-        start.ArgumentList.Add("-m");
-        start.ArgumentList.Add("--first-parent");
+        HaengeBasisAn(start);
         start.ArgumentList.Add("-M");
         start.ArgumentList.Add("--raw");
         start.ArgumentList.Add("--numstat");
@@ -257,8 +256,7 @@ internal static class GitLeser
         start.ArgumentList.Add("--no-ext-diff");
         start.ArgumentList.Add("--no-textconv");
         start.ArgumentList.Add("--ignore-submodules=none");
-        start.ArgumentList.Add("-m");
-        start.ArgumentList.Add("--first-parent");
+        HaengeBasisAn(start);
         start.ArgumentList.Add("-M");
         start.ArgumentList.Add(KontextFuer(umfang));
         start.ArgumentList.Add("--inter-hunk-context=0");
@@ -278,6 +276,18 @@ internal static class GitLeser
             start.ArgumentList.Add(alterPfad);
         }
         return start;
+    }
+
+    /// <summary>
+    /// Merges gegen den ersten Elternteil, Wurzelcommits gegen den leeren Baum — ausdrücklich, weil `log.diffMerges` und `log.showRoot`
+    /// des fremden Repos sonst den Merge bzw. den Wurzelcommit ohne Dateien zeigen.
+    /// </summary>
+    private static void HaengeBasisAn(ProcessStartInfo start)
+    {
+        start.ArgumentList.Add("-m");
+        start.ArgumentList.Add("--first-parent");
+        start.ArgumentList.Add("--diff-merges=first-parent");
+        start.ArgumentList.Add("--root");
     }
 
     /// <summary>Die ganze Datei ist ein Abschnitt mit so viel Kontext, wie git zulässt: dieselbe Zeilenrechnung wie für die Änderungen, keine zweite Quelle.</summary>
