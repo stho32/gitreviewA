@@ -35,6 +35,16 @@ internal static class GitLeser
     }
 
     /// <summary>
+    /// Pfade gehen wörtlich an git (kein Pathspec-Muster); bei einer Umbenennung beide Pfade, sonst zeigt git die Datei als neu.
+    /// Kontext, Leerzeilen und Farben setzt der Aufruf selbst — die Konfiguration des fremden Repos verschiebt sonst die Zeilennummern.
+    /// </summary>
+    public static string DiffLesen(string hash, Dateiaenderung datei, string arbeitsordner)
+    {
+        var start = GitShowDiffStart(hash, datei, arbeitsordner);
+        return Ausfuehren(start, $"git show {hash} -- {datei.Pfad}");
+    }
+
+    /// <summary>
     /// Ein Bereich ergibt dieselbe Liste wie <c>git rev-list</c>. Mehrere Bereiche ergeben die Vereinigung der einzelnen Bereiche,
     /// neuester zuerst und Kind vor Eltern wie <c>git rev-list --date-order</c>: bei git selbst würde der Anfang eines Bereichs
     /// auch die anderen Bereiche beschneiden. Die Reihenfolge hängt nur an der Vereinigung, nicht an der Reihenfolge der Bereiche,
@@ -201,6 +211,35 @@ internal static class GitLeser
         start.ArgumentList.Add("-z");
         start.ArgumentList.Add("--end-of-options");
         start.ArgumentList.Add(hash);
+        return start;
+    }
+
+    private static ProcessStartInfo GitShowDiffStart(string hash, Dateiaenderung datei, string arbeitsordner)
+    {
+        var start = GitStart.Im(arbeitsordner);
+        start.ArgumentList.Add("--literal-pathspecs");
+        start.ArgumentList.Add("-c");
+        start.ArgumentList.Add("diff.suppressBlankEmpty=false");
+        start.ArgumentList.Add("show");
+        start.ArgumentList.Add("--format=");
+        start.ArgumentList.Add("--no-color");
+        start.ArgumentList.Add("--no-ext-diff");
+        start.ArgumentList.Add("--no-textconv");
+        start.ArgumentList.Add("--ignore-submodules=none");
+        start.ArgumentList.Add("-m");
+        start.ArgumentList.Add("--first-parent");
+        start.ArgumentList.Add("-M");
+        start.ArgumentList.Add("-U3");
+        start.ArgumentList.Add("--inter-hunk-context=0");
+        start.ArgumentList.Add("--end-of-options");
+        start.ArgumentList.Add(hash);
+        start.ArgumentList.Add("--");
+        start.ArgumentList.Add(datei.Pfad);
+        var alterPfad = datei.AlterPfad;
+        if (alterPfad is not null)
+        {
+            start.ArgumentList.Add(alterPfad);
+        }
         return start;
     }
 
