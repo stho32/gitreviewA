@@ -12,7 +12,7 @@ zuletzt: 2026-11-24
 |---|---|---|---|---|---|---|---|---|
 | 1 | Entwicklung | Subagent oder Entwickler | — | | | | | |
 | 2 | Entwicklertest | Entwickler | user-story | | | | | |
-| 3 | Abnahme | Auftraggeber | akzeptanzkriterien | | | | | |
+| 3 | Abnahme | Auftraggeber | akzeptanzkriterien | | | | | verworfen |
 
 ## Durchläufe
 

@@ -49,6 +49,7 @@ Wie die Dienste des Projekts starten und geprüft werden. Gilt für den Director
 - **Auslieferung** (Betreiber 2026-11-24): genau **eine ausführbare Datei** je Plattform, kein Ordner, frameworkabhängig (braucht installierte .NET-10-Runtime) — `dotnet publish -c Release -r <rid> --self-contained false -p:PublishSingleFile=true`; Weboberfläche als eingebettete Ressource, keine losen Dateien neben der Exe
 - **Testdaten**: Integration und E2E legen ihre Git-Repos selbst in einem Temp-Ordner an und räumen sie weg; keine echten fremden Repositories
 - **Pfade**: `/usr/lib/dotnet`; Board der Factory `http://127.0.0.1:48051`, Ordner `/home/shoff/Projekte/Kanban-Boards/gitreviewA-Kanbanboard`
+- **Live-Demo** (Betreiber 2026-11-24): nach jedem Zug nach „Erledigt“ aus `main` eine Datei nach `~/Projekte/Demos/gitreviewA/bin/` veröffentlichen (`dotnet publish src/GitReviewA -c Release -r linux-x64 --self-contained false -p:PublishSingleFile=true`), alte Instanz (PID in `demo.pid`) beenden, auf die letzten 8 Commits von gitreviewA mit `--port 47960` starten, Ergebnis nach `ergebnis.md`, Log nach `demo.log`; ein Fehlschlag hält den Zug nicht auf.
 - **Remotes**: `origin` GitNAS, `github` (public); gepusht wird nur auf ausdrückliche Ansage des Betreibers
 
 ## Rechnerlast
@@ -119,8 +120,7 @@ In der Reihenfolge des Boards. In Spalten der Art Mensch bewegt die Fabrik nie e
 | Nacharbeit | Team | Muss-Befunde an der Karte beheben, danach zurück in die prüfende Spalte |
 | Reviews | Team | code-reviewer und security-reviewer parallel, je Rolle eine Teilaufgabe; Muss-Befunde führen in die Nacharbeit |
 | Entwicklertest | Team | User Story wörtlich im echten Programm |
-| Abnahme | Mensch | der Betreiber nimmt am Board gegen die Akzeptanzkriterien ab |
-| Erledigt | Mensch | letzte Spalte |
+| Erledigt | Mensch | fertig: Entwicklertest bestanden und auf main zusammengeführt (keine separate Abnahme, Betreiber 2026-11-24); letzte Spalte |
 
 ## Ablauf
 
@@ -142,12 +142,12 @@ gilt, ohne dass es je Spalte wiederholt wird:
   verschmutztes Ergebnis auf stdout) oder eine Sicherheitsgrenze verletzt. Der Director stuft gemeldete Muss danach
   ein und nennt die Einstufung im Kommentar.
 - **Kostendeckel 30 $ je Karte**: darüber keine neuen Review-, Test- oder Nacharbeitsläufe; die Karte geht in die
-  Merge-Wache, grün → Abnahme mit Vermerk „Kostendeckel“ und Liste der offenen Befunde; bei Problemen ungemergt nach
+  Merge-Wache, grün → Erledigt mit Vermerk „Kostendeckel“ und Liste der offenen Befunde; bei Problemen ungemergt nach
   „Ohne Mensch nicht lösbar“. Der Director prüft das Preisetikett nach jedem `beende`.
 - **Rechnerlast**: über der Grenze beginnt kein Lauf; die Karte trägt dann „Wartet auf Systemressourcen“.
 - **Störung des Treibers** (Anmeldung, Kontingent, Dienst) ist kein Ergebnis der Rolle: der Lauf hält an, die Karte
   bleibt, wo sie ist.
-- **Push** nur auf ausdrückliche Ansage des Betreibers; Karten dürfen ungepusht in die Abnahme.
+- **Push** nur auf ausdrückliche Ansage des Betreibers; Karten dürfen ungepusht nach „Erledigt“.
 
 ### Detailplanung
 - **Betritt die Karte die Spalte**: planer verfeinert bis Bubble, schreibt die Anforderung und setzt Labels
@@ -188,5 +188,5 @@ gilt, ohne dass es je Spalte wiederholt wird:
 - **Betritt die Karte die Spalte**: entwicklertester fährt die User Story wörtlich im echten Programm in einem
   Wegwerf-Repo; prüft dabei, dass stdout nur das Ergebnis trägt.
 - **Entscheidung**
-  - bestanden → Merge-Wache → Abnahme
+  - bestanden → Merge-Wache → Erledigt (keine separate Abnahme, Betreiber 2026-11-24); danach die Live-Demo neu bauen und starten
   - Muss → Nacharbeit; höchstens 2×
