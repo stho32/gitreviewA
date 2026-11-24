@@ -191,6 +191,19 @@ test.describe('Zeile annotieren', () => {
     expect(ergebnis).toContain('> <img src=x onerror=alert(1)>\n> <b>fett</b>\n> **fett**\n');
   });
 
+  test('Dateiname mit U+202E: in der Oberfläche annotiert, auf stdout steht die Marke statt des Zeichens', async ({ anm }) => {
+    const sichtbarerName = 'a⟨U+202E⟩b.txt';
+    await anm.starten({ vorbereitung: 'Repo B' });
+    await anm.dateiAnsehen(sichtbarerName);
+
+    await anm.annotieren(sichtbarerName, 1, 'Name prüfen');
+    const { exitCode, ergebnis } = await anm.beendenUndErgebnisLesen();
+
+    expect(exitCode).toBe(0);
+    expect(ergebnis.split('\n').filter(zeile => zeile.startsWith('## '))).toEqual([`## 1. ${sichtbarerName}:1`]);
+    expect(ergebnis).not.toContain('\u202E');
+  });
+
   test('Lastprofil: 500 Anmerkungen an gross.txt mit 20 000 Zeilen stehen binnen 1 s nach dem Klick', async ({ anm }) => {
     await anm.starten({ vorbereitung: 'Repo U', seiteOeffnen: false });
     const text = 'a'.repeat(200);

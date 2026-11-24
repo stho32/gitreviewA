@@ -30,6 +30,7 @@ public class ProtokollzeileTests
     [TestCase(@"a\u009b31mb", "a⟨U+009B⟩31mb")]
     [TestCase(@"a\u0000b\u007fc", "a⟨U+0000⟩b⟨U+007F⟩c")]
     [TestCase(@"a\u202eb\u2066c\u200fd", "a⟨U+202E⟩b⟨U+2066⟩c⟨U+200F⟩d")]
+    [TestCase(@"a\u200Bb\uFEFFc\uDB40\uDC41d", "a⟨U+200B⟩b⟨U+FEFF⟩c⟨U+E0041⟩d")]
     [TestCase(@"a\tb ä", "a\tb ä")]
     public void Wenn_Meldung_Steuer_oder_Richtungszeichen_aus_fremden_Namen_enthaelt_dann_stehen_sie_als_Marke_im_Protokoll(string maskierteMeldung, string erwartet)
     {

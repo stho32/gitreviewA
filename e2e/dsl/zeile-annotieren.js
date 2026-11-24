@@ -1,5 +1,5 @@
 'use strict';
-// Testsprache „Zeile annotieren“ (R00010): Repos und Commits heißen wie in der User Story (A mit p, q; U mit u; X mit x), Zeilen tragen
+// Testsprache „Zeile annotieren“ (R00010): Repos und Commits heißen wie in der User Story (A mit p, q; U mit u; X mit x; B mit b), Zeilen tragen
 // ihre Nummer neu (`{ neu: 18 }` ist `z19` in q) oder als entfernte Zeile ihre Nummer alt (`{ alt: 2 }` ist `−zwei`).
 // Die Treiber darunter kennen Seite, Prozess, HTTP und git.
 const path = require('path');
@@ -16,6 +16,7 @@ const VORBEREITUNGEN = {
   'Repo A': { anlegen: repos.repoA, commits: ['q', 'p'] },
   'Repo U': { anlegen: repos.repoU, commits: ['u'] },
   'Repo X': { anlegen: repos.repoX, commits: ['x'] },
+  'Repo B': { anlegen: repos.repoMitBidiPfad, commits: ['b'] },
 };
 
 function annotierSprache(gr, page) {

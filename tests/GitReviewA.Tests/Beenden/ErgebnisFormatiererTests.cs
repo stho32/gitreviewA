@@ -17,6 +17,21 @@ public class ErgebnisFormatiererTests
     }
 
     [Test]
+    public void Wenn_Dateiname_Richtungs_und_Tag_Zeichen_enthaelt_dann_steht_in_der_Ueberschrift_die_Marke_auch_bei_ganzer_Datei()
+    {
+        var anmerkungen = new Anmerkungsliste(
+        [
+            new Anmerkung(1, HashA, "evil\u202Etxt.exe", 3, "Zeile"),
+            new Anmerkung(2, HashA, "x\U000E0041y.txt", null, "Datei"),
+        ]);
+
+        var ergebnis = ErgebnisFormatierer.Formatiere(anmerkungen);
+
+        Assert.That(ergebnis, Does.Contain("\n## 1. evil⟨U+202E⟩txt.exe:3\n"));
+        Assert.That(ergebnis, Does.Contain("\n## 2. x⟨U+E0041⟩y.txt (ganze Datei)\n"));
+    }
+
+    [Test]
     public void Wenn_zwei_Anmerkungen_dann_genau_das_Beispiel_der_Anforderung()
     {
         var anmerkungen = new Anmerkungsliste(

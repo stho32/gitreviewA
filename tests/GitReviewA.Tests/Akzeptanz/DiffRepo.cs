@@ -128,6 +128,22 @@ internal sealed class DiffRepo : IDisposable
         return u;
     }
 
+    /// <summary>Unsichtbare Zeichen in Dateinamen (Befund Security-Review #17): je Zeichen eine Datei `x<Zeichen>y.txt`, dazu `a.txt` als Kontrolle.</summary>
+    public static readonly string[] UnsichtbareZeichenInNamen = ["\u202E", "\u2066", "\u061C", "\u200E", "\u200B", "\uFEFF", "\U000E0041"];
+
+    /// <summary>Repo N: `n` mit `a.txt` und den Dateien aus <see cref="UnsichtbareZeichenInNamen"/>.</summary>
+    public static DiffRepo N()
+    {
+        var n = new DiffRepo(WegwerfRepo.MitCommits());
+        n.Schreibe("a.txt", "a\n");
+        foreach (var zeichen in UnsichtbareZeichenInNamen)
+        {
+            n.Schreibe($"x{zeichen}y.txt", "inhalt\n");
+        }
+        n.Committe("n", "Unsichtbare Namen");
+        return n;
+    }
+
     private static string ZeilenZ01BisZ20()
     {
         return string.Concat(Enumerable.Range(1, 20).Select(nummer => $"z{nummer:D2}\n"));

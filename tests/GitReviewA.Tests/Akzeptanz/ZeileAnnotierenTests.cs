@@ -168,6 +168,33 @@ public class ZeileAnnotierenTests
         Assert.That(gr.Protokoll(), Does.Not.Contain("GEHEIMWORT"));
     }
 
+    [Test]
+    public void Wenn_Dateinamen_mit_Richtungs_Format_oder_Tag_Zeichen_annotiert_dann_steht_in_jeder_Ueberschrift_die_Marke_statt_des_Zeichens()
+    {
+        using var repo = DiffRepo.N();
+        var gr = ZeileAnnotierenSprache.Aufruf(repo, ["n"]);
+
+        var antworten = new List<Anlegeantwort> { gr.Annotiere("n", "a.txt", 1, "Kontrolle") };
+        foreach (var zeichen in DiffRepo.UnsichtbareZeichenInNamen)
+        {
+            antworten.Add(gr.Annotiere("n", $"x{zeichen}y.txt", 1, "Name"));
+        }
+        var ueberschriften = Ueberschriften(gr.Beenden());
+
+        Assert.That(antworten.Select(antwort => antwort.Ausgang), Is.All.EqualTo("angelegt"));
+        Assert.That(ueberschriften, Is.EqualTo(new[]
+        {
+            "## 1. a.txt:1",
+            "## 2. x⟨U+202E⟩y.txt:1",
+            "## 3. x⟨U+2066⟩y.txt:1",
+            "## 4. x⟨U+061C⟩y.txt:1",
+            "## 5. x⟨U+200E⟩y.txt:1",
+            "## 6. x⟨U+200B⟩y.txt:1",
+            "## 7. x⟨U+FEFF⟩y.txt:1",
+            "## 8. x⟨U+E0041⟩y.txt:1",
+        }));
+    }
+
     private static string[] Ueberschriften(string ergebnis)
     {
         return ergebnis.Split('\n').Where(zeile => zeile.StartsWith("## ", StringComparison.Ordinal)).ToArray();

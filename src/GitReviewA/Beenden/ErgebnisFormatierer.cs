@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using GitReviewA.Anmerkungen;
+using GitReviewA.Fremdtext;
 
 namespace GitReviewA.Beenden;
 
@@ -40,11 +41,12 @@ internal static class ErgebnisFormatierer
     private static string Stellenueberschrift(Anmerkung anmerkung)
     {
         var nummer = anmerkung.Nummer.ToString(CultureInfo.InvariantCulture);
+        var datei = UnsichtbareZeichen.AlsMarken(anmerkung.Datei);
         if (anmerkung.Zeile is not { } zeile)
         {
-            return $"## {nummer}. {anmerkung.Datei} (ganze Datei)";
+            return $"## {nummer}. {datei} (ganze Datei)";
         }
-        return $"## {nummer}. {anmerkung.Datei}:{zeile.ToString(CultureInfo.InvariantCulture)}";
+        return $"## {nummer}. {datei}:{zeile.ToString(CultureInfo.InvariantCulture)}";
     }
 
     private static string AlsZitat(string text)
