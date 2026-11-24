@@ -11,7 +11,7 @@ function anzahlZeilen(text, zeile) {
 
 test.describe('Beenden mit Ergebnis', () => {
   test('US-1: Beenden in der Oberfläche ohne Anmerkungen — Meldung, leeres Ergebnis, Exit 0', async ({ gr, page }) => {
-    test.fail(true, 'erwartet rot: R00002 noch nicht gebaut');
+    test.fail(true, 'erwartet rot: B0107 Knopf noch nicht gebaut');
     const repo = gr.repoMitCommits();
     const [a, b] = repo.hashes;
     const lauf = await gr.gitreviewAStarten(repo, [a, b]);
@@ -26,7 +26,6 @@ test.describe('Beenden mit Ergebnis', () => {
   });
 
   test('US-2: zwei Anmerkungen — Nummern 1 und 2, Ergebnis Byte für Byte, Exit 0', async ({ gr }) => {
-    test.fail(true, 'erwartet rot: R00002 noch nicht gebaut');
     const repo = gr.repoMitCommits();
     const [a, b] = repo.hashes;
     const lauf = await gr.gitreviewAStarten(repo, [a, b]);
@@ -47,7 +46,6 @@ test.describe('Beenden mit Ergebnis', () => {
   });
 
   test('US-3: mehrzeiliger Text steht als Zitat und erzeugt keine Überschrift', async ({ gr }) => {
-    test.fail(true, 'erwartet rot: R00002 noch nicht gebaut');
     const repo = gr.repoMitCommits();
     const [a] = repo.hashes;
     const lauf = await gr.gitreviewAStarten(repo, [a]);
@@ -63,7 +61,6 @@ test.describe('Beenden mit Ergebnis', () => {
   });
 
   test('US-5: stdout trägt nur das Ergebnis, Meldungen stehen auf stderr', async ({ gr }) => {
-    test.fail(true, 'erwartet rot: R00002 noch nicht gebaut');
     const repo = gr.repoMitCommits();
     const [a] = repo.hashes;
     const lauf = await gr.gitreviewAStarten(repo, [a], { zusatz: ['--verbose'] });
@@ -80,7 +77,6 @@ test.describe('Beenden mit Ergebnis', () => {
   });
 
   test('US-6: doppeltes Beenden — Ergebnis genau einmal, Exit 0', async ({ gr }) => {
-    test.fail(true, 'erwartet rot: R00002 noch nicht gebaut');
     const repo = gr.repoMitCommits();
     const [a] = repo.hashes;
     const lauf = await gr.gitreviewAStarten(repo, [a]);
@@ -95,7 +91,6 @@ test.describe('Beenden mit Ergebnis', () => {
   });
 
   test('US-7: 500 Anmerkungen zu je 200 Zeichen — Prozessende höchstens 1 s nach der Anforderung', async ({ gr }) => {
-    test.fail(true, 'erwartet rot: R00002 noch nicht gebaut');
     const repo = gr.repoMitCommits();
     const [a, b] = repo.hashes;
     const lauf = await gr.gitreviewAStarten(repo, [a, b]);
@@ -111,7 +106,9 @@ test.describe('Beenden mit Ergebnis', () => {
 
     const { dauerMs, antwort } = await gr.beendenUndDauerMessen(lauf);
 
-    test.info().annotations.push({ type: 'Messwert', description: `Beenden bis Prozessende bei 500 Anmerkungen: ${Math.round(dauerMs)} ms` });
+    const messwert = `Beenden bis Prozessende bei 500 Anmerkungen: ${Math.round(dauerMs)} ms`;
+    test.info().annotations.push({ type: 'Messwert', description: messwert });
+    console.log(`Messwert ${messwert}`);
     expect(antwort.status).toBe(200);
     expect(lauf.exitCode).toBe(0);
     expect(dauerMs).toBeLessThanOrEqual(BEENDEN_FRIST_MS);
@@ -120,7 +117,6 @@ test.describe('Beenden mit Ergebnis', () => {
   });
 
   test('US-8: ungültige Anmerkungen werden mit 400 abgelehnt, 10 000 Zeichen angenommen', async ({ gr }) => {
-    test.fail(true, 'erwartet rot: R00002 noch nicht gebaut');
     const repo = gr.repoMitCommits();
     const [a, b, c] = repo.hashes;
     const lauf = await gr.gitreviewAStarten(repo, [a, b]);
@@ -152,7 +148,6 @@ test.describe('Beenden mit Ergebnis', () => {
   });
 
   test('US-9: Anlegen nach dem Beenden — 409 oder keine Verbindung, nie im Ergebnis', async ({ gr }) => {
-    test.fail(true, 'erwartet rot: R00002 noch nicht gebaut');
     const repo = gr.repoMitCommits();
     const [a] = repo.hashes;
     const lauf = await gr.gitreviewAStarten(repo, [a]);
@@ -171,7 +166,6 @@ test.describe('Beenden mit Ergebnis', () => {
   });
 
   test('US-10: fremder Origin und fremder Host werden mit 403 abgelehnt, ohne Origin angenommen', async ({ gr }) => {
-    test.fail(true, 'erwartet rot: R00002 noch nicht gebaut');
     const repo = gr.repoMitCommits();
     const [a] = repo.hashes;
     const lauf = await gr.gitreviewAStarten(repo, [a]);
@@ -195,7 +189,6 @@ test.describe('Beenden mit Ergebnis', () => {
   });
 
   test('US-10 (c): eine Seite auf localhost:<anderer Port> kann weder anlegen noch beenden', async ({ gr, page }) => {
-    test.fail(true, 'erwartet rot: R00002 noch nicht gebaut');
     const repo = gr.repoMitCommits();
     const [a] = repo.hashes;
     const lauf = await gr.gitreviewAStarten(repo, [a]);
@@ -241,16 +234,15 @@ test.describe('Beenden mit Ergebnis', () => {
   });
 
   test('US-11: Beenden per GET 405, ohne oder mit falschem Inhaltstyp 415 — der Lauf geht weiter', async ({ gr }) => {
-    test.fail(true, 'erwartet rot: R00002 noch nicht gebaut');
     const repo = gr.repoMitCommits();
     const [a] = repo.hashes;
     const lauf = await gr.gitreviewAStarten(repo, [a]);
     const anmerkung = { commit: a, datei: 'datei.txt', zeile: 1, text: 'falsche Art' };
 
-    const perGet = await gr.beendenAnfordern(lauf, { methode: 'GET', inhaltstyp: undefined });
+    const perGet = await gr.beendenAnfordern(lauf, { methode: 'GET', inhaltstyp: null });
     const ohneInhaltstyp = [
-      await gr.beendenAnfordern(lauf, { inhaltstyp: undefined }),
-      await gr.anmerkungAnlegen(lauf, anmerkung, { inhaltstyp: undefined }),
+      await gr.beendenAnfordern(lauf, { inhaltstyp: null }),
+      await gr.anmerkungAnlegen(lauf, anmerkung, { inhaltstyp: null }),
     ];
     const mitTextPlain = [
       await gr.beendenAnfordern(lauf, { inhaltstyp: 'text/plain' }),

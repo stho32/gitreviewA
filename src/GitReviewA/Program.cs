@@ -1,4 +1,5 @@
 using GitReviewA.Aufruf;
+using GitReviewA.Beenden;
 using GitReviewA.Browser;
 using GitReviewA.Git;
 using GitReviewA.Protokoll;
@@ -50,6 +51,10 @@ internal static class Program
             OeffneBrowser(server.Adresse, protokoll);
         }
         await server.WartenBisBeendetAsync();
+        if (server.Anmerkungen.IstAbgeschlossen)
+        {
+            StdoutErgebnis.Schreibe(ErgebnisFormatierer.Formatiere(server.Anmerkungen.Schnappschuss()));
+        }
     }
 
     private static void OeffneBrowser(string adresse, StderrProtokoll protokoll)

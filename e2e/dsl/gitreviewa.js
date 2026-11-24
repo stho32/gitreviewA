@@ -156,7 +156,7 @@ function welt() {
 
   /**
    * Legt eine Anmerkung über die Schnittstelle an. `zeile` weglassen heißt „ganze Datei“.
-   * Optionen: `origin`, `host`, `inhaltstyp` (Standard application/json), `rohKoerper` statt JSON aus `anmerkung`.
+   * Optionen: `origin`, `host`, `inhaltstyp` (Standard application/json, `null` = ohne Kopfzeile), `rohKoerper` statt JSON aus `anmerkung`.
    */
   async function anmerkungAnlegen(lauf, anmerkung, { origin, host, inhaltstyp = JSON_INHALT, rohKoerper } = {}) {
     let koerper = rohKoerper;
@@ -164,9 +164,17 @@ function welt() {
       koerper = JSON.stringify(anmerkung);
     }
     const antwort = await senden(lauf.adresse, '/api/anmerkungen', {
-      methode: 'POST', host, kopf: { Origin: origin, 'Content-Type': inhaltstyp }, koerper,
+      methode: 'POST', host, kopf: { Origin: origin, 'Content-Type': inhaltstypKopf(inhaltstyp) }, koerper,
     });
     return { status: antwort.status, ...jsonOderLeer(antwort.koerper) };
+  }
+
+  /** `null` heißt: Anfrage ohne Content-Type. */
+  function inhaltstypKopf(inhaltstyp) {
+    if (inhaltstyp === null) {
+      return undefined;
+    }
+    return inhaltstyp;
   }
 
   /** Fordert das Beenden an; Standard ist die Befehlszeile: POST, JSON `{}`, ohne Origin. */
@@ -175,7 +183,8 @@ function welt() {
     if (methode === 'POST') {
       koerper = '{}';
     }
-    const antwort = await senden(lauf.adresse, '/api/beenden', { methode, host, kopf: { Origin: origin, 'Content-Type': inhaltstyp }, koerper });
+    const kopf = { Origin: origin, 'Content-Type': inhaltstypKopf(inhaltstyp) };
+    const antwort = await senden(lauf.adresse, '/api/beenden', { methode, host, kopf, koerper });
     return { status: antwort.status, ...jsonOderLeer(antwort.koerper) };
   }
 

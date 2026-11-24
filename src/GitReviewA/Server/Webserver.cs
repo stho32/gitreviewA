@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using GitReviewA.Anmerkungen;
+using GitReviewA.Beenden;
 using GitReviewA.Git;
 using GitReviewA.Protokoll;
 using Microsoft.AspNetCore.Hosting.Server;
@@ -122,6 +123,8 @@ internal sealed class Webserver : IAsyncDisposable
     {
         var anlegen = AnmerkungsEndpunkt.Fuer(anmerkungen, new CommitAuswahl(commits), protokoll);
         anwendung.Map("/api/anmerkungen", GeschuetzterEndpunkt.Mit(anlegen, protokoll));
+        var beenden = BeendenEndpunkt.Fuer(anmerkungen, anwendung.Lifetime, protokoll);
+        anwendung.Map("/api/beenden", GeschuetzterEndpunkt.Mit(beenden, protokoll));
     }
 
     private static List<CommitAntwort> AlsAntworten(Commitzeilen commits)
