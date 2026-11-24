@@ -1,7 +1,8 @@
 /* gitreviewA — Diff-Bereich: liest den Diff einer Datei erst bei ihrer Wahl (Ereignis `datei-gewaehlt`) und zeigt ihn mit Nummern
    alt und neu, als „nur Änderungen“ oder „ganze Datei“ (Diffansicht); der Wechsel des Commits (`commit-gewaehlt`) hebt die Wahl auf
    und fordert zum Wählen auf. Nach jedem Zeichnen meldet das Ereignis `diff-gezeichnet` Commit, Pfad, Ansicht und Bereich. Zeilenaufbau nach kanbanD
-   web/diff.js (zeileHtml), aber als DOM-Knoten mit textContent: Diff-Text, Pfade und Hunk-Titel sind fremder Text. */
+   web/diff.js (zeileHtml), aber als DOM-Knoten mit textContent: Diff-Text, Pfade und Hunk-Titel sind fremder Text.
+   Syntaxfarben (R00007) kommen als Auflage nach dem Zeichnen: Prism rechnet im Worker (faerben.js) und liefert nur Zahlen. */
 (function () {
   'use strict';
 
@@ -12,8 +13,9 @@
   const VORZEICHEN = { plus: '+', minus: '−', kontext: '' };
 
   /** `datei`: die gewählte Datei, `alsText` ihre Wahl „Als Text zeigen“; `diffansicht`: `aenderungen` oder `ganz`, nur im Speicher der Seite
-      (nach Neuladen wieder „nur Änderungen“); `zugeklappt`: Zeilen eines langen Textes, die erst „Trotzdem laden“ zeichnet. */
-  const zustand = { letzteLadung: 0, datei: null, alsText: false, diffansicht: 'aenderungen', zugeklappt: null };
+      (nach Neuladen wieder „nur Änderungen“); `zugeklappt`: Zeilen eines langen Textes, die erst „Trotzdem laden“ zeichnet;
+      `anzeige`: zählt jeden neuen Inhalt des Bereichs — eine Färbung gilt nur für die Anzeige, für die sie gestellt wurde. */
+  const zustand = { letzteLadung: 0, datei: null, alsText: false, diffansicht: 'aenderungen', zugeklappt: null, anzeige: 0 };
 
   function init() {
     const ansicht = ansichtElemente();
@@ -40,7 +42,16 @@
       alsTextElement: wurzelElement.querySelector('.als-text'),
       trotzdemLadenElement: wurzelElement.querySelector('.trotzdem-laden'),
       rollElement: wurzelElement.querySelector('.df-sc'),
+      farbschlange: farbschlange({ workerAnlegen: faerbeWorkerAnlegen }),
     };
+  }
+
+  /** Ohne Worker im Browser bleibt jede Datei ungefärbt. */
+  function faerbeWorkerAnlegen() {
+    if (typeof Worker !== 'function') {
+      return null;
+    }
+    return new Worker('faerben.js');
   }
 
   /** Die Wahl liegt am Bereich, nicht am Diff: sie bleibt beim Wechsel von Datei und Commit. */
@@ -112,6 +123,9 @@
   }
 
   function zeigeMeldung(ansicht, text, istFehler) {
+    zustand.anzeige += 1;
+    ansicht.farbschlange.aufraeumen();
+    delete ansicht.rollElement.dataset.farbe;
     ansicht.meldungElement.textContent = text;
     ansicht.meldungElement.classList.toggle('fehler', istFehler);
     ansicht.rollElement.replaceChildren();
@@ -134,10 +148,10 @@
     }
     const zuLangGrund = alsText ? zuLang(zeilen) : null;
     if (zuLangGrund) {
-      zeigeZugeklappt(ansicht, antwort.pfad, zeilen, zuLangGrund);
+      zeigeZugeklappt(ansicht, antwort, zeilen, zuLangGrund);
       return;
     }
-    zeichneZeilen(ansicht, antwort.pfad, zeilen);
+    zeichneZeilen(ansicht, antwort, zeilen);
   }
 
   function zeilenDerDiffansicht(patch, diffansicht) {
@@ -159,9 +173,9 @@
   }
 
   /** Über der Grenze bleibt der Text zugeklappt, bis der Mensch „Trotzdem laden“ wählt (vorläufig bis I0014). */
-  function zeigeZugeklappt(ansicht, pfad, zeilen, grund) {
+  function zeigeZugeklappt(ansicht, antwort, zeilen, grund) {
     zeigeMeldung(ansicht, `Sehr lang: ${grund.anzahl.toLocaleString('de-DE')} ${grund.einheit} — zugeklappt`, false);
-    zustand.zugeklappt = { pfad, zeilen };
+    zustand.zugeklappt = { antwort, zeilen };
     ansicht.trotzdemLadenElement.hidden = false;
   }
 
@@ -170,12 +184,13 @@
     if (!zugeklappt) {
       return;
     }
-    zeichneZeilen(ansicht, zugeklappt.pfad, zugeklappt.zeilen);
+    zeichneZeilen(ansicht, zugeklappt.antwort, zugeklappt.zeilen);
   }
 
-  function zeichneZeilen(ansicht, pfad, zeilen) {
+  /** `antwort`: Pfad und Patch der gezeigten Ansicht — an ihnen hängen Sprache und Grenze der Färbung. */
+  function zeichneZeilen(ansicht, antwort, zeilen) {
     zeigeMeldung(ansicht, '', false);
-    const name = `Änderungen in ${pfad}`;
+    const name = `Änderungen in ${antwort.pfad}`;
     const sammelElement = document.createDocumentFragment();
     for (const block of bloecke(zeilen)) {
       sammelElement.append(blockElement(block, name));
@@ -183,7 +198,8 @@
     ansicht.rollElement.setAttribute('aria-label', name);
     ansicht.rollElement.replaceChildren(sammelElement);
     ansicht.rollElement.hidden = false;
-    meldeGezeichnet(ansicht, pfad);
+    faerbeZeilen(ansicht, antwort, zeilen);
+    meldeGezeichnet(ansicht, antwort.pfad);
   }
 
   /** `ersterBlockElement` erkennt der Empfänger wieder: ist er nicht mehr im Dokument, ist dieser Diff verworfen. */
@@ -196,6 +212,54 @@
       ersterBlockElement: ansicht.rollElement.firstElementChild,
     };
     document.dispatchEvent(new CustomEvent('diff-gezeichnet', { detail }));
+  }
+
+  /** Ohne Sprache oder über den Grenzen geht kein Auftrag an den Worker; ein Ausfall unterwegs lässt die Datei still ungefärbt. */
+  function faerbeZeilen(ansicht, antwort, zeilen) {
+    const sprache = spracheZuPfad(antwort.pfad);
+    if (!sprache || !faerbbar(antwort.patch)) {
+      ansicht.rollElement.dataset.farbe = 'nein';
+      return;
+    }
+    ansicht.rollElement.dataset.farbe = 'laeuft';
+    const anzeige = zustand.anzeige;
+    const aktuell = () => anzeige === zustand.anzeige;
+    ansicht.farbschlange.stellen({
+      sprache,
+      zeilen: zeilen.map(zeile => ({ art: zeile.art, text: zeile.text })),
+      aktuell,
+      fertig: farbantwort => legeFarbeAuf(ansicht, zeilen, farbantwort, aktuell),
+    });
+  }
+
+  /** Je Aufgabe des Hauptfadens ein Block zu 500 Zeilen; ersetzt wird nur der Inhalt der Textzellen mit Farbstücken. Nur Zeilen mit
+      `data-art` sind Diff-Zeilen, in Reihenfolge der Liste `zeilen`. Eine neue Anzeige beendet die Auflage still. */
+  function legeFarbeAuf(ansicht, zeilen, farbantwort, aktuell) {
+    if (!farbantwort) {
+      ansicht.rollElement.dataset.farbe = 'nein';
+      return;
+    }
+    const stueckeNachZeile = stueckeJeZeile(farbantwort);
+    const zeilenElemente = ansicht.rollElement.querySelectorAll('tr[data-art]');
+    const blockAuflegen = anfang => {
+      if (!aktuell()) {
+        return;
+      }
+      const ende = Math.min(anfang + BLOCK_ZEILEN, zeilen.length);
+      for (let index = anfang; index < ende; index += 1) {
+        if (stueckeNachZeile.has(index)) {
+          const zeile = zeilen[index];
+          const teile = farbteile(sichtbarTeile(zeile.text), stueckeNachZeile.get(index));
+          zeilenElemente[index].lastElementChild.replaceChildren(...textzellenInhalt(zeile, teile));
+        }
+      }
+      if (ende < zeilen.length) {
+        setTimeout(() => blockAuflegen(ende), 0);
+        return;
+      }
+      ansicht.rollElement.dataset.farbe = 'ja';
+    };
+    blockAuflegen(0);
   }
 
   /** Ein Block mit `content-visibility: auto` (Höhe vorab geschätzt), darin eine Tabelle: Spalten alt | neu | Vorzeichen | Text. */
@@ -257,21 +321,31 @@
     return zelleElement;
   }
 
-  /** Der Text mit Lesetext für Screenreader und sichtbar gemachten Zeichen; jede Marke ist ein Bild mit Namen, ihr Text bleibt im Dokument. */
   function textzelleElement(zeile) {
     const zelleElement = document.createElement('td');
     zelleElement.className = 'c';
-    const lesetext = LESETEXT[zeile.art];
-    if (lesetext) {
-      zelleElement.append(textElement('vh', lesetext));
-    }
-    for (const teil of sichtbarTeile(zeile.text)) {
-      zelleElement.append(teilKnoten(teil));
-    }
+    zelleElement.append(...textzellenInhalt(zeile, sichtbarTeile(zeile.text)));
     return zelleElement;
   }
 
+  /** Der Text mit Lesetext für Screenreader und sichtbar gemachten Zeichen; jede Marke ist ein Bild mit Namen, ihr Text bleibt im Dokument.
+      Mit Farbe tragen die Teile eine Klasse `tk-…` aus farbe-werte.js; der Text ist mit und ohne Farbe derselbe. */
+  function textzellenInhalt(zeile, teile) {
+    const knoten = [];
+    const lesetext = LESETEXT[zeile.art];
+    if (lesetext) {
+      knoten.push(textElement('vh', lesetext));
+    }
+    for (const teil of teile) {
+      knoten.push(teilKnoten(teil));
+    }
+    return knoten;
+  }
+
   function teilKnoten(teil) {
+    if (teil.klasse) {
+      return textElement(teil.klasse, teil.text);
+    }
     if (!teil.marke) {
       return document.createTextNode(teil.text);
     }
