@@ -70,6 +70,12 @@ internal sealed class ZusammenRepo : IDisposable
         repo.SchreibeDatei(pfad, inhalt);
     }
 
+    /// <summary>Für Tests: eine weitere Datei im Arbeitsordner (nicht committet).</summary>
+    public void LegeDateiAn(string pfad, string inhalt)
+    {
+        repo.SchreibeDatei(pfad, inhalt);
+    }
+
     private void Committe(string name, string betreff)
     {
         weitereCommits++;

@@ -14,7 +14,8 @@ namespace GitReviewA.Git;
 /// </summary>
 internal static class GitStart
 {
-    private const string Leerbaum = "4b825dc642cb6eb9a060e54bf8d69288fbee4904";
+    /// <summary>Der leere Baum: git kennt ihn ohne Objekt; die Basis eines Wurzelcommits ist leer.</summary>
+    internal const string Leerbaum = "4b825dc642cb6eb9a060e54bf8d69288fbee4904";
 
     public static ProcessStartInfo Im(string arbeitsordner)
     {

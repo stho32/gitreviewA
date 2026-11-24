@@ -27,6 +27,17 @@ internal static class GitLeser
         return ElternfolgeAus(ausgabe, auswahl);
     }
 
+    /// <summary>
+    /// Die Netto-Änderungen der lückenlosen Kette in einem Aufruf: jede Datei einmal gegen den Elternstand des ältesten Commits.
+    /// Eine leere Basis ist der leere Baum (ein Wurzelcommit). Umbenennungen erkennt `-M`, Submodule bleiben sichtbar.
+    /// </summary>
+    public static Dateiaenderungen NettoDateienLesen(string basis, string spitze, string arbeitsordner)
+    {
+        var start = GitDiffNettoStart(basis, spitze, arbeitsordner);
+        var ausgabe = AusfuehrenAlsBytes(start, $"git diff (Netto {Kurz(basis)}..{Kurz(spitze)})");
+        return DateiaenderungenParser.Parse(ausgabe);
+    }
+
     /// <summary>Merge-Commits gegen den ersten Elternteil (Entscheidung des PO, gilt auch für den Diff einer Datei).</summary>
     public static Dateiaenderungen DateienLesen(string hash, string arbeitsordner)
     {
@@ -287,6 +298,37 @@ internal static class GitLeser
             }
         }
         return new Commitzeilen(auswahl);
+    }
+
+    private static ProcessStartInfo GitDiffNettoStart(string basis, string spitze, string arbeitsordner)
+    {
+        var start = GitStart.Im(arbeitsordner);
+        start.ArgumentList.Add("diff");
+        start.ArgumentList.Add("--no-color");
+        start.ArgumentList.Add("--no-ext-diff");
+        start.ArgumentList.Add("--no-textconv");
+        start.ArgumentList.Add("--ignore-submodules=none");
+        start.ArgumentList.Add("-M");
+        start.ArgumentList.Add("--raw");
+        start.ArgumentList.Add("--numstat");
+        start.ArgumentList.Add("--no-abbrev");
+        start.ArgumentList.Add("-z");
+        start.ArgumentList.Add("--end-of-options");
+        start.ArgumentList.Add(BasisOderLeerbaum(basis));
+        start.ArgumentList.Add(spitze);
+        return start;
+    }
+
+    private static string BasisOderLeerbaum(string basis)
+    {
+        var istLeer = basis.Length == 0;
+        return istLeer ? GitStart.Leerbaum : basis;
+    }
+
+    private static string Kurz(string hash)
+    {
+        var istLeer = hash.Length == 0;
+        return istLeer ? "leer" : hash[..7];
     }
 
     private static ProcessStartInfo GitElternfolgeStart(CommitHashes auswahl, string arbeitsordner)
