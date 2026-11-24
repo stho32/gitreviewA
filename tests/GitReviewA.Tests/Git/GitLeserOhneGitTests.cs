@@ -7,7 +7,7 @@ namespace GitReviewA.Tests.Git;
 public class GitLeserOhneGitTests
 {
     [Test]
-    public void Wenn_git_nicht_im_Suchpfad_dann_GitFehler_mit_Hinweis_auf_git()
+    public void Wenn_git_nicht_im_Suchpfad_dann_GitNichtGefunden_mit_Hinweis_auf_git()
     {
         var leererOrdner = Directory.CreateTempSubdirectory("gitreviewa-ohne-git-").FullName;
         var alterSuchpfad = Environment.GetEnvironmentVariable("PATH");
@@ -15,7 +15,7 @@ public class GitLeserOhneGitTests
         {
             Environment.SetEnvironmentVariable("PATH", leererOrdner);
 
-            var fehler = Assert.Throws<GitFehler>(() => GitLeser.Lesen(new CommitHashes(["deadbeef"]), leererOrdner));
+            var fehler = Assert.Throws<GitNichtGefunden>(() => GitLeser.Lesen(new CommitHashes(["deadbeef"]), leererOrdner));
 
             Assert.That(fehler.Message, Does.StartWith("git ließ sich nicht starten"));
         }

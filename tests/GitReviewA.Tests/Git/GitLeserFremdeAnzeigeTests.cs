@@ -95,12 +95,14 @@ public class GitLeserFremdeAnzeigeTests
     }
 
     [Test]
-    public void Wenn_der_Ordner_in_keinem_Repo_liegt_dann_GitFehler()
+    public void Wenn_der_Ordner_in_keinem_Repo_liegt_dann_Aufruffehler_kein_Repository()
     {
         var ordner = Directory.CreateTempSubdirectory("gitreviewa-kein-repo-").FullName;
         try
         {
-            Assert.Throws<GitFehler>(() => GitLeser.WurzelLesen(ordner));
+            var fehler = Assert.Throws<Aufruffehler>(() => GitLeser.WurzelLesen(ordner));
+
+            Assert.That(fehler.Grund, Is.EqualTo(Aufrufgrund.KeinRepository));
         }
         finally
         {

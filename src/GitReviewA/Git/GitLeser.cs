@@ -35,14 +35,53 @@ internal static class GitLeser
         return UebersichtParser.Parse(ausgabe, auswahl);
     }
 
-    /// <summary>Pfade der Dateiliste sind wurzelrelativ; jeder weitere git-Aufruf läuft deshalb in der Wurzel des Arbeitsbaums.</summary>
+    /// <summary>
+    /// Pfade der Dateiliste sind wurzelrelativ; jeder weitere git-Aufruf läuft deshalb in der Wurzel des Arbeitsbaums.
+    /// Scheitert die Repoprüfung, ist der Aufruf ungültig: kein Repo, nacktes Repo oder fehlendes git — bestimmt an der Prüfstelle, nicht am git-Text.
+    /// </summary>
     public static string WurzelLesen(string startordner)
     {
         var start = GitStart.Im(startordner);
         start.ArgumentList.Add("rev-parse");
         start.ArgumentList.Add("--show-toplevel");
-        var ausgabe = Ausfuehren(start, "git rev-parse --show-toplevel");
-        return ausgabe.TrimEnd('\n');
+        try
+        {
+            return Ausfuehren(start, "git rev-parse --show-toplevel").TrimEnd('\n');
+        }
+        catch (GitNichtGefunden fehler)
+        {
+            throw Aufruffehler.Fuer(Aufrufgrund.GitNichtGefunden, fehler.Message);
+        }
+        catch (GitFehler fehler)
+        {
+            throw Aufruffehler.Fuer(Repogrund(startordner), fehler.Message);
+        }
+    }
+
+    /// <summary>Ohne Arbeitsbaum ist es ein nacktes Repository; ein auch dafür scheiternder rev-parse heißt: kein Repository.</summary>
+    private static Aufrufgrund Repogrund(string startordner)
+    {
+        var start = GitStart.Im(startordner);
+        start.ArgumentList.Add("rev-parse");
+        start.ArgumentList.Add("--is-bare-repository");
+        try
+        {
+            var ausgabe = Ausfuehren(start, "git rev-parse --is-bare-repository").TrimEnd('\n');
+            var istNackt = ausgabe == "true";
+            if (istNackt)
+            {
+                return Aufrufgrund.NacktesRepository;
+            }
+            return Aufrufgrund.KeinRepository;
+        }
+        catch (GitNichtGefunden fehler)
+        {
+            throw Aufruffehler.Fuer(Aufrufgrund.GitNichtGefunden, fehler.Message);
+        }
+        catch (GitFehler)
+        {
+            return Aufrufgrund.KeinRepository;
+        }
     }
 
     /// <summary>
@@ -496,11 +535,11 @@ internal static class GitLeser
         }
         catch (Win32Exception fehler)
         {
-            throw new GitFehler($"git ließ sich nicht starten — ist git installiert und im PATH? ({fehler.Message})");
+            throw new GitNichtGefunden($"git ließ sich nicht starten — ist git installiert und im PATH? ({fehler.Message})");
         }
         if (prozess is null)
         {
-            throw new GitFehler("git ließ sich nicht starten");
+            throw new GitNichtGefunden("git ließ sich nicht starten");
         }
         return prozess;
     }
