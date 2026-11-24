@@ -41,3 +41,9 @@ Nie vom User erfragen.
 | 2026-11-24 | R00003 Commits und Dateien sehen | Nacharbeit Security-Review #5 (Submodul, refs/replace, Richtungszeichen, Zeilenzahl, Wurzel/diff.relative, Attribute) | unklar | 2-4h | 0,6h | 0,6h | autonom |
 | 2026-11-24 | R00004 Diff einer Datei lesen | Nacharbeit Reviews #6 (Rebase auf karte/5, Unterordner, diff.submodule, Binär mit Grund und „Als Text zeigen“, core.attributesFile, Steuerzeichen im Protokoll) | unklar | 2-4h | 0,5h | 0,5h | autonom |
 | 2026-11-24 | R00007 Syntaxhervorhebung | Nacharbeit B1 dichte Inhalte (Häppchen nach Knoten, Zeichenblöcke) | Bug-Fix | – | 0,6h | – | autonom |
+| 2026-11-24 | R00013 Diff bei Name mit ungültigem Byte | Rote Spezifikation (Repo N, Kriterien 1–9, 11) | – | – | 0,1h | – | autonom |
+| 2026-11-24 | R00013 Diff bei Name mit ungültigem Byte | B1201 Rohbytes der Namen behalten | unklar | 2-4h | 0,1h | 0,1h | autonom |
+| 2026-11-24 | R00013 Diff bei Name mit ungültigem Byte | B1202 Diff mit Rohbytes über stdin lesen | unklar | 2-4h | 0,15h | 0,15h | autonom |
+| 2026-11-24 | R00013 Diff bei Name mit ungültigem Byte | B1203 Namen und Zählung prüfen | klar | 2h | 0,1h | 0,1h | autonom |
+| 2026-11-24 | R00013 Diff bei Name mit ungültigem Byte | B1204 Fehlerausgang und Anzeige | klar | 2h | 0,1h | 0,1h | autonom |
+| 2026-11-24 | R00013 Diff bei Name mit ungültigem Byte | B1205 E2E und Wegwerf-Repo Fremde Namen | unklar | 2-4h | 0,1h | 0,1h | autonom |
