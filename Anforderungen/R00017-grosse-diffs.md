@@ -59,8 +59,8 @@ Vorbereitung (herstellbar mit `git` allein; alle Dateien enden mit Zeilenumbruch
 - [ ] Gegeben ein Diff, dessen `git`-Ausgabe sich nicht lesen lässt (z. B. entfernte Objektdatei), wenn man die Datei wählt, dann steht „Diff konnte nicht gelesen werden“ (R00004) und **nicht** „zu groß“ — die beiden Ausgänge sind unterscheidbar. *Ebene: Integration.*
 
 ### Flüssiges Zeichnen (Blockgrenze)
-- [ ] Gegeben `dicht.js` (200 dichte, gefärbte Zeilen) geladen und gezeigt, wenn man durch den Diff scrollt, dann dauert keine Aufgabe des Hauptfadens länger als 150 ms (Long Tasks, `PerformanceObserver`); die Positivkontrolle (Mutant „Blockgrenze nach Zeichen statt Knoten“) erzeugt eine Aufgabe über der Grenze. *Ebene: Playwright (Long Tasks im Browser, Browser-Eigenes; Positivkontrolle).*
-- [ ] Gegeben `riesig.txt` geladen über „Trotzdem laden“, wenn man den Text, die Nummern, die Zeilenart und die Marken mit einer kleinen Datei vergleicht, dann sind sie gleich (Zuklappen und Laden ändern den Text nicht), und die Zeilen erscheinen in Blöcken, deren Knotenzahl je Block die Grenze (etwa 5 000) nicht überschreitet. *Ebene: Integration (Blockzerlegung, rein) und Playwright (Textgleichheit).*
+- [ ] Gegeben `dicht.js` (200 dichte, gefärbte Zeilen) geladen und gezeigt, wenn man durch den Diff scrollt, dann dauert keine Aufgabe des Hauptfadens länger als 150 ms (Long Tasks, `PerformanceObserver`, Färbung aktiv) — Absenzprobe; ihre Positivkontrolle ist der Knotenzähler der nächsten Zeile. *Ebene: Playwright (Long Tasks im Browser, Browser-Eigenes).*
+- [ ] Gegeben `riesig.txt` geladen über „Trotzdem laden“, wenn man den Text, die Nummern, die Zeilenart und die Marken mit einer kleinen Datei vergleicht und die Knoten je Block zählt, dann sind Text, Nummern, Zeilenart und Marken gleich (Zuklappen und Laden ändern den Text nicht), und jeder Block enthält höchstens 5 000 Knoten — gezählt werden Elemente und Textknoten; der Zähler wird rot beim Mutanten „Zeichen statt Knoten“ und beim Mutanten „Schätzung ohne Grundgerüst“. *Ebene: Integration (Blockzerlegung, Knotenzähler, Mutanten) und Playwright (Textgleichheit).*
 
 ### Fremder Text
 - [ ] Gegeben ein Repository mit `diff.external` und einem `textconv`-Marker (wie R00004), wenn man eine zugeklappte Datei wählt und „Trotzdem laden“ betätigt, dann ist keine Markerdatei entstanden (kein Programmstart), und die Zahl im Zuklapphinweis sowie die geladenen Zeilen stehen als Text (spitze Klammern sichtbar, kein Dialog, kein `img`/`b`). *Ebene: Integration (Marker-Probe) und Playwright (Fremdtext, Browser-Eigenes).*
@@ -108,7 +108,7 @@ Nach `~/.claude/skills/test-pyramide/SKILL.md` und der ATDD-Regel des Projekts (
 
 **Unit (pure Logik):**
 - `zuLang` an den Grenzen (20 000/20 001 Zeilen, 262 144/262 145 Zeichen, 10 000/10 001 Marken; Kopfzeilen zählen nicht).
-- `bloecke` nach Knotenzahl (dichte Zeilen → kleinere Blöcke; eine Zeile allein über der Grenze bleibt ein Block).
+- `bloecke` nach Knotenzahl (Elemente und Textknoten, Grundgerüst mitgezählt; dichte Zeilen → kleinere Blöcke; eine Zeile allein über der Grenze bleibt ein Block).
 - `Ausgabegrenze`-Prüfung (knapp unter/über).
 
 **Integration (gegen `DiffLesenInteractor` mit echtem `git` im Wegwerf-Repo):**
@@ -120,7 +120,7 @@ Nach `~/.claude/skills/test-pyramide/SKILL.md` und der ATDD-Regel des Projekts (
 
 **E2E (Playwright headless, Fenster 1280 × 800):**
 - Zuklappen und „Trotzdem laden“ (`riesig.txt`), Zeitkriterien ereignisgenau, verzögerte Antwort über `route`, Ansichtswechsel.
-- `dicht.js`: Long Tasks beim Scrollen mit Positivkontrolle (Mutant „Zeichen- statt Knotengrenze“).
+- `dicht.js`: Long Tasks beim Scrollen als Absenzprobe; Positivkontrolle ist der Knotenzähler je Block über `riesig.txt` (Elemente und Textknoten, höchstens 5 000; Mutanten „Zeichen statt Knoten“ und „Schätzung ohne Grundgerüst“).
 - Fremdtext und Marker über die Oberfläche.
 
 ## Abhängigkeiten
@@ -131,12 +131,12 @@ Nicht Teil dieser Anforderung: die **Frist** für `GitLeser` (Altlast; als eigen
 
 ## Offene Fragen
 
-An den product-owner (Empfehlung gilt bis zur Antwort; keine blockiert den Bau):
+Alle vier entschieden (product-owner 2026-11-24, `AI-Team/po-entscheidungen.md`, Commit 9f21fc3, Zeilen 99–102); nichts offen.
 
-1. **Zuklappgrenze**: 20 000 Diff-Zeilen (Vision) **und** die bestehenden Grenzen 262 144 Zeichen / 10 000 Marken beibehalten? Empfehlung: ja — die Zeilengrenze ist die Vision, die Zeichen- und Markengrenze schützen den DOM (viele Knoten je Zeile); sie stehen schon im Code (`diff-werte.js`). Alternative: nur die Zeilengrenze.
-2. **Ausgabegrenze beim Lesen (Bytes)**: Empfehlung **8 MiB** (kanbanD `GRENZE_EINZELN`, ein erprobter Wert). Herleitung: eine Datei an der Zuklappgrenze ist ~0,3 MB, ein feindliches 40-MB-Repo liegt 5× darüber; die Grenze ist damit groß genug, dass „Trotzdem laden“ für eine zugeklappte Datei noch funktioniert, und klein genug, dass der Speicher beschränkt bleibt. Alternative: die Grenze an die Zuklappgrenze koppeln (dann ist jede zugeklappte Datei auch nicht ladbar — der Knopf verlöre seinen Sinn).
-3. **Blockgrenze (Knoten)**: Empfehlung **5 000 Knoten je Block** (aus der Review-Empfehlung; die Auflage arbeitet in Häppchen zu 2 000 Knoten). Herleitung (Probe): heute fasst ein Block bei dichten Zeilen ~1 000 Zeichen/Zeile rund 25 Zeilen ≈ viele tausend Knoten und kostet bis 0,8 s; mit 5 000 Knoten sinkt die Blockgröße bei dichten Zeilen auf wenige Zeilen. Alternative: eine Zeichen- und eine Knotengrenze nebeneinander (beide greifen).
-4. **Frist für `GitLeser`**: Empfehlung — eigene Karte (Leitplanke für jeden `git`-Aufruf, nicht nur große Diffs). Bestätigt der product-owner/director das, bleibt I0014 auf die Ausgabegrenze beschränkt.
+1. ~~**Zuklappgrenze**: 20 000 Diff-Zeilen (Vision) **und** die bestehenden Grenzen 262 144 Zeichen / 10 000 Marken beibehalten?~~ **Entschieden**: ja, alle drei; Geltung beide Ansichten (Zeile 99).
+2. ~~**Ausgabegrenze beim Lesen (Bytes)**: 8 MiB?~~ **Entschieden**: 8 MiB; Geltung ganze Anwendung (Zeile 100).
+3. ~~**Blockgrenze (Knoten)**: 5 000 Knoten je Block?~~ **Entschieden**: 5 000 DOM-Knoten je Block, zusätzlich zur Zeilengrenze 500; Geltung beide Ansichten (Zeile 101). Die Abnahme zählt Elemente und Textknoten; die Schätzung zählt das Grundgerüst mit (Zeile 103).
+4. ~~**Frist für `GitLeser`**: eigene Karte?~~ **Entschieden**: eigene Karte; I0014 bleibt auf die Ausgabegrenze beschränkt (Zeile 102).
 
 ## Manuelle Vorbereitungstätigkeiten
 - Keine über R00001/R00004 hinaus.
