@@ -145,3 +145,10 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-24 | #3 | Reviews | code-reviewer | bestanden | 3 min | opencode: B1 und H1–H4 nachgeprüft, kein Muss · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 3-code-reviewer-2 · 0,063 $ · Karte gesamt 1,57 $ |
 | 2026-11-24 | #29 | Nacharbeit | security-reviewer | bestanden | 6 min | opencode: Muss behoben, keine dritte Form (12 Varianten) · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 29-security-reviewer-2 · 0,13 $ · Karte gesamt 10,87 $ |
 | 2026-11-24 | #3 | Entwicklertest | entwicklertester | bestanden | 3 min | opencode: US-1..US-9 bestanden, 3 Chartas, kein Befund · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 3-entwicklertester-1 · 0,12 $ · Karte gesamt 1,69 $ |
+| 2026-11-24 | #29 | Entwicklertest | entwicklertester | bestanden | 7 min | opencode: 7 Szenarien bestanden, stdout byte-genau; Anmerkung: Stand zeigt LF roh statt ⟨U+000A⟩ · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 29-entwicklertester-1 · 0,17 $ · Karte gesamt 11,04 $ |
+| 2026-11-24 | #14 | Reviews | entwickler | bestanden | 20 min | opencode: Knotenschätzung obere Schranke (5521→4994), Zähler Elemente+Textknoten, S2/S3/S5/S6 behoben, 7 Commits · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 14-entwickler-2 · 0,37 $ · Karte gesamt 1,35 $ |
+
+## Retrospektive #3 I0003 Ungültiger Aufruf (2026-11-24)
+- Durchlauf: Bau opencode 24 min, Security ohne Muss, Code-Review 1 Muss (Meldung bei teilweise auflösbarer Auswahl), Nacharbeit 29 min, Nachprüfung eng (nur code-reviewer), Entwicklertest ohne Befund. Karte gesamt 1,69 $.
+- Gate: erster Playwright-Lauf 12 rot, weil der Director `GitReviewA.dll` suchte (Datei heißt `gitreviewA.dll`) und der Treiber auf den alten Standard-Build fiel. Lehre: im Gate den DLL-Pfad fest nennen (`target-gate/bin/GitReviewA/debug/gitreviewA.dll`) und vor dem Lauf mit `ls` prüfen — ein leeres `GITREVIEWA_DLL` testet still einen alten Stand.
+- Zweiter Lauf 306/306 zweimal, NUnit 781/781.
