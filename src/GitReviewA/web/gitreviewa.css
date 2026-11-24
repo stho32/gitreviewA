@@ -111,5 +111,8 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .haken-meldung:empty{display:none}
 .haken-ziel{display:inline-flex;align-items:center;justify-content:center;flex:none;min-inline-size:var(--kd-ziel);min-block-size:var(--kd-ziel);margin-inline:calc(-1 * var(--kd-s1)) 0;cursor:pointer}
 .haken-ziel input{flex:none;inline-size:18px;block-size:18px;margin:0;accent-color:var(--kd-accent);cursor:pointer}
-.haken-ziel input:disabled{cursor:not-allowed}
+.haken-ziel input:disabled,.haken-ziel input[aria-disabled="true"]{cursor:not-allowed}
+.haken-ziel:has(input[aria-disabled="true"]){cursor:not-allowed}
+.datei-zeile .haken-grund{flex:0 1 auto;min-width:0;overflow-wrap:anywhere;font-size:12px;color:var(--kd-status-error-ink)}
+.datei-zeile .haken-grund:empty{display:none}
 .haken-ziel input:focus-visible{outline:2px solid var(--kd-accent);outline-offset:2px}

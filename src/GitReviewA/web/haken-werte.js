@@ -1,14 +1,19 @@
-/* gitreviewA — Werte des Abhakens: Fortschrittstext, Balkenanteil, Schlüssel einer Stelle, nächster Zielzustand. Reine Funktionen, im Browser
+/* gitreviewA — Werte des Abhakens: Fortschrittstext, Balkenanteil, Schlüssel einer Stelle, nächster Zielzustand, Name des Kästchens. Reine Funktionen, im Browser
    und in Node. Herkunft: kanbanD web/diff.js (gesehenZeileHtml, gesehenAnsage), ohne Tausendertrenner wie die Summe der Dateiliste. */
 (function (ziel) {
   'use strict';
 
-  /** Anzeige- und Lesetext zugleich: dieselben Worte stehen sichtbar und in der Live-Region. */
-  function fortschrittText(abgehakt, gesamt) {
+  /** Anzeige- und Lesetext zugleich: dieselben Worte stehen sichtbar und in der Live-Region. Gesperrte Stellen zählen in m, nie in n (R00014). */
+  function fortschrittText(abgehakt, gesamt, nichtLesbar) {
     if (gesamt === 0) {
       return 'Keine Dateien zum Abhaken';
     }
-    return `${abgehakt} von ${gesamt} abgehakt`;
+    const zaehler = `${abgehakt} von ${gesamt} abgehakt`;
+    const gibtEsGesperrteStellen = nichtLesbar > 0;
+    if (gibtEsGesperrteStellen) {
+      return `${zaehler} (${nichtLesbar} nicht lesbar)`;
+    }
+    return zaehler;
   }
 
   function balkenAnteil(abgehakt, gesamt) {
@@ -31,5 +36,15 @@
     return !letzterWunsch;
   }
 
-  Object.assign(ziel, { fortschrittText, balkenAnteil, stellenSchluessel, naechsterZielzustand });
+  /** Zugänglicher Name des Kästchens (Vorlage kanbanD „Gesehen“); an einer gesperrten Stelle nennt er den Grund mit. */
+  function kaestchenBezeichnung(sichtbarerPfad, sperrgrund) {
+    const bezeichnung = `Abgehakt: ${sichtbarerPfad}`;
+    const istGesperrt = sperrgrund.length > 0;
+    if (istGesperrt) {
+      return `${bezeichnung} — ${sperrgrund}`;
+    }
+    return bezeichnung;
+  }
+
+  Object.assign(ziel, { fortschrittText, balkenAnteil, stellenSchluessel, naechsterZielzustand, kaestchenBezeichnung });
 })(typeof module !== 'undefined' ? module.exports : window);

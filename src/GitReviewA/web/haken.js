@@ -1,5 +1,6 @@
 /* gitreviewA — Datei abhaken (R00011): liest den Stand aller Stellen nach der Commit-Leiste (erstes Ereignis `commit-gewaehlt`), zeigt
-   „n von m abgehakt“ mit Balken über der Dateiliste und führt die Kästchen der Dateizeilen (Ereignis `dateiliste-gezeichnet`).
+   „n von m abgehakt“ mit Balken über der Dateiliste und führt die Kästchen der Dateizeilen (Ereignis `dateiliste-gezeichnet`); an einer
+   gesperrten Stelle (R00014) steht der Grund neben der Zeile, und das Kästchen ändert nichts.
    Ein Klick sendet den Zielzustand; das Kästchen zeigt immer den vom Server bestätigten Zustand. Je Stelle ist höchstens eine Anfrage
    unterwegs; wer währenddessen erneut klickt, ändert nur den Wunsch, und die laufende Anfrage sendet ihn nach. */
 (function () {
@@ -9,7 +10,9 @@
     istLesbar: false,
     abgehakt: 0,
     gesamt: 0,
+    nichtLesbar: 0,
     bestaetigt: new Map(),
+    sperrgrund: new Map(),
     wunsch: new Map(),
     unterwegs: new Set(),
     angezeigterCommit: null,
@@ -45,8 +48,11 @@
       return;
     }
     for (const stelle of stand.stellen) {
-      zustand.bestaetigt.set(stellenSchluessel(stelle.commit, stelle.datei), stelle.abgehakt);
+      const schluessel = stellenSchluessel(stelle.commit, stelle.datei);
+      zustand.bestaetigt.set(schluessel, stelle.abgehakt);
+      zustand.sperrgrund.set(schluessel, stelle.sperrgrund);
     }
+    zustand.nichtLesbar = stand.stellen.filter(stelle => stelle.sperrgrund.length > 0).length;
     zustand.abgehakt = stand.abgehakt;
     zustand.gesamt = stand.gesamt;
     zustand.istLesbar = true;
@@ -63,14 +69,14 @@
   }
 
   function zeichneFortschritt(ansicht) {
-    const text = fortschrittText(zustand.abgehakt, zustand.gesamt);
+    const text = fortschrittText(zustand.abgehakt, zustand.gesamt, zustand.nichtLesbar);
     ansicht.zaehlerElement.textContent = text;
     ansicht.ansageElement.textContent = text;
     ansicht.balkenElement.hidden = zustand.gesamt === 0;
     ansicht.balkenElement.querySelector('.haken-anteil').style.setProperty('--anteil', String(balkenAnteil(zustand.abgehakt, zustand.gesamt)));
   }
 
-  /** Alle Kästchen der gezeichneten Liste: bestätigter Zustand, bedienbar erst mit gelesenem Stand. */
+  /** Alle Kästchen der gezeichneten Liste: bestätigter Zustand, bedienbar erst mit gelesenem Stand und nie an einer gesperrten Stelle. */
   function zeigeKaestchen(ansicht) {
     for (const kaestchenElement of ansicht.zeilenElement.querySelectorAll('input.haken')) {
       zeigeKaestchenZustand(kaestchenElement);
@@ -78,9 +84,27 @@
   }
 
   function zeigeKaestchenZustand(kaestchenElement) {
-    const pfad = kaestchenElement.closest('.datei-zeile').dataset.pfad;
-    kaestchenElement.checked = zustand.bestaetigt.get(stellenSchluessel(zustand.angezeigterCommit, pfad)) === true;
+    const zeileElement = kaestchenElement.closest('.datei-zeile');
+    const schluessel = stellenSchluessel(zustand.angezeigterCommit, zeileElement.dataset.pfad);
+    kaestchenElement.checked = zustand.bestaetigt.get(schluessel) === true;
     kaestchenElement.disabled = !zustand.istLesbar;
+    zeigeSperre(zeileElement, kaestchenElement, sperrgrundDerStelle(schluessel));
+  }
+
+  function sperrgrundDerStelle(schluessel) {
+    const istBekannt = zustand.sperrgrund.has(schluessel);
+    if (!istBekannt) {
+      return '';
+    }
+    return zustand.sperrgrund.get(schluessel);
+  }
+
+  /** Gesperrt bleibt das Kästchen fokussierbar (aria-disabled statt disabled): so finden Tastatur und Vorlesen den Grund. */
+  function zeigeSperre(zeileElement, kaestchenElement, sperrgrund) {
+    const istGesperrt = sperrgrund.length > 0;
+    kaestchenElement.setAttribute('aria-disabled', String(istGesperrt));
+    kaestchenElement.setAttribute('aria-label', kaestchenBezeichnung(sichtbarerName(zeileElement.dataset.pfad), sperrgrund));
+    zeileElement.querySelector('.haken-grund').textContent = sperrgrund;
   }
 
   /** Das native Umschalten wird verhindert: gezeichnet wird erst mit der Antwort des Servers. */
@@ -95,6 +119,10 @@
     }
     const stelle = { commit: zustand.angezeigterCommit, pfad: kaestchenElement.closest('.datei-zeile').dataset.pfad };
     const schluessel = stellenSchluessel(stelle.commit, stelle.pfad);
+    const istGesperrt = sperrgrundDerStelle(schluessel).length > 0;
+    if (istGesperrt) {
+      return;
+    }
     const istBestaetigtAbgehakt = zustand.bestaetigt.get(schluessel) === true;
     zustand.wunsch.set(schluessel, naechsterZielzustand(istBestaetigtAbgehakt, zustand.wunsch.get(schluessel)));
     ansicht.meldungElement.textContent = '';

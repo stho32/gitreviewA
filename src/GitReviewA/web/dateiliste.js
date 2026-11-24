@@ -1,6 +1,7 @@
 /* gitreviewA — Dateiliste des gewählten Commits: liest sie erst bei der Wahl (Ereignis `commit-gewaehlt`), zeigt sie flach oder als Baum
    und hält die gewählte Datei als Zustand {commit, pfad, status, alterPfad}; jede Wahl meldet das Ereignis `datei-gewaehlt`.
-   Jede Dateizeile trägt ein Kästchen zum Abhaken; dessen Zustand führt haken.js, nach jedem Zeichnen gemeldet mit `dateiliste-gezeichnet`. */
+   Jede Dateizeile trägt ein Kästchen zum Abhaken und einen Platz für den Sperrgrund; beides führt haken.js, nach jedem Zeichnen gemeldet
+   mit `dateiliste-gezeichnet`. */
 (function () {
   'use strict';
 
@@ -95,7 +96,7 @@
     dateiElement.setAttribute('aria-current', String(datei.pfad === zustand.gewaehlterPfad));
     dateiElement.dataset.pfad = datei.pfad;
     const statusElement = textElement(`status status-${datei.status}`, datei.status);
-    dateiElement.append(hakenElement(datei), statusElement, textElement('pfad', zeile.name), balkenElement(datei, groesste), textElement('zahlen mono', zahlenText(datei)));
+    dateiElement.append(hakenElement(datei), statusElement, textElement('pfad', zeile.name), textElement('haken-grund', ''), balkenElement(datei, groesste), textElement('zahlen mono', zahlenText(datei)));
     return dateiElement;
   }
 

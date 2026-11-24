@@ -1,7 +1,7 @@
 'use strict';
 // Bausteintests (ohne Browser) der reinen Funktionen des Abhakens: Fortschrittstext, Balkenanteil, Schlüssel der Stelle, nächster Zielzustand.
 const { test, expect } = require('@playwright/test');
-const { fortschrittText, balkenAnteil, stellenSchluessel, naechsterZielzustand } = require('../../../src/GitReviewA/web/haken-werte.js');
+const { fortschrittText, balkenAnteil, stellenSchluessel, naechsterZielzustand, kaestchenBezeichnung } = require('../../../src/GitReviewA/web/haken-werte.js');
 
 const HASH_P = '13ba46c707f0744779fe7c52c3e935814b908017';
 const HASH_Q = 'dd13577c75a05e64a0aa01cb6e9053d7548c83d0';
@@ -13,6 +13,19 @@ test.describe('Baustein Haken-Werte', () => {
     expect(fortschrittText(8, 8)).toBe('8 von 8 abgehakt');
     expect(fortschrittText(1000, 2000)).toBe('1000 von 2000 abgehakt');
     expect(fortschrittText(0, 0)).toBe('Keine Dateien zum Abhaken');
+  });
+
+  test('soll gesperrte Stellen nur bei k ≥ 1 als „ (k nicht lesbar)“ hinter den Zähler setzen (R00014)', () => {
+    expect(fortschrittText(0, 10, 0)).toBe('0 von 10 abgehakt');
+    expect(fortschrittText(1, 10, 1)).toBe('1 von 10 abgehakt (1 nicht lesbar)');
+    expect(fortschrittText(0, 10, 3)).toBe('0 von 10 abgehakt (3 nicht lesbar)');
+    expect(fortschrittText(7, 10, 3)).toBe('7 von 10 abgehakt (3 nicht lesbar)');
+    expect(fortschrittText(0, 0, 0)).toBe('Keine Dateien zum Abhaken');
+  });
+
+  test('soll den Namen des Kästchens mit „Abgehakt: <Pfad>“ beginnen und bei einer Sperre den Grund anhängen (R00014)', () => {
+    expect(kaestchenBezeichnung('g.txt', '')).toBe('Abgehakt: g.txt');
+    expect(kaestchenBezeichnung('f⟨0xFF⟩.txt', 'Diff nicht lesbar: Name nicht eindeutig')).toBe('Abgehakt: f⟨0xFF⟩.txt — Diff nicht lesbar: Name nicht eindeutig');
   });
 
   test('soll den Balken als Anteil n / m rechnen und bei m = 0 leer lassen', () => {
