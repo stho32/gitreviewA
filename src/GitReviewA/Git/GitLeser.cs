@@ -21,7 +21,7 @@ internal static class GitLeser
     public static Dateiaenderungen DateienLesen(string hash, string arbeitsordner)
     {
         var start = GitShowDateienStart(hash, arbeitsordner);
-        var ausgabe = Ausfuehren(start, $"git show {hash}");
+        var ausgabe = AusfuehrenAlsBytes(start, $"git show {hash}");
         return DateiaenderungenParser.Parse(ausgabe);
     }
 
@@ -30,7 +30,7 @@ internal static class GitLeser
     {
         var start = GitLogUebersichtStart(auswahl, arbeitsordner);
         var anzahl = auswahl.Anzahl.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        var ausgabe = Ausfuehren(start, $"git log (Übersicht von {anzahl} Commits)");
+        var ausgabe = AusfuehrenAlsBytes(start, $"git log (Übersicht von {anzahl} Commits)");
         return UebersichtParser.Parse(ausgabe, auswahl);
     }
 
@@ -344,6 +344,20 @@ internal static class GitLeser
         var lauf = WarteAufEnde(Starte(start));
         PruefeErfolg(lauf, aufruf);
         return lauf.Ausgabe;
+    }
+
+    /// <summary>Namen in der Ausgabe sind Bytes: erst der Parser entscheidet je Name, ob er gültiges UTF-8 ist.</summary>
+    private static byte[] AusfuehrenAlsBytes(ProcessStartInfo start, string aufruf)
+    {
+        using var prozess = Starte(start);
+        var fehler = new StringBuilder();
+        prozess.ErrorDataReceived += (_, zeile) => fehler.AppendLine(zeile.Data);
+        prozess.BeginErrorReadLine();
+        using var ausgabe = new MemoryStream();
+        prozess.StandardOutput.BaseStream.CopyTo(ausgabe);
+        prozess.WaitForExit();
+        PruefeErfolg(new GitLauf(prozess.ExitCode, "", fehler.ToString().Trim()), aufruf);
+        return ausgabe.ToArray();
     }
 
     private static void PruefeErfolg(GitLauf lauf, string befehl)

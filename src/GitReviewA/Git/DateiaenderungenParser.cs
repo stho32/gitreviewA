@@ -1,8 +1,12 @@
+using System.Text;
+using GitReviewA.Fremdtext;
+
 namespace GitReviewA.Git;
 
 /// <summary>
 /// Zerlegt die Ausgabe von <c>git show --raw --numstat -z</c>: erst je Datei ein Rohdatensatz (Status, Pfad, bei Umbenennung zwei Pfade),
-/// danach je Datei in derselben Reihenfolge die Zeilenzahlen.
+/// danach je Datei in derselben Reihenfolge die Zeilenzahlen. Zerlegt wird in Bytezeichen (ein Zeichen je Byte, Latin-1): erst je Name
+/// entscheidet sich, ob er gültiges UTF-8 ist — sonst trägt er die Marke <c>⟨0xFF⟩</c> und behält seine Bytes als Rohpfad.
 /// </summary>
 internal static class DateiaenderungenParser
 {
@@ -14,13 +18,19 @@ internal static class DateiaenderungenParser
 
     private static readonly string[] AngezeigteStatus = ["A", "M", "D", "R"];
 
-    public static Dateiaenderungen Parse(string ausgabe)
+    public static Dateiaenderungen Parse(byte[] ausgabe)
     {
-        var teile = ausgabe.Split(Nul);
+        var teile = TeileInBytezeichen(ausgabe);
         var position = 0;
         var dateien = LiesDateienEinesCommits(teile, ref position);
         PruefeVollstaendigGelesen(teile, position);
         return dateien;
+    }
+
+    /// <summary>Die Ausgabe an NUL zerlegt, jedes Byte als ein Zeichen: Status, Hashes und Zahlen sind ASCII, Namen bleiben verlustfrei.</summary>
+    public static string[] TeileInBytezeichen(byte[] ausgabe)
+    {
+        return Encoding.Latin1.GetString(ausgabe).Split(Nul);
     }
 
     /// <summary>Liest ab <paramref name="position"/> die Datensätze eines Commits und lässt die Position hinter seinem letzten Teil stehen.</summary>
@@ -41,14 +51,40 @@ internal static class DateiaenderungenParser
             var traegtZweiPfade = gitStatus.StartsWith('R') || gitStatus.StartsWith('C');
             if (traegtZweiPfade)
             {
-                rohdaten.Add(new Dateiaenderung(AngezeigterStatus(gitStatus), Teil(teile, position + 1), Teil(teile, position), null, null));
+                rohdaten.Add(Umbenannt(AngezeigterStatus(gitStatus), Teil(teile, position + 1), Teil(teile, position)));
                 position += 2;
                 continue;
             }
-            rohdaten.Add(new Dateiaenderung(AngezeigterStatus(gitStatus), Teil(teile, position), null, null, null));
+            rohdaten.Add(Einzeln(AngezeigterStatus(gitStatus), Teil(teile, position)));
             position++;
         }
         return rohdaten;
+    }
+
+    private static Dateiaenderung Einzeln(string status, string pfadInBytezeichen)
+    {
+        var (pfad, rohpfad) = Name(pfadInBytezeichen);
+        return new Dateiaenderung(status, pfad, null, null, null, rohpfad);
+    }
+
+    private static Dateiaenderung Umbenannt(string status, string pfadInBytezeichen, string alterPfadInBytezeichen)
+    {
+        var (pfad, rohpfad) = Name(pfadInBytezeichen);
+        var (alterPfad, rohAlterPfad) = Name(alterPfadInBytezeichen);
+        return new Dateiaenderung(status, pfad, alterPfad, null, null, rohpfad, rohAlterPfad);
+    }
+
+    /// <summary>Der Name wie angezeigt; die Bytes nur, wenn er kein gültiges UTF-8 ist.</summary>
+    private static (string Name, Rohname? Rohname) Name(string nameInBytezeichen)
+    {
+        var bytes = Encoding.Latin1.GetBytes(nameInBytezeichen);
+        var name = FremdeBytes.Utf8MitBytemarken.GetString(bytes);
+        var istGueltigesUtf8 = System.Text.Unicode.Utf8.IsValid(bytes);
+        if (istGueltigesUtf8)
+        {
+            return (name, null);
+        }
+        return (name, new Rohname(bytes));
     }
 
     private static string AngezeigterStatus(string gitStatus)

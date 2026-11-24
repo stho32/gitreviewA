@@ -10,14 +10,13 @@ namespace GitReviewA.Git;
 /// </summary>
 internal static class UebersichtParser
 {
-    private const char Nul = '\0';
     private const string Satztrenner = "\u001e";
     private const string ZeilenumbruchVorDenDateien = "\n";
     private const int KurzHashLaenge = 7;
 
-    public static Dateiuebersicht Parse(string ausgabe, CommitHashes auswahl)
+    public static Dateiuebersicht Parse(byte[] ausgabe, CommitHashes auswahl)
     {
-        var teile = ausgabe.Split(Nul);
+        var teile = DateiaenderungenParser.TeileInBytezeichen(ausgabe);
         var position = 0;
         var commits = new List<string>();
         var stellen = new List<Stelle>();

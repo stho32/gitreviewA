@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using GitReviewA.Fremdtext;
 using GitReviewA.Git;
 using GitReviewA.Protokoll;
 using GitReviewA.Server;
@@ -26,6 +27,19 @@ public class DateienEndpunktTests
         Assert.That(antwort.StatusCode, Is.EqualTo(HttpStatusCode.OK));
         Assert.That(json, Is.EqualTo("""[{"status":"A","pfad":"README.md","alterPfad":null,"plus":2,"minus":0},{"status":"R","pfad":"LIESMICH.md","alterPfad":"README.md","plus":0,"minus":0},{"status":"A","pfad":"logo.bin","alterPfad":null,"plus":null,"minus":null}]"""));
         Assert.That(quelle.Lesevorgaenge, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task Wenn_ein_Name_kein_gueltiges_UTF_8_ist_dann_zeigt_die_Dateiliste_ihn_mit_Marke_und_ohne_seine_Bytes()
+    {
+        var mitRohpfad = new Dateiaenderung("A", "a⟨0xFF⟩.sh", null, 1, 0, new Rohname([0x61, 0xFF, 0x2E, 0x73, 0x68]));
+        var quelle = new TestDateiquelle(new() { [HashP] = new Dateiaenderungen([mitRohpfad]) });
+        await using var server = await StarteServer(quelle, new StringWriter(), Protokollstufe.Warnung);
+        using var client = new HttpClient();
+
+        var json = await client.GetStringAsync(DateienAdresse(server, HashP));
+
+        Assert.That(json, Is.EqualTo("""[{"status":"A","pfad":"a\u27E80xFF\u27E9.sh","alterPfad":null,"plus":1,"minus":0}]"""));
     }
 
     [Test]

@@ -1,3 +1,4 @@
+using System.Text;
 using GitReviewA.Aufruf;
 using GitReviewA.Git;
 using GitReviewA.Haken;
@@ -21,7 +22,7 @@ public class UebersichtParserTests
             + Kopf(HashR)
             + Kopf(HashP) + "\n" + Roh("A") + "a.txt\0" + "1\t0\ta.txt\0";
 
-        var stellen = UebersichtParser.Parse(ausgabe, new CommitHashes([HashQ, HashR, HashP])).AlsArray();
+        var stellen = UebersichtParser.Parse(Encoding.UTF8.GetBytes(ausgabe), new CommitHashes([HashQ, HashR, HashP])).AlsArray();
 
         Assert.That(stellen, Is.EqualTo(new[] { new Stelle(HashQ, "neu.txt"), new Stelle(HashQ, "LIESMICH.md"), new Stelle(HashP, "a.txt") }));
     }
@@ -31,7 +32,7 @@ public class UebersichtParserTests
     {
         var ausgabe = Kopf(HashP) + "\n" + Roh("A") + "a.txt\0" + "1\t0\ta.txt\0" + Kopf(HashR);
 
-        var uebersicht = UebersichtParser.Parse(ausgabe, new CommitHashes([HashP, HashR]));
+        var uebersicht = UebersichtParser.Parse(Encoding.UTF8.GetBytes(ausgabe), new CommitHashes([HashP, HashR]));
 
         Assert.That(uebersicht.AlsArray(), Is.EqualTo(new[] { new Stelle(HashP, "a.txt") }));
         Assert.That(uebersicht.EnthaeltCommit(HashR), Is.True);
@@ -43,7 +44,7 @@ public class UebersichtParserTests
         var falscherKopf = "\u001e" + HashR;
         var ausgabe = Kopf(HashP) + "\n" + Roh("A") + falscherKopf + "\0" + Roh("A") + ":x\0" + $"1\t0\t{falscherKopf}\0" + "1\t0\t:x\0";
 
-        var stellen = UebersichtParser.Parse(ausgabe, new CommitHashes([HashP])).AlsArray();
+        var stellen = UebersichtParser.Parse(Encoding.UTF8.GetBytes(ausgabe), new CommitHashes([HashP])).AlsArray();
 
         Assert.That(stellen, Is.EqualTo(new[] { new Stelle(HashP, falscherKopf), new Stelle(HashP, ":x") }));
     }
@@ -54,7 +55,7 @@ public class UebersichtParserTests
     {
         var ausgabe = string.Concat(koepfe.Split(',').Select(Kopf));
 
-        var fehler = Assert.Throws<GitFehler>(() => UebersichtParser.Parse(ausgabe, new CommitHashes([HashP, HashQ])));
+        var fehler = Assert.Throws<GitFehler>(() => UebersichtParser.Parse(Encoding.UTF8.GetBytes(ausgabe), new CommitHashes([HashP, HashQ])));
 
         Assert.That(fehler.Message, Does.Contain(HashP[..7]).Or.Contain(HashQ[..7]), fall);
     }
@@ -64,7 +65,7 @@ public class UebersichtParserTests
     {
         var ausgabe = Kopf(HashP) + "rest\0";
 
-        Assert.Throws<GitFehler>(() => UebersichtParser.Parse(ausgabe, new CommitHashes([HashP])));
+        Assert.Throws<GitFehler>(() => UebersichtParser.Parse(Encoding.UTF8.GetBytes(ausgabe), new CommitHashes([HashP])));
     }
 
     private static string Kopf(string hash)
