@@ -1,5 +1,5 @@
 'use strict';
-// Testsprache „Diff einer Datei lesen“ (R00004): Commits und Repos heißen wie in der User Story (A mit p, q, s; M mit m; U mit u);
+// Testsprache „Diff einer Datei lesen“ (R00004, R00013): Commits und Repos heißen wie in der User Story (A mit p, q, s; M mit m; U mit u; N mit b, n, w);
 // die Sprache kennt ihre Hashes, die Treiber darunter kennen Seite, Prozess, HTTP und git.
 const path = require('path');
 const { test: basis, expect } = require('./gitreviewa.js');
@@ -8,6 +8,7 @@ const diffSeite = require('../treiber/diff-oberflaeche.js');
 const schnittstelle = require('../treiber/diff-schnittstelle.js');
 const beobachtung = require('../treiber/beobachtung.js');
 const repos = require('../treiber/diff-repos.js');
+const fremdeNamen = require('../treiber/fremde-namen-repo.js');
 
 const FENSTER = { width: 1280, height: 800 };
 const ZEILE_FRIST_MS = 1000;
@@ -25,6 +26,7 @@ const VORBEREITUNGEN = {
   'große Binärdateien': { anlegen: repos.repoK, commits: ['k'] },
   '20 000 Zeilen': { anlegen: repos.repoU, commits: ['u'] },
   '20 000 Zeilen, eine geändert': { anlegen: repos.repoUMitV, commits: ['v'] },
+  'Repo N': { anlegen: fremdeNamen.repoN, commits: ['n', 'b'] },
 };
 
 function diffSprache(gr, page) {
@@ -72,6 +74,9 @@ function diffSprache(gr, page) {
     commitGewaehlt: commit => seite.pruefeGewaehlterCommit(page, kurz(commit)),
     commitAnsehen: commit => seite.commitWaehlen(page, kurz(commit)),
     dateiAnsehen: name => seite.dateiWaehlen(page, name),
+    /** Die `nummer`-te Zeile (ab 0) mit genau diesem Pfad, auch wenn zwei Zeilen ihn tragen oder er unsichtbare Zeichen enthält (R00013). */
+    dateizeileAnsehen: (pfad, nummer = 0) => seite.dateizeileMitPfadWaehlen(page, pfad, nummer),
+    diffNichtLesbar: text => diffSeite.pruefeFehlerOhneZeilen(page, text),
     dateienSind: async namen => {
       await expect.poll(async () => (await seite.dateilisteLesen(page)).map(eintrag => eintrag.name).sort()).toEqual([...namen].sort());
     },

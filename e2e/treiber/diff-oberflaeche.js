@@ -75,6 +75,13 @@ async function pruefeMeldung(page, pfad, text, istFehler) {
   }
 }
 
+/** Fehlermeldung statt Patch, ohne den Pfad zu vergleichen (sein Name trägt Marken für unsichtbare Zeichen); nie „Keine Zeilenänderungen“. */
+async function pruefeFehlerOhneZeilen(page, text) {
+  await expect(page.locator(MELDUNG)).toHaveText(text);
+  await expect(page.locator(MELDUNG)).toHaveClass(/\bfehler\b/);
+  await expect(page.locator(ZEILE)).toHaveCount(0);
+}
+
 const ALS_TEXT = 'Als Text zeigen';
 const TROTZDEM_LADEN = 'Trotzdem laden';
 
@@ -239,6 +246,6 @@ async function pruefeBedienbarNachAlsText(page, dateiWaehlen, datei, andereDatei
 
 module.exports = {
   pruefeBedienbarNachAlsText, ansichtWaehlen, ansichtPerTastaturWechseln, pruefeAnsicht, zeilenfarbenLesen, pruefeZeilenfarben, pruefeKontextzeileBinnen,
-  pruefeDiff, pruefeMeldung, pruefeAufforderungZurWahl, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, diffAntwortVerzoegern,
+  pruefeDiff, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, diffAntwortVerzoegern,
   pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
 };

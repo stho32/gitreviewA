@@ -123,6 +123,20 @@ async function dateiWaehlen(page, name) {
   await page.locator(DATEIZEILE).filter({ has: page.locator('.pfad', { hasText: name, exact: true }) }).click();
 }
 
+/** Klick auf die `nummer`-te Dateizeile (ab 0) mit genau diesem Pfad: zwei Zeilen können denselben Namen tragen (R00013). */
+async function dateizeileMitPfadWaehlen(page, pfad, nummer) {
+  const zeilen = page.locator(DATEIZEILE);
+  const stellenMitPfad = () => zeilen.evaluateAll((elemente, gesucht) => elemente.flatMap((element, index) => {
+    if (element.dataset.pfad === gesucht) {
+      return [index];
+    }
+    return [];
+  }), pfad);
+  await expect.poll(async () => (await stellenMitPfad()).length, `Dateizeilen mit dem Pfad ${JSON.stringify(pfad)}`).toBeGreaterThan(nummer);
+  const stellen = await stellenMitPfad();
+  await zeilen.nth(stellen[nummer]).click();
+}
+
 /** Klick auf die Dateizeile mit genau diesem Pfad (ein Name kann Teil eines anderen sein: `beispiel.cs` in `beispiel.css`). */
 async function dateiMitPfadWaehlen(page, pfad) {
   await page.locator(`${DATEIZEILE}[data-pfad="${pfad}"]`).click();
@@ -262,7 +276,7 @@ function dialogeZaehlen(page) {
 }
 
 module.exports = {
-  dateiMitPfadWaehlen,
+  dateiMitPfadWaehlen, dateizeileMitPfadWaehlen,
   pruefeLeiste, pruefeMessageVerborgen, pruefeMessage, pruefeOhneMessage, pruefeKeineFormatierung, pruefeGewaehlterCommit, pruefeDateiliste,
   pruefeDateilistenMeldung, pruefeRichtungszeichenNurAlsMarke, pruefeGewaehlteDateien, pruefeDateiwahlen, pruefeZeilenBinnen, pruefeDateizeilenBinnenNachKlick,
   dateienAntwortZurueckhalten, dialogeZaehlen,
