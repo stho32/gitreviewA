@@ -1,6 +1,6 @@
 /* gitreviewA — Diff-Bereich: liest den Diff einer Datei erst bei ihrer Wahl (Ereignis `datei-gewaehlt`) und zeigt ihn mit Nummern
    alt und neu, als „nur Änderungen“ oder „ganze Datei“ (Diffansicht); der Wechsel des Commits (`commit-gewaehlt`) hebt die Wahl auf
-   und fordert zum Wählen auf. Zeilenaufbau nach kanbanD
+   und fordert zum Wählen auf. Nach jedem Zeichnen meldet das Ereignis `diff-gezeichnet` Commit, Pfad, Ansicht und Bereich. Zeilenaufbau nach kanbanD
    web/diff.js (zeileHtml), aber als DOM-Knoten mit textContent: Diff-Text, Pfade und Hunk-Titel sind fremder Text. */
 (function () {
   'use strict';
@@ -183,6 +183,19 @@
     ansicht.rollElement.setAttribute('aria-label', name);
     ansicht.rollElement.replaceChildren(sammelElement);
     ansicht.rollElement.hidden = false;
+    meldeGezeichnet(ansicht, pfad);
+  }
+
+  /** `ersterBlockElement` erkennt der Empfänger wieder: ist er nicht mehr im Dokument, ist dieser Diff verworfen. */
+  function meldeGezeichnet(ansicht, pfad) {
+    const detail = {
+      commit: zustand.datei.commit,
+      pfad,
+      ansicht: zustand.diffansicht,
+      bereichElement: ansicht.rollElement,
+      ersterBlockElement: ansicht.rollElement.firstElementChild,
+    };
+    document.dispatchEvent(new CustomEvent('diff-gezeichnet', { detail }));
   }
 
   /** Ein Block mit `content-visibility: auto` (Höhe vorab geschätzt), darin eine Tabelle: Spalten alt | neu | Vorzeichen | Text. */

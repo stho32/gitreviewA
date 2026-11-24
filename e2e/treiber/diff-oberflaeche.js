@@ -6,7 +6,8 @@ const BEREICH = '#diff';
 const PFAD = '#diff .diff-pfad';
 const MELDUNG = '#diff .diff-meldung';
 const ROLLBEREICH = '#diff .df-sc';
-const ZEILE = '#diff .dz tr';
+/** Nur Diff-Zeilen: Anmerkungszeilen (R00010) tragen kein `data-art` und zählen nicht mit. */
+const ZEILE = '#diff .dz tr[data-art]';
 const HINWEIS_ZUR_WAHL = 'Datei wählen, um ihren Diff zu sehen';
 const VORZEICHEN = { plus: '+', minus: '−' };
 const VERZOEGERUNG_MS = 1500;
