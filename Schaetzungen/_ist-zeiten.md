@@ -21,3 +21,11 @@ Nie vom User erfragen.
 | 2026-11-24 | R00001 Mit Commit-Hashes aufrufen | B0009 Hauptablauf | Standard | 2h | 0,01h | 0,01h | autonom |
 | 2026-11-24 | R00001 Mit Commit-Hashes aufrufen | Lauf R00001 | Nacharbeit | — | — | 0,1h | autonom |
 | 2026-11-24 | R00001 Mit Commit-Hashes aufrufen | Nacharbeit Security-Review (Signaturprüfer) und Code-Review (git fehlt) | Nacharbeit | — | 0,1h | 0,1h | autonom |
+| 2026-11-24 | R00002 Beenden mit Ergebnis | Rote Spezifikation (Akzeptanztests US-1 bis US-11) | unklar | — | 0,1h | 0,1h | autonom |
+| 2026-11-24 | R00002 Beenden mit Ergebnis | B0101 Anmerkungsspeicher | Standard | 2h | 0,03h | 0,03h | autonom |
+| 2026-11-24 | R00002 Beenden mit Ergebnis | B0102 Anmerkung prüfen | Standard | 2h | 0,05h | 0,05h | autonom |
+| 2026-11-24 | R00002 Beenden mit Ergebnis | B0103 Ergebnis formatieren | unklar | 2-4h | 0,03h | 0,03h | autonom |
+| 2026-11-24 | R00002 Beenden mit Ergebnis | B0105 Anfrageschutz | Standard | 2h | 0,03h | 0,03h | autonom |
+| 2026-11-24 | R00002 Beenden mit Ergebnis | B0104 Endpunkt Anmerkung anlegen | Standard | 2h | 0,05h | 0,05h | autonom |
+| 2026-11-24 | R00002 Beenden mit Ergebnis | B0106 Beenden-Ablauf | unklar | 2-4h | 0,05h | 0,05h | autonom |
+| 2026-11-24 | R00002 Beenden mit Ergebnis | B0107 Beenden in der Oberfläche | Standard | 2h | 0,03h | 0,03h | autonom |
