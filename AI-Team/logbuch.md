@@ -46,3 +46,6 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-24 | #22 | Detailplanung | planer | bestanden | 6 min | R00008 + User Story (17 Szenarien), I0022 bis Bubble B0701–B0706 · claude · sonnet · Lauf 22-planer-1 · 1,11 $ · Karte gesamt 1,11 $ |
 | 2026-11-24 | #22 | Detailplanung | product-owner | bestanden | 0 min | 5 Fragen nach Empfehlung; Gelesen vollständig · claude · sonnet · Lauf 22-product-owner-1 · 0,25 $ · Karte gesamt 1,36 $ |
 | 2026-11-24 | #6 | Nacharbeit | product-owner | bestanden | 2 min | Binärdatei: Grund + Schalter „als Text zeigen“ · claude · sonnet · Lauf 6-product-owner-2 · 0,20 $ · Karte gesamt 3,31 $ |
+| 2026-11-24 | #8 | Detailplanung | planer | bestanden | 10 min | R00007 + User Story, I0008 bis Bubble B0601–B0608 · claude · sonnet · Lauf 8-planer-1 · 0,97 $ · Karte gesamt 0,97 $ |
+| 2026-11-24 | #5 | Nacharbeit | entwickler | bestanden | 12 min | 3 Muss + Ergänzung (Wurzel, diff.relative, attr-source, bigFileThreshold) + Sollte Zeilenzahl; NUnit 256, Playwright 62 · claude · opus · Lauf 5-entwickler-2 · 2,31 $ · Karte gesamt 5,13 $ |
+| 2026-11-24 | #8 | Detailplanung | product-owner | bestanden | 2 min | 5 Fragen; TypeScript abweichend vom planer aufgenommen · claude · sonnet · Lauf 8-product-owner-1 · 0,27 $ · Karte gesamt 1,24 $ |
