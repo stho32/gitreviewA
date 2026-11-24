@@ -1,3 +1,4 @@
+using GitReviewA.Anmerkungen;
 using GitReviewA.Aufruf;
 using GitReviewA.Beenden;
 using GitReviewA.Browser;
@@ -9,7 +10,6 @@ namespace GitReviewA;
 
 internal static class Program
 {
-    private const int ExitBeendet = 0;
     private const int ExitLaufGescheitert = 1;
     private const int ExitUngueltigerAufruf = 2;
     private const string BrowserVariable = "GITREVIEWA_BROWSER";
@@ -24,10 +24,10 @@ internal static class Program
         }
         var startauftrag = aufruf.Startauftrag;
         var protokoll = NeuesProtokoll(startauftrag.Mindeststufe);
+        using var abbruchsignale = Abbruchsignale.Abfangen();
         try
         {
-            await LaufeBisZumEnde(startauftrag, protokoll);
-            return ExitBeendet;
+            return await LaufeBisZumEnde(startauftrag, abbruchsignale, protokoll);
         }
         catch (GitFehler fehler)
         {
@@ -41,7 +41,7 @@ internal static class Program
         }
     }
 
-    private static async Task LaufeBisZumEnde(Startauftrag startauftrag, StderrProtokoll protokoll)
+    private static async Task<int> LaufeBisZumEnde(Startauftrag startauftrag, Abbruchsignale abbruchsignale, StderrProtokoll protokoll)
     {
         var commits = GitLeser.Lesen(startauftrag.Hashes, Environment.CurrentDirectory);
         await using var server = await Webserver.StartenAsync(startauftrag.Port, commits, Oberflaeche.AusDemProgramm(), protokoll);
@@ -50,11 +50,30 @@ internal static class Program
         {
             OeffneBrowser(server.Adresse, protokoll);
         }
-        await server.WartenBisBeendetAsync();
-        if (server.Anmerkungen.IstAbgeschlossen)
+        await WartenBisBeendetOderAbgebrochen(server, abbruchsignale);
+        var ausgang = AbbruchEntscheidung.Entscheide(server.Anmerkungen.IstAbgeschlossen);
+        GibErgebnisOderAbbruchAus(ausgang, server.Anmerkungen, protokoll);
+        return ausgang.ExitCode;
+    }
+
+    private static async Task WartenBisBeendetOderAbgebrochen(Webserver server, Abbruchsignale abbruchsignale)
+    {
+        var kamAbbruchVorDemServerstart = abbruchsignale.IstAbbruchAngefordert;
+        if (kamAbbruchVorDemServerstart)
         {
-            StdoutErgebnis.Schreibe(ErgebnisFormatierer.Formatiere(server.Anmerkungen.Schnappschuss()));
+            return;
         }
+        await server.WartenBisBeendetAsync();
+    }
+
+    private static void GibErgebnisOderAbbruchAus(Laufausgang ausgang, Anmerkungsspeicher anmerkungen, StderrProtokoll protokoll)
+    {
+        if (ausgang.IstAbgebrochen)
+        {
+            protokoll.Melde(Protokollstufe.Warnung, "Abbruch", "Review abgebrochen");
+            return;
+        }
+        StdoutErgebnis.Schreibe(ErgebnisFormatierer.Formatiere(anmerkungen.Schnappschuss()));
     }
 
     private static void OeffneBrowser(string adresse, StderrProtokoll protokoll)
