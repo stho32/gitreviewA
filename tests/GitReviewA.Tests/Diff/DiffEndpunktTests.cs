@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using GitReviewA.Diff;
+using GitReviewA.Fremdtext;
 using GitReviewA.Git;
 using GitReviewA.Protokoll;
 using GitReviewA.Server;
@@ -227,6 +228,50 @@ public class DiffEndpunktTests
         Assert.That(fehlerzeilen, Has.Count.EqualTo(1));
         Assert.That(fehlerzeilen[0], Does.Contain("[Diff]").And.Contain(HashQ).And.Contain("src/b.txt"));
         Assert.That(danachP.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+    }
+
+    [Test]
+    public async Task Wenn_zwei_Dateien_den_Namen_tragen_dann_422_mit_Meldung_ohne_Diff_Lesevorgang_und_Debug_Zeile_nur_mit_Laenge()
+    {
+        var doppelgaenger = new Dateiaenderungen([
+            new Dateiaenderung("A", "markenwort⟨0xFF⟩.txt", null, 1, 0),
+            new Dateiaenderung("A", "markenwort⟨0xFF⟩.txt", null, 1, 0, new Rohname([0x6D, 0xFF])),
+            new Dateiaenderung("M", "src/b.txt", null, 2, 1),
+        ]);
+        var diffquelle = new TestDiffquelle(PatchVonB);
+        var protokollziel = new StringWriter();
+        await using var server = await StarteServer(new TestDateiquelle(new() { [HashQ] = doppelgaenger }), diffquelle, protokollziel, Protokollstufe.Debug);
+        using var client = new HttpClient();
+
+        var antwort = await client.GetAsync(DiffAdresse(server, HashQ, "markenwort⟨0xFF⟩.txt"));
+        var json = await antwort.Content.ReadAsStringAsync();
+        var danachB = await client.GetAsync(DiffAdresse(server, HashQ, "src/b.txt"));
+
+        Assert.That(antwort.StatusCode, Is.EqualTo(HttpStatusCode.UnprocessableEntity));
+        Assert.That(JsonSerializer.Deserialize<JsonElement>(json).GetProperty("meldung").GetString(), Is.EqualTo("Diff dieser Datei nicht lesbar (Name mit ungültigem Byte)"));
+        Assert.That(danachB.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        Assert.That(diffquelle.Lesevorgaenge, Is.EqualTo(1), "nur src/b.txt");
+        var zeilen = protokollziel.ToString().Split('\n');
+        Assert.That(zeilen.Count(zeile => zeile.Contains("markenwort")), Is.Zero);
+        Assert.That(zeilen.Count(zeile => zeile.Contains("mehrere Dateien tragen den Namen (Länge 20)")), Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task Wenn_der_Patch_der_Zaehlung_der_Dateiliste_widerspricht_dann_500_mit_Meldung_und_einer_Fehlerzeile()
+    {
+        var dateien = new TestDateiquelle(new() { [HashQ] = DateienVonQ() });
+        var protokollziel = new StringWriter();
+        await using var server = await StarteServer(dateien, TestDiffquelle.Leer(), protokollziel, Protokollstufe.Warnung);
+        using var client = new HttpClient();
+
+        var antwort = await client.GetAsync(DiffAdresse(server, HashQ, "src/b.txt"));
+        var json = await antwort.Content.ReadAsStringAsync();
+
+        Assert.That(antwort.StatusCode, Is.EqualTo(HttpStatusCode.InternalServerError));
+        Assert.That(json, Is.EqualTo("""{"meldung":"Diff konnte nicht gelesen werden"}"""));
+        var fehlerzeilen = protokollziel.ToString().Split('\n').Where(zeile => zeile.Contains(" FEHLER ")).ToList();
+        Assert.That(fehlerzeilen, Has.Count.EqualTo(1));
+        Assert.That(fehlerzeilen[0], Does.Contain(HashQ).And.Contain("src/b.txt").And.Contain("+2 −1"));
     }
 
     [Test]

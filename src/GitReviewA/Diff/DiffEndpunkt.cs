@@ -6,12 +6,13 @@ namespace GitReviewA.Diff;
 
 /// <summary>
 /// Adapter zwischen HTTP und <see cref="DiffLesenInteractor"/>: liest die Anfrage — ohne Pfad oder mit einem Umfang außerhalb der festen Liste 400 —
-/// und bildet das Ergebnis auf den Status ab.
+/// und bildet das Ergebnis auf den Status ab: ein Name, der keine Datei eindeutig meint oder sich nicht an git geben lässt, ist 422.
 /// </summary>
 internal static class DiffEndpunkt
 {
     public const string Muster = "/api/commits/{hash}/diff";
     private const string Fehlermeldung = "Diff konnte nicht gelesen werden";
+    private const string NameNichtLesbarMeldung = "Diff dieser Datei nicht lesbar (Name mit ungültigem Byte)";
     private const string UmfangParameter = "umfang";
 
     private static readonly Dictionary<string, Diffumfang> UmfangNachWert = new(StringComparer.Ordinal)
@@ -57,6 +58,8 @@ internal static class DiffEndpunkt
                 return Results.NotFound();
             case Diffausgang.NichtLesbar:
                 return Results.Json(new MeldungAntwort(Fehlermeldung), JsonAntwort.Optionen, statusCode: StatusCodes.Status500InternalServerError);
+            case Diffausgang.NameNichtLesbar:
+                return Results.Json(new MeldungAntwort(NameNichtLesbarMeldung), JsonAntwort.Optionen, statusCode: StatusCodes.Status422UnprocessableEntity);
             default:
                 throw new InvalidOperationException($"Unbekannter Ausgang {ergebnis.Ausgang}");
         }
