@@ -14,7 +14,8 @@ public class OberflaecheTests
 
         Assert.That(gefunden, Is.True);
         Assert.That(datei?.Inhaltstyp, Does.StartWith("text/html"));
-        Assert.That(Encoding.UTF8.GetString(datei?.Inhalt ?? []), Does.Contain("id=\"commit-liste\""));
+        Assert.That(datei, Is.Not.Null);
+        Assert.That(Encoding.UTF8.GetString(datei!.Inhalt), Does.Contain("id=\"commit-liste\""));
     }
 
     [TestCase("commits.js", "text/javascript")]
@@ -50,13 +51,18 @@ public class OberflaecheTests
     public void Wenn_Ausgabeordner_durchsucht_dann_keine_losen_Dateien_der_Oberflaeche()
     {
         var ausgabeordner = Path.GetDirectoryName(typeof(Oberflaeche).Assembly.Location)!;
-        string[] endungen = [".html", ".js", ".css", ".woff2"];
 
         var loseDateien = Directory.EnumerateFiles(ausgabeordner, "*", SearchOption.AllDirectories)
-            .Where(datei => endungen.Contains(Path.GetExtension(datei)))
+            .Where(IstDateiDerOberflaeche)
             .ToList();
 
         Assert.That(File.Exists(Path.Combine(ausgabeordner, "gitreviewA.dll")), Is.True);
         Assert.That(loseDateien, Is.Empty);
+    }
+
+    private static bool IstDateiDerOberflaeche(string datei)
+    {
+        string[] endungenDerOberflaeche = [".html", ".js", ".css", ".woff2"];
+        return endungenDerOberflaeche.Contains(Path.GetExtension(datei), StringComparer.OrdinalIgnoreCase);
     }
 }

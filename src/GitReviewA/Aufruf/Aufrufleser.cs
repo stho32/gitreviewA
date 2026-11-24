@@ -11,93 +11,91 @@ internal static partial class Aufrufleser
 
     public static Aufrufergebnis Lesen(string[] argumente)
     {
-        var hashes = new List<string>();
-        var port = FreierPort;
-        var browserOeffnen = true;
-        var istVerbose = false;
-        var istQuiet = false;
-
+        var sammlung = new Aufrufsammlung();
         for (var position = 0; position < argumente.Length; position++)
         {
-            var argument = argumente[position];
-            switch (argument)
+            var fehlermeldung = LeseArgument(argumente, ref position, sammlung);
+            if (fehlermeldung is not null)
             {
-                case "--kein-browser":
-                    browserOeffnen = false;
-                    break;
-                case "--verbose":
-                    istVerbose = true;
-                    break;
-                case "--quiet":
-                    istQuiet = true;
-                    break;
-                case "--port":
-                    position++;
-                    var portergebnis = LesePort(argumente, position);
-                    if (portergebnis is null)
-                    {
-                        return Aufrufergebnis.Ungueltig($"--port erwartet eine Zahl von {FreierPort} bis {HoechsterPort}.");
-                    }
-                    port = portergebnis.Value;
-                    break;
-                default:
-                    var istCommitHash = CommitHashMuster().IsMatch(argument);
-                    if (!istCommitHash)
-                    {
-                        return Aufrufergebnis.Ungueltig(KeinHashMeldung(position));
-                    }
-                    hashes.Add(argument);
-                    break;
+                return Aufrufergebnis.Ungueltig(fehlermeldung);
             }
         }
-
-        return Zusammenstellen(hashes, port, browserOeffnen, istVerbose, istQuiet);
+        return Zusammenstellen(sammlung);
     }
 
-    private static int? LesePort(string[] argumente, int position)
+    private static string? LeseArgument(string[] argumente, ref int position, Aufrufsammlung sammlung)
     {
+        switch (argumente[position])
+        {
+            case "--kein-browser":
+                sammlung.BrowserOeffnen = false;
+                return null;
+            case "--verbose":
+                sammlung.IstVerbose = true;
+                return null;
+            case "--quiet":
+                sammlung.IstQuiet = true;
+                return null;
+            case "--port":
+                position++;
+                return LesePort(argumente, position, sammlung);
+            default:
+                return LeseHash(argumente[position], position, sammlung);
+        }
+    }
+
+    private static string? LesePort(string[] argumente, int position, Aufrufsammlung sammlung)
+    {
+        var ungueltigerPort = $"--port erwartet eine Zahl von {FreierPort} bis {HoechsterPort}.";
         var wertFehlt = position >= argumente.Length;
         if (wertFehlt)
         {
-            return null;
+            return ungueltigerPort;
         }
         var istZahl = int.TryParse(argumente[position], NumberStyles.None, CultureInfo.InvariantCulture, out var port);
         var istGueltigerPort = istZahl && port <= HoechsterPort;
         if (!istGueltigerPort)
         {
-            return null;
+            return ungueltigerPort;
         }
-        return port;
+        sammlung.Port = port;
+        return null;
     }
 
-    private static string KeinHashMeldung(int position)
+    private static string? LeseHash(string argument, int position, Aufrufsammlung sammlung)
     {
-        return $"Argument {position + 1} ist weder eine bekannte Option noch ein Commit-Hash (4 bis 64 Hexziffern).";
+        var istCommitHash = CommitHashMuster().IsMatch(argument);
+        if (!istCommitHash)
+        {
+            return $"Argument {position + 1} ist weder eine bekannte Option noch ein Commit-Hash (4 bis 64 Hexziffern).";
+        }
+        sammlung.Hashes.Add(argument);
+        return null;
     }
 
-    private static Aufrufergebnis Zusammenstellen(List<string> hashes, int port, bool browserOeffnen, bool istVerbose, bool istQuiet)
+    private static Aufrufergebnis Zusammenstellen(Aufrufsammlung sammlung)
     {
-        var stufenSchliessenSichAus = istVerbose && istQuiet;
+        var stufenSchliessenSichAus = sammlung.IstVerbose && sammlung.IstQuiet;
         if (stufenSchliessenSichAus)
         {
             return Aufrufergebnis.Ungueltig("--verbose und --quiet schließen sich aus.");
         }
-        var keinCommitAngegeben = hashes.Count == 0;
+        var keinCommitAngegeben = sammlung.Hashes.Count == 0;
         if (keinCommitAngegeben)
         {
             return Aufrufergebnis.Ungueltig("Kein Commit angegeben: gitreviewA <hash…> [--port <n>] [--kein-browser] [--verbose] [--quiet]");
         }
-        var mindeststufe = Mindeststufe(istVerbose, istQuiet);
-        return Aufrufergebnis.Gueltig(new Startauftrag(new CommitHashes(hashes), port, browserOeffnen, mindeststufe));
+        var startauftrag = new Startauftrag(new CommitHashes(sammlung.Hashes), sammlung.Port, sammlung.BrowserOeffnen, Mindeststufe(sammlung));
+        return Aufrufergebnis.Gueltig(startauftrag);
     }
 
-    private static Protokollstufe Mindeststufe(bool istVerbose, bool istQuiet)
+    private static Protokollstufe Mindeststufe(Aufrufsammlung sammlung)
     {
-        if (istVerbose)
+        if (sammlung.IstVerbose)
         {
             return Protokollstufe.Debug;
         }
-        if (istQuiet)
+        if (sammlung.IstQuiet)
         {
             return Protokollstufe.Fehler;
         }
@@ -106,4 +104,17 @@ internal static partial class Aufrufleser
 
     [GeneratedRegex(@"^[0-9a-fA-F]{4,64}\z", RegexOptions.CultureInvariant)]
     private static partial Regex CommitHashMuster();
+
+    private sealed class Aufrufsammlung
+    {
+        public List<string> Hashes { get; } = [];
+
+        public int Port { get; set; } = FreierPort;
+
+        public bool BrowserOeffnen { get; set; } = true;
+
+        public bool IstVerbose { get; set; }
+
+        public bool IstQuiet { get; set; }
+    }
 }
