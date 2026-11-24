@@ -19,9 +19,17 @@ internal sealed class WegwerfRepo : IDisposable
     {
         var ordner = Directory.CreateTempSubdirectory("gitreviewa-test-").FullName;
         var repo = new WegwerfRepo(ordner);
-        repo.Git("init", "-q", "-b", "main");
-        repo.Hashes = betreffe.Select((betreff, index) => repo.Committe(betreff, index)).ToList();
-        return repo;
+        try
+        {
+            repo.Git("init", "-q", "-b", "main");
+            repo.Hashes = betreffe.Select((betreff, index) => repo.Committe(betreff, index)).ToList();
+            return repo;
+        }
+        catch
+        {
+            repo.Dispose();
+            throw;
+        }
     }
 
     public string Git(params string[] argumente)
