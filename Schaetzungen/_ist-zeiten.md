@@ -29,3 +29,12 @@ Nie vom User erfragen.
 | 2026-11-24 | R00002 Beenden mit Ergebnis | B0104 Endpunkt Anmerkung anlegen | Standard | 2h | 0,05h | 0,05h | autonom |
 | 2026-11-24 | R00002 Beenden mit Ergebnis | B0106 Beenden-Ablauf | unklar | 2-4h | 0,05h | 0,05h | autonom |
 | 2026-11-24 | R00002 Beenden mit Ergebnis | B0107 Beenden in der Oberfläche | Standard | 2h | 0,03h | 0,03h | autonom |
+| 2026-11-24 | R00003 Commits und Dateien sehen | B0202 Dateiliste parsen | unklar | 2-4h | 0,08h | 0,08h | autonom |
+| 2026-11-24 | R00003 Commits und Dateien sehen | B0201 Commitdetails lesen | Standard | 2h | 0,05h | 0,05h | autonom |
+| 2026-11-24 | R00003 Commits und Dateien sehen | B0203 Dateiliste lesen | Standard | 2h | 0,08h | 0,08h | autonom |
+| 2026-11-24 | R00003 Commits und Dateien sehen | B0204 Endpunkte Commits und Dateien | unklar | 2-4h | 0,08h | 0,08h | autonom |
+| 2026-11-24 | R00003 Commits und Dateien sehen | B0205 Commit-Leiste | unklar | 2-4h | 0,1h | 0,1h | autonom |
+| 2026-11-24 | R00003 Commits und Dateien sehen | B0206 Dateiliste flach | Standard | 2h | 0,05h | 0,05h | autonom |
+| 2026-11-24 | R00003 Commits und Dateien sehen | B0207 Dateiliste als Baum | unklar | 2-4h | 0,05h | 0,05h | autonom |
+| 2026-11-24 | R00003 Commits und Dateien sehen | B0208 Auswahl und Laden | unklar | 2-4h | 0,05h | 0,05h | autonom |
+| 2026-11-24 | R00003 Commits und Dateien sehen | B0209 E2E und Wegwerf-Repos | unklar | 2-4h | 0,25h | 0,25h | autonom |
