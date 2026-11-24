@@ -6,6 +6,7 @@ const os = require('os');
 const path = require('path');
 const base = require('@playwright/test');
 const { repoAnlegen, repoEntfernen } = require('../treiber/wegwerf-repo.js');
+const { imHintergrundStarten, pruefeSigintIgnoriert } = require('../treiber/hintergrund-start.js');
 const { programmStarten, adresseAbwarten, programmBeenden, lauschendeAdressen } = require('../treiber/programm.js');
 const { anfrage, senden } = require('../treiber/http.js');
 const oberflaeche = require('../treiber/oberflaeche.js');
@@ -35,6 +36,15 @@ function welt() {
   /** Startet gitreviewA und wartet auf die Startzeile. Standard: ohne Browser, Standardstufe. */
   async function gitreviewAStarten(repo, hashes, { mitBrowser = false, browserBefehl, zusatz = [] } = {}) {
     const lauf = gitreviewAAufrufen(repo, hashes, { mitBrowser, browserBefehl, zusatz });
+    lauf.adresse = await adresseAbwarten(lauf, STARTZEILE_FRIST_MS);
+    return lauf;
+  }
+
+  /** Startet gitreviewA wie eine aufrufende KI: aus einem nicht-interaktiven Skript mit `… &`, ohne Browser. */
+  async function gitreviewAImHintergrundStarten(repo, hashes, { mitSetsid = false } = {}) {
+    const lauf = imHintergrundStarten(repo.ordner, [...hashes, '--kein-browser'], { mitSetsid });
+    laeufe.push(lauf);
+    await pruefeSigintIgnoriert(lauf);
     lauf.adresse = await adresseAbwarten(lauf, STARTZEILE_FRIST_MS);
     return lauf;
   }
@@ -229,7 +239,7 @@ function welt() {
   }
 
   return {
-    repoMitCommits, gitreviewAStarten, gitreviewAAufrufen, aufrufBeendet, aufEndeWarten, laeuftNoch, bisSekundenNachStart, laufAbbrechen,
+    repoMitCommits, gitreviewAStarten, gitreviewAImHintergrundStarten, gitreviewAAufrufen, aufrufBeendet, aufEndeWarten, laeuftNoch, bisSekundenNachStart, laufAbbrechen,
     zustandAbfragen, commitsAbfragen, commitsStatusOderNull, freierPort, startseiteAbfragen, stderrZeilen, portVon, hostDesLaufs,
     lauschendeAdressen, aufzeichnenderBrowser, gitAttrappe, aufraeumen,
     anmerkungAnlegen, beendenAnfordern, beendenUndDauerMessen, fremdeSeite, ergebnis,

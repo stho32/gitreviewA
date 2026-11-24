@@ -46,6 +46,25 @@ test.describe('Review abbrechen', () => {
     await abbruch.sollOhneErgebnisAbgebrochenSein(lauf);
   });
 
+  for (const { name, anmerkung, mitSetsid } of [
+    { name: 'ohne Anmerkung', anmerkung: false, mitSetsid: false },
+    { name: 'mit Anmerkung', anmerkung: true, mitSetsid: false },
+    { name: 'mit setsid', anmerkung: false, mitSetsid: true },
+  ]) {
+    test(`soll aus einem Skript im Hintergrund gestartet bei Strg+C ohne Ergebnis mit 130 enden (${name})`, async ({ gr, abbruch }) => {
+      const repo = gr.repoMitCommits();
+      const [a] = repo.hashes;
+      const lauf = await gr.gitreviewAImHintergrundStarten(repo, [a], { mitSetsid });
+      if (anmerkung) {
+        await gr.anmerkungAnlegen(lauf, { commit: a, datei: 'datei.txt', zeile: 1, text: 'Hintergrundlauf' });
+      }
+
+      abbruch.mitStrgCAbbrechen(lauf);
+
+      await abbruch.sollOhneErgebnisAbgebrochenSein(lauf);
+    });
+  }
+
   test('soll nach geschlossenem Tab weiterlaufen und beim Beenden die Anmerkung liefern (US-4)', async ({ gr, abbruch, context, page }) => {
     const repo = gr.repoMitCommits();
     const [a] = repo.hashes;

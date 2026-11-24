@@ -13,11 +13,17 @@ function programmStarten(ordner, argumente, umgebung) {
     env: { ...process.env, ...umgebung },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
-  const lauf = { kind, gestartetUmMs, stdout: '', stderr: '', exitCode: null };
+  return laufVerfolgen(kind, kind, gestartetUmMs);
+}
+
+/** Sammelt stdout und stderr von `kind`; `signalZiel` ist der Prozess, den Signale und Abfragen treffen. */
+function laufVerfolgen(kind, signalZiel, gestartetUmMs) {
+  const lauf = { kind: signalZiel, gestartetUmMs, stdout: '', stderr: '', exitCode: null };
   kind.stdout.setEncoding('utf8');
   kind.stderr.setEncoding('utf8');
   kind.stdout.on('data', daten => { lauf.stdout += daten; });
   kind.stderr.on('data', daten => { lauf.stderr += daten; });
+  lauf.stderrStrom = kind.stderr;
   lauf.beendet = new Promise(fertig => kind.once('exit', code => { lauf.exitCode = code; fertig(code); }));
   return lauf;
 }
@@ -33,7 +39,7 @@ function adresseAbwarten(lauf, fristMs) {
         gefunden(treffer[0]);
       }
     };
-    lauf.kind.stderr.on('data', pruefen);
+    lauf.stderrStrom.on('data', pruefen);
     lauf.beendet.then(code => {
       clearTimeout(frist);
       fehlgeschlagen(new Error(`gitreviewA endete mit ${code} vor der Startzeile; stderr: ${lauf.stderr}`));
@@ -57,4 +63,4 @@ function lauschendeAdressen(lauf) {
   return eigeneZeilen.map(zeile => zeile.trim().split(/\s+/)[3]);
 }
 
-module.exports = { programmStarten, adresseAbwarten, programmBeenden, lauschendeAdressen };
+module.exports = { DOTNET, laufVerfolgen, programmStarten, adresseAbwarten, programmBeenden, lauschendeAdressen };
