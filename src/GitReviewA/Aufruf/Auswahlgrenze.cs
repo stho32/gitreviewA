@@ -14,6 +14,11 @@ internal static class Auswahlgrenze
 
     public static Auswahlurteil Pruefe(int anzahl)
     {
+        var istLeer = anzahl == 0;
+        if (istLeer)
+        {
+            return Auswahlurteil.Leer;
+        }
         var istZuGross = anzahl > Hoechstzahl;
         if (istZuGross)
         {
@@ -25,6 +30,22 @@ internal static class Auswahlgrenze
             return Auswahlurteil.MitWarnung;
         }
         return Auswahlurteil.Zulaessig;
+    }
+
+    public static string Meldung(Auswahlurteil urteil, int anzahl)
+    {
+        return urteil switch
+        {
+            Auswahlurteil.Leer => Leermeldung(),
+            Auswahlurteil.Abgelehnt => Ablehnungsmeldung(),
+            Auswahlurteil.MitWarnung => Warnmeldung(anzahl),
+            _ => throw new ArgumentOutOfRangeException(nameof(urteil), urteil, "zulässiges oder unbekanntes Urteil hat keine Meldung"),
+        };
+    }
+
+    public static string Leermeldung()
+    {
+        return "Die Auswahl ist leer: kein Commit ausgewählt — bitte einen Bereich mit mindestens einem Commit wählen oder einen Hash je Zeile angeben.";
     }
 
     public static string Ablehnungsmeldung()

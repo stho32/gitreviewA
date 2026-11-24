@@ -13,6 +13,24 @@ public class AuswahlgrenzeTests
         Assert.That(urteil, Is.EqualTo(Auswahlurteil.Zulaessig));
     }
 
+    [Test]
+    public void Wenn_keine_Commits_dann_leer()
+    {
+        var urteil = Auswahlgrenze.Pruefe(0);
+
+        Assert.That(urteil, Is.EqualTo(Auswahlurteil.Leer));
+    }
+
+    [Test]
+    public void Wenn_leer_dann_nennt_die_Meldung_den_Ausweg()
+    {
+        var meldung = Auswahlgrenze.Meldung(Auswahlurteil.Leer, 0);
+
+        Assert.That(meldung, Does.Contain("leer"));
+        Assert.That(meldung, Does.Contain("Bereich mit mindestens einem Commit"));
+        Assert.That(meldung, Is.EqualTo(Auswahlgrenze.Leermeldung()));
+    }
+
     [TestCase(201)]
     [TestCase(1000)]
     public void Wenn_201_bis_1000_Commits_dann_zulaessig_mit_Warnung(int anzahl)
