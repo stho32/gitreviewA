@@ -13,6 +13,7 @@ internal sealed class Oberflaeche
         [".js"] = "text/javascript",
         [".css"] = "text/css",
         [".woff2"] = "font/woff2",
+        [".txt"] = "text/plain; charset=utf-8",
     };
 
     private readonly Dictionary<string, Oberflaechendatei> dateiNachPfad;

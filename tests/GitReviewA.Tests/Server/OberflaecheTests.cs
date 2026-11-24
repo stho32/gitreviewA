@@ -23,6 +23,9 @@ public class OberflaecheTests
     [TestCase("kd-base.css", "text/css")]
     [TestCase("gitreviewa.css", "text/css")]
     [TestCase("fonts/ibm-plex-sans-latin-400-normal.woff2", "font/woff2")]
+    [TestCase("faerben.js", "text/javascript")]
+    [TestCase("vendor/prism.js", "text/javascript")]
+    [TestCase("vendor/LICENSE-prism.txt", "text/plain; charset=utf-8")]
     public void Wenn_Datei_der_Oberflaeche_gesucht_dann_mit_Inhalt_und_Inhaltstyp(string pfad, string inhaltstyp)
     {
         var oberflaeche = Oberflaeche.AusDemProgramm();
@@ -45,6 +48,33 @@ public class OberflaecheTests
         var gefunden = oberflaeche.VersucheZuFinden(pfad, out _);
 
         Assert.That(gefunden, Is.False);
+    }
+
+    [Test]
+    public void Wenn_Prism_ausgeliefert_dann_mit_Version_Lizenz_und_Lizenztext()
+    {
+        var oberflaeche = Oberflaeche.AusDemProgramm();
+
+        oberflaeche.VersucheZuFinden("vendor/prism.js", out var prism);
+        oberflaeche.VersucheZuFinden("vendor/LICENSE-prism.txt", out var lizenz);
+
+        var kopfkommentar = Encoding.UTF8.GetString(prism!.Inhalt).Split('\n')[0];
+        Assert.That(kopfkommentar, Does.Contain("prismjs 1.30.0"));
+        Assert.That(Encoding.UTF8.GetString(prism.Inhalt), Does.Contain("Lizenz: MIT"));
+        Assert.That(Encoding.UTF8.GetString(lizenz!.Inhalt), Does.StartWith("MIT LICENSE"));
+    }
+
+    [Test]
+    public void Wenn_Startseite_gelesen_dann_ohne_Prism_und_ohne_Inline_Skript()
+    {
+        var oberflaeche = Oberflaeche.AusDemProgramm();
+
+        oberflaeche.VersucheZuFinden("index.html", out var startseite);
+
+        var html = Encoding.UTF8.GetString(startseite!.Inhalt);
+        Assert.That(html, Does.Not.Contain("prism").IgnoreCase);
+        Assert.That(html, Does.Not.Contain("faerben.js"));
+        Assert.That(html, Does.Not.Match("<script(?![^>]*\\bsrc=)"));
     }
 
     [Test]
