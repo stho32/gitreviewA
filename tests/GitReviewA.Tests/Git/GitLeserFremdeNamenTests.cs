@@ -102,6 +102,21 @@ public class GitLeserFremdeNamenTests
     }
 
     [Test]
+    public void Wenn_der_Name_mit_Rohbytes_wie_ein_Muster_aussieht_dann_liest_der_Diff_nur_diese_Datei()
+    {
+        using var repo = FremdeNamenRepo.N();
+        var hash = repo.Bash("""
+            printf 'stern\n' > $'*\xff.txt' && printf 'andere\n' > $'x\xff.txt' && git add -A && git commit -q -m Muster
+            rm -f -- $'*\xff.txt' $'x\xff.txt' && git rev-parse HEAD
+            """);
+        var stern = new Dateiaenderung("A", "*⟨0xFF⟩.txt", null, 1, 0, new Rohname([0x2A, 0xFF, 0x2E, 0x74, 0x78, 0x74]));
+
+        var patch = Patch(GitLeser.DiffLesen(hash, stern, Diffumfang.Aenderungen, repo.Ordner));
+
+        Assert.That(patch, Is.EqualTo("@@ -0,0 +1 @@\n+stern\n"));
+    }
+
+    [Test]
     public void Wenn_das_Repo_log_follow_setzt_dann_liest_der_Diff_genau_den_angefragten_Namen()
     {
         using var repo = FremdeNamenRepo.N();

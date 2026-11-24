@@ -168,7 +168,7 @@ public class DiffLesenFremdeNamenTests
         Assert.That(inTxt.Zeilen, Is.EqualTo(new[] { " x", "+y" }));
         Assert.That(t.Zeilen, Is.EqualTo(new[] { " zeile5", " zeile6", " zeile7", "-zeile8", "+GEAENDERT" }));
         Assert.That(File.Exists(marker), Is.False, "ein Programm aus der Konfiguration des Repos lief");
-        repo.Git("diff", repo.Hash("b"), repo.Hash("n"), "--", "g.txt");
+        repo.Git("diff", "--ext-diff", repo.Hash("b"), repo.Hash("n"), "--", "g.txt");
         Assert.That(File.Exists(marker), Is.True, "Kontrolle: das Marker-Programm ist über git diff aufrufbar");
     }
 
@@ -179,6 +179,7 @@ public class DiffLesenFremdeNamenTests
         File.WriteAllText(programm, $"#!/bin/sh\necho \"$@\" >> '{marker}'\ncat \"$1\" 2>/dev/null\n");
         File.SetUnixFileMode(programm, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
         File.WriteAllText(Path.Combine(repo.Ordner, ".gitattributes"), "* diff=marker\n");
+        File.WriteAllText(Path.Combine(repo.Ordner, ".git", "info", "attributes"), "*.sh diff=marker\n*.txt diff=marker\n");
         repo.Git("config", schluessel, programm);
         repo.Git("config", "diff.context", "0");
         repo.Git("config", "diff.relative", "true");
