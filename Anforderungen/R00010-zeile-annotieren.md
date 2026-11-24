@@ -17,6 +17,7 @@ Baut auf auf: [R00004](R00004-diff-einer-datei-lesen.md) (Diff-Zeilen mit `data-
 **Entscheidungen des product-owners (`AI-Team/po-entscheidungen.md`, 2026-11-24), die hier binden:**
 - Eine **entfernte Zeile ist nicht annotierbar** (Zeilen zu #6 und #22): Hinweis „Entfernte Zeile — Anmerkung an eine Zeile im neuen Stand oder an die Datei“; das Format `Datei:Zeile` (Zeile ≥ 1, Stand nach dem Commit) bleibt unverändert. Geltung: beide Ansichten („nur Änderungen“ und „ganze Datei“, [R00008](R00008-ganze-datei-mit-diff.md)).
 - **Nur RAM**, nichts auf Platte (Vision, Leitplanke).
+- Mehrere Anmerkungen je Zeile ohne Grenze; Steuer- und Richtungszeichen abgelehnt (alle Anmerkungsarten); kein Markdown; Anmerkungen außerhalb der Ansicht nur als Hinweis; stabile Nummer je Anmerkung schon hier (Abschnitt „Offene Fragen“, alle vier entschieden).
 
 **Vorlage kanbanD** (Betreiber 2026-11-24; vor dem Schreiben nachgesehen): kanbanDs Review-Seite (R00207, ADR-0033; `web/review-uebersicht.js`, `web/diff.js`) ist **nur lesend** — „kein Kommentar im Diff“ ist dort ein Nicht-Ziel, und keine Datei unter `web/` kennt Anmerkungen an Diff-Zeilen. Es gibt also nichts zu übernehmen außer dem **Stil** (`kd-tokens.css`, `kd-base.css`: `.btn`, `.inp`, Fokusring, Zielgröße `--kd-ziel`) und den **Regeln für fremden Text** (nur `textContent`, nie HTML; Marken für Unsichtbares wie `sichtbarTeile`). Die Zeilenanmerkung ist neu gebaut. kanbanD rendert Kommentare im Aufgabenfenster als Markdown (R00178); das wird hier ausdrücklich **nicht** übernommen (Offene Frage 3).
 
@@ -63,6 +64,9 @@ Vorbereitung: **Repo A** (Commits `p`, `q`, `s`) und **Repo U** (`u`) wie in [R0
 
 ### Nicht annotierbare Zeilen
 - [ ] Gegeben `q` und `src/b.txt` angezeigt, wenn man die Zeile `−zwei` (alt 2, keine Nummer neu) anklickt, dann öffnet kein Feld, und es steht der Hinweis „Entfernte Zeile — Anmerkung an eine Zeile im neuen Stand oder an die Datei“; ein Klick auf den Kopf `@@ -1,2 +1,3 @@` oder (bei `ende.txt`) auf `\ No newline at end of file` öffnet weder Feld noch Hinweis; nach „Beenden“ steht „Keine Anmerkungen.“. Dasselbe gilt in der Ansicht „ganze Datei“. *Ebene: Unit (Zeile → Ziel) und E2E (Darstellung des Hinweises, Browser-Eigenes).*
+
+### Stabile Nummer
+- [ ] Gegeben ein frischer Lauf, wenn nacheinander drei Anmerkungen angelegt werden und eine vierte mit leerem Text abgelehnt wird, danach eine fünfte angelegt, dann liefern die Anlegeantworten die Nummern 1, 2, 3 und 4 (die abgelehnte verbraucht keine Nummer), und `GET /api/anmerkungen` nennt sie in dieser Reihenfolge; die Nummer einer Anmerkung ändert sich nicht, wenn später weitere angelegt werden. Rechnung: 3 angelegt, 1 abgelehnt, 1 angelegt = Nummern 1–4. *Ebene: Integration gegen den Interactor.*
 
 ### Notizfeld
 - [ ] Gegeben `q` und `lang.txt`, nur Tastatur, wenn man in den Diff-Bereich tabt, mit Pfeil ab zur Zeile `z19` geht und Enter drückt, dann öffnet das Feld „Anmerkung zu lang.txt, Zeile 18“ mit Fokus im Textfeld; Strg+Enter nach einem Text speichert, und der Fokus steht danach auf `z19`; ein zweites Mal Enter, Esc, dann ist das Feld zu, nichts ist angelegt, und der Fokus steht wieder auf `z19`. *Ebene: E2E (Tastatur und Fokus, Browser-Eigenes).*
@@ -113,7 +117,7 @@ Vorplanung; welche Bubbles es am Ende werden, entscheidet der Entwickler beim Ba
 - `AnnotierenErgebnis` (DTO, immutable) — Ausgang des Anlegens.
 - `Anmerkungstext` (Operation, rein) — `Pruefergebnis Pruefe(string? text)` (leer, Länge, Steuer- und Richtungszeichen); `AnmerkungsPruefer` ruft sie, die Länge 10 000 und der Leerfall bleiben in R00002-Verhalten.
 - `AnmerkungsEndpunkt` (dünner Adapter) — liest JSON, ruft den Interactor, übersetzt in 201/400/409; `AnmerkungenListeEndpunkt` (dünner Adapter) — `GET`.
-- `Anmerkungsspeicher` (bestehend, B0101) — unverändert in dieser Stufe.
+- `Anmerkungsspeicher` (bestehend, B0101) — **erweitert**: vergibt je angelegter Anmerkung eine **stabile Nummer** aus einem Zähler (ab 1, nur für tatsächlich angelegte Anmerkungen, nie wiederverwendet) statt „Anzahl + 1“; I0023 und I0024 adressieren die Anmerkung über diese Nummer. Die Nummerierung im Ergebnis nach Position (`## 1.`, `## 2.` …, R00002) bleibt davon getrennt und unverändert.
 - JS `zeilenziel(zeile, textAusgewaehlt)` (rein) → `{art: 'annotierbar', neu}` | `{art: 'entfernt', hinweis}` | `{art: 'keines'}`; `anmerkungsstand(anmerkungen, commit, datei, gezeigteNummern)` (rein) → `{jeZeile, ausserhalb}`; Oberfläche `anmerkungen.js` (Adapter: Ereignisse, Feld, Anfrage, DOM mit `textContent`).
 
 ### Änderungen an bestehenden Klassen
@@ -143,11 +147,14 @@ Nicht Teil dieser Anforderung: Ändern und Löschen einer Anmerkung (I0023, I002
 
 ## Offene Fragen
 
-An den product-owner (die Empfehlung gilt bis zur Antwort; keine blockiert den Bau):
-1. **Mehrere Anmerkungen an derselben Zeile**: erlaubt (Empfehlung: ja — R00002 kennt keine Grenze, das Ergebnis hält sie in Anlegereihenfolge, eine neue Grenze wäre neuer Umfang), oder höchstens eine je Zeile mit „weitere hinzufügen“ über das Ändern?
-2. **Steuer- und Richtungszeichen im Text ablehnen** statt durchlassen (Empfehlung: ablehnen — R00002 verlangt, dass der Text sonst unverändert auf stdout steht, und ein Terminal führt Escape-Folgen aus; das Ablehnen kostet den Nutzer nichts, weil getippter Text diese Zeichen nicht enthält; eine Fehlermeldung nennt den Grund). Alternative: auf stdout ersetzen — verändert den Text und widerspricht R00002.
-3. **Markdown im Anmerkungstext darstellen** wie kanbanD seine Kommentare (Empfehlung: nein — das Ergebnis zeigt den Text als Zitat, was der Mensch sieht, soll sein, was die KI liest; später ergänzbar).
-4. **Anmerkungen außerhalb der gezeigten Abschnitte**: nur der Hinweis mit den Zeilennummern (Empfehlung; vom Nutzer lassen sie sich über „ganze Datei“, R00008, erreichen) oder zusätzlich als Liste mit Text über dem Diff?
+Alle vier Fragen sind vom product-owner entschieden (`AI-Team/po-entscheidungen.md`, 2026-11-24, Zeilen „#17 I0017“); keine ist mehr offen.
+
+1. **Mehrere Anmerkungen an derselben Zeile**: **entschieden — ja, ohne Grenze**; Anzeige und Ergebnis in Anlegereihenfolge. Die einzige Obergrenze ist das Lastprofil (500 Anmerkungen). Geltung: Zeilenanmerkungen, ebenso Dateianmerkungen (I0018). (Protokollzeile „Mehrere Anmerkungen an derselben Zeile?“)
+2. **Steuer- und Richtungszeichen im Text**: **entschieden — ablehnen** mit 400 und einer Meldung, die den Grund nennt; Tab, LF, CRLF, Umlaute und Emoji sind erlaubt; der Text des Nutzers bleibt im Feld erhalten. Die abgelehnte Zeichenmenge gilt für **alle Anmerkungsarten** (Zeile, Datei, Ändern). (Protokollzeile „Steuer- und Richtungszeichen im Anmerkungstext“)
+3. **Markdown im Anmerkungstext**: **entschieden — nein**, nur Text (`textContent`); das Ergebnis zitiert ihn unverändert. Später als eigene Karte ergänzbar. (Protokollzeile „Markdown im Anmerkungstext darstellen?“)
+4. **Anmerkungen außerhalb der gezeigten Abschnitte**: **entschieden — nur der Hinweis** über dem Diff mit den Zeilennummern; der Text steht in „ganze Datei“ (R00008) und im Ergebnis; keine Liste mit Text über dem Diff. Geltung: beide Ansichten. (Protokollzeile „Anmerkungen an Zeilen außerhalb der gezeigten Abschnitte“)
+
+Zusätzlich entschieden (Protokollzeile „Zuschnitt: Ändern und Löschen aus I0017 herausgelöst?“): der Schnitt gilt; „änderbar und löschbar“ liegt bei I0023 und I0024, die nach der Abnahme dieser Karte sofort freigegeben werden und vor I0018 laufen. Der Speicher vergibt schon in I0017 eine stabile Nummer je Anmerkung (Zähler statt Anzahl + 1).
 
 ## Manuelle Vorbereitungstätigkeiten
 - Keine.
@@ -164,7 +171,7 @@ Gezählt (bis Bubble geplant, Richtwerte ungemessen, keine Hypothese): 9 Bubbles
 Auslöser: der Mensch sieht im Diff eine Stelle, die falsch ist, und hat keinen Weg, sie der aufrufenden KI so zu nennen, dass sie sie ohne Rückfrage findet; Zeilennummern aus dem Diff abtippen kostet Zeit und verrutscht, sobald alte und neue Nummer abweichen. Wenn ein Klick auf die Zeile ein Notizfeld öffnet, der Server die Nummer **neu** der Zeile mit Commit und Datei speichert und „Beenden“ sie als `Datei:Zeile` mit dem Satz ausgibt, dann liest die KI die Stelle im Stand nach dem Commit, auf den sie ohnehin zugreift, und kann sie ohne Nachfrage ändern. Hebel gerade hier: diese Interaction schließt den Hot Path von der ersten Beobachtung bis zum Urteil auf stdout; vorher war der Rückkanal ohne Inhalt. Dass Text und Pfade nur als Text erscheinen und Steuerzeichen schon an der Tür abgewiesen werden, verhindert, dass ein präpariertes Repo oder eingefügter Text die Oberfläche oder das Terminal der KI-Sitzung verändert.
 
 ## Missing-Docs
-- Genaue Zeichenmenge der Ablehnung (Unicode-Klassen Cc und die Richtungs-Formatzeichen aus `sichtbarTeile` in `web/diff-werte.js`) und das Verhalten von `ReplaceLineEndings` für U+2028/U+2029/U+0085 im Ergebnis — vor dem Bauen mit einer kleinen Tabelle im Test belegen.
+- Genaue Zeichenmenge der Ablehnung — gilt für alle Anmerkungsarten, nicht nur für Zeilen (Unicode-Klassen Cc und die Richtungs-Formatzeichen aus `sichtbarTeile` in `web/diff-werte.js`) und das Verhalten von `ReplaceLineEndings` für U+2028/U+2029/U+0085 im Ergebnis — vor dem Bauen mit einer kleinen Tabelle im Test belegen.
 - Fokus- und Tastaturverhalten einer Tabellenzeile mit `tabindex` und Pfeilbewegung im Browser (Playwright `press`) — mit einem kleinen Versuch vor Bubble B0908 belegen; I0015 vereinheitlicht später die Tastatur.
 
 ## Notizen
@@ -188,7 +195,7 @@ Gewählt: 1.
 | C. Server schickt die Anmerkungen mit jeder Diff-Antwort | kein eigener Abruf | koppelt `GET …/diff` (R00004, R00008) an den Speicher und verdoppelt Verhalten dort |
 
 ### Entscheidungen im Zuschnitt
-- **Schnitt von I0017**: das Fertig-Kriterium „… änderbar und löschbar“ ergab beim Zählen 14–15 Bubbles (Probe: mehr als etwa acht Bubbles, Ändern und Löschen sind neue Requests). Geschnitten nach neuem Verhalten (Skill, „Inkrement oder Ausbaustufe“): **I0017** = anlegen und zeigen (hier), **I0023 Anmerkung ändern** und **I0024 Anmerkung löschen** parallel danach, jede für sich nützlich und von außen prüfbar. Der Speicher braucht für beide eine stabile Nummer (Zähler statt „Anzahl + 1“) und das Ergebnis eine Nummerierung nach Position (R00002: „fortlaufend ab 1“) — das legt I0024 fest, nicht diese Stufe.
+- **Schnitt von I0017**: das Fertig-Kriterium „… änderbar und löschbar“ ergab beim Zählen 14–15 Bubbles (Probe: mehr als etwa acht Bubbles, Ändern und Löschen sind neue Requests). Geschnitten nach neuem Verhalten (Skill, „Inkrement oder Ausbaustufe“): **I0017** = anlegen und zeigen (hier), **I0023 Anmerkung ändern** und **I0024 Anmerkung löschen** parallel danach, jede für sich nützlich und von außen prüfbar. Der Speicher braucht für beide eine stabile Nummer (Zähler statt „Anzahl + 1“); der product-owner hat entschieden, sie **schon in I0017** einzuführen (kostet jetzt fast nichts, nachträglich wäre es Umbau). Die Nummerierung des Ergebnisses nach Position (R00002: „fortlaufend ab 1“) bleibt wie sie ist; das Zusammenspiel mit gelöschten Anmerkungen legt I0024 fest.
 - **Klick und Auswahl**: ein Klick bei ausgewähltem Text öffnet nichts, damit Kopieren aus dem Diff möglich bleibt.
 - **Tastatur** (Enter öffnet, Pfeile wechseln die Zeile) gehört hierher, weil ohne sie die Interaction nur mit der Maus bedienbar wäre; I0015 verallgemeinert.
 
