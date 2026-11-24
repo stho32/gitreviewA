@@ -183,6 +183,71 @@ public class ErgebnisFormatiererTests
         Assert.That(uhr.Elapsed, Is.LessThan(TimeSpan.FromMilliseconds(700)));
     }
 
+    [Test]
+    [Description("R00014 Kriterium 4")]
+    public void Wenn_Repo_N_mit_v_und_g_txt_abgehakt_dann_Byte_fuer_Byte_das_Beispiel_mit_Sperrgrund_nur_an_den_gesperrten_Zeilen()
+    {
+        const string NichtEindeutig = "Diff nicht lesbar: Name nicht eindeutig";
+        const string NichtUebergebbar = "Diff nicht lesbar: Name nicht übergebbar";
+        var dateien = new Dateienstand(
+        [
+            new Stellenstand(HashP, "a⟨0xFF⟩.sh", false, string.Empty),
+            new Stellenstand(HashP, "b⟨0xFF⟩.bin", false, string.Empty),
+            new Stellenstand(HashP, "f⟨0xFF⟩.txt", false, NichtEindeutig),
+            new Stellenstand(HashP, "f⟨0xFF⟩.txt", false, NichtEindeutig),
+            new Stellenstand(HashP, "g.txt", true, string.Empty),
+            new Stellenstand(HashP, "in.txt", false, string.Empty),
+            new Stellenstand(HashP, "r⟨0xFF⟩.txt", false, string.Empty),
+            new Stellenstand(HashP, "t⟨0xFE⟩.txt", false, string.Empty),
+            new Stellenstand(HashP, "z\n⟨0xFF⟩.txt", false, NichtUebergebbar),
+            new Stellenstand(HashQ, "f⟨0xFF⟩.txt", false, string.Empty),
+        ]);
+
+        var ergebnis = ErgebnisFormatierer.Formatiere(new Anmerkungsliste([]), dateien);
+
+        Assert.That(ergebnis, Is.EqualTo(
+            "# Ergebnis manueller Review\n\nKeine Anmerkungen.\n\n## Dateien\n\nAbgehakt: 1 von 10\n\n"
+            + $"- g.txt (Commit {HashP})\n\n"
+            + "Ungeprüft: 9 von 10\n\n"
+            + $"- a⟨0xFF⟩.sh (Commit {HashP})\n"
+            + $"- b⟨0xFF⟩.bin (Commit {HashP})\n"
+            + $"- f⟨0xFF⟩.txt (Commit {HashP}) — Diff nicht lesbar: Name nicht eindeutig\n"
+            + $"- f⟨0xFF⟩.txt (Commit {HashP}) — Diff nicht lesbar: Name nicht eindeutig\n"
+            + $"- in.txt (Commit {HashP})\n"
+            + $"- r⟨0xFF⟩.txt (Commit {HashP})\n"
+            + $"- t⟨0xFE⟩.txt (Commit {HashP})\n"
+            + $"- z⟨U+000A⟩⟨0xFF⟩.txt (Commit {HashP}) — Diff nicht lesbar: Name nicht übergebbar\n"
+            + $"- f⟨0xFF⟩.txt (Commit {HashQ})\n"));
+    }
+
+    [Test]
+    [Description("R00014 Kriterium 4")]
+    public void Wenn_ein_gesperrter_Name_Richtungs_Nullbreiten_und_Tag_Zeichen_traegt_dann_steht_er_mit_Marken_und_Grund_in_genau_einer_Zeile()
+    {
+        var dateien = new Dateienstand(
+        [
+            new Stellenstand(HashP, "g.txt", true, string.Empty),
+            new Stellenstand(HashP, "x\n\u202E\u200B\U000E0041.txt", false, "Diff nicht lesbar: Name nicht übergebbar"),
+        ]);
+
+        var ergebnis = ErgebnisFormatierer.Formatiere(new Anmerkungsliste([]), dateien);
+
+        var zeilen = ergebnis.Split('\n');
+        Assert.That(zeilen, Does.Contain($"- x⟨U+000A⟩⟨U+202E⟩⟨U+200B⟩⟨U+E0041⟩.txt (Commit {HashP}) — Diff nicht lesbar: Name nicht übergebbar"));
+        Assert.That(zeilen.Count(zeile => zeile.Contains("Name nicht übergebbar", StringComparison.Ordinal)), Is.EqualTo(1));
+    }
+
+    [Test]
+    [Description("R00014 Kriterium 5")]
+    public void Wenn_gesperrte_Stellen_vorkommen_aber_kein_Haken_gesetzt_dann_Byte_fuer_Byte_das_Ergebnis_aus_R00002()
+    {
+        var dateien = new Dateienstand([new Stellenstand(HashP, "f.txt", false, "Diff nicht lesbar: Name nicht eindeutig"), new Stellenstand(HashP, "g.txt", false, string.Empty)]);
+
+        var ergebnis = ErgebnisFormatierer.Formatiere(new Anmerkungsliste([]), dateien);
+
+        Assert.That(ergebnis, Is.EqualTo(OhneAnmerkungen));
+    }
+
     /// <summary>Die acht Stellen aus R00003 in Auswahlreihenfolge; abgehakt sind die genannten (Commitname, Pfad).</summary>
     private static Dateienstand VorbereitungPqr(params (string Commit, string Datei)[] abgehakt)
     {

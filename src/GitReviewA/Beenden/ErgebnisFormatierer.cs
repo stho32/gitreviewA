@@ -75,7 +75,7 @@ internal static class ErgebnisFormatierer
         var ungeprueft = new List<string>();
         foreach (var stelle in dateien)
         {
-            var zeile = $"- {UnsichtbareZeichen.AlsMarken(stelle.Datei)} (Commit {stelle.Commit})";
+            var zeile = Stellenzeile(stelle);
             if (stelle.Abgehakt)
             {
                 abgehakt.Add(zeile);
@@ -89,6 +89,18 @@ internal static class ErgebnisFormatierer
         abschnitte.AddRange(Liste("Abgehakt", abgehakt, dateien.Gesamt));
         abschnitte.AddRange(Liste("Ungeprüft", ungeprueft, dateien.Gesamt));
         return abschnitte;
+    }
+
+    /// <summary>Eine gesperrte Stelle trägt ihren Sperrgrund (R00014); jede andere Zeile bleibt wie in R00011.</summary>
+    private static string Stellenzeile(Stellenstand stelle)
+    {
+        var zeile = $"- {UnsichtbareZeichen.AlsMarken(stelle.Datei)} (Commit {stelle.Commit})";
+        var istGesperrt = stelle.Sperrgrund.Length > 0;
+        if (istGesperrt)
+        {
+            return $"{zeile} — {stelle.Sperrgrund}";
+        }
+        return zeile;
     }
 
     /// <summary>Kopfzeile „&lt;Art&gt;: k von m“, darunter die Zeilen; eine leere Liste hat nur die Kopfzeile.</summary>

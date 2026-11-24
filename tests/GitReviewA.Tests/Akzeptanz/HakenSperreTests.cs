@@ -40,6 +40,11 @@ public class HakenSperreTests
         Assert.That((paarEntnehmen.Ausgang, paarEntnehmen.Grund), Is.EqualTo(("ungültig", NichtEindeutig)));
         Assert.That((zeilenumbruchEntnehmen.Ausgang, zeilenumbruchEntnehmen.Grund), Is.EqualTo(("ungültig", NichtUebergebbar)));
         Assert.That(gr.Fortschritt(), Is.EqualTo("2 von 10 abgehakt"));
+        var ergebnis = gr.Beenden().Split('\n');
+        var ungeprueftAb = Array.IndexOf(ergebnis, "Ungeprüft: 8 von 10");
+        Assert.That(ungeprueftAb, Is.GreaterThan(0), "Kontrolle: der Abschnitt Dateien steht, ein Haken ist gesetzt");
+        Assert.That(ergebnis[ungeprueftAb..].Count(zeile => zeile == $"- {Paar} (Commit {gr.Hash("n")}) — {NichtEindeutig}"), Is.EqualTo(2));
+        Assert.That(ergebnis[ungeprueftAb..], Does.Contain($"- z⟨U+000A⟩⟨0xFF⟩.txt (Commit {gr.Hash("n")}) — {NichtUebergebbar}"));
     }
 
     [Test]
@@ -57,6 +62,52 @@ public class HakenSperreTests
         Assert.That(ablehnungen[0], Does.EndWith("abgelehnt: " + NichtEindeutig));
         Assert.That(ablehnungen[1], Does.EndWith("abgelehnt: " + NichtUebergebbar));
         Assert.That(gr.Protokollzeilen(), Has.None.Contains("f⟨0xFF⟩").And.None.Contains("z⟨U+000A⟩"));
+    }
+
+    [Test]
+    [Description("R00014 Kriterium 4")]
+    public void Wenn_g_txt_abgehakt_und_beendet_dann_Byte_fuer_Byte_das_Beispiel_der_Anforderung()
+    {
+        using var repo = FremdeNamenRepo.NMitV();
+        var gr = HakenSperreSprache.Aufruf(repo, "n", "v");
+        gr.Hake("n", "g.txt");
+
+        var ergebnis = gr.Beenden();
+
+        var n = gr.Hash("n");
+        var v = gr.Hash("v");
+        Assert.That(ergebnis, Is.EqualTo(string.Join("\n",
+            "# Ergebnis manueller Review", "", "Keine Anmerkungen.", "", "## Dateien", "", "Abgehakt: 1 von 10", "",
+            $"- g.txt (Commit {n})", "", "Ungeprüft: 9 von 10", "",
+            $"- a⟨0xFF⟩.sh (Commit {n})",
+            $"- b⟨0xFF⟩.bin (Commit {n})",
+            $"- f⟨0xFF⟩.txt (Commit {n}) — Diff nicht lesbar: Name nicht eindeutig",
+            $"- f⟨0xFF⟩.txt (Commit {n}) — Diff nicht lesbar: Name nicht eindeutig",
+            $"- in.txt (Commit {n})",
+            $"- r⟨0xFF⟩.txt (Commit {n})",
+            $"- t⟨0xFE⟩.txt (Commit {n})",
+            $"- z⟨U+000A⟩⟨0xFF⟩.txt (Commit {n}) — Diff nicht lesbar: Name nicht übergebbar",
+            $"- f⟨0xFF⟩.txt (Commit {v})") + "\n"));
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    [Description("R00014 Kriterium 5")]
+    public void Wenn_kein_Haken_oder_ein_gesetzter_und_entnommener_dann_das_Ergebnis_aus_R00002_trotz_gesperrter_Stellen(bool setzenUndEntnehmen)
+    {
+        using var repo = FremdeNamenRepo.NMitV();
+        var gr = HakenSperreSprache.Aufruf(repo, "n", "v");
+        gr.Hake("n", Paar);
+        if (setzenUndEntnehmen)
+        {
+            gr.Hake("n", "g.txt");
+            gr.NimmHakenWeg("n", "g.txt");
+        }
+
+        var ergebnis = gr.Beenden();
+
+        Assert.That(gr.StellenMitSperrgrund().Count(stelle => !stelle.EndsWith('|')), Is.EqualTo(3), "Kontrolle: gesperrte Stellen kommen vor");
+        Assert.That(ergebnis, Is.EqualTo("# Ergebnis manueller Review\n\nKeine Anmerkungen.\n"));
     }
 
     [Test]

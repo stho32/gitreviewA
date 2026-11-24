@@ -90,7 +90,7 @@ public class DateiAbhakenFremdeBytesTests
         Assert.That(mehrdeutig.Grund, Is.EqualTo("Diff nicht lesbar: Name nicht eindeutig"));
         Assert.That((kontrolle.Ausgang, kontrolle.Abgehakt, kontrolle.Gesamt), Is.EqualTo(("gesetzt", 1, 3)));
         var zeilen = ergebnis.Split('\n');
-        var zeileDesDoppelgaengers = gr.Ergebniszeile("u", NameMitFF);
+        var zeileDesDoppelgaengers = gr.Ergebniszeile("u", NameMitFF) + " — Diff nicht lesbar: Name nicht eindeutig";
         var ungeprueftAb = Array.IndexOf(zeilen, "Ungeprüft: 2 von 3");
         Assert.That(zeilen, Does.Contain("Abgehakt: 1 von 3"));
         Assert.That(ungeprueftAb, Is.GreaterThan(0));
