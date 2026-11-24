@@ -56,3 +56,7 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-24 | #4 | Reviews | code-reviewer | bestanden | 1 min | kein Muss, kein Sollte; Sicherheitsblick mit Probe (Injection, rm -rf) ohne Befund · claude · sonnet · Lauf 4-code-reviewer-1 · 0,21 $ · Karte gesamt 1,26 $ |
 | 2026-11-24 | #4 | Entwicklertest | entwicklertester | bestanden | 4 min | US-1 bis US-6 bestanden; Beenden mit Anmerkung aus der veröffentlichten Datei · claude · sonnet · Lauf 4-entwicklertester-1 · 0,24 $ · Karte gesamt 1,50 $ |
 | 2026-11-24 | #2 | Entwicklertest | entwicklertester | bestanden | 13 min | 11 Szenarien bestanden, Hintergrund-Aufruf wie eine KI · claude · sonnet · Lauf 2-entwicklertester-1 · 0,79 $ · Karte gesamt 10,78 $ |
+| 2026-11-24 | #6 | Nacharbeit | entwickler | bestanden | 23 min | 2 Muss behoben, Binärdatei mit Grund und „Als Text zeigen“, core.attributesFile; NUnit 350, Playwright 105 · claude · opus · Lauf 6-entwickler-2 |
+| 2026-11-24 | #2 | Entwicklertest | entwickler | bestanden | 5 min | Rebase auf main, 7 Konfliktstellen beidseitig gelöst, Reihenfolge Auswahl vor WurzelLesen; Kopie NUnit 370, Playwright 124 · claude · sonnet · Lauf 2-entwickler-3 · 0,54 $ · Karte gesamt 11,32 $ |
+| 2026-11-24 | #6 | Reviews | code-reviewer | bestanden | 3 min | Nachprüfung: Muss geschlossen · claude · sonnet · Lauf 6-code-reviewer-2 · 0,45 $ · Karte gesamt 3,76 $ |
+| 2026-11-24 | #6 | Reviews | security-reviewer | bestanden | 3 min | Nachprüfung: Muss geschlossen · claude · sonnet · Lauf 6-security-reviewer-2 · 0,29 $ · Karte gesamt 4,05 $ |
