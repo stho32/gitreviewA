@@ -2,9 +2,20 @@ using GitReviewA.Git;
 
 namespace GitReviewA.Diff;
 
-internal sealed class GitDiffquelle(string arbeitsordner, Ausgabegrenze? ausgabegrenze = null) : IDiffquelle
+internal sealed class GitDiffquelle : IDiffquelle
 {
-    private readonly Ausgabegrenze grenze = ausgabegrenze ?? Ausgabegrenze.Standard;
+    private readonly string arbeitsordner;
+    private readonly Ausgabegrenze grenze;
+
+    public GitDiffquelle(string arbeitsordner) : this(arbeitsordner, Ausgabegrenze.Standard)
+    {
+    }
+
+    public GitDiffquelle(string arbeitsordner, Ausgabegrenze grenze)
+    {
+        this.arbeitsordner = arbeitsordner;
+        this.grenze = grenze;
+    }
 
     public string Lesen(string hash, Dateiaenderung datei, Diffumfang umfang)
     {

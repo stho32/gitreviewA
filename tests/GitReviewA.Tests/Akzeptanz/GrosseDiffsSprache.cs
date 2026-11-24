@@ -22,10 +22,13 @@ internal sealed class GrosseDiffsSprache
     /// <summary>`gitreviewA <commits…>` im Repo; ohne <paramref name="grenze"/> gilt der Produktwert.</summary>
     public static GrosseDiffsSprache Aufruf(DiffRepo repo, string[] commits, Ausgabegrenze? grenze = null)
     {
-        var treiber = grenze is null
-            ? DiffLesenTreiber.Starten(repo.Ordner, commits.Select(repo.Hash))
-            : DiffLesenTreiber.Starten(repo.Ordner, commits.Select(repo.Hash), grenze);
-        return new GrosseDiffsSprache(repo, treiber);
+        if (grenze is null)
+        {
+            var mitProduktgrenze = DiffLesenTreiber.Starten(repo.Ordner, commits.Select(repo.Hash));
+            return new GrosseDiffsSprache(repo, mitProduktgrenze);
+        }
+        var mitGrenze = DiffLesenTreiber.Starten(repo.Ordner, commits.Select(repo.Hash), grenze);
+        return new GrosseDiffsSprache(repo, mitGrenze);
     }
 
     public Dateiansicht NurAenderungen(string commit, string pfad)
@@ -56,13 +59,13 @@ internal sealed class GrosseDiffsSprache
         return repo.Hash(commit);
     }
 
-    public string[] DiffZeilenImProtokoll(string commit)
-    {
-        return treiber.Protokollzeilen().Where(zeile => zeile.Contains($"GET /api/commits/{repo.Hash(commit)}/diff", StringComparison.Ordinal)).ToArray();
-    }
-
     public string[] Warnungen()
     {
         return treiber.Protokollzeilen().Where(zeile => zeile.Contains(" WARNUNG ", StringComparison.Ordinal)).ToArray();
+    }
+
+    public string[] DiffZeilenImProtokoll(string commit)
+    {
+        return treiber.Protokollzeilen().Where(zeile => zeile.Contains($"GET /api/commits/{repo.Hash(commit)}/diff", StringComparison.Ordinal)).ToArray();
     }
 }

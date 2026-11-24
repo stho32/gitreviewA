@@ -21,6 +21,15 @@ internal static class DiffEndpunkt
         ["ganz"] = Diffumfang.Ganz,
     };
 
+    private static readonly Dictionary<Diffausgang, Func<Differgebnis, IResult>> AntwortNachAusgang = new()
+    {
+        [Diffausgang.Gelesen] = GelesenAntwort,
+        [Diffausgang.ZuGross] = ZuGrossAntwort,
+        [Diffausgang.NichtGefunden] = NichtGefundenAntwort,
+        [Diffausgang.NichtLesbar] = NichtLesbarAntwort,
+        [Diffausgang.NameNichtLesbar] = NameNichtLesbarAntwort,
+    };
+
     public static Delegate Fuer(DiffLesenInteractor interactor)
     {
         return (string hash, string? pfad, bool? alsText, HttpRequest http) =>
@@ -50,20 +59,42 @@ internal static class DiffEndpunkt
 
     private static IResult AlsHttpAntwort(Differgebnis ergebnis)
     {
-        switch (ergebnis.Ausgang)
+        var istBekannterAusgang = AntwortNachAusgang.TryGetValue(ergebnis.Ausgang, out var antwort);
+        if (!istBekannterAusgang || antwort is null)
         {
-            case Diffausgang.Gelesen:
-                return Results.Json(ergebnis.Antwort, JsonAntwort.Optionen);
-            case Diffausgang.ZuGross:
-                return Results.Json(new ZuGrossAntwort(true, ergebnis.Meldung ?? ""), JsonAntwort.Optionen);
-            case Diffausgang.NichtGefunden:
-                return Results.NotFound();
-            case Diffausgang.NichtLesbar:
-                return Results.Json(new MeldungAntwort(Fehlermeldung), JsonAntwort.Optionen, statusCode: StatusCodes.Status500InternalServerError);
-            case Diffausgang.NameNichtLesbar:
-                return Results.Json(new MeldungAntwort(NameNichtLesbarMeldung), JsonAntwort.Optionen, statusCode: StatusCodes.Status422UnprocessableEntity);
-            default:
-                throw new InvalidOperationException($"Unbekannter Ausgang {ergebnis.Ausgang}");
+            throw new InvalidOperationException($"Unbekannter Ausgang {ergebnis.Ausgang}");
         }
+        return antwort(ergebnis);
+    }
+
+    private static IResult GelesenAntwort(Differgebnis ergebnis)
+    {
+        return Results.Json(ergebnis.Antwort, JsonAntwort.Optionen);
+    }
+
+    /// <summary>Über der Ausgabegrenze: Kennzeichen und die Meldung, die die Grenze nennt — kein Patch.</summary>
+    private static IResult ZuGrossAntwort(Differgebnis ergebnis)
+    {
+        var meldung = "";
+        if (ergebnis.Meldung is not null)
+        {
+            meldung = ergebnis.Meldung;
+        }
+        return Results.Json(new ZuGrossAntwort(true, meldung), JsonAntwort.Optionen);
+    }
+
+    private static IResult NichtGefundenAntwort(Differgebnis _)
+    {
+        return Results.NotFound();
+    }
+
+    private static IResult NichtLesbarAntwort(Differgebnis _)
+    {
+        return Results.Json(new MeldungAntwort(Fehlermeldung), JsonAntwort.Optionen, statusCode: StatusCodes.Status500InternalServerError);
+    }
+
+    private static IResult NameNichtLesbarAntwort(Differgebnis _)
+    {
+        return Results.Json(new MeldungAntwort(NameNichtLesbarMeldung), JsonAntwort.Optionen, statusCode: StatusCodes.Status422UnprocessableEntity);
     }
 }
