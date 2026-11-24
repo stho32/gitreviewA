@@ -17,4 +17,4 @@ Keine aus der Factory.
 
 ## Gelerntes
 
-- (noch keine)
+- 2026-11-24 (#19, #5): Vor jeder Entscheidung `gemeinsam/regeln.md` und `gemeinsam/gelerntes.md` der Factory tatsächlich öffnen und lesen — zweimal fehlten sie in der Gelesen-Zeile.
