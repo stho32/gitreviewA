@@ -7,15 +7,18 @@ const path = require('path');
 const base = require('@playwright/test');
 const { repoAnlegen, repoEntfernen } = require('../treiber/wegwerf-repo.js');
 const { programmStarten, adresseAbwarten, programmBeenden, lauschendeAdressen } = require('../treiber/programm.js');
-const { anfrage } = require('../treiber/http.js');
+const { anfrage, senden } = require('../treiber/http.js');
 const oberflaeche = require('../treiber/oberflaeche.js');
+const { fremdeSeiteStarten } = require('../treiber/fremde-seite.js');
 
 const STARTZEILE_FRIST_MS = 2000;
 const DREI_COMMITS = ['Erster Commit', 'Zweiter Commit', 'Dritter Commit'];
+const JSON_INHALT = 'application/json';
 
 function welt() {
   const ordnerZumAufraeumen = [];
   const laeufe = [];
+  const fremdeSeiten = [];
 
   function repoMitCommits(betreffe = DREI_COMMITS) {
     const repo = repoAnlegen(betreffe);
@@ -56,6 +59,19 @@ function welt() {
   async function aufrufBeendet(lauf) {
     await lauf.beendet;
     return lauf.exitCode;
+  }
+
+  /** Wartet auf das Prozessende, höchstens `fristMs`; liefert den Exit-Code. */
+  async function aufEndeWarten(lauf, fristMs = 5000) {
+    let frist;
+    const fristAbgelaufen = new Promise((_, abgelaufen) => {
+      frist = setTimeout(() => abgelaufen(new Error(`gitreviewA lief ${fristMs} ms nach dem Beenden noch; stderr: ${lauf.stderr}`)), fristMs);
+    });
+    try {
+      return await Promise.race([lauf.beendet, fristAbgelaufen]);
+    } finally {
+      clearTimeout(frist);
+    }
   }
 
   function laeuftNoch(lauf) {
@@ -138,7 +154,63 @@ function welt() {
     return { ordner, wurdeGestartet: () => fs.existsSync(markierung) };
   }
 
+  /**
+   * Legt eine Anmerkung über die Schnittstelle an. `zeile` weglassen heißt „ganze Datei“.
+   * Optionen: `origin`, `host`, `inhaltstyp` (Standard application/json), `rohKoerper` statt JSON aus `anmerkung`.
+   */
+  async function anmerkungAnlegen(lauf, anmerkung, { origin, host, inhaltstyp = JSON_INHALT, rohKoerper } = {}) {
+    let koerper = rohKoerper;
+    if (koerper === undefined) {
+      koerper = JSON.stringify(anmerkung);
+    }
+    const antwort = await senden(lauf.adresse, '/api/anmerkungen', {
+      methode: 'POST', host, kopf: { Origin: origin, 'Content-Type': inhaltstyp }, koerper,
+    });
+    return { status: antwort.status, ...jsonOderLeer(antwort.koerper) };
+  }
+
+  /** Fordert das Beenden an; Standard ist die Befehlszeile: POST, JSON `{}`, ohne Origin. */
+  async function beendenAnfordern(lauf, { methode = 'POST', origin, host, inhaltstyp = JSON_INHALT } = {}) {
+    let koerper;
+    if (methode === 'POST') {
+      koerper = '{}';
+    }
+    const antwort = await senden(lauf.adresse, '/api/beenden', { methode, host, kopf: { Origin: origin, 'Content-Type': inhaltstyp }, koerper });
+    return { status: antwort.status, ...jsonOderLeer(antwort.koerper) };
+  }
+
+  function jsonOderLeer(text) {
+    try {
+      return JSON.parse(text);
+    } catch {
+      return {};
+    }
+  }
+
+  /** Beendet und misst die Zeit von der Anforderung bis zum Ende des Prozesses. */
+  async function beendenUndDauerMessen(lauf) {
+    const angefordertUmMs = performance.now();
+    const antwort = beendenAnfordern(lauf);
+    await lauf.beendet;
+    const dauerMs = performance.now() - angefordertUmMs;
+    return { dauerMs, antwort: await antwort };
+  }
+
+  /** Eine Seite auf localhost:<anderer Port>, die `skript` ausführt (Konstante ZIEL = Adresse des Laufs). */
+  async function fremdeSeite(lauf, skript) {
+    const seite = await fremdeSeiteStarten(lauf.adresse, skript);
+    fremdeSeiten.push(seite);
+    return seite;
+  }
+
+  function ergebnis(lauf) {
+    return lauf.stdout;
+  }
+
   async function aufraeumen() {
+    for (const seite of fremdeSeiten) {
+      await seite.stoppen();
+    }
     for (const lauf of laeufe) {
       await programmBeenden(lauf);
     }
@@ -148,9 +220,13 @@ function welt() {
   }
 
   return {
-    repoMitCommits, gitreviewAStarten, gitreviewAAufrufen, aufrufBeendet, laeuftNoch, bisSekundenNachStart, laufAbbrechen,
+    repoMitCommits, gitreviewAStarten, gitreviewAAufrufen, aufrufBeendet, aufEndeWarten, laeuftNoch, bisSekundenNachStart, laufAbbrechen,
     zustandAbfragen, commitsAbfragen, commitsStatusOderNull, freierPort, startseiteAbfragen, stderrZeilen, portVon, hostDesLaufs,
     lauschendeAdressen, aufzeichnenderBrowser, gitAttrappe, aufraeumen,
+    anmerkungAnlegen, beendenAnfordern, beendenUndDauerMessen, fremdeSeite, ergebnis,
+    beendenBetaetigen: oberflaeche.beendenBetaetigen,
+    beendenKnopf: oberflaeche.beendenKnopf,
+    beendetMeldung: oberflaeche.beendetMeldung,
     oberflaecheOeffnen: (page, lauf) => page.goto(lauf.adresse),
     commitZeilenLesen: oberflaeche.commitZeilenLesen,
     commitZeilen: oberflaeche.commitZeilen,

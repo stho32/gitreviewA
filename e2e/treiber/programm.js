@@ -14,6 +14,8 @@ function programmStarten(ordner, argumente, umgebung) {
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   const lauf = { kind, gestartetUmMs, stdout: '', stderr: '', exitCode: null };
+  kind.stdout.setEncoding('utf8');
+  kind.stderr.setEncoding('utf8');
   kind.stdout.on('data', daten => { lauf.stdout += daten; });
   kind.stderr.on('data', daten => { lauf.stderr += daten; });
   lauf.beendet = new Promise(fertig => kind.once('exit', code => { lauf.exitCode = code; fertig(code); }));

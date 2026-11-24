@@ -18,4 +18,16 @@ async function aufZeilenWarten(page, anzahl) {
   await page.waitForFunction(erwartet => document.querySelectorAll('#commit-liste .commit-zeile').length === erwartet, anzahl, { polling: 'raf' });
 }
 
-module.exports = { commitZeilenLesen, commitZeilen, aufZeilenWarten };
+function beendenKnopf(page) {
+  return page.getByRole('button', { name: 'Beenden' });
+}
+
+async function beendenBetaetigen(page) {
+  await beendenKnopf(page).click({ timeout: 5000 });
+}
+
+function beendetMeldung(page) {
+  return page.getByText('Review beendet', { exact: true });
+}
+
+module.exports = { commitZeilenLesen, commitZeilen, aufZeilenWarten, beendenKnopf, beendenBetaetigen, beendetMeldung };
