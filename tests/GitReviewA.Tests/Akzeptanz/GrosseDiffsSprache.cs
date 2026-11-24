@@ -63,9 +63,4 @@ internal sealed class GrosseDiffsSprache
     {
         return treiber.Protokollzeilen().Where(zeile => zeile.Contains(" WARNUNG ", StringComparison.Ordinal)).ToArray();
     }
-
-    public string[] DiffZeilenImProtokoll(string commit)
-    {
-        return treiber.Protokollzeilen().Where(zeile => zeile.Contains($"GET /api/commits/{repo.Hash(commit)}/diff", StringComparison.Ordinal)).ToArray();
-    }
 }

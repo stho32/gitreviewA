@@ -597,9 +597,14 @@ internal static class GitLeser
         return FremdeBytes.Utf8MitBytemarken.GetString(speicher.ToArray());
     }
 
-    /// <summary>Beendet einen noch laufenden Prozess samt Kindern; war er schon beendet, ist nichts zu tun.</summary>
+    /// <summary>Beendet einen noch laufenden Prozess samt Kindern; war er schon beendet, ist nichts zu tun. Ein gescheitertes Beenden
+    /// darf den Ausgang „zu groß“ nicht verdecken — der Aufrufer wirft ihn unabhängig davon.</summary>
     private static void Beende(Process prozess)
     {
+        if (prozess.HasExited)
+        {
+            return;
+        }
         try
         {
             prozess.Kill(entireProcessTree: true);
@@ -607,9 +612,11 @@ internal static class GitLeser
         }
         catch (InvalidOperationException)
         {
+            // Der Prozess hat sich zwischen Prüfung und Kill selbst beendet.
         }
         catch (SystemException)
         {
+            // Das Beenden ist gescheitert; der Aufrufer meldet weiter „zu groß“.
         }
     }
 

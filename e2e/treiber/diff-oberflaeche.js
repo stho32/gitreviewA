@@ -290,7 +290,8 @@ async function zugeklapptRechtzeitigNachAktion(page, aktion, pfad, meldung, fris
 }
 
 /** Wählt die Datei über `waehlen` und misst vom Klick, bis die Zeile mit Nummer neu `neu` im Dokument steht; liefert den Messwert. */
-async function pruefeZeileBinnenNachKlick(page, waehlen, { kopf, plus, neu }, fristMs) {  const klickUmMs = Date.now();
+async function pruefeZeileBinnenNachKlick(page, waehlen, { kopf, plus, neu }, fristMs) {
+  const klickUmMs = Date.now();
   await waehlen();
   await page.waitForFunction(([selektor, nummer]) => document.querySelector(`${selektor}[data-neu="${nummer}"]`) !== null, [ZEILE, neu], { polling: 'raf', timeout: 10000 });
   const dauerMs = Date.now() - klickUmMs;
