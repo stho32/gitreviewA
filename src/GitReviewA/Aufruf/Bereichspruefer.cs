@@ -8,7 +8,7 @@ namespace GitReviewA.Aufruf;
 /// </summary>
 internal static partial class Bereichspruefer
 {
-    private const string Bereichstrenner = "..";
+    public const string Bereichstrenner = "..";
     private const string SymmetrischeDifferenz = "...";
 
     public static bool IstZulaessigerBereich(string argument)

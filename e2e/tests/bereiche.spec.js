@@ -34,6 +34,28 @@ test.describe('Auswahl über Bereiche', () => {
     expect(await auswahl.gezeigteCommits(lauf)).toEqual([e, b]);
   });
 
+  test('Szenario 4: soll bei gleichen Commit-Zeiten für a..b d..e und d..e a..b dieselbe Auswahl e, b zeigen', async ({ auswahl }) => {
+    const { repo, a, b, d, e } = auswahl.verlaufAbisEZurSelbenZeit();
+
+    const abZuerst = await auswahl.gezeigteCommits(await auswahl.bereicheReviewen(repo, [`${a}..${b}`, `${d}..${e}`]));
+    const deZuerst = await auswahl.gezeigteCommits(await auswahl.bereicheReviewen(repo, [`${d}..${e}`, `${a}..${b}`]));
+
+    expect(abZuerst).toEqual([e, b]);
+    expect(deZuerst).toEqual([e, b]);
+  });
+
+  test('Szenario 4: soll bei Zweig, Merge und gleichen Commit-Zeiten zwei Bereiche wie git ordnen, Kind vor Eltern', async ({ auswahl }) => {
+    const { repo, a, f1, f2, m } = auswahl.verlaufMitMergeZurSelbenZeit();
+
+    const featureZuerst = await auswahl.gezeigteCommits(await auswahl.bereicheReviewen(repo, [`${a}..${f2}`, `${f2}..${m}`]));
+    const mergeZuerst = await auswahl.gezeigteCommits(await auswahl.bereicheReviewen(repo, [`${f2}..${m}`, `${a}..${f2}`]));
+
+    expect(featureZuerst).toEqual(auswahl.listeVonGitNeuesteZuerst(repo, `${a}..${m}`));
+    expect(mergeZuerst).toEqual(featureZuerst);
+    expect(featureZuerst.indexOf(m)).toBeLessThan(featureZuerst.indexOf(f2));
+    expect(featureZuerst.indexOf(f2)).toBeLessThan(featureZuerst.indexOf(f1));
+  });
+
   const unzulaessig = [
     ({ a, b }) => [`${a}...${b}`],
     () => ['--output=pwn..HEAD'],

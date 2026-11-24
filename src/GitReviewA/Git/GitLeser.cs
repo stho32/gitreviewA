@@ -7,6 +7,8 @@ namespace GitReviewA.Git;
 
 internal static class GitLeser
 {
+    private const int MergeBaseOhneGemeinsamenVorfahren = 1;
+
     public static Commitzeilen Lesen(CommitHashes hashes, string arbeitsordner)
     {
         var start = GitLogStart(hashes, arbeitsordner);
@@ -34,8 +36,9 @@ internal static class GitLeser
 
     /// <summary>
     /// Ein Bereich ergibt dieselbe Liste wie <c>git rev-list</c>. Mehrere Bereiche ergeben die Vereinigung der einzelnen Bereiche,
-    /// neuester zuerst: bei git selbst würde der Anfang eines Bereichs auch die anderen Bereiche beschneiden.
-    /// Je Bereich wird höchstens ein Commit mehr als die Grenze gelesen, damit eine zu große Auswahl erkennbar ist.
+    /// neuester zuerst und Kind vor Eltern wie <c>git rev-list --date-order</c>: bei git selbst würde der Anfang eines Bereichs
+    /// auch die anderen Bereiche beschneiden. Die Reihenfolge hängt nur an der Vereinigung, nicht an der Reihenfolge der Bereiche,
+    /// auch bei gleichen Commit-Zeiten. Je Bereich wird höchstens ein Commit mehr als die Grenze gelesen, damit eine zu große Auswahl erkennbar ist.
     /// </summary>
     public static Commitzeilen LeseBereiche(Bereiche bereiche, string arbeitsordner)
     {
@@ -45,7 +48,8 @@ internal static class GitLeser
             return LeseBereich(bereiche[0], arbeitsordner);
         }
         var vereinigteHashes = VereinigeBereiche(bereiche, arbeitsordner);
-        return LeseNeuesteZuerst(vereinigteHashes, arbeitsordner);
+        var gemeinsameVorfahren = LeseGemeinsameVorfahrenDerAnfaenge(bereiche, arbeitsordner);
+        return LeseNeuesteZuerst(vereinigteHashes, gemeinsameVorfahren, arbeitsordner);
     }
 
     private static Commitzeilen LeseBereich(string bereich, string arbeitsordner)
@@ -73,17 +77,77 @@ internal static class GitLeser
         return new CommitHashes(vereinigt.Take(Auswahlgrenze.Hoechstzahl + 1));
     }
 
-    private static Commitzeilen LeseNeuesteZuerst(CommitHashes hashes, string arbeitsordner)
+    /// <summary>
+    /// Kein Commit der Vereinigung ist Vorfahr eines gemeinsamen Vorfahren aller Anfänge — dort darf der Verlauf enden,
+    /// damit <c>--date-order</c> nicht die ganze Geschichte durchläuft. Ohne gemeinsamen Vorfahren bleibt die Liste leer.
+    /// </summary>
+    private static CommitHashes LeseGemeinsameVorfahrenDerAnfaenge(Bereiche bereiche, string arbeitsordner)
+    {
+        var start = GitStart.Im(arbeitsordner);
+        start.ArgumentList.Add("merge-base");
+        start.ArgumentList.Add("--octopus");
+        start.ArgumentList.Add("--all");
+        start.ArgumentList.Add("--end-of-options");
+        foreach (var bereich in bereiche)
+        {
+            start.ArgumentList.Add(AnfangDes(bereich));
+        }
+        var lauf = WarteAufEnde(Starte(start));
+        var keinGemeinsamerVorfahr = lauf.ExitCode == MergeBaseOhneGemeinsamenVorfahren && lauf.Ausgabe.Length == 0;
+        if (keinGemeinsamerVorfahr)
+        {
+            return new CommitHashes([]);
+        }
+        PruefeErfolg(lauf, "git merge-base");
+        return new CommitHashes(lauf.Ausgabe.Split('\n', StringSplitOptions.RemoveEmptyEntries));
+    }
+
+    private static string AnfangDes(string bereich)
+    {
+        var anfang = bereich[..bereich.IndexOf(Bereichspruefer.Bereichstrenner, StringComparison.Ordinal)];
+        var anfangFehlt = anfang.Length == 0;
+        if (anfangFehlt)
+        {
+            return "HEAD";
+        }
+        return anfang;
+    }
+
+    private static Commitzeilen LeseNeuesteZuerst(CommitHashes hashes, CommitHashes gemeinsameVorfahren, string arbeitsordner)
     {
         var start = GitLogMitFormat(arbeitsordner);
-        start.ArgumentList.Add("--no-walk=sorted");
+        start.ArgumentList.Add("--date-order");
         start.ArgumentList.Add("--end-of-options");
+        var hashesUnabhaengigVonDerBereichsreihenfolge = new SortedSet<string>(StringComparer.Ordinal);
         foreach (var hash in hashes)
+        {
+            hashesUnabhaengigVonDerBereichsreihenfolge.Add(hash);
+        }
+        foreach (var hash in hashesUnabhaengigVonDerBereichsreihenfolge)
         {
             start.ArgumentList.Add(hash);
         }
-        var ausgabe = Ausfuehren(start, "git log");
-        return GitLogAusgabe.Zerlegen(ausgabe);
+        foreach (var vorfahr in gemeinsameVorfahren)
+        {
+            start.ArgumentList.Add($"^{vorfahr}");
+        }
+        start.ArgumentList.Add("--");
+        var verlauf = GitLogAusgabe.Zerlegen(Ausfuehren(start, "git log"));
+        return NurDieAusDerVereinigung(verlauf, hashesUnabhaengigVonDerBereichsreihenfolge);
+    }
+
+    private static Commitzeilen NurDieAusDerVereinigung(Commitzeilen verlauf, SortedSet<string> vereinigung)
+    {
+        var auswahl = new List<Commitzeile>();
+        foreach (var zeile in verlauf)
+        {
+            var gehoertZurVereinigung = vereinigung.Contains(zeile.Hash);
+            if (gehoertZurVereinigung)
+            {
+                auswahl.Add(zeile);
+            }
+        }
+        return new Commitzeilen(auswahl);
     }
 
     private static ProcessStartInfo GitLogStart(CommitHashes hashes, string arbeitsordner)
@@ -142,18 +206,29 @@ internal static class GitLeser
 
     private static string Ausfuehren(ProcessStartInfo start, string aufruf)
     {
-        using var prozess = Starte(start);
+        var lauf = WarteAufEnde(Starte(start));
+        PruefeErfolg(lauf, aufruf);
+        return lauf.Ausgabe;
+    }
+
+    private static void PruefeErfolg(GitLauf lauf, string befehl)
+    {
+        var gitIstGescheitert = lauf.ExitCode != 0;
+        if (gitIstGescheitert)
+        {
+            throw new GitFehler($"{befehl} endete mit {lauf.ExitCode}: {lauf.Fehlertext}");
+        }
+    }
+
+    private static GitLauf WarteAufEnde(Process gestartet)
+    {
+        using var prozess = gestartet;
         var fehler = new StringBuilder();
         prozess.ErrorDataReceived += (_, zeile) => fehler.AppendLine(zeile.Data);
         prozess.BeginErrorReadLine();
         var ausgabe = prozess.StandardOutput.ReadToEnd();
         prozess.WaitForExit();
-        var gitIstGescheitert = prozess.ExitCode != 0;
-        if (gitIstGescheitert)
-        {
-            throw new GitFehler($"{aufruf} endete mit {prozess.ExitCode}: {fehler.ToString().Trim()}");
-        }
-        return ausgabe;
+        return new GitLauf(prozess.ExitCode, ausgabe, fehler.ToString().Trim());
     }
 
     private static Process Starte(ProcessStartInfo start)
@@ -173,4 +248,6 @@ internal static class GitLeser
         }
         return prozess;
     }
+
+    private sealed record GitLauf(int ExitCode, string Ausgabe, string Fehlertext);
 }
