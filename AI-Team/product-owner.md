@@ -17,4 +17,4 @@ Keine aus der Factory.
 
 ## Gelerntes
 
-- 2026-11-24 (#19, #5): Vor jeder Entscheidung `gemeinsam/regeln.md` und `gemeinsam/gelerntes.md` der Factory tatsächlich öffnen und lesen — zweimal fehlten sie in der Gelesen-Zeile.
+- 2026-11-24 (#19, #5): Vor jeder Entscheidung `gemeinsam/regeln.md` und `gemeinsam/gelerntes.md` der Factory tatsächlich öffnen und lesen — zweimal fehlten sie in der Gelesen-Zeile. Was wirkt (#2, dritter Auftrag): im Auftrag verlangen, die Dateien „vollständig mit dem Read-Werkzeug“ zu öffnen und in der Gelesen-Zeile mit Zeilenzahl zu nennen.

@@ -36,3 +36,4 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-24 | #21 | Entwicklertest | entwicklertester | befund | 7 min | 1 Muss: SIGINT im nicht-interaktiven Hintergrundstart ignoriert, Prozess hängt · claude · sonnet · Lauf 21-entwicklertester-1 · 0,50 $ · Karte gesamt 3,73 $ |
 | 2026-11-24 | #5 | Reviews | security-reviewer | befund | 7 min | 3 Muss: Submodul-Ignore, refs/replace, Bidi in Pfaden · claude · sonnet · Lauf 5-security-reviewer-1 · 0,51 $ · Karte gesamt 2,82 $ |
 | 2026-11-24 | #2 | Entwicklung | entwickler | bestanden | 23 min | Build 0 Warnungen, NUnit 293, Playwright 65; 200 Commits 0,48–0,65 s; 7 Mutanten rot · claude · opus · Lauf 2-entwickler-1 · 6,68 $ · Karte gesamt 7,61 $ |
+| 2026-11-24 | #2 | Reviews | product-owner | bestanden | 1 min | Kriterium 5: Vereinigung einzelner Bereiche; Gelesen erstmals vollständig mit Zeilenzahlen · claude · sonnet · Lauf 2-product-owner-2 · 0,22 $ · Karte gesamt 7,83 $ |
