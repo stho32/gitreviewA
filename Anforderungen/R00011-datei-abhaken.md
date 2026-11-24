@@ -10,6 +10,8 @@ datum: 2026-11-24
 
 Der prüfende Mensch hakt in der Dateiliste (R00003) jede Datei eines Commits ab, wenn er sie geprüft hat, und nimmt den Haken wieder weg, wenn er sich geirrt hat. Ein Haken gilt je **Stelle** = Commit und Datei: dieselbe Datei in zwei Commits sind zwei Stellen mit je eigenem Haken. Über der Dateiliste steht „n von m abgehakt“ für **alle** Stellen der Auswahl des Laufs (nicht nur des gewählten Commits). Die Haken bleiben beim Wechsel von Datei und Commit und nach dem Neuladen der Seite bis zum Ende des Laufs erhalten und leben nur im Arbeitsspeicher. Beim „Beenden“ nennt das Ergebnis (R00002) ab dem ersten Haken einen Abschnitt `## Dateien` mit den abgehakten und den ungeprüften Stellen — damit die aufrufende KI erfährt, was der Mensch **nicht** angesehen hat.
 
+„Zusammen“ (R00012) ist eine Sicht auf diese Stellen: ein Haken je Datei setzt oder nimmt alle ihre Stellen, Modell und Ergebnis bleiben je Stelle, und Wortlaut und Ort des Zählers löst R00012 ab.
+
 Zahlt ein auf: [Vision](R00000-vision.md) — „Checkliste im Kopf entlasten“ (Dateien abhaken, Fortschritt sehen), „Ergebnis als Rückkanal“ und die Leitplanken „Nichts wird gespeichert“, „stdout gehört allein dem Ergebnis“ und Lastprofil (2 000 geänderte Dateien).
 
 Baut auf auf: [R00003](R00003-commits-und-dateien-sehen.md) (Dateiliste, Dateiwahl, Ereignisse), [R00004](R00004-diff-einer-datei-lesen.md) (Zeichenmenge der Marken für Unsichtbares), [R00002](R00002-beenden-mit-ergebnis.md) (Ergebnisformat, Einmal-Schalter, Anfrageschutz, reservierter Abschnitt `## Dateien`) und [R00001](R00001-mit-commit-hashes-aufrufen.md) (Gerüst, Host-Prüfung).
