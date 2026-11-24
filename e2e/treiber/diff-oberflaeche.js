@@ -222,9 +222,20 @@ async function diffAntwortZuGross(page, pfad, meldung) {
   }, route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ zuGross: true, meldung }) }));
 }
 
-/** Knotenzahl je Block (`.dz-b`): die Elemente des Blocks samt dem Block selbst. */
+/** Knotenzahl je Block (`.dz-b`): Elemente **und** Textknoten, samt dem Block selbst — dieselbe Zahl, die der Browser auslegt. */
 async function blockKnoten(page) {
-  return page.evaluate(() => Array.from(document.querySelectorAll('#diff .df-sc .dz-b'), block => block.getElementsByTagName('*').length + 1));
+  return page.evaluate(() => Array.from(document.querySelectorAll('#diff .df-sc .dz-b'), block => {
+    const knotenElemente = [block, ...block.querySelectorAll('*')];
+    let anzahl = knotenElemente.length;
+    for (const element of knotenElemente) {
+      for (const kind of element.childNodes) {
+        if (kind.nodeType === Node.TEXT_NODE) {
+          anzahl += 1;
+        }
+      }
+    }
+    return anzahl;
+  }));
 }
 
 /** Wartet, bis die Färbung fertig ist (`data-farbe` `ja` oder `nein`), und liefert den Zustand. */

@@ -70,7 +70,7 @@ test.describe('Ausgabegrenze in der Oberfläche', () => {
 });
 
 test.describe('Flüssiges Zeichnen (Blockgrenze)', () => {
-  test('soll riesig.txt über „Trotzdem laden“ in Blöcken zu höchstens etwa 5 000 Knoten zeigen', async ({ diff }) => {
+  test('soll riesig.txt über „Trotzdem laden“ in Blöcken zu höchstens 5 000 Knoten (Elemente und Textknoten) zeigen', async ({ diff }) => {
     await diff.starten({ vorbereitung: 'Große Diffs', commits: ['w'] });
 
     await diff.dateiAnsehen('riesig.txt');
@@ -80,7 +80,7 @@ test.describe('Flüssiges Zeichnen (Blockgrenze)', () => {
 
     const knoten = await diff.blockKnoten();
     const meiste = Math.max(...knoten);
-    test.info().annotations.push({ type: 'Messwert', description: `${knoten.length} Blöcke, höchstens ${meiste} Knoten je Block (Grenze ~5000)` });
+    test.info().annotations.push({ type: 'Messwert', description: `${knoten.length} Blöcke, höchstens ${meiste} Knoten je Block (Grenze 5000; Positivkontrolle der Mutanten ist der Bausteintest diff-werte.spec.js)` });
     expect(meiste, 'Knoten je Block').toBeLessThanOrEqual(5000);
     await diff.zeileZeigt(1, 'zeile 00001');
   });
@@ -90,7 +90,7 @@ test.describe('Flüssiges Zeichnen (Blockgrenze)', () => {
 
     await diff.dateiAnsehen('dicht.js');
     const zustand = await diff.warteAufFarbe();
-    expect(zustand, 'Positivkontrolle: dicht.js ist dicht gefärbt').toBe('ja');
+    expect(zustand, 'Vorbedingung: dicht.js ist dicht gefärbt').toBe('ja');
     const aufgaben = await diff.langeAufgabenBeimScrollen(24);
 
     test.info().annotations.push({ type: 'Messwert', description: `Aufgaben beim Scrollen über 150 ms: ${JSON.stringify(aufgaben.filter(a => a.dauerMs > 150))}` });
