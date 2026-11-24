@@ -20,15 +20,15 @@ internal static class UebersichtParser
     {
         var teile = DateiaenderungenParser.TeileInBytezeichen(ausgabe);
         var position = 0;
-        var commits = new List<string>();
+        var commits = new List<Commitdateien>();
         var stellen = new List<Uebersichtsstelle>();
         foreach (var hash in auswahl)
         {
-            commits.Add(hash);
             PruefeKopf(teile, position, hash);
             position++;
             EntferneZeilenumbruchVorDenDateien(teile, position);
             var dateienDesCommits = DateiaenderungenParser.LiesDateienEinesCommits(teile, ref position);
+            commits.Add(new Commitdateien(hash, dateienDesCommits));
             stellen.AddRange(StellenDesCommits(hash, dateienDesCommits));
         }
         DateiaenderungenParser.PruefeVollstaendigGelesen(teile, position);

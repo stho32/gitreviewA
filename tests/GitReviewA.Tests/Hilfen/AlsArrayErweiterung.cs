@@ -66,4 +66,14 @@ internal static class AlsArrayErweiterung
         }
         return liste.ToArray();
     }
+
+    public static NettoDatei[] AlsArray(this NettoDateiliste liste)
+    {
+        var dateien = new List<NettoDatei>();
+        foreach (var datei in liste)
+        {
+            dateien.Add(datei);
+        }
+        return dateien.ToArray();
+    }
 }

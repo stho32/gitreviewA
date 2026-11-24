@@ -13,14 +13,15 @@ internal sealed class TestUebersichtsquelle(Dateiuebersicht? uebersicht) : IUebe
 
     public static TestUebersichtsquelle Mit(string hash, params string[] pfade)
     {
-        return new TestUebersichtsquelle(new Dateiuebersicht([hash], pfade.Select(pfad => new Uebersichtsstelle(new Stelle(hash, pfad), string.Empty))));
+        var stellen = pfade.Select(pfad => new Uebersichtsstelle(new Stelle(hash, pfad), string.Empty)).ToArray();
+        return new TestUebersichtsquelle(Aus(hash, stellen));
     }
 
     /// <summary>Eine gesperrte Stelle mit <paramref name="sperrgrund"/>, danach eine lesbare.</summary>
     public static TestUebersichtsquelle MitSperre(string hash, string gesperrterPfad, string sperrgrund, string lesbarerPfad)
     {
         var stellen = new[] { new Uebersichtsstelle(new Stelle(hash, gesperrterPfad), sperrgrund), new Uebersichtsstelle(new Stelle(hash, lesbarerPfad), string.Empty) };
-        return new TestUebersichtsquelle(new Dateiuebersicht([hash], stellen));
+        return new TestUebersichtsquelle(Aus(hash, stellen));
     }
 
     public static TestUebersichtsquelle Scheiternd()
@@ -35,5 +36,11 @@ internal sealed class TestUebersichtsquelle(Dateiuebersicht? uebersicht) : IUebe
             throw new GitFehler("git log (Übersicht von 1 Commits) endete mit 128: fatal: bad object");
         }
         return uebersicht;
+    }
+
+    private static Dateiuebersicht Aus(string hash, IEnumerable<Uebersichtsstelle> stellen)
+    {
+        var dateien = new Dateiaenderungen(stellen.Select(stelle => new Dateiaenderung("M", stelle.Stelle.Pfad, null, 1, 0)));
+        return new Dateiuebersicht([new Commitdateien(hash, dateien)], stellen);
     }
 }
