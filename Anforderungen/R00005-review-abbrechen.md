@@ -21,6 +21,7 @@ Ohne diese Anforderung sieht die aufrufende KI bei einem Abbruch denselben Exit-
 ## Funktionale Anforderungen
 
 - Strg+C und SIGTERM während des Laufs beenden den Prozess mit Exit-Code 130 und der Meldung „Review abgebrochen“ auf stderr (Logformat `<Zeit> <STUFE> [Kontext] Meldung`, Stufe Warnung).
+- Der Knopf „Abbrechen“ im Kopf der Oberfläche (nach Bestätigung, R00012 und I0028) ist ein zweiter Weg zu demselben Abbruch und wirkt wie Strg+C: nichts auf stdout, „Review abgebrochen“ auf stderr, Exit-Code 130; ein geschlossener Tab bricht weiter nichts ab.
 - Bei einem Abbruch wird nichts auf stdout geschrieben, auch dann nicht, wenn Anmerkungen vorliegen. Anmerkungen gehen verloren (nur Arbeitsspeicher, Vision „Nichts wird gespeichert“).
 - Das Schließen des Browser-Tabs ändert nichts am Lauf: der Prozess wartet weiter, die Oberfläche ist unter derselben Adresse wieder erreichbar, angelegte Anmerkungen bleiben. Es gibt kein Zeitlimit.
 - Ist „Beenden“ bereits angenommen (erste Anforderung bestätigt, R00002), gewinnt das Beenden: das Ergebnis erscheint vollständig, Exit-Code 0.
