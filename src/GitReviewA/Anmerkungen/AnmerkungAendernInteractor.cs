@@ -16,12 +16,12 @@ internal sealed class AnmerkungAendernInteractor(Anmerkungsspeicher speicher, St
 
     public Aenderungsergebnis Aendere(Aenderungswunsch? wunsch)
     {
-        if (!Anmerkungstext.IstGueltig(wunsch?.Text, out var textGrund))
+        var text = wunsch?.Text;
+        if (!Anmerkungstext.IstGueltig(text, out var textGrund))
         {
             return Abgelehnt(Aenderungsausgang.Ungueltig, textGrund);
         }
-        var text = wunsch!.Text;
-        var nummer = wunsch.Nummer;
+        var nummer = wunsch!.Nummer;
         var anmerkung = speicher.Finde(nummer);
         if (anmerkung is null)
         {
