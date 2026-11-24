@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using GitReviewA.Anmerkungen;
 using GitReviewA.Fremdtext;
+using GitReviewA.Haken;
 
 namespace GitReviewA.Beenden;
 
@@ -14,16 +15,23 @@ internal static class ErgebnisFormatierer
     private const string Zeilenende = "\n";
     private const string Ueberschrift = "# Ergebnis manueller Review";
     private const string OhneAnmerkungen = "Keine Anmerkungen.";
+    private const string DateienUeberschrift = "## Dateien";
 
-    public static string Formatiere(Anmerkungsliste anmerkungen)
+    public static string Formatiere(Anmerkungsliste anmerkungen, Dateienstand dateien)
     {
         var abschnitte = new List<string> { Ueberschrift };
+        abschnitte.AddRange(AnmerkungsAbschnitte(anmerkungen));
+        abschnitte.AddRange(DateiAbschnitte(dateien));
+        return VerbindeAbschnitte(abschnitte);
+    }
+
+    private static List<string> AnmerkungsAbschnitte(Anmerkungsliste anmerkungen)
+    {
         if (anmerkungen.Anzahl == 0)
         {
-            abschnitte.Add(OhneAnmerkungen);
-            return VerbindeAbschnitte(abschnitte);
+            return [OhneAnmerkungen];
         }
-        abschnitte.Add(string.Create(CultureInfo.InvariantCulture, $"Anmerkungen: {anmerkungen.Anzahl}"));
+        var abschnitte = new List<string> { string.Create(CultureInfo.InvariantCulture, $"Anmerkungen: {anmerkungen.Anzahl}") };
         var position = 0;
         foreach (var anmerkung in anmerkungen)
         {
@@ -32,7 +40,7 @@ internal static class ErgebnisFormatierer
             abschnitte.Add($"Commit: {anmerkung.Commit}");
             abschnitte.Add(AlsZitat(anmerkung.Text));
         }
-        return VerbindeAbschnitte(abschnitte);
+        return abschnitte;
     }
 
     private static string VerbindeAbschnitte(List<string> abschnitte)
@@ -50,6 +58,48 @@ internal static class ErgebnisFormatierer
             return $"## {nummer}. {datei} (ganze Datei)";
         }
         return $"## {nummer}. {datei}:{zeile.ToString(CultureInfo.InvariantCulture)}";
+    }
+
+    /// <summary>
+    /// Ab dem ersten Haken (R00011): abgehakte, dann ungeprüfte Stellen in der Reihenfolge der Übersicht. Ohne Haken fehlt der Abschnitt,
+    /// das Ergebnis bleibt wie in R00002 — „Ungeprüft: alle“ wäre ohne einen Haken keine Aussage über das Prüfen.
+    /// </summary>
+    private static List<string> DateiAbschnitte(Dateienstand dateien)
+    {
+        var keinHakenGesetzt = dateien.Abgehakt == 0;
+        if (keinHakenGesetzt)
+        {
+            return [];
+        }
+        var abgehakt = new List<string>();
+        var ungeprueft = new List<string>();
+        foreach (var stelle in dateien)
+        {
+            var zeile = $"- {UnsichtbareZeichen.AlsMarken(stelle.Datei)} (Commit {stelle.Commit})";
+            if (stelle.Abgehakt)
+            {
+                abgehakt.Add(zeile);
+            }
+            else
+            {
+                ungeprueft.Add(zeile);
+            }
+        }
+        var abschnitte = new List<string> { DateienUeberschrift };
+        abschnitte.AddRange(Liste("Abgehakt", abgehakt, dateien.Gesamt));
+        abschnitte.AddRange(Liste("Ungeprüft", ungeprueft, dateien.Gesamt));
+        return abschnitte;
+    }
+
+    /// <summary>Kopfzeile „&lt;Art&gt;: k von m“, darunter die Zeilen; eine leere Liste hat nur die Kopfzeile.</summary>
+    private static List<string> Liste(string art, List<string> zeilen, int gesamt)
+    {
+        var kopf = string.Create(CultureInfo.InvariantCulture, $"{art}: {zeilen.Count} von {gesamt}");
+        if (zeilen.Count == 0)
+        {
+            return [kopf];
+        }
+        return [kopf, string.Join(Zeilenende, zeilen)];
     }
 
     private static string AlsZitat(string text)

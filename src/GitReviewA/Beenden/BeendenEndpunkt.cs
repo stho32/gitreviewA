@@ -1,12 +1,13 @@
 using System.Globalization;
 using GitReviewA.Anmerkungen;
+using GitReviewA.Haken;
 using GitReviewA.Protokoll;
 using GitReviewA.Server;
 
 namespace GitReviewA.Beenden;
 
 /// <summary>
-/// Beenden wirkt genau einmal: die erste vollständig empfangene Anforderung schließt den Speicher ab, bekommt ihre
+/// Beenden wirkt genau einmal: die erste vollständig empfangene Anforderung schließt Anmerkungen und Haken ab, bekommt ihre
 /// Antwort vollständig und stoppt erst danach den Server. Eine Anforderung, deren Körper nie ganz ankommt, ist kein
 /// Beenden — ein Abbruch in dieser Zeit bleibt ein Abbruch. Das Ergebnis schreibt der Hauptablauf, wenn der Server steht.
 /// </summary>
@@ -15,7 +16,7 @@ internal static class BeendenEndpunkt
     private const string Kontext = "Beenden";
     private static readonly BeendetAntwort Beendet = new("beendet");
 
-    public static RequestDelegate Fuer(Anmerkungsspeicher speicher, IHostApplicationLifetime lebensdauer, StderrProtokoll protokoll)
+    public static RequestDelegate Fuer(Anmerkungsspeicher speicher, Hakenspeicher haken, IHostApplicationLifetime lebensdauer, StderrProtokoll protokoll)
     {
         return async kontext =>
         {
@@ -25,6 +26,7 @@ internal static class BeendenEndpunkt
                 return;
             }
             var istErsteAnforderung = speicher.VersucheAbzuschliessen();
+            haken.VersucheZuSiegeln();
             await JsonAntwort.SendeAsync(kontext, StatusCodes.Status200OK, Beendet);
             if (!istErsteAnforderung)
             {

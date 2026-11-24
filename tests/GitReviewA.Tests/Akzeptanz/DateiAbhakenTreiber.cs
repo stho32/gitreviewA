@@ -1,4 +1,6 @@
+using GitReviewA.Anmerkungen;
 using GitReviewA.Aufruf;
+using GitReviewA.Beenden;
 using GitReviewA.Git;
 using GitReviewA.Haken;
 using GitReviewA.Protokoll;
@@ -68,6 +70,13 @@ internal sealed class DateiAbhakenTreiber
             stellen.Add(stelle);
         }
         return new Standantwort(stand.IstLesbar, stand.Dateien.Abgehakt, stand.Dateien.Gesamt, stellen.ToArray());
+    }
+
+    /// <summary>Wie „Beenden“ ohne Anmerkungen: siegelt den Speicher und liefert das Ergebnis, das auf stdout ginge.</summary>
+    public string Beenden()
+    {
+        speicher.VersucheZuSiegeln();
+        return ErgebnisFormatierer.Formatiere(new Anmerkungsliste([]), interactor.Ergebnisstand());
     }
 
     public int Uebersichtslesungen()

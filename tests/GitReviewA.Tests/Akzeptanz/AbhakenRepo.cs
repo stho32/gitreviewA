@@ -64,11 +64,15 @@ internal sealed class AbhakenRepo : IDisposable
         return v;
     }
 
-    /// <summary>`y` fügt die Datei <see cref="NameMitZeilenumbruchUndRichtungszeichen"/> hinzu.</summary>
-    public static AbhakenRepo Y()
+    /// <summary>`y` fügt die Datei <see cref="NameMitZeilenumbruchUndRichtungszeichen"/> hinzu, auf Wunsch dazu `b.txt` (ein zweiter Haken, damit der Name als ungeprüft erscheinen kann).</summary>
+    public static AbhakenRepo Y(bool mitKontrolldatei = false)
     {
         var y = new AbhakenRepo(WegwerfRepo.MitCommits());
         y.repo.SchreibeDatei(NameMitZeilenumbruchUndRichtungszeichen, "x\n");
+        if (mitKontrolldatei)
+        {
+            y.repo.SchreibeDatei("b.txt", "b\n");
+        }
         y.Committe("y", "Fremder Name", "2026-03-04T09:15:00+01:00");
         return y;
     }

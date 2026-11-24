@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using GitReviewA.Git;
+using GitReviewA.Haken;
 using GitReviewA.Protokoll;
 using GitReviewA.Server;
 using GitReviewA.Tests.Hilfen;
@@ -74,11 +75,26 @@ public class BeendenEndpunktTests
         Assert.That((await client.GetAsync(new Uri(new Uri(server.Adresse), "api/zustand"))).StatusCode, Is.EqualTo(HttpStatusCode.OK));
     }
 
+    [Test]
+    public async Task Wenn_Beenden_angefordert_dann_sind_auch_die_Haken_gesiegelt_und_der_Stand_davor_steht_im_Ergebnisstand()
+    {
+        await using var server = await StarteServer(new StringWriter());
+        using var client = new HttpClient();
+        var vorher = server.DateiAbhaken.Setze(new Hakenanfrage(HashA, "a.txt", true));
+
+        await Beende(client, server);
+        var nachher = server.DateiAbhaken.Setze(new Hakenanfrage(HashA, "b.txt", true));
+        var ergebnisstand = server.DateiAbhaken.Ergebnisstand();
+
+        Assert.That((vorher.Ausgang, nachher.Ausgang), Is.EqualTo((Hakenausgang.Gesetzt, Hakenausgang.Beendet)));
+        Assert.That((ergebnisstand.Abgehakt, ergebnisstand.Gesamt), Is.EqualTo((1, 2)));
+    }
+
     private static async Task<Webserver> StarteServer(StringWriter protokollziel)
     {
         var commits = new Commitzeilen([new Commitzeile(HashA, "Testperson", "2026-01-01T09:00:00+00:00", "Erster Commit", "")]);
         var protokoll = new StderrProtokoll(protokollziel, TimeProvider.System, Protokollstufe.Information);
-        return await Webserver.StartenAsync(0, commits, TestDateiquelle.Leer(), TestDiffquelle.Leer(), Oberflaeche.AusDemProgramm(), protokoll);
+        return await Webserver.StartenAsync(0, commits, TestDateiquelle.Leer(), TestDiffquelle.Leer(), TestUebersichtsquelle.Mit(HashA, "a.txt", "b.txt"), Oberflaeche.AusDemProgramm(), protokoll);
     }
 
     private static async Task<HttpResponseMessage> Beende(HttpClient client, Webserver server)

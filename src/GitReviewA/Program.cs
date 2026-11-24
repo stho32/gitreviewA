@@ -5,6 +5,7 @@ using GitReviewA.Browser;
 using GitReviewA.Dateien;
 using GitReviewA.Diff;
 using GitReviewA.Git;
+using GitReviewA.Haken;
 using GitReviewA.Protokoll;
 using GitReviewA.Server;
 
@@ -52,7 +53,8 @@ internal static class Program
     {
         var commits = await CommitsDerAuswahl.LesenAsync(startauftrag.Auswahl, StandardeingabeDesProzesses(), Environment.CurrentDirectory, protokoll);
         var arbeitsordner = GitLeser.WurzelLesen(Environment.CurrentDirectory);
-        await using var server = await Webserver.StartenAsync(startauftrag.Port, commits, new GitDateiquelle(arbeitsordner), new GitDiffquelle(arbeitsordner), Oberflaeche.AusDemProgramm(), protokoll);
+        var uebersichtsquelle = new GitUebersichtsquelle(commits, arbeitsordner);
+        await using var server = await Webserver.StartenAsync(startauftrag.Port, commits, new GitDateiquelle(arbeitsordner), new GitDiffquelle(arbeitsordner), uebersichtsquelle, Oberflaeche.AusDemProgramm(), protokoll);
         protokoll.MeldeStart(server.Adresse);
         if (startauftrag.BrowserOeffnen)
         {
@@ -60,7 +62,7 @@ internal static class Program
         }
         await WartenBisBeendetOderAbgebrochen(server, abbruchsignale);
         var ausgang = AbbruchEntscheidung.Entscheide(server.Anmerkungen.IstAbgeschlossen);
-        GibErgebnisOderAbbruchAus(ausgang, server.Anmerkungen, protokoll);
+        GibErgebnisOderAbbruchAus(ausgang, server, protokoll);
         return ausgang.ExitCode;
     }
 
@@ -74,14 +76,14 @@ internal static class Program
         await server.WartenBisBeendetAsync();
     }
 
-    private static void GibErgebnisOderAbbruchAus(Laufausgang ausgang, Anmerkungsspeicher anmerkungen, StderrProtokoll protokoll)
+    private static void GibErgebnisOderAbbruchAus(Laufausgang ausgang, Webserver server, StderrProtokoll protokoll)
     {
         if (ausgang.IstAbgebrochen)
         {
             protokoll.Melde(Protokollstufe.Warnung, "Abbruch", "Review abgebrochen");
             return;
         }
-        StdoutErgebnis.Schreibe(ErgebnisFormatierer.Formatiere(anmerkungen.Schnappschuss()));
+        StdoutErgebnis.Schreibe(ErgebnisFormatierer.Formatiere(server.Anmerkungen.Schnappschuss(), server.DateiAbhaken.Ergebnisstand()));
     }
 
     private static Standardeingabe StandardeingabeDesProzesses()

@@ -61,6 +61,17 @@ internal sealed class DateiAbhakenSprache
         return treiber.Stand().Stellen.Select(stelle => $"{nameNachHash[stelle.Commit]}:{stelle.Datei}").ToArray();
     }
 
+    public string Beenden()
+    {
+        return treiber.Beenden();
+    }
+
+    /// <summary>Eine Zeile des Abschnitts „Dateien“: `- <Pfad> (Commit <voller Hash>)`.</summary>
+    public string Ergebniszeile(string commit, string pfad)
+    {
+        return $"- {pfad} (Commit {repo.Hash(commit)})";
+    }
+
     public int Uebersichtslesungen()
     {
         return treiber.Uebersichtslesungen();

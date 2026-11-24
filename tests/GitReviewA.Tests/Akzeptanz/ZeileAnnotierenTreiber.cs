@@ -2,6 +2,7 @@ using GitReviewA.Anmerkungen;
 using GitReviewA.Aufruf;
 using GitReviewA.Beenden;
 using GitReviewA.Git;
+using GitReviewA.Haken;
 using GitReviewA.Protokoll;
 
 namespace GitReviewA.Tests.Akzeptanz;
@@ -60,7 +61,7 @@ internal sealed class ZeileAnnotierenTreiber
     public string Beenden()
     {
         speicher.VersucheAbzuschliessen();
-        return ErgebnisFormatierer.Formatiere(speicher.Schnappschuss());
+        return ErgebnisFormatierer.Formatiere(speicher.Schnappschuss(), new Dateienstand([]));
     }
 
     public string Protokoll()

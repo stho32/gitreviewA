@@ -5,6 +5,7 @@ using GitReviewA.Beenden;
 using GitReviewA.Dateien;
 using GitReviewA.Diff;
 using GitReviewA.Git;
+using GitReviewA.Haken;
 using GitReviewA.Protokoll;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
@@ -23,21 +24,26 @@ internal sealed class Webserver : IAsyncDisposable
 
     private readonly WebApplication anwendung;
 
-    private Webserver(WebApplication anwendung, int port, Anmerkungsspeicher anmerkungen)
+    private Webserver(WebApplication anwendung, int port, Anmerkungsspeicher anmerkungen, DateiAbhakenInteractor dateiAbhaken)
     {
         this.anwendung = anwendung;
         Adresse = $"http://{HostPruefung.Rechneradresse}:{port}/";
         Anmerkungen = anmerkungen;
+        DateiAbhaken = dateiAbhaken;
     }
 
     public string Adresse { get; }
 
     public Anmerkungsspeicher Anmerkungen { get; }
 
-    public static async Task<Webserver> StartenAsync(int port, Commitzeilen commits, IDateiquelle dateiquelle, IDiffquelle diffquelle, Oberflaeche oberflaeche, StderrProtokoll protokoll)
+    public DateiAbhakenInteractor DateiAbhaken { get; }
+
+    public static async Task<Webserver> StartenAsync(int port, Commitzeilen commits, IDateiquelle dateiquelle, IDiffquelle diffquelle, IUebersichtsquelle uebersichtsquelle, Oberflaeche oberflaeche, StderrProtokoll protokoll)
     {
         var anwendung = BaueAnwendung(port, protokoll);
         var anmerkungen = new Anmerkungsspeicher();
+        var haken = new Hakenspeicher();
+        var dateiAbhaken = new DateiAbhakenInteractor(uebersichtsquelle, haken, protokoll);
         var lauscherPort = new LauscherPort();
         anwendung.Use(SchuetzeVorFremdemHost(lauscherPort, protokoll));
         anwendung.Use(SetzeSchutzkoepfe);
@@ -46,10 +52,10 @@ internal sealed class Webserver : IAsyncDisposable
         var dateien = new GemerkteDateiquelle(dateiquelle);
         anwendung.MapGet(DateienEndpunkt.Muster, DateienEndpunkt.Fuer(commits, dateien, protokoll));
         anwendung.MapGet(DiffEndpunkt.Muster, DiffEndpunkt.Fuer(new DiffLesenInteractor(commits, dateien, diffquelle, protokoll)));
-        BildeRueckkanal(anwendung, commits, anmerkungen, protokoll);
+        BildeRueckkanal(anwendung, commits, anmerkungen, haken, protokoll);
         await anwendung.StartAsync();
         lauscherPort.Wert = TatsaechlicherPort(anwendung);
-        return new Webserver(anwendung, lauscherPort.Wert, anmerkungen);
+        return new Webserver(anwendung, lauscherPort.Wert, anmerkungen, dateiAbhaken);
     }
 
     public Task WartenBisBeendetAsync()
@@ -127,13 +133,13 @@ internal sealed class Webserver : IAsyncDisposable
         anwendung.MapGet("/{**pfad}", (string pfad) => Oberflaechendatei(oberflaeche, pfad));
     }
 
-    private static void BildeRueckkanal(WebApplication anwendung, Commitzeilen commits, Anmerkungsspeicher anmerkungen, StderrProtokoll protokoll)
+    private static void BildeRueckkanal(WebApplication anwendung, Commitzeilen commits, Anmerkungsspeicher anmerkungen, Hakenspeicher haken, StderrProtokoll protokoll)
     {
         var interactor = new ZeileAnnotierenInteractor(anmerkungen, new CommitAuswahl(commits), protokoll);
         var anlegen = AnmerkungsEndpunkt.Fuer(interactor, protokoll);
         anwendung.MapGet("/api/anmerkungen", AnmerkungenListeEndpunkt.Fuer(interactor));
         anwendung.Map("/api/anmerkungen", GeschuetzterEndpunkt.Mit(anlegen, protokoll));
-        var beenden = BeendenEndpunkt.Fuer(anmerkungen, anwendung.Lifetime, protokoll);
+        var beenden = BeendenEndpunkt.Fuer(anmerkungen, haken, anwendung.Lifetime, protokoll);
         anwendung.Map("/api/beenden", GeschuetzterEndpunkt.Mit(beenden, protokoll));
     }
 
