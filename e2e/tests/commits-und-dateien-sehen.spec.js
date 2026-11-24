@@ -180,6 +180,8 @@ test.describe('Dateilisten nur auf Anfrage lesen', () => {
 
     await review.commitAnsehen('q');
     await review.dateienZeigen(DATEIEN_VON_Q);
+    await review.commitAnsehen('q');
+    await review.dateienZeigen(DATEIEN_VON_Q);
 
     await review.dateilistenGelesen({ p: 1, q: 1, r: 0 });
   });
