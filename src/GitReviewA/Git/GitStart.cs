@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using System.Text;
+using GitReviewA.Fremdtext;
 
 namespace GitReviewA.Git;
 
@@ -8,6 +8,7 @@ namespace GitReviewA.Git;
 /// seine Ersatzrefs (refs/replace) keinen anderen Inhalt unter einem angezeigten Hash unterschieben
 /// und seine Einstellungen und Attribute keine Dateien kürzen oder Änderungen als binär verbergen (Attribute weder aus dem Baum
 /// noch aus `core.attributesFile`; nur `.git/info/attributes` lässt sich nicht abschalten — dafür „als Text zeigen“ im Diff).
+/// Bytes außerhalb von UTF-8 stehen in der Ausgabe als Marke (<see cref="FremdeBytes"/>).
 /// Der Aufrufer hängt nur noch Unterbefehl und Argumente an.
 /// </summary>
 internal static class GitStart
@@ -21,8 +22,8 @@ internal static class GitStart
             WorkingDirectory = arbeitsordner,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
-            StandardOutputEncoding = Encoding.UTF8,
-            StandardErrorEncoding = Encoding.UTF8,
+            StandardOutputEncoding = FremdeBytes.Utf8MitBytemarken,
+            StandardErrorEncoding = FremdeBytes.Utf8MitBytemarken,
         };
         start.ArgumentList.Add("-c");
         start.ArgumentList.Add("log.showSignature=false");

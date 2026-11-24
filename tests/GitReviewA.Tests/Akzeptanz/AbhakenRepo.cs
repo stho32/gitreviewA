@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.Versioning;
 using GitReviewA.Tests.Hilfen;
 
@@ -5,7 +6,7 @@ namespace GitReviewA.Tests.Akzeptanz;
 
 /// <summary>
 /// Die Wegwerf-Repos der User Story R00011 mit Commits unter ihren Namen: Vorbereitung (`p`, `q`, `r` aus R00003), `y` (Name mit LF und U+202E),
-/// `g` (2 000 Dateien). Gleicher Inhalt wie <c>e2e/treiber/wegwerf-repo.js</c>.
+/// `g` (2 000 Dateien), `u` (Namen aus ungültigem UTF-8). Gleicher Inhalt wie <c>e2e/treiber/wegwerf-repo.js</c>.
 /// </summary>
 [UnsupportedOSPlatform("windows")]
 internal sealed class AbhakenRepo : IDisposable
@@ -87,6 +88,55 @@ internal sealed class AbhakenRepo : IDisposable
         }
         g.Committe("g", "2000 Dateien", "2026-03-04T09:15:00+01:00");
         return g;
+    }
+
+    /// <summary>
+    /// `u` fügt `f\xFF.txt`, `f\xFE.txt` (ungültiges UTF-8) und `g.txt` hinzu; auf Wunsch statt `f\xFE.txt` eine Datei mit dem
+    /// Doppelgänger-Namen <paramref name="doppelgaenger"/> in gültigem UTF-8 (etwa wörtlich `f⟨0xFF⟩.txt` oder `f\uFFFD.txt`).
+    /// Die Namen aus fremden Bytes verlassen den Arbeitsordner nach dem Commit wieder: .NET kann sie nicht löschen.
+    /// </summary>
+    public static AbhakenRepo U(string? doppelgaenger = null)
+    {
+        byte[] nameMitFF = [(byte)'f', 0xFF, (byte)'.', (byte)'t', (byte)'x', (byte)'t'];
+        byte[] nameMitFE = [(byte)'f', 0xFE, (byte)'.', (byte)'t', (byte)'x', (byte)'t'];
+        var u = new AbhakenRepo(WegwerfRepo.MitCommits());
+        var bytenamen = new List<byte[]> { nameMitFF };
+        if (doppelgaenger is null)
+        {
+            bytenamen.Add(nameMitFE);
+        }
+        else
+        {
+            u.repo.SchreibeDatei(doppelgaenger, "d\n");
+        }
+        foreach (var name in bytenamen)
+        {
+            u.Python("open(bytes.fromhex(sys.argv[1]), 'wb').write(b'x\\n')", name);
+        }
+        u.repo.SchreibeDatei("g.txt", "g\n");
+        u.Committe("u", "Namen aus fremden Bytes", "2026-03-04T09:15:00+01:00");
+        foreach (var name in bytenamen)
+        {
+            u.Python("os.remove(bytes.fromhex(sys.argv[1]))", name);
+        }
+        return u;
+    }
+
+    /// <summary>.NET legt nur Namen in gültigem UTF-8 an; die Bytes behandelt deshalb python3 wie in der Abnahme-Probe.</summary>
+    private void Python(string anweisung, byte[] name)
+    {
+        var start = new ProcessStartInfo("python3") { WorkingDirectory = Ordner };
+        start.ArgumentList.Add("-I");
+        start.ArgumentList.Add("-c");
+        start.ArgumentList.Add("import os, sys; " + anweisung);
+        start.ArgumentList.Add(Convert.ToHexString(name));
+        using var prozess = Process.Start(start)!;
+        prozess.WaitForExit();
+        var istGescheitert = prozess.ExitCode != 0;
+        if (istGescheitert)
+        {
+            throw new InvalidOperationException($"python3 endete mit {prozess.ExitCode}: {anweisung}");
+        }
     }
 
     private void Committe(string name, string betreff, string datum)

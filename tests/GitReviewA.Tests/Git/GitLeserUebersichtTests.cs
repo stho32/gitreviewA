@@ -82,6 +82,19 @@ public class GitLeserUebersichtTests
     }
 
     [Test]
+    public void Wenn_Pfade_ungueltiges_UTF_8_tragen_dann_nennen_Dateiliste_und_Uebersicht_dieselben_Namen_mit_Bytemarken()
+    {
+        using var repo = GitReviewA.Tests.Akzeptanz.AbhakenRepo.U();
+        var hash = repo.Hash("u");
+
+        var stellen = GitLeser.UebersichtLesen(new CommitHashes([hash]), repo.Ordner).AlsArray();
+
+        var pfade = stellen.Select(stelle => stelle.Pfad);
+        Assert.That(pfade, Is.EqualTo(new[] { "f⟨0xFE⟩.txt", "f⟨0xFF⟩.txt", "g.txt" }));
+        Assert.That(stellen, Is.EqualTo(OrakelAusDenDateilisten([hash], repo.Ordner)));
+    }
+
+    [Test]
     public void Wenn_aus_einem_Unterordner_gelesen_wird_dann_stehen_die_Pfade_ab_der_Wurzel()
     {
         using var repo = WegwerfRepo.MitCommits();

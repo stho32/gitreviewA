@@ -4,7 +4,7 @@ namespace GitReviewA.Haken;
 
 /// <summary>
 /// Prüft eine Hakenanfrage in zwei Stufen: erst die Form (ohne die Übersicht zu lesen), dann die Stelle gegen die Übersicht —
-/// nur ein voller Hash der Auswahl und ein Pfad, den git für diesen Commit geliefert hat, werden angenommen.
+/// nur ein voller Hash der Auswahl und ein Pfad, den git für diesen Commit genau einmal geliefert hat, werden angenommen.
 /// Die Gründe nennen nie den Wortlaut der Anfrage.
 /// </summary>
 internal static class HakenPruefer
@@ -49,6 +49,12 @@ internal static class HakenPruefer
         if (!kommtImCommitVor)
         {
             grund = "Datei kommt im Commit nicht vor";
+            return false;
+        }
+        var istEindeutig = uebersicht.IstEindeutig(stelle);
+        if (!istEindeutig)
+        {
+            grund = "Datei ist im Commit nicht eindeutig";
             return false;
         }
         grund = string.Empty;
