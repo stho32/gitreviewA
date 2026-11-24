@@ -20,23 +20,36 @@ internal sealed class DiffLesenTreiber
 
     public static DiffLesenTreiber Starten(string startordner, IEnumerable<string> hashes)
     {
+        var arbeitsordner = GitLeser.WurzelLesen(startordner);
+        return Starten(startordner, hashes, new GitDiffquelle(arbeitsordner));
+    }
+
+    /// <summary>Dateiliste aus dem echten git, Patches aus <paramref name="diffquelle"/> — für Fehler im Lesen, die git selbst nicht zeigt.</summary>
+    public static DiffLesenTreiber Starten(string startordner, IEnumerable<string> hashes, IDiffquelle diffquelle)
+    {
         var commits = GitLeser.Lesen(new CommitHashes(hashes), startordner);
         var arbeitsordner = GitLeser.WurzelLesen(startordner);
         var protokollziel = new StringWriter();
         var protokoll = new StderrProtokoll(protokollziel, TimeProvider.System, Protokollstufe.Debug);
         var dateien = new GemerkteDateiquelle(new GitDateiquelle(arbeitsordner));
-        var interactor = new DiffLesenInteractor(commits, dateien, new GitDiffquelle(arbeitsordner), protokoll);
+        var interactor = new DiffLesenInteractor(commits, dateien, diffquelle, protokoll);
         return new DiffLesenTreiber(interactor, protokollziel);
     }
 
     public Dateiansicht Lesen(string hash, string pfad, bool ganzeDatei)
+    {
+        return Lesen(hash, pfad, ganzeDatei, alsText: false);
+    }
+
+    /// <summary>Wie <see cref="Lesen(string, string, bool)"/>, mit der Wahl „Als Text zeigen“ bei einer Binärdatei.</summary>
+    public Dateiansicht Lesen(string hash, string pfad, bool ganzeDatei, bool alsText)
     {
         var umfang = Diffumfang.Aenderungen;
         if (ganzeDatei)
         {
             umfang = Diffumfang.Ganz;
         }
-        var ergebnis = interactor.Lesen(new Diffanfrage(hash, pfad, false, umfang));
+        var ergebnis = interactor.Lesen(new Diffanfrage(hash, pfad, alsText, umfang));
         return Dateiansicht.Aus(ergebnis);
     }
 
