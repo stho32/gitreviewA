@@ -34,3 +34,4 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-24 | #5 | Reviews | product-owner | bestanden | 1 min | AK 4 eingeengt; Gelesen erneut ohne gemeinsam/ (3. Mal trotz Auftrag) · claude · sonnet · Lauf 5-product-owner-2 · 0,15 $ · Karte gesamt 1,74 $ |
 | 2026-11-24 | #5 | Reviews | code-reviewer | bestanden | 3 min | kein Muss; Sollte u. a. Abwahl beim Commit-Wechsel ohne Ereignis (Anschluss I0006) · claude · sonnet · Lauf 5-code-reviewer-1 · 0,57 $ · Karte gesamt 2,31 $ |
 | 2026-11-24 | #21 | Entwicklertest | entwicklertester | befund | 7 min | 1 Muss: SIGINT im nicht-interaktiven Hintergrundstart ignoriert, Prozess hängt · claude · sonnet · Lauf 21-entwicklertester-1 · 0,50 $ · Karte gesamt 3,73 $ |
+| 2026-11-24 | #5 | Reviews | security-reviewer | befund | 7 min | 3 Muss: Submodul-Ignore, refs/replace, Bidi in Pfaden · claude · sonnet · Lauf 5-security-reviewer-1 · 0,51 $ · Karte gesamt 2,82 $ |
