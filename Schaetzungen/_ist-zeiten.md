@@ -40,3 +40,4 @@ Nie vom User erfragen.
 | 2026-11-24 | R00003 Commits und Dateien sehen | B0209 E2E und Wegwerf-Repos | unklar | 2-4h | 0,25h | 0,25h | autonom |
 | 2026-11-24 | R00003 Commits und Dateien sehen | Nacharbeit Security-Review #5 (Submodul, refs/replace, Richtungszeichen, Zeilenzahl, Wurzel/diff.relative, Attribute) | unklar | 2-4h | 0,6h | 0,6h | autonom |
 | 2026-11-24 | R00004 Diff einer Datei lesen | Nacharbeit Reviews #6 (Rebase auf karte/5, Unterordner, diff.submodule, Binär mit Grund und „Als Text zeigen“, core.attributesFile, Steuerzeichen im Protokoll) | unklar | 2-4h | 0,5h | 0,5h | autonom |
+| 2026-11-24 | R00007 Syntaxhervorhebung | Nacharbeit B1 dichte Inhalte (Häppchen nach Knoten, Zeichenblöcke) | Bug-Fix | – | 0,6h | – | autonom |
