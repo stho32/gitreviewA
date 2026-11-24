@@ -54,6 +54,8 @@ internal static class DiffEndpunkt
         {
             case Diffausgang.Gelesen:
                 return Results.Json(ergebnis.Antwort, JsonAntwort.Optionen);
+            case Diffausgang.ZuGross:
+                return Results.Json(new ZuGrossAntwort(true, ergebnis.Meldung ?? ""), JsonAntwort.Optionen);
             case Diffausgang.NichtGefunden:
                 return Results.NotFound();
             case Diffausgang.NichtLesbar:

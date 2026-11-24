@@ -425,6 +425,24 @@ public class DiffEndpunktTests
         Assert.That(zeilen.Count(zeile => zeile.EndsWith($"GET /api/commits/{HashQ}/diff Datei src/b.txt ganze Datei", StringComparison.Ordinal)), Is.EqualTo(1));
     }
 
+    [Test]
+    public async Task Wenn_Ausgabegrenze_ueberschritten_dann_200_mit_Kennzeichen_und_Meldung_ohne_Patch()
+    {
+        var dateien = new TestDateiquelle(new() { [HashQ] = DateienVonQ() });
+        var diffquelle = new TestDiffquelle(PatchVonB, zuGrossFuer: HashQ, zuGrossGrenze: 1024);
+        await using var server = await StarteServer(dateien, diffquelle, new StringWriter(), Protokollstufe.Warnung);
+        using var client = new HttpClient();
+
+        var antwort = await client.GetAsync(DiffAdresse(server, HashQ, "src/b.txt"));
+        var json = await antwort.Content.ReadAsStringAsync();
+
+        Assert.That(antwort.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        using var dokument = JsonDocument.Parse(json);
+        Assert.That(dokument.RootElement.GetProperty("zuGross").GetBoolean(), Is.True);
+        Assert.That(dokument.RootElement.GetProperty("meldung").GetString(), Does.Contain("zu groß").And.Contain("1024"));
+        Assert.That(dokument.RootElement.TryGetProperty("patch", out _), Is.False, "kein Patch, auch kein gekürzter");
+    }
+
     private static Dateiaenderungen DateienVonQ()
     {
         return new Dateiaenderungen([

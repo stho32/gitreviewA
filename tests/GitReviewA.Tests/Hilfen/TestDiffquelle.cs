@@ -7,7 +7,7 @@ namespace GitReviewA.Tests.Hilfen;
 /// Liefert einen festen Patch (als Text gelesen: <c>textPatch</c>) und einen festen Grund für Binärdateien, merkt sich jede gelesene Datei;
 /// ein Hash in <c>scheitertFuer</c> wirft wie git bei fehlendem Objekt.
 /// </summary>
-internal sealed class TestDiffquelle(string patch, string? scheitertFuer = null, string textPatch = "", string binaerGrund = Diffaufbereitung.GrundNullbytes) : IDiffquelle
+internal sealed class TestDiffquelle(string patch, string? scheitertFuer = null, string textPatch = "", string binaerGrund = Diffaufbereitung.GrundNullbytes, string? zuGrossFuer = null, long zuGrossGrenze = 0) : IDiffquelle
 {
     private readonly List<Dateiaenderung> gelesen = [];
     private readonly List<Diffumfang> gelesenMitUmfang = [];
@@ -73,6 +73,10 @@ internal sealed class TestDiffquelle(string patch, string? scheitertFuer = null,
         {
             gelesen.Add(datei);
             gelesenMitUmfang.Add(umfang);
+        }
+        if (hash == zuGrossFuer)
+        {
+            throw new GitZuGross($"git show {hash} -- {datei.Pfad}", zuGrossGrenze);
         }
         var scheitert = hash == scheitertFuer;
         if (scheitert)

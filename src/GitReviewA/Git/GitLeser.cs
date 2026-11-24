@@ -91,27 +91,39 @@ internal static class GitLeser
     /// </summary>
     public static string DiffLesen(string hash, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner)
     {
+        return DiffLesen(hash, datei, umfang, arbeitsordner, Ausgabegrenze.Standard);
+    }
+
+    /// <summary>Wie <see cref="DiffLesen(string, Dateiaenderung, Diffumfang, string)"/>, aber über der <paramref name="grenze"/> Bytes kein Rumpf, sondern <see cref="GitZuGross"/>.</summary>
+    public static string DiffLesen(string hash, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner, Ausgabegrenze grenze)
+    {
         var traegtRohbytes = TraegtRohbytes(datei);
         if (traegtRohbytes)
         {
             var mitRohbytes = GitLogStdinDiffStart(umfang, arbeitsordner, alsText: false);
-            return AusfuehrenMitEingabe(mitRohbytes, DiffEingabe(hash, datei), $"git log --stdin {hash} -- {datei.Pfad}");
+            return AusfuehrenMitEingabe(mitRohbytes, DiffEingabe(hash, datei), $"git log --stdin {hash} -- {datei.Pfad}", grenze);
         }
         var start = GitShowDiffStart(hash, datei, umfang, arbeitsordner, alsText: false);
-        return Ausfuehren(start, $"git show {hash} -- {datei.Pfad}");
+        return Ausfuehren(start, $"git show {hash} -- {datei.Pfad}", grenze);
     }
 
     /// <summary>Wie <see cref="DiffLesen"/>, aber mit `--text`: zeigt auch eine als binär eingestufte Datei mit allen Bytes.</summary>
     public static string DiffAlsTextLesen(string hash, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner)
     {
+        return DiffAlsTextLesen(hash, datei, umfang, arbeitsordner, Ausgabegrenze.Standard);
+    }
+
+    /// <summary>Wie <see cref="DiffAlsTextLesen(string, Dateiaenderung, Diffumfang, string)"/>, aber über der <paramref name="grenze"/> Bytes kein Rumpf, sondern <see cref="GitZuGross"/>.</summary>
+    public static string DiffAlsTextLesen(string hash, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner, Ausgabegrenze grenze)
+    {
         var traegtRohbytes = TraegtRohbytes(datei);
         if (traegtRohbytes)
         {
             var mitRohbytes = GitLogStdinDiffStart(umfang, arbeitsordner, alsText: true);
-            return AusfuehrenMitEingabe(mitRohbytes, DiffEingabe(hash, datei), $"git log --stdin --text {hash} -- {datei.Pfad}");
+            return AusfuehrenMitEingabe(mitRohbytes, DiffEingabe(hash, datei), $"git log --stdin --text {hash} -- {datei.Pfad}", grenze);
         }
         var start = GitShowDiffStart(hash, datei, umfang, arbeitsordner, alsText: true);
-        return Ausfuehren(start, $"git show --text {hash} -- {datei.Pfad}");
+        return Ausfuehren(start, $"git show --text {hash} -- {datei.Pfad}", grenze);
     }
 
     /// <summary>
@@ -478,6 +490,14 @@ internal static class GitLeser
         return lauf.Ausgabe;
     }
 
+    /// <summary>Wie <see cref="Ausfuehren(ProcessStartInfo, string)"/>, aber höchstens <paramref name="grenze"/> Byte; darüber wird der Prozess beendet und <see cref="GitZuGross"/> geworfen.</summary>
+    private static string Ausfuehren(ProcessStartInfo start, string aufruf, Ausgabegrenze grenze)
+    {
+        var lauf = WarteAufEndeMitGrenze(Starte(start), aufruf, grenze);
+        PruefeErfolg(lauf, aufruf);
+        return lauf.Ausgabe;
+    }
+
     /// <summary>Die Eingabe geht als Bytes an stdin; sie ist kurz (ein Hash und bis zu zwei Namen) und vollständig geschrieben, bevor git ausgibt.</summary>
     private static string AusfuehrenMitEingabe(ProcessStartInfo start, byte[] eingabe, string aufruf)
     {
@@ -488,6 +508,20 @@ internal static class GitLeser
             stdin.Write(eingabe);
         }
         var lauf = WarteAufEnde(gestartet);
+        PruefeErfolg(lauf, aufruf);
+        return lauf.Ausgabe;
+    }
+
+    /// <summary>Wie <see cref="AusfuehrenMitEingabe(ProcessStartInfo, byte[], string)"/>, aber höchstens <paramref name="grenze"/> Byte; darüber wird der Prozess beendet und <see cref="GitZuGross"/> geworfen.</summary>
+    private static string AusfuehrenMitEingabe(ProcessStartInfo start, byte[] eingabe, string aufruf, Ausgabegrenze grenze)
+    {
+        start.RedirectStandardInput = true;
+        var gestartet = Starte(start);
+        using (var stdin = gestartet.StandardInput.BaseStream)
+        {
+            stdin.Write(eingabe);
+        }
+        var lauf = WarteAufEndeMitGrenze(gestartet, aufruf, grenze);
         PruefeErfolg(lauf, aufruf);
         return lauf.Ausgabe;
     }
@@ -524,6 +558,59 @@ internal static class GitLeser
         var ausgabe = prozess.StandardOutput.ReadToEnd();
         prozess.WaitForExit();
         return new GitLauf(prozess.ExitCode, ausgabe, fehler.ToString().Trim());
+    }
+
+    /// <summary>
+    /// Wie <see cref="WarteAufEnde(Process)"/>, aber die Stdout wird stückweise bis zur <paramref name="grenze"/> gelesen; darüber wird der
+    /// Prozess beendet und <see cref="GitZuGross"/> geworfen. Kein gekürzter Rumpf: entweder die ganze Ausgabe oder der Ausgang „zu groß“.
+    /// </summary>
+    private static GitLauf WarteAufEndeMitGrenze(Process gestartet, string aufruf, Ausgabegrenze grenze)
+    {
+        using var prozess = gestartet;
+        var fehler = new StringBuilder();
+        prozess.ErrorDataReceived += (_, zeile) => fehler.AppendLine(zeile.Data);
+        prozess.BeginErrorReadLine();
+        var ausgabe = LesenMitGrenze(prozess, aufruf, grenze);
+        prozess.WaitForExit();
+        return new GitLauf(prozess.ExitCode, ausgabe, fehler.ToString().Trim());
+    }
+
+    /// <summary>Liest Stdout als Bytes, bis der Puffer leer ist; überschreitet die Ausgabe die Grenze, wird der Prozess beendet.</summary>
+    private static string LesenMitGrenze(Process prozess, string aufruf, Ausgabegrenze grenze)
+    {
+        using var speicher = new MemoryStream();
+        var puffer = new byte[81920];
+        while (true)
+        {
+            var gelesen = prozess.StandardOutput.BaseStream.Read(puffer, 0, puffer.Length);
+            if (gelesen == 0)
+            {
+                break;
+            }
+            if (speicher.Length + gelesen > grenze.Bytes)
+            {
+                Beende(prozess);
+                throw new GitZuGross(aufruf, grenze.Bytes);
+            }
+            speicher.Write(puffer, 0, gelesen);
+        }
+        return FremdeBytes.Utf8MitBytemarken.GetString(speicher.ToArray());
+    }
+
+    /// <summary>Beendet einen noch laufenden Prozess samt Kindern; war er schon beendet, ist nichts zu tun.</summary>
+    private static void Beende(Process prozess)
+    {
+        try
+        {
+            prozess.Kill(entireProcessTree: true);
+            prozess.WaitForExit();
+        }
+        catch (InvalidOperationException)
+        {
+        }
+        catch (SystemException)
+        {
+        }
     }
 
     private static Process Starte(ProcessStartInfo start)

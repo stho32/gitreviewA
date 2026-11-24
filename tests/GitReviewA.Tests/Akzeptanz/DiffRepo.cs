@@ -128,6 +128,28 @@ internal sealed class DiffRepo : IDisposable
         return u;
     }
 
+    /// <summary>
+    /// Repo G (R00017): ein Commit `w` fügt alle Prüfdateien hinzu — so erscheinen sie in beiden Ansichten gleich.
+    /// `gross.txt` genau 20 000 Zeilen, `riesig.txt` 30 000 (über der Zuklappgrenze), `winzig.txt` drei Zeilen,
+    /// `dicht.js` dichte Zeilen zu ~1 000 Zeichen und `logo.bin` binär (für den „Als Text“-Lesepfad).
+    /// </summary>
+    public static DiffRepo Gross()
+    {
+        var g = new DiffRepo(WegwerfRepo.MitCommits());
+        g.Schreibe("gross.txt", Zeilen("zeile ", 20000));
+        g.Schreibe("riesig.txt", Zeilen("zeile ", 30000));
+        g.Schreibe("winzig.txt", "eins\nzwei\ndrei\n");
+        g.Schreibe("dicht.js", string.Concat(Enumerable.Repeat(string.Concat(Enumerable.Repeat("a1=1;", 200)), 200).Select(zeile => zeile + "\n")));
+        File.WriteAllBytes(Path.Combine(g.Ordner, "logo.bin"), new byte[5000]);
+        g.Committe("w", "Große Diffs");
+        return g;
+    }
+
+    private static string Zeilen(string praefix, int anzahl)
+    {
+        return string.Concat(Enumerable.Range(1, anzahl).Select(nummer => $"{praefix}{nummer:D5}\n"));
+    }
+
     /// <summary>Unsichtbare Zeichen in Dateinamen (Befund Security-Review #17): je Zeichen eine Datei `x<Zeichen>y.txt`, dazu `a.txt` als Kontrolle.</summary>
     public static readonly string[] UnsichtbareZeichenInNamen = ["\u202E", "\u2066", "\u061C", "\u200E", "\u200B", "\uFEFF", "\U000E0041"];
 

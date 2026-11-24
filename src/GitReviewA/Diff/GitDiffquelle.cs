@@ -2,17 +2,19 @@ using GitReviewA.Git;
 
 namespace GitReviewA.Diff;
 
-internal sealed class GitDiffquelle(string arbeitsordner) : IDiffquelle
+internal sealed class GitDiffquelle(string arbeitsordner, Ausgabegrenze? ausgabegrenze = null) : IDiffquelle
 {
+    private readonly Ausgabegrenze grenze = ausgabegrenze ?? Ausgabegrenze.Standard;
+
     public string Lesen(string hash, Dateiaenderung datei, Diffumfang umfang)
     {
-        var ausgabe = GitLeser.DiffLesen(hash, datei, umfang, arbeitsordner);
+        var ausgabe = GitLeser.DiffLesen(hash, datei, umfang, arbeitsordner, grenze);
         return Diffaufbereitung.PatchAbErstemHunk(ausgabe);
     }
 
     public string AlsTextLesen(string hash, Dateiaenderung datei, Diffumfang umfang)
     {
-        var ausgabe = GitLeser.DiffAlsTextLesen(hash, datei, umfang, arbeitsordner);
+        var ausgabe = GitLeser.DiffAlsTextLesen(hash, datei, umfang, arbeitsordner, grenze);
         return Diffaufbereitung.PatchAbErstemHunk(ausgabe);
     }
 

@@ -24,6 +24,13 @@ internal sealed class DiffLesenTreiber
         return Starten(startordner, hashes, new GitDiffquelle(arbeitsordner));
     }
 
+    /// <summary>Wie <see cref="Starten(string, IEnumerable{string})"/>, aber mit einer kleinen Ausgabegrenze für die Grenzprobe.</summary>
+    public static DiffLesenTreiber Starten(string startordner, IEnumerable<string> hashes, Ausgabegrenze ausgabegrenze)
+    {
+        var arbeitsordner = GitLeser.WurzelLesen(startordner);
+        return Starten(startordner, hashes, new GitDiffquelle(arbeitsordner, ausgabegrenze));
+    }
+
     /// <summary>Dateiliste aus dem echten git, Patches aus <paramref name="diffquelle"/> — für Fehler im Lesen, die git selbst nicht zeigt.</summary>
     public static DiffLesenTreiber Starten(string startordner, IEnumerable<string> hashes, IDiffquelle diffquelle)
     {
@@ -63,7 +70,7 @@ internal sealed class DiffLesenTreiber
 /// Was der Diff-Bereich aus einer Antwort zeigt, in Patch-Schreibweise: `Zeilen` ohne Abschnittsköpfe (` z01`, `-z03`, `+Z03`, `\ No newline …`),
 /// `Ausgang` `gelesen`, `nicht gefunden`, `nicht lesbar` oder `name nicht lesbar`.
 /// </summary>
-internal sealed record Dateiansicht(string Ausgang, string? Pfad, string? Art, string[] Abschnittskoepfe, string[] Zeilen)
+internal sealed record Dateiansicht(string Ausgang, string? Pfad, string? Art, string[] Abschnittskoepfe, string[] Zeilen, string? Meldung = null)
 {
     public static Dateiansicht Aus(Differgebnis ergebnis)
     {
@@ -79,7 +86,11 @@ internal sealed record Dateiansicht(string Ausgang, string? Pfad, string? Art, s
             {
                 ausgang = "name nicht lesbar";
             }
-            return new Dateiansicht(ausgang, null, null, [], []);
+            if (ergebnis.Ausgang == Diffausgang.ZuGross)
+            {
+                ausgang = "zu groß";
+            }
+            return new Dateiansicht(ausgang, null, null, [], [], ergebnis.Meldung);
         }
         var patchzeilen = antwort.Patch.Split('\n');
         var ohneLetztesZeilenende = patchzeilen.Take(patchzeilen.Length - 1).ToArray();
