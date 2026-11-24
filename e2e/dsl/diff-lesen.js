@@ -16,6 +16,8 @@ const VORBEREITUNGEN = {
   'Repo A': { anlegen: repos.repoA, commits: ['q', 'p'] },
   'Diff-Programme': { anlegen: repos.repoAMitDiffProgrammen, commits: ['q', 'p'] },
   'fremde Einstellungen': { anlegen: repos.repoAMitFremdenEinstellungen, commits: ['q', 'p'] },
+  'Start im Unterordner src': { anlegen: repos.repoAAusUnterordner, commits: ['q', 'p'] },
+  'Submodul als Log': { anlegen: repos.repoMitSubmodulAlsLog, commits: ['n'] },
   Merge: { anlegen: repos.repoM, commits: ['m'] },
   'Bidi im Dateinamen': { anlegen: repos.repoMitBidiPfad, commits: ['b'] },
   '20 000 Zeilen': { anlegen: repos.repoU, commits: ['u'] },
@@ -71,6 +73,11 @@ function diffSprache(gr, page) {
     },
 
     diffZeigt: erwartet => diffSeite.pruefeDiff(page, erwartet),
+    /** Der Diff des Submoduls `pfad` zeigt den Wechsel seines Zeigers vom Commit `von` auf den Commit `nach`. */
+    submodulWechselZeigt: (pfad, von, nach) => diffSeite.pruefeDiff(page, {
+      pfad,
+      zeilen: [{ kopf: '@@ -1 +1 @@' }, { minus: `Subproject commit ${hash(von)}`, alt: 1 }, { plus: `Subproject commit ${hash(nach)}`, neu: 1 }],
+    }),
     diffMeldet: (pfad, text) => diffSeite.pruefeMeldung(page, pfad, text, false),
     diffMeldetFehler: (pfad, text) => diffSeite.pruefeMeldung(page, pfad, text, true),
     fordertZurWahlAuf: () => diffSeite.pruefeAufforderungZurWahl(page),

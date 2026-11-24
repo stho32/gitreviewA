@@ -79,6 +79,29 @@ function repoAMitFremdenEinstellungen(ordner) {
   return repo;
 }
 
+/** Repo A, gestartet aus seinem Unterordner `src`: die Pfade der Dateiliste sind wurzelrelativ, der Startordner ist es nicht. */
+function repoAAusUnterordner(ordner) {
+  const repo = repoA(ordner);
+  return { ordner: path.join(ordner, 'src'), hashes: repo.hashes };
+}
+
+/** Commits `e` und `z`, dann `n` hebt den Zeiger des Submoduls `sub` von `e` auf `z`; das Repo will Submodule als Log zeigen. */
+function repoMitSubmodulAlsLog(ordner) {
+  repoAnlegen(ordner);
+  dateiSchreiben(ordner, 'a.txt', 'eins\n');
+  const e = commitAnlegen(ordner, { betreff: 'eins' });
+  dateiSchreiben(ordner, 'a.txt', 'zwei\n');
+  const z = commitAnlegen(ordner, { betreff: 'zwei' });
+  dateiSchreiben(ordner, '.gitmodules', '[submodule "sub"]\n\tpath = sub\n\turl = ./sub\n');
+  git(ordner, 'add', '.gitmodules');
+  git(ordner, 'update-index', '--add', '--cacheinfo', `160000,${e},sub`);
+  git(ordner, 'commit', '-q', '-m', 'Submodul anlegen');
+  git(ordner, 'update-index', '--cacheinfo', `160000,${z},sub`);
+  git(ordner, 'commit', '-q', '-m', 'Submodul heben');
+  git(ordner, 'config', 'diff.submodule', 'log');
+  return { ordner, hashes: { e, z, n: git(ordner, 'rev-parse', 'HEAD') } };
+}
+
 /** Repo M: `c1`, Zweig `feature` mit `f.txt`, `c2` mit `g.txt` auf main, `m` = Merge von `feature`. */
 function repoM(ordner) {
   repoAnlegen(ordner);
@@ -108,4 +131,4 @@ function repoU(ordner) {
   return { ordner, hashes: { u: commitAnlegen(ordner, { betreff: '20 000 Zeilen' }) } };
 }
 
-module.exports = { repoMitBidiPfad, repoA, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoMitBidiPfad, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, markerVorhanden, diffProgrammOhneSchutzStarten };

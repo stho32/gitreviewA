@@ -36,7 +36,8 @@ internal static class GitLeser
 
     /// <summary>
     /// Pfade gehen wörtlich an git (kein Pathspec-Muster); bei einer Umbenennung beide Pfade, sonst zeigt git die Datei als neu.
-    /// Kontext, Leerzeilen und Farben setzt der Aufruf selbst — die Konfiguration des fremden Repos verschiebt sonst die Zeilennummern.
+    /// Kontext, Leerzeilen, Farben, Submodul-Darstellung und Pfadbezug setzt der Aufruf selbst — die Konfiguration des fremden Repos
+    /// verschiebt sonst die Zeilennummern oder leert den Patch (`diff.submodule=log`, `diff.relative`).
     /// </summary>
     public static string DiffLesen(string hash, Dateiaenderung datei, string arbeitsordner)
     {
@@ -231,6 +232,8 @@ internal static class GitLeser
         start.ArgumentList.Add("-M");
         start.ArgumentList.Add("-U3");
         start.ArgumentList.Add("--inter-hunk-context=0");
+        start.ArgumentList.Add("--submodule=short");
+        start.ArgumentList.Add("--no-relative");
         start.ArgumentList.Add("--end-of-options");
         start.ArgumentList.Add(hash);
         start.ArgumentList.Add("--");

@@ -224,6 +224,24 @@ test.describe('Fremdes Repository', () => {
     await diff.diffAnfrageBeantwortet({ pfad: 'src/b.txt' });
   });
 
+  test('soll aus einem Unterordner gestartet den Diff jeder Datei ab der Wurzel zeigen', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Start im Unterordner src' });
+
+    await diff.dateiAnsehen('src/b.txt');
+    await diff.diffZeigt(DIFF_VON_B);
+    await diff.commitAnsehen('p');
+    await diff.dateiAnsehen('README.md');
+    await diff.diffZeigt({ pfad: 'README.md', zeilen: [{ kopf: '@@ -0,0 +1,2 @@' }, { plus: 'Titel', neu: 1 }, { plus: 'Text', neu: 2 }] });
+  });
+
+  test('soll den Zeigerwechsel eines Submoduls zeigen, auch wenn das Repo Submodule als Log darstellt', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Submodul als Log' });
+
+    await diff.dateiAnsehen('sub');
+
+    await diff.submodulWechselZeigt('sub', 'e', 'z');
+  });
+
   test('soll Dateien mit Namen wie Optionen und Muster je nur selbst zeigen', async ({ diff }) => {
     await diff.starten({ commits: ['s'] });
 

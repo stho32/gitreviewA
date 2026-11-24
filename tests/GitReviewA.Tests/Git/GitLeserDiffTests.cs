@@ -120,23 +120,57 @@ public class GitLeserDiffTests
         Assert.That(patch, Does.StartWith("@@ -1,6 +1,6 @@\n").And.Contain("\n@@ -15,6 +15,5 @@ z14\n"));
     }
 
-    [Test]
-    public void Wenn_gitmodules_Aenderungen_ignorieren_laesst_dann_zeigt_der_Diff_den_Submodul_Stand_trotzdem()
+    [TestCase("ohne Einstellung")]
+    [TestCase(".gitmodules ignore=all")]
+    [TestCase("config diff.submodule=log")]
+    [TestCase("config diff.submodule=diff")]
+    [TestCase("config diff.submodule=short")]
+    public void Wenn_das_Repo_Submodule_ausblendet_oder_anders_darstellt_dann_zeigt_der_Diff_den_Zeigerwechsel(string einstellung)
     {
         using var repo = WegwerfRepo.MitCommits("eins", "zwei");
         var vorher = repo.Hashes[0];
         var nachher = repo.Hashes[1];
-        repo.SchreibeDatei(".gitmodules", "[submodule \"sub\"]\n\tpath = sub\n\turl = ./sub\n\tignore = all\n");
+        var gitmodules = "[submodule \"sub\"]\n\tpath = sub\n\turl = ./sub\n";
+        if (einstellung == ".gitmodules ignore=all")
+        {
+            gitmodules += "\tignore = all\n";
+        }
+        repo.SchreibeDatei(".gitmodules", gitmodules);
         repo.Git("add", ".gitmodules");
         repo.Git("update-index", "--add", "--cacheinfo", $"160000,{vorher},sub");
         repo.Git("commit", "-q", "-m", "Submodul");
         repo.Git("update-index", "--cacheinfo", $"160000,{nachher},sub");
         repo.Git("commit", "-q", "-m", "Submodul anheben");
         var bump = repo.Git("rev-parse", "HEAD");
+        if (einstellung.StartsWith("config diff.submodule=", StringComparison.Ordinal))
+        {
+            repo.Git("config", "diff.submodule", einstellung["config diff.submodule=".Length..]);
+        }
 
         var patch = PatchLesen(repo, bump, new Dateiaenderung("M", "sub", null, 1, 1));
 
         Assert.That(patch, Is.EqualTo($"@@ -1 +1 @@\n-Subproject commit {vorher}\n+Subproject commit {nachher}\n"));
+    }
+
+    [TestCase("src/b.txt", false, "@@ -1,2 +1,3 @@\n eins\n-zwei\n+ZWEI\n+drei\n")]
+    [TestCase("src/b.txt", true, "@@ -1,2 +1,3 @@\n eins\n-zwei\n+ZWEI\n+drei\n")]
+    [TestCase("README.md", false, "@@ -1 +1,2 @@\n Titel\n+Text\n")]
+    [TestCase("README.md", true, "@@ -1 +1,2 @@\n Titel\n+Text\n")]
+    public void Wenn_aus_einem_Unterordner_gestartet_dann_zeigt_der_Diff_jede_Datei_ab_der_Wurzel(string pfad, bool pfadeRelativ, string erwartet)
+    {
+        using var repo = WegwerfRepo.MitCommits();
+        repo.SchreibeDatei("src/b.txt", "eins\nzwei\n");
+        repo.SchreibeDatei("README.md", "Titel\n");
+        repo.Committe("p", "A", Zeitpunkt, "");
+        repo.SchreibeDatei("src/b.txt", "eins\nZWEI\ndrei\n");
+        repo.SchreibeDatei("README.md", "Titel\nText\n");
+        var q = repo.Committe("q", "A", Zeitpunkt, "");
+        repo.Git("config", "diff.relative", pfadeRelativ.ToString().ToLowerInvariant());
+        var arbeitsordner = GitLeser.WurzelLesen(Path.Combine(repo.Ordner, "src"));
+
+        var ausgabe = GitLeser.DiffLesen(q, new Dateiaenderung("M", pfad, null, 1, 1), arbeitsordner);
+
+        Assert.That(Diffaufbereitung.PatchAbErstemHunk(ausgabe), Is.EqualTo(erwartet));
     }
 
     [Test]
