@@ -26,6 +26,37 @@ public class GitLeserFremdeKonfigurationTests
         Assert.That(File.Exists(marker), Is.True, "Kontrolle: das Marker-Programm ist über git log aufrufbar");
     }
 
+    [TestCase("diff.x.textconv")]
+    [TestCase("diff.x.command")]
+    [TestCase("diff.external")]
+    public void Wenn_das_Repo_ein_Diff_Programm_verlangt_dann_startet_das_Lesen_der_Dateiliste_das_Programm_nicht(string schluessel)
+    {
+        using var repo = WegwerfRepo.MitCommits();
+        var marker = Path.Combine(repo.Ordner, ".git", "marker.txt");
+        var programm = MarkerProgrammAnlegen(repo, marker);
+        repo.SchreibeDatei(".gitattributes", "*.txt diff=x\n");
+        repo.SchreibeDatei("a.txt", "eins\n");
+        repo.Committe("Erster", "A", "2026-03-04T09:15:00+01:00", "");
+        repo.SchreibeDatei("a.txt", "eins\nzwei\n");
+        var hash = repo.Committe("Zweiter", "A", "2026-03-04T09:16:00+01:00", "");
+        repo.Git("config", schluessel, programm);
+
+        var dateien = GitLeser.DateienLesen(hash, repo.Ordner).AlsArray();
+
+        Assert.That(dateien, Is.EqualTo(new[] { new Dateiaenderung("M", "a.txt", null, 1, 0) }));
+        Assert.That(File.Exists(marker), Is.False, "das Programm aus der Konfiguration des Repos lief");
+        repo.Git("diff", $"{hash}~", hash);
+        Assert.That(File.Exists(marker), Is.True, "Kontrolle: das Marker-Programm ist über git diff aufrufbar");
+    }
+
+    private static string MarkerProgrammAnlegen(WegwerfRepo repo, string marker)
+    {
+        var programm = Path.Combine(repo.Ordner, ".git", "marker.sh");
+        File.WriteAllText(programm, $"#!/bin/sh\necho \"$@\" >> '{marker}'\ncat \"$1\" 2>/dev/null\n");
+        File.SetUnixFileMode(programm, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        return programm;
+    }
+
     private static void LegeSignaturpruefungMitMarkerProgrammAn(WegwerfRepo repo, string signaturart, string marker)
     {
         var programm = Path.Combine(repo.Ordner, ".git", "marker.sh");

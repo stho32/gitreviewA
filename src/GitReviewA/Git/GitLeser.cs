@@ -10,8 +10,16 @@ internal static class GitLeser
     public static Commitzeilen Lesen(CommitHashes hashes, string arbeitsordner)
     {
         var start = GitLogStart(hashes, arbeitsordner);
-        var ausgabe = Ausfuehren(start);
+        var ausgabe = Ausfuehren(start, "git log");
         return GitLogAusgabe.Zerlegen(ausgabe);
+    }
+
+    /// <summary>Merge-Commits gegen den ersten Elternteil (Entscheidung des PO, gilt auch für den Diff einer Datei).</summary>
+    public static Dateiaenderungen DateienLesen(string hash, string arbeitsordner)
+    {
+        var start = GitShowDateienStart(hash, arbeitsordner);
+        var ausgabe = Ausfuehren(start, $"git show {hash}");
+        return DateiaenderungenParser.Parse(ausgabe);
     }
 
     private static ProcessStartInfo GitLogStart(CommitHashes hashes, string arbeitsordner)
@@ -31,7 +39,27 @@ internal static class GitLeser
         return start;
     }
 
-    private static string Ausfuehren(ProcessStartInfo start)
+    private static ProcessStartInfo GitShowDateienStart(string hash, string arbeitsordner)
+    {
+        var start = GitStart.Im(arbeitsordner);
+        start.ArgumentList.Add("show");
+        start.ArgumentList.Add("--format=");
+        start.ArgumentList.Add("--no-color");
+        start.ArgumentList.Add("--no-ext-diff");
+        start.ArgumentList.Add("--no-textconv");
+        start.ArgumentList.Add("-m");
+        start.ArgumentList.Add("--first-parent");
+        start.ArgumentList.Add("-M");
+        start.ArgumentList.Add("--raw");
+        start.ArgumentList.Add("--numstat");
+        start.ArgumentList.Add("--no-abbrev");
+        start.ArgumentList.Add("-z");
+        start.ArgumentList.Add("--end-of-options");
+        start.ArgumentList.Add(hash);
+        return start;
+    }
+
+    private static string Ausfuehren(ProcessStartInfo start, string aufruf)
     {
         using var prozess = Starte(start);
         var fehler = new StringBuilder();
@@ -42,7 +70,7 @@ internal static class GitLeser
         var gitIstGescheitert = prozess.ExitCode != 0;
         if (gitIstGescheitert)
         {
-            throw new GitFehler($"git log endete mit {prozess.ExitCode}: {fehler.ToString().Trim()}");
+            throw new GitFehler($"{aufruf} endete mit {prozess.ExitCode}: {fehler.ToString().Trim()}");
         }
         return ausgabe;
     }
