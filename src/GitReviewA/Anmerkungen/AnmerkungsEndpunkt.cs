@@ -4,33 +4,25 @@ using GitReviewA.Server;
 
 namespace GitReviewA.Anmerkungen;
 
+/// <summary>Adapter zwischen HTTP und <see cref="ZeileAnnotierenInteractor"/>: liest den JSON-Körper und bildet das Ergebnis auf 201, 400 oder 409 ab.</summary>
 internal static class AnmerkungsEndpunkt
 {
     private const string Kontext = "Anmerkung";
+    private const string Unlesbar = "Körper ist kein JSON-Objekt einer Anmerkung";
 
-    public static RequestDelegate Fuer(Anmerkungsspeicher speicher, CommitAuswahl auswahl, StderrProtokoll protokoll)
+    public static RequestDelegate Fuer(ZeileAnnotierenInteractor interactor, StderrProtokoll protokoll)
     {
         return async kontext =>
         {
             var lesung = await LiesNeueAnmerkungAsync(kontext.Request);
             if (!lesung.IstLesbar)
             {
-                await LehneAbAsync(kontext, protokoll, "Körper ist kein JSON-Objekt einer Anmerkung");
+                protokoll.Melde(Protokollstufe.Debug, Kontext, $"abgelehnt: {Unlesbar}");
+                await JsonAntwort.SendeMeldungAsync(kontext, StatusCodes.Status400BadRequest, Unlesbar);
                 return;
             }
-            var pruefung = AnmerkungsPruefer.Pruefe(lesung.Anmerkung, auswahl);
-            if (!pruefung.IstGueltig)
-            {
-                await LehneAbAsync(kontext, protokoll, pruefung.Ablehnungsgrund);
-                return;
-            }
-            if (!speicher.VersucheAnzuhaengen(pruefung.Anmerkung, out var angelegt))
-            {
-                await JsonAntwort.SendeMeldungAsync(kontext, StatusCodes.Status409Conflict, "Review ist beendet — keine Anmerkung mehr möglich");
-                return;
-            }
-            protokoll.Melde(Protokollstufe.Debug, Kontext, $"Nummer {angelegt.Nummer} angelegt (Textlänge {angelegt.Text.Length})");
-            await JsonAntwort.SendeAsync(kontext, StatusCodes.Status201Created, new AnmerkungAngelegtAntwort(angelegt.Nummer));
+            var ergebnis = interactor.LegeAn(lesung.Anmerkung);
+            await SendeAsync(kontext, ergebnis);
         };
     }
 
@@ -47,10 +39,19 @@ internal static class AnmerkungsEndpunkt
         }
     }
 
-    private static Task LehneAbAsync(HttpContext kontext, StderrProtokoll protokoll, string grund)
+    private static Task SendeAsync(HttpContext kontext, AnnotierenErgebnis ergebnis)
     {
-        protokoll.Melde(Protokollstufe.Debug, Kontext, $"abgelehnt: {grund}");
-        return JsonAntwort.SendeMeldungAsync(kontext, StatusCodes.Status400BadRequest, grund);
+        switch (ergebnis.Ausgang)
+        {
+            case Annotierenausgang.Angelegt:
+                return JsonAntwort.SendeAsync(kontext, StatusCodes.Status201Created, new AnmerkungAngelegtAntwort(ergebnis.Angelegt!.Nummer));
+            case Annotierenausgang.Ungueltig:
+                return JsonAntwort.SendeMeldungAsync(kontext, StatusCodes.Status400BadRequest, ergebnis.Grund);
+            case Annotierenausgang.Beendet:
+                return JsonAntwort.SendeMeldungAsync(kontext, StatusCodes.Status409Conflict, ergebnis.Grund);
+            default:
+                throw new InvalidOperationException($"Unbekannter Ausgang {ergebnis.Ausgang}");
+        }
     }
 
     private sealed record Lesung(bool IstLesbar, NeueAnmerkung? Anmerkung);

@@ -129,7 +129,8 @@ internal sealed class Webserver : IAsyncDisposable
 
     private static void BildeRueckkanal(WebApplication anwendung, Commitzeilen commits, Anmerkungsspeicher anmerkungen, StderrProtokoll protokoll)
     {
-        var anlegen = AnmerkungsEndpunkt.Fuer(anmerkungen, new CommitAuswahl(commits), protokoll);
+        var interactor = new ZeileAnnotierenInteractor(anmerkungen, new CommitAuswahl(commits), protokoll);
+        var anlegen = AnmerkungsEndpunkt.Fuer(interactor, protokoll);
         anwendung.Map("/api/anmerkungen", GeschuetzterEndpunkt.Mit(anlegen, protokoll));
         var beenden = BeendenEndpunkt.Fuer(anmerkungen, anwendung.Lifetime, protokoll);
         anwendung.Map("/api/beenden", GeschuetzterEndpunkt.Mit(beenden, protokoll));
