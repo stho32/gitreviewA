@@ -82,11 +82,11 @@ an die KI zurückzugeben.
 - Kein Pull-Request-Ersatz: keine Kommentare zurück zu GitHub oder anderen Plattformen,
   keine Freigabe-Workflows.
 - Kein Editor: gitreviewA ändert keine Dateien und keine Commits.
+- Kein Gesamturteil („freigegeben“ / „nacharbeiten“): das Ergebnis besteht aus den Anmerkungen,
+  „Beenden“ endet immer mit Exit 0 (entschieden 2026-11-24).
 
 ## Offene Richtungsfragen
 
-- **Urteil neben den Anmerkungen**: Soll das Ergebnis ein Gesamturteil tragen (etwa
-  „freigegeben“ / „nacharbeiten“) und es auch über den Exit-Code melden?
 - **Lauf ohne „Beenden“**: Was gilt, wenn der Tab geschlossen oder der Prozess
   abgebrochen wird — Ergebnis bis dahin ausgeben, Abbruch melden, Zeitlimit?
 - **Format des Ergebnisses**: Markdown für Mensch und KI zugleich, oder wahlweise
@@ -100,3 +100,4 @@ an die KI zurückzugeben.
 |---|---|
 | 2026-11-24 | Vision angelegt (Review-Rückkanal Mensch → KI, .NET 10, nur RAM, stdout = Ergebnis, Lastprofil, MIT) |
 | 2026-11-24 | Leitplanke Auslieferung: eine ausführbare Datei je Plattform statt `dotnet tool` + Single-File (Betreiber: „als 1 executable, nicht als Ordner“, „kann aber frameworkabhängig sein“) |
+| 2026-11-24 | Richtungsfrage „Urteil neben den Anmerkungen“ entschieden: kein Gesamturteil, Exit 0 bei „Beenden“ (Betreiber, Empfehlung des product-owner) |
