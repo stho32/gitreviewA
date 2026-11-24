@@ -65,6 +65,42 @@ public class NamenspruefungTests
         Assert.That(treffer, Is.EqualTo(new Namenstreffer(Namensfall.NichtUebergebbar, null)));
     }
 
+    [TestCase("h\nidden.txt")]
+    [TestCase("h\r")]
+    [TestCase("\nh")]
+    public void Wenn_der_neue_Name_Zeilenende_traegt_und_der_alte_Rohbytes_dann_nicht_uebergebbar(string neuerName)
+    {
+        var umbenannt = new Dateiaenderung("R", neuerName, "o⟨0xFF⟩.txt", 1, 0, null, new Rohname([0x6F, 0xFF, 0x2E, 0x74, 0x78, 0x74]));
+        var dateien = new Dateiaenderungen([umbenannt]);
+
+        var treffer = Namenspruefung.Pruefe(dateien, neuerName);
+
+        Assert.That(treffer, Is.EqualTo(new Namenstreffer(Namensfall.NichtUebergebbar, null)));
+    }
+
+    [TestCase("h\nidden.txt")]
+    [TestCase("h\r")]
+    public void Wenn_der_alte_Name_Zeilenende_traegt_und_der_neue_Rohbytes_dann_nicht_uebergebbar(string alterName)
+    {
+        var umbenannt = new Dateiaenderung("R", "n⟨0xFF⟩.txt", alterName, 1, 0, new Rohname([0x6E, 0xFF, 0x2E, 0x74, 0x78, 0x74]));
+        var dateien = new Dateiaenderungen([umbenannt]);
+
+        var treffer = Namenspruefung.Pruefe(dateien, "n⟨0xFF⟩.txt");
+
+        Assert.That(treffer, Is.EqualTo(new Namenstreffer(Namensfall.NichtUebergebbar, null)));
+    }
+
+    [Test]
+    public void Wenn_der_alte_Name_Rohbytes_traegt_und_der_neue_gueltig_ohne_Zeilenende_ist_dann_lesbar()
+    {
+        var umbenannt = new Dateiaenderung("R", "x.txt", "o⟨0xFF⟩.txt", 1, 0, null, new Rohname([0x6F, 0xFF, 0x2E, 0x74, 0x78, 0x74]));
+        var dateien = new Dateiaenderungen([umbenannt]);
+
+        var treffer = Namenspruefung.Pruefe(dateien, "x.txt");
+
+        Assert.That(treffer, Is.EqualTo(new Namenstreffer(Namensfall.Lesbar, umbenannt)));
+    }
+
     [Test]
     public void Wenn_ein_Name_in_gueltigem_UTF_8_einen_Zeilenumbruch_traegt_dann_lesbar_ueber_das_Argument()
     {
