@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using GitReviewA.Protokoll;
 
@@ -7,6 +8,9 @@ internal static class Aufrufleser
 {
     public const int FreierPort = 0;
     private const int HoechsterPort = 65535;
+    private const string StdinArgument = "-";
+    private const string Bereichstrenner = "..";
+    private const string Aufrufform = "gitreviewA <hash…> | <von>..<bis>… | - [--port <n>] [--kein-browser] [--verbose] [--quiet]";
 
     public static Aufrufergebnis Lesen(string[] argumente)
     {
@@ -39,7 +43,8 @@ internal static class Aufrufleser
                 position++;
                 return LesePort(argumente, position, sammlung);
             default:
-                return LeseHash(argumente[position], position, sammlung);
+                sammlung.Auswahlargumente.Add(new Auswahlargument(argumente[position], position + 1));
+                return null;
         }
     }
 
@@ -61,17 +66,6 @@ internal static class Aufrufleser
         return null;
     }
 
-    private static string? LeseHash(string argument, int position, Aufrufsammlung sammlung)
-    {
-        var istCommitHash = CommitHashForm.IstCommitHash(argument);
-        if (!istCommitHash)
-        {
-            return $"Argument {position + 1} ist weder eine bekannte Option noch ein Commit-Hash ({CommitHashForm.Beschreibung}).";
-        }
-        sammlung.Hashes.Add(argument);
-        return null;
-    }
-
     private static Aufrufergebnis Zusammenstellen(Aufrufsammlung sammlung)
     {
         var stufenSchliessenSichAus = sammlung.IstVerbose && sammlung.IstQuiet;
@@ -79,13 +73,74 @@ internal static class Aufrufleser
         {
             return Aufrufergebnis.Ungueltig("--verbose und --quiet schließen sich aus.");
         }
-        var keinCommitAngegeben = sammlung.Hashes.Count == 0;
-        if (keinCommitAngegeben)
+        var keineAuswahlAngegeben = sammlung.Auswahlargumente.Count == 0;
+        if (keineAuswahlAngegeben)
         {
-            return Aufrufergebnis.Ungueltig("Kein Commit angegeben: gitreviewA <hash…> [--port <n>] [--kein-browser] [--verbose] [--quiet]");
+            return Aufrufergebnis.Ungueltig($"Kein Commit angegeben: {Aufrufform}");
         }
-        var startauftrag = new Startauftrag(new CommitHashes(sammlung.Hashes), sammlung.Port, sammlung.BrowserOeffnen, Mindeststufe(sammlung));
+        var auswahl = BestimmeAuswahl(sammlung.Auswahlargumente);
+        if (!auswahl.IstGueltig)
+        {
+            return Aufrufergebnis.Ungueltig(auswahl.Fehlermeldung);
+        }
+        var startauftrag = new Startauftrag(auswahl.Auswahl, sammlung.Port, sammlung.BrowserOeffnen, Mindeststufe(sammlung));
         return Aufrufergebnis.Gueltig(startauftrag);
+    }
+
+    private static Auswahlergebnis BestimmeAuswahl(List<Auswahlargument> argumente)
+    {
+        var nenntStdin = argumente.Exists(argument => argument.Text == StdinArgument);
+        if (nenntStdin)
+        {
+            return StdinAuswahl(argumente);
+        }
+        var nenntBereich = argumente.Exists(argument => argument.Text.Contains(Bereichstrenner, StringComparison.Ordinal));
+        if (nenntBereich)
+        {
+            return BereichsAuswahl(argumente);
+        }
+        return EinzelcommitAuswahl(argumente);
+    }
+
+    private static Auswahlergebnis StdinAuswahl(List<Auswahlargument> argumente)
+    {
+        var istEinzigesAuswahlargument = argumente.Count == 1;
+        if (!istEinzigesAuswahlargument)
+        {
+            return Auswahlergebnis.Ungueltig("- (Hashes über stdin) ist das einzige Auswahl-Argument: daneben stehen weder Hashes noch Bereiche noch ein zweites -.");
+        }
+        return Auswahlergebnis.Gueltig(Auswahl.UeberStdin());
+    }
+
+    private static Auswahlergebnis BereichsAuswahl(List<Auswahlargument> argumente)
+    {
+        foreach (var argument in argumente)
+        {
+            var istEinzelhash = !argument.Text.Contains(Bereichstrenner, StringComparison.Ordinal);
+            if (istEinzelhash)
+            {
+                return Auswahlergebnis.Ungueltig($"Argument {argument.Position} steht ohne .. neben einem Bereich: ein Bereichsaufruf nennt nur Bereiche (<von>..<bis>).");
+            }
+            var istZulaessig = Bereichspruefer.IstZulaessigerBereich(argument.Text);
+            if (!istZulaessig)
+            {
+                return Auswahlergebnis.Ungueltig($"Argument {argument.Position} ist kein zulässiger Bereich: erwartet wird <von>..<bis>, je Endpunkt ein Commit-Hash, HEAD oder ein Zweig- bzw. Tag-Name aus A-Z a-z 0-9 . _ / -, danach ~<n> oder ^<n>.");
+            }
+        }
+        return Auswahlergebnis.Gueltig(Auswahl.AusBereichen(new Bereiche(argumente.Select(argument => argument.Text))));
+    }
+
+    private static Auswahlergebnis EinzelcommitAuswahl(List<Auswahlargument> argumente)
+    {
+        foreach (var argument in argumente)
+        {
+            var istCommitHash = CommitHashForm.IstCommitHash(argument.Text);
+            if (!istCommitHash)
+            {
+                return Auswahlergebnis.Ungueltig($"Argument {argument.Position} ist weder eine bekannte Option noch ein Commit-Hash ({CommitHashForm.Beschreibung}).");
+            }
+        }
+        return Auswahlergebnis.Gueltig(Auswahl.AusEinzelcommits(new CommitHashes(argumente.Select(argument => argument.Text))));
     }
 
     private static Protokollstufe Mindeststufe(Aufrufsammlung sammlung)
@@ -103,7 +158,7 @@ internal static class Aufrufleser
 
     private sealed class Aufrufsammlung
     {
-        public List<string> Hashes { get; } = [];
+        public List<Auswahlargument> Auswahlargumente { get; } = [];
 
         public int Port { get; set; } = FreierPort;
 
@@ -112,5 +167,23 @@ internal static class Aufrufleser
         public bool IstVerbose { get; set; }
 
         public bool IstQuiet { get; set; }
+    }
+
+    private sealed record Auswahlargument(string Text, int Position);
+
+    private sealed record Auswahlergebnis(Auswahl? Auswahl, string Fehlermeldung)
+    {
+        [MemberNotNullWhen(true, nameof(Auswahl))]
+        public bool IstGueltig => Auswahl is not null;
+
+        public static Auswahlergebnis Gueltig(Auswahl auswahl)
+        {
+            return new Auswahlergebnis(auswahl, string.Empty);
+        }
+
+        public static Auswahlergebnis Ungueltig(string fehlermeldung)
+        {
+            return new Auswahlergebnis(null, fehlermeldung);
+        }
     }
 }

@@ -15,6 +15,16 @@ internal static class AlsArrayErweiterung
         return liste.ToArray();
     }
 
+    public static string[] AlsArray(this Bereiche bereiche)
+    {
+        var liste = new List<string>();
+        foreach (var bereich in bereiche)
+        {
+            liste.Add(bereich);
+        }
+        return liste.ToArray();
+    }
+
     public static Commitzeile[] AlsArray(this Commitzeilen zeilen)
     {
         var liste = new List<Commitzeile>();

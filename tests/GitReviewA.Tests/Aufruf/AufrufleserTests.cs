@@ -15,7 +15,8 @@ public class AufrufleserTests
         var ergebnis = Aufrufleser.Lesen([HashC, HashA]);
 
         var startauftrag = GueltigerStartauftrag(ergebnis);
-        Assert.That(startauftrag.Hashes.AlsArray(), Is.EqualTo(new[] { HashC, HashA }));
+        Assert.That(startauftrag.Auswahl.Art, Is.EqualTo(Auswahlart.Einzelcommits));
+        Assert.That(startauftrag.Auswahl.Hashes.AlsArray(), Is.EqualTo(new[] { HashC, HashA }));
         Assert.That(startauftrag.Port, Is.EqualTo(Aufrufleser.FreierPort));
         Assert.That(startauftrag.BrowserOeffnen, Is.True);
         Assert.That(startauftrag.Mindeststufe, Is.EqualTo(Protokollstufe.Warnung));
@@ -30,7 +31,7 @@ public class AufrufleserTests
         var ergebnis = Aufrufleser.Lesen([hash]);
 
         var startauftrag = GueltigerStartauftrag(ergebnis);
-        Assert.That(startauftrag.Hashes.AlsArray(), Is.EqualTo(new[] { hash }));
+        Assert.That(startauftrag.Auswahl.Hashes.AlsArray(), Is.EqualTo(new[] { hash }));
     }
 
     [TestCase("abc")]
@@ -50,6 +51,64 @@ public class AufrufleserTests
 
         Assert.That(ergebnis.IstGueltig, Is.False);
         Assert.That(ergebnis.Fehlermeldung, Is.Not.Empty);
+    }
+
+    [Test]
+    public void Wenn_nur_Bereiche_angegeben_dann_Auswahl_aus_Bereichen_in_Aufrufreihenfolge()
+    {
+        var ergebnis = Aufrufleser.Lesen(["--kein-browser", "d4e5..HEAD", "main..feature", "--port", "5123"]);
+
+        var startauftrag = GueltigerStartauftrag(ergebnis);
+        Assert.That(startauftrag.Auswahl.Art, Is.EqualTo(Auswahlart.Bereiche));
+        Assert.That(startauftrag.Auswahl.Bereiche.AlsArray(), Is.EqualTo(new[] { "d4e5..HEAD", "main..feature" }));
+        Assert.That(startauftrag.Port, Is.EqualTo(5123));
+    }
+
+    [Test]
+    public void Wenn_genau_ein_Minus_zwischen_Optionen_dann_Auswahl_ueber_stdin()
+    {
+        var ergebnis = Aufrufleser.Lesen(["--quiet", "-", "--kein-browser"]);
+
+        var startauftrag = GueltigerStartauftrag(ergebnis);
+        Assert.That(startauftrag.Auswahl.Art, Is.EqualTo(Auswahlart.Stdin));
+        Assert.That(startauftrag.BrowserOeffnen, Is.False);
+    }
+
+    [TestCase("-", HashA)]
+    [TestCase(HashA, "-")]
+    [TestCase("-", "main..feature")]
+    [TestCase("main..feature", "-")]
+    [TestCase("-", "-")]
+    public void Wenn_Minus_neben_einem_weiteren_Auswahlargument_dann_Fehler(string erstes, string zweites)
+    {
+        var ergebnis = Aufrufleser.Lesen([erstes, zweites]);
+
+        Assert.That(ergebnis.IstGueltig, Is.False);
+        Assert.That(ergebnis.Fehlermeldung, Does.Contain("-"));
+        Assert.That(ergebnis.Fehlermeldung, Does.Contain("stdin"));
+    }
+
+    [TestCase("a1b2..c3d4", HashC)]
+    [TestCase(HashC, "a1b2..c3d4")]
+    public void Wenn_Bereich_neben_Einzelhash_dann_Fehler(string erstes, string zweites)
+    {
+        var ergebnis = Aufrufleser.Lesen([erstes, zweites]);
+
+        Assert.That(ergebnis.IstGueltig, Is.False);
+        Assert.That(ergebnis.Fehlermeldung, Does.Contain("nur Bereiche"));
+    }
+
+    [TestCase("--output=pwn..HEAD")]
+    [TestCase("a1b2...c3d4")]
+    [TestCase("HEAD@{1}..HEAD")]
+    [TestCase("..")]
+    public void Wenn_Bereich_unzulaessig_dann_Fehler_mit_der_erwarteten_Form(string bereich)
+    {
+        var ergebnis = Aufrufleser.Lesen(["main..feature", bereich]);
+
+        Assert.That(ergebnis.IstGueltig, Is.False);
+        Assert.That(ergebnis.Fehlermeldung, Does.Contain("Argument 2"));
+        Assert.That(ergebnis.Fehlermeldung, Does.Contain("<von>..<bis>"));
     }
 
     [Test]

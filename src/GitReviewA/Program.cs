@@ -45,7 +45,7 @@ internal static class Program
     private static async Task<int> LaufeBisZumEnde(Startauftrag startauftrag, Abbruchsignale abbruchsignale, StderrProtokoll protokoll)
     {
         var arbeitsordner = GitLeser.WurzelLesen(Environment.CurrentDirectory);
-        var commits = GitLeser.Lesen(startauftrag.Hashes, arbeitsordner);
+        var commits = GitLeser.Lesen(startauftrag.Auswahl.Hashes, arbeitsordner);
         await using var server = await Webserver.StartenAsync(startauftrag.Port, commits, new GitDateiquelle(arbeitsordner), Oberflaeche.AusDemProgramm(), protokoll);
         protokoll.MeldeStart(server.Adresse);
         if (startauftrag.BrowserOeffnen)
