@@ -12,7 +12,8 @@ const KLASSE_JE_ROLLE = {
 };
 const LANGE_AUFGABE_MS = 150;
 
-/** Vor dem Laden der Seite: Long Tasks, jeder Wechsel von `data-farbe` und auf Wunsch die Zeilen beim Wechsel auf `laeuft` (vor der Farbe). */
+/** Vor dem Laden der Seite: Long Tasks, jeder Wechsel von `data-farbe` und die Zeilen unmittelbar nach dem Zeichnen, vor der Farbe
+    (der erste Zustand nach dem Zeichnen: `laeuft` oder gleich `nein`). */
 async function mitschriftEinrichten(page) {
   const meldungen = { konsole: [], seitenfehler: [] };
   page.on('console', nachricht => meldungen.konsole.push(nachricht.text()));
@@ -32,12 +33,13 @@ async function mitschriftEinrichten(page) {
       for (const eintrag of eintraege) {
         const zustand = eintrag.target.getAttribute('data-farbe');
         mitschrift.farbzustaende.push(zustand);
-        if (zustand === 'laeuft') {
+        const frischGezeichnet = eintrag.oldValue === null && zustand !== null;
+        if (frischGezeichnet) {
           mitschrift.textStehtUm = performance.now();
           mitschrift.zeilenVorDerFarbe = zeilenLesen();
         }
       }
-    }).observe(document, { subtree: true, attributes: true, attributeFilter: ['data-farbe'] });
+    }).observe(document, { subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ['data-farbe'] });
   }, DIFFZEILE);
   return meldungen;
 }
@@ -177,7 +179,8 @@ async function pruefeKeineLangeAufgabeSeitText(page) {
   expect(lange).toEqual([]);
 }
 
-/** Farben der Rollen in einer Zeile je Art, in sRGB über eine Leinwand gerechnet, dazu der Hintergrund der Textzelle und die Schriftlage. */
+/** Farben der Rollen in einer Zeile je Art, in sRGB über eine Leinwand gerechnet, dazu der sichtbare Hintergrund der Textzelle (der erste
+    nicht durchsichtige von ihr aufwärts) und die Schriftlage. */
 async function rollenfarbenMessen(page) {
   return page.evaluate(([selektor, klassen]) => {
     const leinwand = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
@@ -186,7 +189,17 @@ async function rollenfarbenMessen(page) {
       leinwand.fillStyle = '#000';
       leinwand.fillStyle = farbe;
       leinwand.fillRect(0, 0, 1, 1);
-      return Array.from(leinwand.getImageData(0, 0, 1, 1).data.slice(0, 3));
+      return Array.from(leinwand.getImageData(0, 0, 1, 1).data);
+    };
+    const ohneAlpha = rgba => rgba.slice(0, 3);
+    const sichtbarerHintergrund = element => {
+      for (let bei = element; bei; bei = bei.parentElement) {
+        const farbe = srgb(getComputedStyle(bei).backgroundColor);
+        if (farbe[3] === 255) {
+          return ohneAlpha(farbe);
+        }
+      }
+      return [255, 255, 255];
     };
     const messung = {};
     for (const art of ['kontext', 'minus', 'plus']) {
@@ -194,9 +207,9 @@ async function rollenfarbenMessen(page) {
       const rollen = {};
       for (const [rolle, klasse] of Object.entries(klassen)) {
         const element = zelle.querySelector(`.${klasse}`);
-        rollen[rolle] = { farbe: srgb(getComputedStyle(element).color), kursiv: getComputedStyle(element).fontStyle === 'italic' };
+        rollen[rolle] = { farbe: ohneAlpha(srgb(getComputedStyle(element).color)), kursiv: getComputedStyle(element).fontStyle === 'italic' };
       }
-      messung[art] = { hintergrund: srgb(getComputedStyle(zelle).backgroundColor), text: srgb(getComputedStyle(zelle).color), rollen };
+      messung[art] = { hintergrund: sichtbarerHintergrund(zelle), text: ohneAlpha(srgb(getComputedStyle(zelle).color)), rollen };
     }
     return messung;
   }, [DIFFZEILE, KLASSE_JE_ROLLE]);

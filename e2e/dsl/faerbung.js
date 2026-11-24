@@ -54,8 +54,12 @@ function farbSprache(gr, page) {
     return farbe.farbeAbwarten(page, pfad);
   }
 
+  /** Ohne gewählte Datei gibt es nichts zu färben und nichts abzuwarten. */
   async function ansichtWaehlen(name) {
     await diffSeite.ansichtWaehlen(page, name);
+    if (!gewaehlterPfad) {
+      return null;
+    }
     return farbe.farbeAbwarten(page, gewaehlterPfad);
   }
 
