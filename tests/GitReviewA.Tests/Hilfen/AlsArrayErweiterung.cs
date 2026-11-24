@@ -1,6 +1,7 @@
 using GitReviewA.Aufruf;
 using GitReviewA.Git;
 using GitReviewA.Haken;
+using GitReviewA.Zusammen;
 
 namespace GitReviewA.Tests.Hilfen;
 
@@ -52,6 +53,16 @@ internal static class AlsArrayErweiterung
         foreach (var stelle in uebersicht)
         {
             liste.Add(stelle);
+        }
+        return liste.ToArray();
+    }
+
+    public static Elternzeile[] AlsArray(this Elternfolge folge)
+    {
+        var liste = new List<Elternzeile>();
+        foreach (var zeile in folge)
+        {
+            liste.Add(zeile);
         }
         return liste.ToArray();
     }

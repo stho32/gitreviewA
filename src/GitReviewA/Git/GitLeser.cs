@@ -4,6 +4,7 @@ using System.Text;
 using GitReviewA.Aufruf;
 using GitReviewA.Fremdtext;
 using GitReviewA.Haken;
+using GitReviewA.Zusammen;
 
 namespace GitReviewA.Git;
 
@@ -16,6 +17,14 @@ internal static class GitLeser
         var start = GitLogStart(hashes, arbeitsordner);
         var ausgabe = Ausfuehren(start, "git log");
         return GitLogAusgabe.Zerlegen(ausgabe);
+    }
+
+    /// <summary>Je Commit der Auswahl sein erster Eltern-Hash, in Auswahlreihenfolge; leer bei einer Wurzel.</summary>
+    public static Elternfolge ElternfolgeLesen(CommitHashes auswahl, string arbeitsordner)
+    {
+        var start = GitElternfolgeStart(auswahl, arbeitsordner);
+        var ausgabe = Ausfuehren(start, $"git log (Elternfolge von {auswahl.Anzahl} Commits)");
+        return ElternfolgeAus(ausgabe, auswahl);
     }
 
     /// <summary>Merge-Commits gegen den ersten Elternteil (Entscheidung des PO, gilt auch für den Diff einer Datei).</summary>
@@ -278,6 +287,48 @@ internal static class GitLeser
             }
         }
         return new Commitzeilen(auswahl);
+    }
+
+    private static ProcessStartInfo GitElternfolgeStart(CommitHashes auswahl, string arbeitsordner)
+    {
+        var start = GitStart.Im(arbeitsordner);
+        start.ArgumentList.Add("log");
+        start.ArgumentList.Add("--no-walk=unsorted");
+        start.ArgumentList.Add("--format=%H%x1f%P");
+        start.ArgumentList.Add("--end-of-options");
+        foreach (var hash in auswahl)
+        {
+            start.ArgumentList.Add(hash);
+        }
+        start.ArgumentList.Add("--");
+        return start;
+    }
+
+    /// <summary>Eine Zeile je Commit, `<hash>` Feldtrenner `<erster Elternteil>`; weitere Elternteile eines Merges fallen weg.</summary>
+    private static Elternfolge ElternfolgeAus(string ausgabe, CommitHashes auswahl)
+    {
+        var zeilen = ausgabe.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        if (zeilen.Length != auswahl.Anzahl)
+        {
+            throw new GitFehler($"unerwartete Ausgabe von git log (Elternfolge: {zeilen.Length} Zeilen für {auswahl.Anzahl} Commits)");
+        }
+        var folge = new List<Elternzeile>(zeilen.Length);
+        for (var stelle = 0; stelle < zeilen.Length; stelle++)
+        {
+            var felder = zeilen[stelle].Split('\u001f');
+            var istZeileDesErwartetenCommits = felder.Length == 2 && felder[0] == auswahl[stelle];
+            if (!istZeileDesErwartetenCommits)
+            {
+                throw new GitFehler($"unerwartete Ausgabe von git log (Elternfolge: Commit {auswahl[stelle][..7]} fehlt an seiner Stelle)");
+            }
+            folge.Add(new Elternzeile(auswahl[stelle], ErsterElternteil(felder[1])));
+        }
+        return new Elternfolge(folge);
+    }
+
+    private static string ErsterElternteil(string eltern)
+    {
+        return eltern.Split(' ')[0];
     }
 
     private static ProcessStartInfo GitLogStart(CommitHashes hashes, string arbeitsordner)
