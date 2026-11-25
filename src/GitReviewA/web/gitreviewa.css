@@ -5,8 +5,9 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .gr-status:empty{display:none}
 .gr-status.fehler{color:var(--kd-status-error-ink)}
 .gr-commits{list-style:none;margin:0;padding:0;border:1px solid var(--kd-line);background:var(--kd-surface)}
-.gr-ansicht{display:grid;grid-template-columns:minmax(280px,2fr) minmax(320px,3fr);gap:var(--kd-s5);align-items:start}
-@media (max-width:899px){.gr-ansicht{grid-template-columns:1fr}}
+/* Eine Spalte ist der Rückfall (R00033, B3202): unter 566 px steht die Seitenleiste über dem Diff und die Seite scrollt
+   wie bisher; ab 566 px wird daraus der feste Rahmen mit zwei getrennten Rollbereichen (Regel am Ende dieser Datei). */
+.gr-ansicht{display:grid;grid-template-columns:1fr;gap:var(--kd-s5);align-items:start}
 .commit-zeile{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--kd-s2) var(--kd-s3);padding:var(--kd-s2) var(--kd-s3);min-width:0;border-inline-start:3px solid transparent}
 .commit-zeile+.commit-zeile{border-top:1px solid var(--kd-line)}
 .commit-zeile[aria-current="true"]{background:var(--kd-accent-weak);border-inline-start-color:var(--kd-accent)}
@@ -273,3 +274,28 @@ kbd{font:11px/1.2 var(--kd-mono);padding:1px 4px;border:1px solid var(--kd-line-
 /* Im dunklen Kopf hält ein heller Ring den Kontrast (der Akzent käme dort nur auf 2,3 : 1); das Token gilt für den ganzen Kopf. */
 .kz{--gr-fokus:var(--kd-head-text)}
 .kz :focus-visible{outline-color:var(--gr-fokus)}
+
+/* Fester Rahmen mit zwei getrennten Rollbereichen (R00033, B3201): ab 900 px — der Grenze, an der der zweispaltige Aufbau
+   heute beginnt — füllt der Aufbau die Fensterhöhe. Kopf und Werkzeugzeilen bleiben stehen, die Dateiliste und der
+   Diff-Bereich werden je ein eigener Rollbereich mit eigener Bildlaufleiste, und die Seite selbst scrollt nicht. Unterhalb
+   gilt der Rückfall oben (eine Spalte, Seite scrollt); die Grenze verschiebt B3202 auf 566 px. Die Regel steht am Dateiende,
+   damit sie die Grundregeln oben überschreibt. */
+@media (min-width:900px){
+  html,body{block-size:100%;overflow:hidden}
+  body{display:flex;flex-direction:column}
+  .gr-inhalt{flex:1 1 auto;min-block-size:0;display:flex;flex-direction:column;padding:0}
+  .gr-inhalt>.gr-status,.gr-inhalt>.gr-beendet,.gr-inhalt>.gr-beendet-hinweis{margin-inline:var(--kd-s5)}
+  .gr-ansicht{flex:1 1 auto;min-block-size:0;grid-template-columns:minmax(240px,2fr) minmax(320px,3fr);gap:0;align-items:stretch}
+  /* Seitenleiste: die Commit-Zeile steht, die Dateiliste scrollt in ihrem eigenen Bereich */
+  .gr-links{padding:var(--kd-s5);min-block-size:0;overflow:hidden}
+  .gr-links>.gr-leiste{flex:none}
+  #dateiliste{flex:1 1 auto;min-block-size:0;display:flex;flex-direction:column}
+  .gr-dateien{flex:1 1 auto;min-block-size:0;overflow:auto}
+  /* Aufgeklappt bleibt die Commit-Liste in der Leiste (Entwurf Fassung 2, `.auswahl-liste`: 300 px mit eigenem Bildlauf) */
+  .gr-commitzeile .gr-commits{max-block-size:300px;overflow:auto}
+  /* Diff-Bereich: der Kopf steht, die Zeilen scrollen im eigenen Bereich */
+  .gr-diff{margin-block-start:0;padding:var(--kd-s5);min-block-size:0;display:flex;flex-direction:column;overflow:hidden}
+  .gr-diff>:not(.df-sc){flex:none}
+  .df-sc{flex:1 1 auto;min-block-size:0;overflow:auto}
+  .statuszeile{flex:none}
+}
