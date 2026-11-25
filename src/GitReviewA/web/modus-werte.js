@@ -43,15 +43,17 @@
   }
 
   /**
-   * Wahl beim Moduswechsel: kommt die bisherige Wahl in der neuen Sicht vor, bleibt sie; sonst die erste Wahl der neuen Sicht.
-   * `wahl` ist `{ pfad }`, `sicht` eine Liste von Einträgen mit `pfad`; `null`, wenn die neue Sicht leer ist.
+   * Wahl beim Moduswechsel: der Eintrag der neuen Sicht mit derselben Wahl, sonst die erste Wahl der neuen Sicht; `null`, wenn die
+   * neue Sicht leer ist. `anzeigename` vergleicht die Pfade so, wie sie sichtbar sind (Marken statt roher Zeichen) — dieselbe Regel,
+   * nach der die Liste die Zeilen zeigt; ohne Angabe zählt der rohe Pfad.
    */
-  function wahlUebernehmen(wahl, sicht) {
+  function wahlUebernehmen(wahl, sicht, anzeigename) {
     if (sicht.length === 0) {
       return null;
     }
-    if (wahl && sicht.some(eintrag => eintrag.pfad === wahl.pfad)) {
-      return wahl;
+    const gleich = anzeigename || (pfad => pfad);
+    if (wahl && sicht.some(eintrag => gleich(eintrag.pfad) === gleich(wahl.pfad))) {
+      return sicht.find(eintrag => gleich(eintrag.pfad) === gleich(wahl.pfad));
     }
     return sicht[0];
   }

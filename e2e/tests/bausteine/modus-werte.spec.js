@@ -40,18 +40,24 @@ test.describe('Baustein Modus-Werte', () => {
   });
 
   test('soll die Wahl beim Moduswechsel übernehmen, wenn sie in der neuen Sicht vorkommt (R00012, Kriterium 5)', () => {
-    const wahl = { pfad: 'src/a.txt' };
     const sicht = [{ pfad: 'README.md' }, { pfad: 'src/a.txt' }];
 
-    expect(wahlUebernehmen(wahl, sicht)).toBe(wahl);
+    expect(wahlUebernehmen({ pfad: 'src/a.txt' }, sicht)).toBe(sicht[1]);
   });
 
   test('soll sonst die erste Datei der neuen Sicht wählen und ohne Datei keine Wahl treffen', () => {
-    const wahl = { pfad: 'src/b.txt' };
     const sicht = [{ pfad: 'README.md' }, { pfad: 'src/a.txt' }];
 
-    expect(wahlUebernehmen(wahl, sicht)).toBe(sicht[0]);
+    expect(wahlUebernehmen({ pfad: 'src/b.txt' }, sicht)).toBe(sicht[0]);
     expect(wahlUebernehmen(null, sicht)).toBe(sicht[0]);
-    expect(wahlUebernehmen(wahl, [])).toBeNull();
+    expect(wahlUebernehmen({ pfad: 'src/b.txt' }, [])).toBeNull();
+  });
+
+  test('soll die Wahl über den Anzeigenamen vergleichen — dieselbe Regel für Wahl und Liste (A2, J10)', () => {
+    const sicht = [{ pfad: 'z.txt' }, { pfad: 'a⟨U+202E⟩b.txt' }];
+    const marke = pfad => pfad.replace(/\u202E/g, '⟨U+202E⟩');
+
+    expect(wahlUebernehmen({ pfad: 'a\u202Eb.txt' }, sicht, marke)).toBe(sicht[1]);
+    expect(wahlUebernehmen({ pfad: 'a\u202Eb.txt' }, sicht), 'ohne Anzeigename zählt der rohe Pfad').toBe(sicht[0]);
   });
 });

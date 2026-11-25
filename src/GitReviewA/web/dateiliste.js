@@ -141,22 +141,15 @@
     return antwort.json();
   }
 
-  /** Wahl beim Moduswechsel: die bisherige Wahl, wenn sie vorkommt; sonst die erste Datei; ohne Übernahme keine Wahl. */
+  /** Wahl beim Moduswechsel: die bisherige Wahl, wenn sie vorkommt; sonst die erste Datei; ohne Übernahme keine Wahl. Die Regel
+      selbst steht in `modus-werte.js` (eine Regel für Wahl und Liste, J10). */
   function wahlInNeuerSicht(sicht, uebernehmen, vorher) {
-    if (sicht.length === 0) {
-      return null;
-    }
     if (!uebernehmen) {
       return null;
     }
     const kandidat = vorher === undefined ? zustand.gewaehlterPfad : vorher;
-    if (kandidat) {
-      const treffer = sicht.find(eintrag => sichtbarerName(eintrag.pfad) === sichtbarerName(kandidat));
-      if (treffer) {
-        return treffer;
-      }
-    }
-    return sicht[0];
+    const wahl = kandidat ? { pfad: kandidat } : null;
+    return window.gitreviewaModusWerte.wahlUebernehmen(wahl, sicht, sichtbarerName);
   }
 
   function sichtbarerName(pfad) {
