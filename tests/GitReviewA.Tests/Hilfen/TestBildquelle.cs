@@ -3,7 +3,8 @@ using GitReviewA.Git;
 
 namespace GitReviewA.Tests.Hilfen;
 
-/// <summary>Liefert feste Bytes je Pfad und Seite, zählt die Lesevorgänge; ein Pfad in <c>zuGrossFuer</c>/<c>scheitertFuer</c> wirft wie git.</summary>
+/// <summary>Liefert feste Bytes je Pfad und Seite, zählt die Lesevorgänge; ein Pfad in <c>zuGrossFuer</c> kam abgeschnitten an der
+/// Grenze zurück (die Bytes sind sein Anfang), ein Pfad in <c>scheitertFuer</c> wirft wie git.</summary>
 internal sealed class TestBildquelle : IBildquelle
 {
     private readonly Dictionary<string, byte[]> bytesNachStelle = new(StringComparer.Ordinal);
@@ -20,6 +21,7 @@ internal sealed class TestBildquelle : IBildquelle
         return this;
     }
 
+    /// <summary>Der Blob dieses Pfads hatte mehr als <paramref name="grenze"/> Byte: es kommt der Anfang bis zur Grenze zurück.</summary>
     public TestBildquelle ZuGrossFuer(string pfad, long grenze)
     {
         zuGrossFuer = pfad;
@@ -33,23 +35,23 @@ internal sealed class TestBildquelle : IBildquelle
         return this;
     }
 
-    public byte[] Lesen(string hash, Dateiaenderung datei, Bildseite seite)
+    public Blobinhalt Lesen(string hash, Dateiaenderung datei, Bildseite seite)
     {
         Interlocked.Increment(ref lesevorgaenge);
         if (datei.Pfad == scheitertFuer)
         {
             throw new GitFehler($"git cat-file endete mit 128: fatal: bad object");
         }
-        if (datei.Pfad == zuGrossFuer)
-        {
-            throw new GitZuGross("git cat-file", zuGrossGrenze);
-        }
         var bekannt = bytesNachStelle.TryGetValue(Stelle(datei.Pfad, seite), out var bytes);
         if (!bekannt || bytes is null)
         {
             throw new GitFehler("git cat-file endete mit 128: fatal: path does not exist");
         }
-        return bytes;
+        if (datei.Pfad == zuGrossFuer)
+        {
+            return new Blobinhalt(bytes, new Ausgabegrenze(zuGrossGrenze));
+        }
+        return new Blobinhalt(bytes, null);
     }
 
     private static string Stelle(string pfad, Bildseite seite)

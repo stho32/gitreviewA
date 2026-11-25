@@ -120,6 +120,30 @@ internal sealed class BildLesenInteractorTests
         Assert.That(ergebnis.Ausgang, Is.EqualTo(Bildausgang.KeinBild));
     }
 
+    /// <summary>B2: die Bildart kommt aus den ersten Bytes, bevor die Größe zählt — eine Binärdatei ohne Bildtyp bleibt „kein Bild“,
+    /// auch wenn git mehr als die Ausgabegrenze hatte.</summary>
+    [Test]
+    public void Wenn_Binaerdatei_ueber_der_Grenze_dann_kein_Bild_statt_zu_gross()
+    {
+        using var repo = BildRepo.V();
+
+        var ergebnis = Interactor(repo, new Ausgabegrenze(100)).Lesen(new Bildanfrage(repo.Hash("q"), "bilder/daten.bin", Bildseite.Nachher));
+
+        Assert.That(ergebnis.Ausgang, Is.EqualTo(Bildausgang.KeinBild));
+    }
+
+    /// <summary>B2: genau an der Grenze wird der Blob noch ganz gelesen — ohne Bildtyp ebenfalls „kein Bild“.</summary>
+    [Test]
+    public void Wenn_Binaerdatei_genau_an_der_Grenze_dann_kein_Bild()
+    {
+        using var repo = BildRepo.V();
+        var groesse = new FileInfo(Path.Combine(repo.Ordner, "bilder", "daten.bin")).Length;
+
+        var ergebnis = Interactor(repo, new Ausgabegrenze(groesse)).Lesen(new Bildanfrage(repo.Hash("q"), "bilder/daten.bin", Bildseite.Nachher));
+
+        Assert.That(ergebnis.Ausgang, Is.EqualTo(Bildausgang.KeinBild));
+    }
+
     [Test]
     public void Wenn_ueber_der_Grenze_dann_zu_gross_mit_der_Grenze()
     {

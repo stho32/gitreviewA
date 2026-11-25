@@ -22,7 +22,7 @@ internal sealed class GitBildquelle : IBildquelle
         this.grenze = grenze;
     }
 
-    public byte[] Lesen(string hash, Dateiaenderung datei, Bildseite seite)
+    public Blobinhalt Lesen(string hash, Dateiaenderung datei, Bildseite seite)
     {
         var istVorher = seite == Bildseite.Vorher;
         var revision = hash;

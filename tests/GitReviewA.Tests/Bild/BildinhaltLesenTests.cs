@@ -15,7 +15,7 @@ internal sealed class BildinhaltLesenTests
     {
         using var repo = BildRepo.V();
 
-        var bytes = Quelle(repo).Lesen(repo.Hash("q"), Datei(repo, "q", "bilder/logo.png"), Bildseite.Nachher);
+        var bytes = Quelle(repo).Lesen(repo.Hash("q"), Datei(repo, "q", "bilder/logo.png"), Bildseite.Nachher).Bytes;
 
         Assert.That(bytes, Is.EqualTo(BildRepo.Bytes(BildRepo.Png2)));
     }
@@ -25,7 +25,7 @@ internal sealed class BildinhaltLesenTests
     {
         using var repo = BildRepo.V();
 
-        var bytes = Quelle(repo).Lesen(repo.Hash("q"), Datei(repo, "q", "bilder/logo.png"), Bildseite.Vorher);
+        var bytes = Quelle(repo).Lesen(repo.Hash("q"), Datei(repo, "q", "bilder/logo.png"), Bildseite.Vorher).Bytes;
 
         Assert.That(bytes, Is.EqualTo(BildRepo.Bytes(BildRepo.Png1)));
     }
@@ -35,7 +35,7 @@ internal sealed class BildinhaltLesenTests
     {
         using var repo = BildRepo.V();
 
-        var bytes = Quelle(repo).Lesen(repo.Hash("q"), Datei(repo, "q", "bilder/umbenannt.png"), Bildseite.Vorher);
+        var bytes = Quelle(repo).Lesen(repo.Hash("q"), Datei(repo, "q", "bilder/umbenannt.png"), Bildseite.Vorher).Bytes;
 
         Assert.That(bytes, Is.EqualTo(BildRepo.Bytes(BildRepo.PngAlt)));
     }
@@ -45,7 +45,7 @@ internal sealed class BildinhaltLesenTests
     {
         using var repo = BildRepo.V();
 
-        var bytes = Quelle(repo).Lesen(repo.Hash("q"), Datei(repo, "q", "bilder/b⟨0xFF⟩.png"), Bildseite.Nachher);
+        var bytes = Quelle(repo).Lesen(repo.Hash("q"), Datei(repo, "q", "bilder/b⟨0xFF⟩.png"), Bildseite.Nachher).Bytes;
 
         Assert.That(bytes, Is.EqualTo(BildRepo.Bytes(BildRepo.Png1)));
     }
@@ -56,19 +56,22 @@ internal sealed class BildinhaltLesenTests
         using var repo = BildRepo.V();
         var grenze = new Ausgabegrenze(BildRepo.Bytes(BildRepo.PngGross).Length);
 
-        var bytes = new GitBildquelle(Wurzel(repo), grenze).Lesen(repo.Hash("q"), Datei(repo, "q", "bilder/gross.png"), Bildseite.Nachher);
+        var bytes = new GitBildquelle(Wurzel(repo), grenze).Lesen(repo.Hash("q"), Datei(repo, "q", "bilder/gross.png"), Bildseite.Nachher).Bytes;
 
         Assert.That(bytes, Is.EqualTo(BildRepo.Bytes(BildRepo.PngGross)));
     }
 
     [Test]
-    public void Wenn_ueber_der_Grenze_dann_GitZuGross()
+    public void Wenn_ueber_der_Grenze_dann_der_Anfang_mit_der_ueberschrittenen_Grenze()
     {
         using var repo = BildRepo.V();
         var grenze = new Ausgabegrenze(BildRepo.Bytes(BildRepo.PngGross).Length - 1);
         var quelle = new GitBildquelle(Wurzel(repo), grenze);
 
-        Assert.Throws<GitZuGross>(() => quelle.Lesen(repo.Hash("q"), Datei(repo, "q", "bilder/gross.png"), Bildseite.Nachher));
+        var inhalt = quelle.Lesen(repo.Hash("q"), Datei(repo, "q", "bilder/gross.png"), Bildseite.Nachher);
+
+        Assert.That(inhalt.UeberschritteneGrenze, Is.EqualTo(grenze), "die Grenze wird gemeldet, nicht geworfen");
+        Assert.That(inhalt.Bytes, Is.EqualTo(BildRepo.Bytes(BildRepo.PngGross).Take((int)grenze.Bytes)), "gelesen ist der Anfang bis zur Grenze");
     }
 
     [Test]
@@ -85,7 +88,7 @@ internal sealed class BildinhaltLesenTests
     {
         using var repo = BildRepo.VMitFremderDiffKonfiguration();
 
-        var bytes = Quelle(repo).Lesen(repo.Hash("q"), Datei(repo, "q", "bilder/logo.png"), Bildseite.Nachher);
+        var bytes = Quelle(repo).Lesen(repo.Hash("q"), Datei(repo, "q", "bilder/logo.png"), Bildseite.Nachher).Bytes;
 
         Assert.That(bytes, Is.EqualTo(BildRepo.Bytes(BildRepo.Png2)));
         Assert.That(repo.VorhandeneMarker(), Is.Empty);
@@ -97,7 +100,7 @@ internal sealed class BildinhaltLesenTests
         using var repo = BildRepo.V();
         var ausUnterordner = GitLeser.WurzelLesen(Path.Combine(repo.Ordner, "bilder"));
 
-        var bytes = new GitBildquelle(ausUnterordner).Lesen(repo.Hash("q"), Datei(repo, "q", "bilder/logo.png"), Bildseite.Nachher);
+        var bytes = new GitBildquelle(ausUnterordner).Lesen(repo.Hash("q"), Datei(repo, "q", "bilder/logo.png"), Bildseite.Nachher).Bytes;
 
         Assert.That(bytes, Is.EqualTo(BildRepo.Bytes(BildRepo.Png2)));
     }

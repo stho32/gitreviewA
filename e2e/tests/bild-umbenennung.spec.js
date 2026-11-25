@@ -89,6 +89,26 @@ test.describe('R00024 Endpunkt und fremdes Repo', () => {
     await expect(page.locator('#diff').getByRole('button', { name: 'Als Text zeigen' })).toBeVisible();
   });
 
+  // B2 (Nacharbeit): die Bildart kommt aus den ersten Bytes, bevor die Größe zählt — eine Binärdatei ohne Bildtyp bleibt
+  // „Binärdatei“ (404), auch über der 8-MiB-Grenze; nur ein echtes Bild meldet „zu groß“ (413). Echte Grenze, kein Fake.
+  test('soll eine Binärdatei an und über der Grenze als Binärdatei abweisen — 404 statt 413', async ({ gr, page }) => {
+    const repo = gr.gemerktesRepo(bildRepo.repoGrenze());
+    const lauf = await gr.gitreviewAStarten(repo, [repo.hashes.q]);
+    const q = repo.hashes.q;
+
+    expect((await anfrage(lauf.adresse, bildAdresse(lauf, q, 'genau.bin', '&seite=nachher'))).status, 'genau an der Grenze').toBe(404);
+    expect((await anfrage(lauf.adresse, bildAdresse(lauf, q, 'gross.bin', '&seite=nachher'))).status, 'knapp über der Grenze').toBe(404);
+    expect((await anfrage(lauf.adresse, bildAdresse(lauf, q, 'gross.png', '&seite=nachher'))).status, 'Bild über der Grenze').toBe(413);
+
+    await page.setViewportSize(FENSTER);
+    await gr.oberflaecheOeffnen(page, lauf, 'einzeln');
+    await seite.dateiWaehlen(page, 'gross.bin');
+
+    await expect(page.locator('#diff .diff-meldung')).toHaveText('Binärdatei — enthält Null-Bytes');
+    await expect(page.locator('#diff .bild-paar')).toHaveCount(0);
+    await expect(page.locator('#diff').getByRole('button', { name: 'Als Text zeigen' })).toBeVisible();
+  });
+
   test('soll die vier festen Typen mit ihrem Content-Type liefern und karte.svg/keinbild.png nicht als Bild', async ({ gr }) => {
     const { repo, lauf } = await starte(gr);
     const q = repo.hashes.q;

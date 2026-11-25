@@ -9,7 +9,8 @@ namespace GitReviewA.Bild;
 /// Interaction „Bild einer Datei lesen“: git bekommt nur einen vollen Hash der Auswahl und einen Pfad, der genau so in der
 /// Dateiliste dieses Commits steht — alles andere endet vorher als <see cref="Bildausgang.NichtGefunden"/>. Eine Textdatei
 /// (die nie ein Bild sein kann) und eine Seite, die es nicht gibt (neu/gelöscht), werden ohne `git`-Aufruf abgewiesen; die
-/// Bytes liest die Quelle nur mit Ausgabegrenze und Namensprüfung. Der Typ kommt am Inhalt erkannt aus der festen Liste.
+/// Bytes liest die Quelle nur mit Ausgabegrenze und Namensprüfung. Der Typ kommt am Inhalt erkannt aus der festen Liste — und
+/// zwar aus den ersten Bytes, bevor die Größe zählt: eine Binärdatei ohne Bildtyp ist auch über der Grenze kein Bild (B2).
 /// </summary>
 internal sealed class BildLesenInteractor(Commitzeilen commits, GemerkteDateiquelle dateien, IBildquelle quelle, StderrProtokoll protokoll)
 {
@@ -49,28 +50,29 @@ internal sealed class BildLesenInteractor(Commitzeilen commits, GemerkteDateique
         {
             return KeinBildMitGrund(hash, datei, $"die Seite {anfrage.Seite} gibt es nicht");
         }
-        byte[] bytes;
+        Blobinhalt inhalt;
         try
         {
-            bytes = quelle.Lesen(hash, datei, anfrage.Seite);
-        }
-        catch (GitZuGross zuGross)
-        {
-            protokoll.Melde(Protokollstufe.Warnung, Fehlerkontext, $"Bild von Commit {hash} zu groß: Ausgabegrenze von {zuGross.Grenze} Byte überschritten");
-            return Bildergebnis.ZuGross(zuGross.Grenze);
+            inhalt = quelle.Lesen(hash, datei, anfrage.Seite);
         }
         catch (GitFehler fehler)
         {
             protokoll.Melde(Protokollstufe.Fehler, Fehlerkontext, $"Bild von Commit {hash} nicht lesbar: {fehler.Message}");
             return Bildergebnis.NichtLesbar;
         }
-        var art = Bildbestimmung.Art(bytes);
+        // Die Bildart kommt aus den ersten Bytes; erst ein echtes Bild kann über der Ausgabegrenze liegen (R00024, B2).
+        var art = Bildbestimmung.Art(inhalt.Bytes);
         if (art is null)
         {
             return KeinBildMitGrund(hash, datei, "der Inhalt ist keiner der festen Bildtypen");
         }
-        protokoll.Melde(Protokollstufe.Debug, Anfragekontext, $"GET /api/commits/{hash}/bild Seite {anfrage.Seite} Datei (Länge {datei.Pfad.Length}) Typ {art} Größe {bytes.Length}");
-        return Bildergebnis.Gelesen(new Bildantwort(art.Value, bytes));
+        if (inhalt.UeberschritteneGrenze is not null)
+        {
+            protokoll.Melde(Protokollstufe.Warnung, Fehlerkontext, $"Bild von Commit {hash} zu groß: Ausgabegrenze von {inhalt.UeberschritteneGrenze.Bytes} Byte überschritten");
+            return Bildergebnis.ZuGross(inhalt.UeberschritteneGrenze.Bytes);
+        }
+        protokoll.Melde(Protokollstufe.Debug, Anfragekontext, $"GET /api/commits/{hash}/bild Seite {anfrage.Seite} Datei (Länge {datei.Pfad.Length}) Typ {art} Größe {inhalt.Bytes.Length}");
+        return Bildergebnis.Gelesen(new Bildantwort(art.Value, inhalt.Bytes));
     }
 
     private static Dictionary<string, string> HashesDerAuswahl(Commitzeilen commits)

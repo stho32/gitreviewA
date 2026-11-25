@@ -41,6 +41,7 @@ git mv bilder/alt.png bilder/umbenannt.png
 git mv notizen.txt notizen2.txt && printf 'eins\\nZWEI\\ndrei\\nvier\\nfuenf\\nsechs\\n' > notizen2.txt
 bild bilder/gross.png '__PNGGROSS__'
 printf 'RIFF\\0' > bilder/roh.bin
+head -c 200 /dev/zero > bilder/daten.bin
 bild $'bilder/b\\xff.png' '__PNG1__'
 git add -A && git commit -q -m "Bilder ändern"
 rm -f -- $'bilder/b\\xff.png'
@@ -70,4 +71,28 @@ function repoV() {
   return { ordner, hashes: { p, q }, png1: PNG1, png2: PNG2 };
 }
 
-module.exports = { repoV, PNG1, PNG2 };
+/** Die Ausgabegrenze des Produkts (R00017): 8 MiB. */
+const GRENZE_BYTES = 8388608;
+
+// B2 (Nacharbeit): drei Dateien an und über der Ausgabegrenze — genau an der Grenze (der Blob wird noch ganz gelesen), knapp
+// darüber (der Anfang kommt bis zur Grenze) und ein Bild darüber (die Art steht in den ersten Bytes, die Grenze greift).
+const SKRIPT_GRENZE = `
+set -e
+head -c ${GRENZE_BYTES} /dev/zero > genau.bin
+head -c ${GRENZE_BYTES + 1} /dev/zero > gross.bin
+printf '\\x89PNG\\r\\n\\x1a\\n' > gross.png
+head -c ${GRENZE_BYTES + 1} /dev/zero >> gross.png
+git add -A && git commit -q -m "Grenze"
+`;
+
+/** Repo „Grenze“ (R00024, B2): ein Commit `q` mit `genau.bin`, `gross.bin` und `gross.png`. */
+function repoGrenze() {
+  const ordner = fs.mkdtempSync(path.join(os.tmpdir(), 'gitreviewa-e2e-'));
+  const git = (...argumente) => execFileSync('git', ['-C', ordner, ...argumente], { encoding: 'utf8', env: GIT_UMGEBUNG }).trim();
+  git('init', '-q', '-b', 'main');
+  execFileSync('bash', ['-c', SKRIPT_GRENZE], { cwd: ordner, env: GIT_UMGEBUNG });
+  const q = git('rev-parse', 'HEAD');
+  return { ordner, hashes: { q } };
+}
+
+module.exports = { repoV, repoGrenze, PNG1, PNG2 };

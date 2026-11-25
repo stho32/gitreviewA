@@ -110,7 +110,7 @@ internal sealed class BildEndpunktTests
     [Test]
     public async Task Wenn_ueber_der_Grenze_dann_413_mit_der_Grenze()
     {
-        var quelle = new TestBildquelle().ZuGrossFuer("bilder/logo.png", 4096);
+        var quelle = new TestBildquelle().Mit("bilder/logo.png", Bildseite.Nachher, Png2).ZuGrossFuer("bilder/logo.png", 4096);
         await using var server = await StarteServer(quelle);
         using var client = new HttpClient();
 
@@ -120,6 +120,19 @@ internal sealed class BildEndpunktTests
 
         Assert.That(antwort.StatusCode, Is.EqualTo((HttpStatusCode)413));
         Assert.That(meldung, Does.Contain("zu groß").And.Contain("4096"));
+    }
+
+    /// <summary>B2: über der Grenze ohne Bildtyp bleibt „kein Bild“ (404) — „zu groß“ gilt nur für ein echtes Bild.</summary>
+    [Test]
+    public async Task Wenn_ueber_der_Grenze_ohne_Bildtyp_dann_404()
+    {
+        var quelle = new TestBildquelle().Mit("bilder/roh.bin", Bildseite.Nachher, [0x00, 0x01, 0x02]).ZuGrossFuer("bilder/roh.bin", 4096);
+        await using var server = await StarteServer(quelle);
+        using var client = new HttpClient();
+
+        var antwort = await client.GetAsync(Adresse(server, HashQ, "bilder/roh.bin", "nachher"));
+
+        Assert.That(antwort.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
 
     [Test]
@@ -163,6 +176,7 @@ internal sealed class BildEndpunktTests
             new Dateiaenderung("M", "notizen2.txt", "notizen.txt", 1, 1),
             new Dateiaenderung("A", "bilder/neu.png", null, null, null),
             new Dateiaenderung("D", "bilder/weg.png", null, null, null),
+            new Dateiaenderung("M", "bilder/roh.bin", null, null, null),
             new Dateiaenderung("R", "bilder/umbenannt.png", "bilder/alt.png", 0, 0),
         ]);
     }
