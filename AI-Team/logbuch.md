@@ -365,3 +365,12 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Durchlauf: Detailplanung mit 6 PO-Fragen, Bau 45 min, Rebase mit #7/#26 + 2 eigene rote Tests (B2302) vom entwickler behoben, Security ohne Muss (52 HTTP-Proben, SVG/Polyglott abgewiesen), Code-Review 2 Muss (kurze RIFF → 500; Binärdatei > 8 MiB als „Bild zu groß“) + vom Director hochgestuft S3 (kein Bild in „Zusammen“, dem Standardmodus), Nacharbeit, enge Nachprüfung mit Mutanten, Entwicklertest ohne Befund. Karte gesamt 1,39 $.
 - Lehre: Reviewer stufen Lücken im **Standardmodus** gern als Sollte ein, weil das Kriterium den Modus nicht nennt — der Director prüft Sollte auf „Nutzer bemerkt es im Standard“.
 - Gate: NUnit 1264/1264, Playwright 619/619 zweimal.
+| 2026-11-25 | #30 | Entwicklertest | entwicklertester | bestanden | 21 min | opencode: alle Szenarien, kein Befund · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 30-entwicklertester-1 · 0,062 $ · Karte gesamt 1,36 $ |
+| 2026-11-25 | #15 | Nacharbeit | entwickler | bestanden | 42 min | opencode: US-18 Hinweis aus Katalog-ziel für alle Einträge, rot→grün · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 15-entwickler-3 · 0,61 $ · Karte gesamt 2,24 $ |
+| 2026-11-25 | #36 | Detailplanung | planer | bestanden | 8 min | opencode: I0033 + B3101–B3104, R00032, 4 Fragen · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 36-planer-1 · 0,092 $ · Karte gesamt 0,090 $ |
+| 2026-11-25 | #36 | Detailplanung | product-owner | bestanden | 2 min | opencode: 4 Fragen nach Empfehlung entschieden, R00032 unverändert · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 36-product-owner-1 · 0,070 $ · Karte gesamt 0,16 $ |
+
+## Retrospektive #30 I0031 Im Diff suchen (2026-11-25)
+- Durchlauf: Bau, Reviews 2 Muss (Code: Markierung in „Zusammen“-Abschnitten verschwand nach der Färbung; Security: viele Treffer in einer Zeile quadratisch, 20 000 `x` → 45,6 s, längste Aufgabe 3,7 s), Nacharbeit (Markierung je Zelle in einem Durchgang, Häppchen ≤ 150 ms; 20 000 `x` → 0,1 s, Mutant „alter Algorithmus“ rot), beide Nachprüfungen mit eigener Messung bestanden, Entwicklertest ohne Befund. Rebase: CSS-Konflikt mit #12 (zwei unabhängige Regelblöcke) mechanisch, beide Seiten behalten. Karte gesamt 1,36 $.
+- Lehre: Grenzen für Browser-Suche brauchen zwei Achsen — Trefferzahl **und** Treffer je Textknoten/Zeile; der security-reviewer fand die Lücke, weil er eine einzelne lange Zeile probte statt vieler kurzer.
+- Gate: NUnit 1264/1264, Playwright 654/654 zweimal.
