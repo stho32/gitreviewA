@@ -39,3 +39,4 @@ zuletzt: 2026-11-25
 | I0023 | Entwicklertest | 2026-11-25 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | 11 Szenarien (R00018), Karte #23 |
 | I0024 | Entwicklertest | 2026-11-25 | bestanden | Claude (autonom, entwicklertester + Director, Auftrag Stefan Hoffmann) | 10 von 11 Szenarien (R00019), US-7 nicht herstellbar, per Integrationstest belegt, Karte #24 |
 | I0011 | Entwicklertest | 2026-11-25 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | 10 Szenarien (R00021), Karte #11 |
+| I0009 | Entwicklertest | 2026-11-25 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | 14 Szenarien (R00026), Karte #9 |
