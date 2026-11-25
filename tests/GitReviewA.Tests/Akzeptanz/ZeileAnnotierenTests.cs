@@ -169,6 +169,54 @@ public class ZeileAnnotierenTests
     }
 
     [Test]
+    [Description("R00031 Kriterium 1 und 10: der Bereich wird angelegt und die Debug-Zeile nennt Nummer, Bereich und Textlänge, nie den Text")]
+    public void Wenn_Bereich_3_bis_7_angelegt_dann_Liste_mit_von_und_bis_und_Debug_Zeile_mit_dem_Bereich()
+    {
+        using var repo = DiffRepo.A();
+        var gr = ZeileAnnotierenSprache.Aufruf(repo, ["q", "p"]);
+
+        var antwort = gr.AnnotiereBereich("q", "lang.txt", 3, 7, "GEHEIMWORT eins");
+
+        Assert.That(antwort, Is.EqualTo(new Anlegeantwort("angelegt", 1, "")));
+        Assert.That(gr.Anmerkungen(), Is.EqualTo(new[] { gr.Bereich(1, "q", "lang.txt", 3, 7, "GEHEIMWORT eins") }));
+        var zeilen = gr.Protokollzeilen();
+        Assert.That(zeilen, Has.Exactly(1).Contains("Nummer 1 angelegt (Bereich 3–7, Textlänge 15)"));
+        Assert.That(gr.Protokoll(), Does.Not.Contain("GEHEIMWORT"));
+    }
+
+    [TestCase(5, 3, "bis")]
+    [TestCase(0, 7, "von")]
+    [TestCase(3, 0, "bis")]
+    [Description("R00031 Kriterium 6: die Form der Spanne — abgelehnt, nichts gespeichert, keine Nummer verbraucht")]
+    public void Wenn_die_Spanne_ungueltig_dann_abgelehnt_und_keine_Nummer_verbraucht(int von, int bis, string grundEnthaelt)
+    {
+        using var repo = DiffRepo.A();
+        var gr = ZeileAnnotierenSprache.Aufruf(repo, ["q", "p"]);
+
+        var abgelehnt = gr.AnnotiereBereich("q", "lang.txt", von, bis, "t");
+        var gueltig = gr.AnnotiereBereich("q", "lang.txt", 3, 7, "t");
+
+        Assert.That(abgelehnt.Ausgang, Is.EqualTo("ungültig"));
+        Assert.That(abgelehnt.Grund, Does.Contain(grundEnthaelt));
+        Assert.That(gueltig.Nummer, Is.EqualTo(1), "keine Nummer verbraucht");
+        Assert.That(gr.Anmerkungen(), Has.Length.EqualTo(1));
+    }
+
+    [Test]
+    [Description("R00031 Kriterium 6: zeile und von/bis schließen sich aus (400)")]
+    public void Wenn_zeile_und_Bereich_zusammen_dann_abgelehnt_und_keine_Nummer_verbraucht()
+    {
+        using var repo = DiffRepo.A();
+        var gr = ZeileAnnotierenSprache.Aufruf(repo, ["q", "p"]);
+
+        var abgelehnt = gr.AnnotiereMitBereichUndZeile("q", "lang.txt", 18, 3, 7, "t");
+        var gueltig = gr.AnnotiereBereich("q", "lang.txt", 3, 7, "t");
+
+        Assert.That((abgelehnt.Ausgang, abgelehnt.Grund), Is.EqualTo(("ungültig", "Zeile und Bereich (von/bis) schließen sich aus")));
+        Assert.That(gueltig.Nummer, Is.EqualTo(1));
+    }
+
+    [Test]
     public void Wenn_Dateinamen_mit_Richtungs_Format_oder_Tag_Zeichen_annotiert_dann_steht_in_jeder_Ueberschrift_die_Marke_statt_des_Zeichens()
     {
         using var repo = DiffRepo.N();

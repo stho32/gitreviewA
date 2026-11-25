@@ -1,3 +1,4 @@
 namespace GitReviewA.Anmerkungen;
 
-internal sealed record GepruefteAnmerkung(string Commit, string Datei, int? Zeile, string Text);
+/// <summary>Geprüfte Eingabe: `zeile` oder der Bereich `von`/`bis` oder keins von beiden (ganze Datei).</summary>
+internal sealed record GepruefteAnmerkung(string Commit, string Datei, int? Zeile, string Text, int? Von = null, int? Bis = null);

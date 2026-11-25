@@ -205,9 +205,77 @@ public class AnmerkungsEndpunktTests
         var eintraege = antwort.Json.EnumerateArray().Select(eintrag => eintrag.GetRawText()).ToArray();
         Assert.That(eintraege, Is.EqualTo(new[]
         {
-            "{\"nummer\":1,\"commit\":\"" + HashA + "\",\"datei\":\"src/Foo.cs\",\"zeile\":42,\"text\":\"Null-Pr\\u00FCfung fehlt\"}",
-            "{\"nummer\":2,\"commit\":\"" + HashA + "\",\"datei\":\"lang.txt\",\"zeile\":18,\"text\":\"Klammer fehlt\"}",
+            "{\"nummer\":1,\"commit\":\"" + HashA + "\",\"datei\":\"src/Foo.cs\",\"zeile\":42,\"text\":\"Null-Pr\\u00FCfung fehlt\",\"von\":null,\"bis\":null}",
+            "{\"nummer\":2,\"commit\":\"" + HashA + "\",\"datei\":\"lang.txt\",\"zeile\":18,\"text\":\"Klammer fehlt\",\"von\":null,\"bis\":null}",
         }));
+    }
+
+    [Test]
+    [Description("R00031 Kriterium 6: derselbe POST trägt von/bis, GET nennt beide")]
+    public async Task Wenn_Bereich_von_3_bis_7_dann_201_mit_Nummer_1_und_GET_nennt_von_und_bis()
+    {
+        await using var server = await StarteServer();
+        using var client = new HttpClient();
+
+        var angelegt = await Sende(client, server, "api/anmerkungen", "{\"commit\":\"" + HashA + "\",\"datei\":\"lang.txt\",\"von\":3,\"bis\":7,\"text\":\"Klammer fehlt\"}");
+        var liste = await Hole(client, server, host: null);
+
+        Assert.That((angelegt.Status, angelegt.Json.GetProperty("nummer").GetInt32()), Is.EqualTo((HttpStatusCode.Created, 1)));
+        var eintrag = liste.Json.EnumerateArray().Single();
+        Assert.That(
+            (eintrag.GetProperty("nummer").GetInt32(), eintrag.GetProperty("datei").GetString(), eintrag.GetProperty("zeile").ValueKind, eintrag.GetProperty("von").GetInt32(), eintrag.GetProperty("bis").GetInt32(), eintrag.GetProperty("text").GetString()),
+            Is.EqualTo((1, "lang.txt", JsonValueKind.Null, 3, 7, "Klammer fehlt")));
+    }
+
+    [TestCase("{\"commit\":\"" + HashA + "\",\"datei\":\"a.txt\",\"von\":5,\"bis\":3,\"text\":\"t\"}")]
+    [TestCase("{\"commit\":\"" + HashA + "\",\"datei\":\"a.txt\",\"von\":0,\"bis\":7,\"text\":\"t\"}")]
+    [TestCase("{\"commit\":\"" + HashA + "\",\"datei\":\"a.txt\",\"bis\":-1,\"text\":\"t\"}")]
+    [TestCase("{\"commit\":\"" + HashA + "\",\"datei\":\"a.txt\",\"von\":3,\"text\":\"t\"}")]
+    [TestCase("{\"commit\":\"" + HashA + "\",\"datei\":\"a.txt\",\"zeile\":1,\"von\":1,\"bis\":2,\"text\":\"t\"}")]
+    [TestCase("{\"commit\":\"" + HashA + "\",\"datei\":\"a.txt\",\"von\":1.5,\"bis\":2,\"text\":\"t\"}")]
+    [Description("R00031 Kriterium 6: die Form der Spanne — abgelehnt, nichts gespeichert, keine Nummer verbraucht")]
+    public async Task Wenn_die_Spanne_ungueltig_dann_400_und_die_naechste_Anmerkung_bekommt_Nummer_1(string koerper)
+    {
+        await using var server = await StarteServer();
+        using var client = new HttpClient();
+
+        var abgelehnt = await Sende(client, server, "api/anmerkungen", koerper);
+        var gueltig = await Sende(client, server, "api/anmerkungen", "{\"commit\":\"" + HashA + "\",\"datei\":\"a.txt\",\"von\":1,\"bis\":2,\"text\":\"t\"}");
+
+        Assert.That(abgelehnt.Status, Is.EqualTo(HttpStatusCode.BadRequest));
+        Assert.That(abgelehnt.Json.GetProperty("meldung").GetString(), Is.Not.Empty);
+        Assert.That((gueltig.Status, gueltig.Json.GetProperty("nummer").GetInt32()), Is.EqualTo((HttpStatusCode.Created, 1)), "keine Nummer verbraucht");
+        Assert.That(server.Anmerkungen.Schnappschuss().Anzahl, Is.EqualTo(1));
+    }
+
+    [Test]
+    [Description("R00014 Kriterium 6 für den Bereich: dieselbe Sperre, derselbe kanonische Anzeigename (Lehre #29/#27/#18)")]
+    public async Task Wenn_ein_Bereich_an_einer_gesperrten_Stelle_dann_400_mit_Sperrgrund_und_die_naechste_bekommt_Nummer_1()
+    {
+        await using var server = await StarteServer(TestUebersichtsquelle.MitSperre(HashA, "f.txt", "Diff nicht lesbar: Name nicht eindeutig", "g.txt"));
+        using var client = new HttpClient();
+
+        var gesperrt = await Sende(client, server, "api/anmerkungen", "{\"commit\":\"" + HashA + "\",\"datei\":\"f.txt\",\"von\":3,\"bis\":7,\"text\":\"t\"}");
+        var lesbar = await Sende(client, server, "api/anmerkungen", "{\"commit\":\"" + HashA + "\",\"datei\":\"g.txt\",\"von\":3,\"bis\":7,\"text\":\"t\"}");
+
+        Assert.That((gesperrt.Status, gesperrt.Json.GetProperty("meldung").GetString()), Is.EqualTo((HttpStatusCode.BadRequest, "Diff nicht lesbar: Name nicht eindeutig")));
+        Assert.That((lesbar.Status, lesbar.Json.GetProperty("nummer").GetInt32()), Is.EqualTo((HttpStatusCode.Created, 1)));
+        Assert.That(server.Anmerkungen.Schnappschuss().Anzahl, Is.EqualTo(1));
+    }
+
+    [Test]
+    [Description("R00031 Kriterium 7: der Bereich prüft denselben kanonischen Namen wie Sperre und Ergebnis")]
+    public async Task Wenn_der_Bereich_die_Markenform_des_gesperrten_Namens_traegt_dann_400_mit_Sperrgrund()
+    {
+        await using var server = await StarteServer(TestUebersichtsquelle.MitSperre(HashA, "z\n⟨0xFF⟩.txt", "Diff nicht lesbar: Name nicht übergebbar", "a⟨0xFF⟩.sh"));
+        using var client = new HttpClient();
+
+        var gesperrt = await Sende(client, server, "api/anmerkungen", "{\"commit\":\"" + HashA + "\",\"datei\":\"z⟨U+000A⟩⟨0xFF⟩.txt\",\"von\":1,\"bis\":2,\"text\":\"x\"}");
+        var lesbar = await Sende(client, server, "api/anmerkungen", "{\"commit\":\"" + HashA + "\",\"datei\":\"a⟨0xFF⟩.sh\",\"von\":1,\"bis\":2,\"text\":\"x\"}");
+
+        Assert.That((gesperrt.Status, gesperrt.Json.GetProperty("meldung").GetString()), Is.EqualTo((HttpStatusCode.BadRequest, "Diff nicht lesbar: Name nicht übergebbar")));
+        Assert.That((lesbar.Status, lesbar.Json.GetProperty("nummer").GetInt32()), Is.EqualTo((HttpStatusCode.Created, 1)));
+        Assert.That(server.Anmerkungen.Schnappschuss().Anzahl, Is.EqualTo(1));
     }
 
     [Test]

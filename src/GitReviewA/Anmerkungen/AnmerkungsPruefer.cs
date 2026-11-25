@@ -26,11 +26,19 @@ internal static class AnmerkungsPruefer
         {
             return Pruefergebnis.Abgelehnt(zeileGrund);
         }
+        if (TraegtZeileUndSpanne(neu))
+        {
+            return Pruefergebnis.Abgelehnt("Zeile und Bereich (von/bis) schließen sich aus");
+        }
+        if (!IstGueltigeSpanne(neu.Von, neu.Bis, out var spannenGrund))
+        {
+            return Pruefergebnis.Abgelehnt(spannenGrund);
+        }
         if (!Anmerkungstext.IstGueltig(neu.Text, out var textGrund))
         {
             return Pruefergebnis.Abgelehnt(textGrund);
         }
-        return Pruefergebnis.Gueltig(new GepruefteAnmerkung(neu.Commit, neu.Datei, neu.Zeile, neu.Text));
+        return Pruefergebnis.Gueltig(new GepruefteAnmerkung(neu.Commit, neu.Datei, neu.Zeile, neu.Text, neu.Von, neu.Bis));
     }
 
     private static bool IstGueltigerCommit([NotNullWhen(true)] string? commit, CommitAuswahl auswahl, out string grund)
@@ -90,6 +98,44 @@ internal static class AnmerkungsPruefer
         if (zeileLiegtVorDerErsten)
         {
             grund = "Zeile zählt ab 1";
+            return false;
+        }
+        return true;
+    }
+
+    private static bool TraegtZeileUndSpanne(NeueAnmerkung neu)
+    {
+        return neu.Zeile is not null && (neu.Von is not null || neu.Bis is not null);
+    }
+
+    /// <summary>Form der Spanne (R00031): beide Zahlen, `von` ≥ 1, `bis` ≥ `von`; ganzzahlig prüft schon der JSON-Leser.</summary>
+    private static bool IstGueltigeSpanne(int? von, int? bis, out string grund)
+    {
+        grund = string.Empty;
+        var hatVon = von is not null;
+        var hatBis = bis is not null;
+        if (!hatVon && !hatBis)
+        {
+            return true;
+        }
+        if (!hatVon)
+        {
+            grund = "von fehlt (bis ohne von)";
+            return false;
+        }
+        if (!hatBis)
+        {
+            grund = "bis fehlt (von ohne bis)";
+            return false;
+        }
+        if (von < 1)
+        {
+            grund = "von zählt ab 1";
+            return false;
+        }
+        if (bis < von)
+        {
+            grund = "bis liegt vor von";
             return false;
         }
         return true;

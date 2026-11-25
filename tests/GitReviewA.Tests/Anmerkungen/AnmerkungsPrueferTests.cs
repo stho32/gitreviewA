@@ -28,6 +28,52 @@ public class AnmerkungsPrueferTests
         Assert.That(ergebnis.Anmerkung, Is.EqualTo(new GepruefteAnmerkung(HashA, "README.md", null, "veraltet")));
     }
 
+    [Test]
+    [Description("R00031 Kriterium 1: der Bereich kommt als von/bis an und bleibt unverändert")]
+    public void Wenn_von_3_bis_7_dann_gueltig_als_Bereich()
+    {
+        var ergebnis = AnmerkungsPruefer.Pruefe(new NeueAnmerkung(HashB, "src/Foo.cs", null, "Klammer fehlt", 3, 7), Auswahl());
+
+        Assert.That(ergebnis.Anmerkung, Is.EqualTo(new GepruefteAnmerkung(HashB, "src/Foo.cs", null, "Klammer fehlt", 3, 7)));
+        Assert.That(ergebnis.IstGueltig, Is.True);
+    }
+
+    [Test]
+    [Description("R00031: ein Bereich aus einer Zeile ist zulässig (die Oberfläche schickt dafür zeile)")]
+    public void Wenn_von_und_bis_dieselbe_Zeile_dann_gueltig()
+    {
+        var ergebnis = AnmerkungsPruefer.Pruefe(new NeueAnmerkung(HashA, "a.txt", null, "Text", 5, 5), Auswahl());
+
+        Assert.That(ergebnis.Anmerkung, Is.EqualTo(new GepruefteAnmerkung(HashA, "a.txt", null, "Text", 5, 5)));
+    }
+
+    [TestCase(3, null, "bis")]
+    [TestCase(null, 7, "von")]
+    [TestCase(5, 3, "bis")]
+    [TestCase(0, 7, "von")]
+    [TestCase(3, 0, "bis")]
+    [TestCase(-1, 7, "von")]
+    [TestCase(3, -1, "bis")]
+    [Description("R00031 Kriterium 6: die Form der Spanne — beide Zahlen, von ≥ 1, bis ≥ von")]
+    public void Wenn_die_Spanne_ungueltig_dann_abgelehnt_mit_Grund(int? von, int? bis, string grundEnthaelt)
+    {
+        var ergebnis = AnmerkungsPruefer.Pruefe(new NeueAnmerkung(HashA, "a.txt", null, "Text", von, bis), Auswahl());
+
+        Assert.That(ergebnis.IstGueltig, Is.False);
+        Assert.That(ergebnis.Ablehnungsgrund, Does.Contain(grundEnthaelt));
+    }
+
+    [TestCase(1, 2)]
+    [TestCase(42, 42)]
+    [Description("R00031: zeile und von/bis schließen sich aus (400)")]
+    public void Wenn_zeile_und_Spanne_zusammen_dann_abgelehnt(int von, int bis)
+    {
+        var ergebnis = AnmerkungsPruefer.Pruefe(new NeueAnmerkung(HashA, "a.txt", 7, "Text", von, bis), Auswahl());
+
+        Assert.That(ergebnis.IstGueltig, Is.False);
+        Assert.That(ergebnis.Ablehnungsgrund, Does.Contain("schließen sich aus"));
+    }
+
     [TestCase(10_000)]
     [TestCase(1)]
     public void Wenn_Text_bis_10000_Zeichen_dann_gueltig(int laenge)

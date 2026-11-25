@@ -34,8 +34,18 @@ internal sealed class ZeileAnnotierenInteractor(Anmerkungsspeicher speicher, Com
         }
         var nummer = angelegt.Nummer.ToString(CultureInfo.InvariantCulture);
         var textlaenge = angelegt.Text.Length.ToString(CultureInfo.InvariantCulture);
-        protokoll.Melde(Protokollstufe.Debug, Kontext, $"Nummer {nummer} angelegt (Textlänge {textlaenge})");
+        protokoll.Melde(Protokollstufe.Debug, Kontext, $"Nummer {nummer} angelegt ({Stellentext(angelegt)}Textlänge {textlaenge})");
         return new AnnotierenErgebnis(Annotierenausgang.Angelegt, angelegt, string.Empty);
+    }
+
+    /// <summary>Der Bereich als `Bereich 3–7, ` vor der Textlänge; eine Zeilen- und Dateianmerkung bleibt wie in R00010 (kein Zusatz).</summary>
+    private static string Stellentext(Anmerkung anmerkung)
+    {
+        if (anmerkung.Von is { } von && anmerkung.Bis is { } bis)
+        {
+            return string.Create(CultureInfo.InvariantCulture, $"Bereich {von}–{bis}, ");
+        }
+        return string.Empty;
     }
 
     public Anmerkungsliste Liste()

@@ -30,6 +30,18 @@ internal sealed class ZeileAnnotierenSprache
         return treiber.LegeAn(repo.Hash(commit), datei, nummerNeu, text);
     }
 
+    /// <summary>Eine Bereichsanmerkung (R00031): Anker und Ziel als Nummern neu.</summary>
+    public Anlegeantwort AnnotiereBereich(string commit, string datei, int von, int bis, string text)
+    {
+        return treiber.LegeAnBereich(repo.Hash(commit), datei, von, bis, text);
+    }
+
+    /// <summary>Ein Request mit `zeile` und `von`/`bis` zusammen (R00031, Form).</summary>
+    public Anlegeantwort AnnotiereMitBereichUndZeile(string commit, string datei, int nummerNeu, int von, int bis, string text)
+    {
+        return treiber.LegeAnMitZeileUndBereich(repo.Hash(commit), datei, nummerNeu, von, bis, text);
+    }
+
     public Anlegeantwort AnnotiereMitGekuerztemHash(string commit, string datei, int nummerNeu, string text)
     {
         return treiber.LegeAn(repo.Hash(commit)[..7], datei, nummerNeu, text);
@@ -43,6 +55,12 @@ internal sealed class ZeileAnnotierenSprache
     public Listeneintrag Anmerkung(int nummer, string commit, string datei, int nummerNeu, string text)
     {
         return new Listeneintrag(nummer, repo.Hash(commit), datei, nummerNeu, text);
+    }
+
+    /// <summary>Ein Listeneintrag einer Bereichsanmerkung (R00031).</summary>
+    public Listeneintrag Bereich(int nummer, string commit, string datei, int von, int bis, string text)
+    {
+        return new Listeneintrag(nummer, repo.Hash(commit), datei, null, text, von, bis);
     }
 
     public string Beenden()

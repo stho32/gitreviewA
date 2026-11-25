@@ -35,7 +35,24 @@ internal sealed class ZeileAnnotierenTreiber
 
     public Anlegeantwort LegeAn(string commit, string datei, int zeile, string text)
     {
-        var ergebnis = interactor.LegeAn(new NeueAnmerkung(commit, datei, zeile, text));
+        return LegeAn(new NeueAnmerkung(commit, datei, zeile, text));
+    }
+
+    /// <summary>Eine Bereichsanmerkung (R00031): derselbe Interactor, `von`/`bis` statt `zeile`.</summary>
+    public Anlegeantwort LegeAnBereich(string commit, string datei, int von, int bis, string text)
+    {
+        return LegeAn(new NeueAnmerkung(commit, datei, null, text, von, bis));
+    }
+
+    /// <summary>Ein bewusst widersprüchlicher Request (R00031): `zeile` und `von`/`bis` zusammen.</summary>
+    public Anlegeantwort LegeAnMitZeileUndBereich(string commit, string datei, int zeile, int von, int bis, string text)
+    {
+        return LegeAn(new NeueAnmerkung(commit, datei, zeile, text, von, bis));
+    }
+
+    private Anlegeantwort LegeAn(NeueAnmerkung neu)
+    {
+        var ergebnis = interactor.LegeAn(neu);
         switch (ergebnis.Ausgang)
         {
             case Annotierenausgang.Angelegt:
@@ -54,7 +71,7 @@ internal sealed class ZeileAnnotierenTreiber
         var eintraege = new List<Listeneintrag>();
         foreach (var anmerkung in interactor.Liste())
         {
-            eintraege.Add(new Listeneintrag(anmerkung.Nummer, anmerkung.Commit, anmerkung.Datei, anmerkung.Zeile, anmerkung.Text));
+            eintraege.Add(new Listeneintrag(anmerkung.Nummer, anmerkung.Commit, anmerkung.Datei, anmerkung.Zeile, anmerkung.Text, anmerkung.Von, anmerkung.Bis));
         }
         return eintraege.ToArray();
     }
@@ -74,4 +91,4 @@ internal sealed class ZeileAnnotierenTreiber
 
 internal sealed record Anlegeantwort(string Ausgang, int? Nummer, string Grund);
 
-internal sealed record Listeneintrag(int Nummer, string Commit, string Datei, int? Zeile, string Text);
+internal sealed record Listeneintrag(int Nummer, string Commit, string Datei, int? Zeile, string Text, int? Von = null, int? Bis = null);
