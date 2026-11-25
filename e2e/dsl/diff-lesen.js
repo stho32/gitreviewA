@@ -5,6 +5,7 @@ const path = require('path');
 const { test: basis, expect } = require('./gitreviewa.js');
 const seite = require('../treiber/oberflaeche.js');
 const diffSeite = require('../treiber/diff-oberflaeche.js');
+const nebenSeite = require('../treiber/nebeneinander-oberflaeche.js');
 const schnittstelle = require('../treiber/diff-schnittstelle.js');
 const beobachtung = require('../treiber/beobachtung.js');
 const repos = require('../treiber/diff-repos.js');
@@ -36,6 +37,8 @@ const VORBEREITUNGEN = {
   'Repo C': { anlegen: repos.repoC, commits: ['c2', 'c1'] },
   // R00012-Nacharbeit I0027: `t2` stellt in `still.txt` nur die Einrückung um, `echt.txt` ändert wirklich — Aufruf nur `t2`.
   'Repo Still': { anlegen: repos.repoStill, commits: ['t2'] },
+  // R00032: `v1` und `v3` bilden keine lückenlose Kette (es fehlt `v2`); `breit.txt` trägt die 300 Zeichen lange Zeile 2.
+  'Repo V': { anlegen: repos.repoV, commits: ['v1', 'v3'] },
 };
 
 function diffSprache(gr, page) {
@@ -119,6 +122,8 @@ function diffSprache(gr, page) {
     diffMeldet: (pfad, text) => diffSeite.pruefeMeldung(page, pfad, text, false),
     diffMeldetFehler: (pfad, text) => diffSeite.pruefeMeldung(page, pfad, text, true),
     fordertZurWahlAuf: () => diffSeite.pruefeAufforderungZurWahl(page),
+    /** Die Herkunft des gezeigten Diffs: „netto aus <Kurz-Hashes>“ bzw. „je Commit, nicht netto — <Grund>“ (R00012). */
+    herkunft: text => diffSeite.pruefeHerkunft(page, text),
     umbruchUmschalten: () => diffSeite.umbruchUmschalten(page),
     /** Die Stellung des Umschalters „Umbruch“ (R00032): „an“ (der Start) oder „aus“. */
     umbruchIst: stellung => diffSeite.pruefeUmbruchStellung(page, stellung),
@@ -128,6 +133,14 @@ function diffSprache(gr, page) {
     umschalterPerTabErreichbar: () => diffSeite.pruefeUmschalterPerTabErreichbar(page),
     /** R00032: den Umschalter mit der Leertaste bedienen. */
     umbruchPerTastaturUmschalten: () => diffSeite.umbruchPerTastaturUmschalten(page),
+    /** R00032: Zeile `neu` ist umbrochen (mehrere Bildschirmzeilen hoch, kein waagerechtes Scrollen) — in beiden Anordnungen. */
+    zeileUmbrochen: neu => diffSeite.pruefeZeileUmbrochen(page, neu),
+    /** R00032: dieselbe Prüfung im Abschnitt des Commits `name` (ohne lückenlose Kette). */
+    abschnittZeileUmbrochen: (name, neu) => diffSeite.pruefeAbschnittZeileUmbrochen(page, hash(name), neu),
+    /** Modus der Oberfläche (R00012): „zusammen“ oder „einzeln“. */
+    modusWaehlen: modus => seite.modusWaehlen(page, modus),
+    /** Anordnung des Diffs (R00023): „untereinander“ oder „nebeneinander“. */
+    anordnungWaehlen: anordnung => nebenSeite.anordnungWaehlen(page, anordnung),
     /** Umschalter „Leerraum“ (R00026): klicken, per Tastatur umschalten, die Stellung prüfen. */
     leerraumUmschalten: () => diffSeite.leerraumUmschalten(page),
     leerraumPerTastaturUmschalten: () => diffSeite.leerraumPerTastaturUmschalten(page),

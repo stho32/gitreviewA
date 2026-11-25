@@ -258,6 +258,28 @@ async function umbruchPerTastaturUmschalten(page) {
   await page.keyboard.press('Space');
 }
 
+/** R00032: die Zeile mit Nummer neu `neu` ist umbrochen — mehrere Bildschirmzeilen hoch, kein waagerechtes Scrollen.
+    Misst die Tabellenzeile selbst und gilt damit in beiden Anordnungen (in „nebeneinander“ trägt sie zwei Textspalten). */
+async function pruefeZeileUmbrochen(page, neu) {
+  await expect(page.locator(`${ZEILE}[data-neu="${neu}"]`).first()).toBeVisible();
+  const mass = await zeilenmass(page, neu);
+  expect(mass.verhaeltnis, `Höhe von Zeile ${neu} zu Zeile 1`).toBeGreaterThan(1.5);
+  expect(mass.scrolltWaagerecht, 'waagerecht scrollbar').toBe(false);
+}
+
+/** R00032: dieselbe Prüfung im Abschnitt `commit` — ohne lückenlose Kette trägt jede Zeilennummer mehrere Abschnitte. */
+async function pruefeAbschnittZeileUmbrochen(page, commit, neu) {
+  const bereich = abschnitt(page, commit);
+  await expect(bereich.locator(`tr[data-art][data-neu="${neu}"]`).first()).toBeVisible();
+  const mass = await bereich.evaluate((bereichElement, nummer) => {
+    const hoehe = n => bereichElement.querySelector(`tr[data-art][data-neu="${n}"]`).getBoundingClientRect().height;
+    const rollElement = document.querySelector('#diff .df-sc');
+    return { verhaeltnis: hoehe(nummer) / hoehe(1), scrolltWaagerecht: rollElement.scrollWidth > rollElement.clientWidth };
+  }, neu);
+  expect(mass.verhaeltnis, `Höhe von Zeile ${neu} zu Zeile 1 im Abschnitt`).toBeGreaterThan(1.5);
+  expect(mass.scrolltWaagerecht, 'waagerecht scrollbar').toBe(false);
+}
+
 /** Stellt den Umschalter der Ansicht auf `name` („nur Änderungen“ oder „ganze Datei“) — per Klick wie der Mensch. */
 async function ansichtWaehlen(page, name) {
   await page.locator(BEREICH).getByRole('radiogroup', { name: 'Ansicht' }).getByRole('radio', { name, exact: true }).click();
@@ -722,7 +744,7 @@ async function sprungAntwortScheitern(page, pfad, status = 500) {
 
 module.exports = {
   pruefeBedienbarNachAlsText, ansichtWaehlen, ansichtPerTastaturWechseln, pruefeAnsicht, zeilenfarbenLesen, pruefeZeilenfarben, pruefeKontextzeileBinnen,
-  pruefeDiff, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, pruefeHerkunft, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, pruefeUmbruchStellung, pruefeUmschalter, pruefeUmschalterPerTabErreichbar, umbruchPerTastaturUmschalten, diffAntwortVerzoegern,
+  pruefeDiff, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, pruefeHerkunft, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, pruefeUmbruchStellung, pruefeUmschalter, pruefeUmschalterPerTabErreichbar, umbruchPerTastaturUmschalten, pruefeZeileUmbrochen, pruefeAbschnittZeileUmbrochen, diffAntwortVerzoegern,
   pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
   pruefeAbschnittZugeklappt, abschnittTrotzdemLaden, pruefeAbschnittZeile, pruefeAbschnittskopf,
   diffAntwortZuGross, ganzDateiErstScheitern, blockKnoten, warteAufFarbe, langeAufgabenBeimScrollen, zugeklapptRechtzeitigNachKlick, zugeklapptRechtzeitigNachAktion,

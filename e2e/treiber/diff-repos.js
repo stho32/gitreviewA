@@ -379,6 +379,19 @@ function repoX(ordner) {
   return { ordner, hashes: { x: commitAnlegen(ordner, { betreff: 'Seltsamer Name' }) } };
 }
 
+/** Repo V (R00032): `v1` „Breite Zeile“ legt `breit.txt` an (Zeile 2 = 300 Zeichen), `v2` „Andere Datei“ legt `schmal.txt` an,
+    `v3` „Erste Zeile“ ändert `breit.txt` — die Auswahl `v1` und `v3` bildet keine lückenlose Kette (es fehlt `v2`). */
+function repoV(ordner) {
+  repoAnlegen(ordner);
+  dateiSchreiben(ordner, 'breit.txt', `kurz\n${'0123456789'.repeat(30)}\n`);
+  const v1 = commitAnlegen(ordner, { betreff: 'Breite Zeile' });
+  dateiSchreiben(ordner, 'schmal.txt', 'a\nb\n');
+  const v2 = commitAnlegen(ordner, { betreff: 'Andere Datei' });
+  dateiSchreiben(ordner, 'breit.txt', `KURZ\n${'0123456789'.repeat(30)}\n`);
+  const v3 = commitAnlegen(ordner, { betreff: 'Erste Zeile' });
+  return { ordner, hashes: { v1, v2, v3 } };
+}
+
 /** Repo K: ein Commit `k` mit Binärdateien aus Null-Bytes (100 KB, 500 KB, 3 MB) und 200 KB Zufall (fester Startwert) neben der kleinen `klein.txt`. */
 function repoK(ordner) {
   repoAnlegen(ordner);
@@ -400,4 +413,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoG, repoX, repoK, repoZ, repoQ, repoS, repoL, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoV, repoG, repoX, repoK, repoZ, repoQ, repoS, repoL, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };
