@@ -7,6 +7,7 @@ using GitReviewA.Haken;
 using GitReviewA.Protokoll;
 using GitReviewA.Server;
 using GitReviewA.Tests.Hilfen;
+using GitReviewA.Zusammen;
 
 namespace GitReviewA.Tests.Haken;
 
@@ -15,6 +16,30 @@ public class HakenEndpunktTests
 {
     private const string HashA = "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4";
     private const string Gueltig = "{\"commit\":\"" + HashA + "\",\"datei\":\"alt.txt\",\"abgehakt\":true}";
+
+    [Test]
+    public async Task Wenn_zwei_Eintraege_der_Netto_Liste_denselben_Anzeigenamen_tragen_dann_400_und_kein_Haken()
+    {
+        var literal = new Dateiaenderung("A", "a⟨U+202E⟩.txt", null, 1, 0);
+        var echt = new Dateiaenderung("A", "a\u202E.txt", null, 1, 0);
+        var uebersicht = TestUebersichtsquelle.MitDateien(new Commitdateien(HashA, new Dateiaenderungen([literal, echt])));
+        var zusammen = new TestZusammenquelle
+        {
+            GegebeneElternfolge = new Elternfolge([new Elternzeile(HashA, "")]),
+            GegebeneNetto = new Dateiaenderungen([literal, echt]),
+        };
+        await using var server = await StarteServer(uebersicht, zusammen);
+        using var client = new HttpClient();
+        var anfrage = "{\"datei\":\"a⟨U+202E⟩.txt\",\"abgehakt\":true}";
+
+        var antwort = await Sende(client, server, anfrage);
+        var liste = await client.GetStringAsync(new Uri(new Uri(server.Adresse), "api/zusammen"));
+
+        Assert.That(antwort.Status, Is.EqualTo(HttpStatusCode.BadRequest));
+        Assert.That(antwort.Json.GetProperty("meldung").GetString(), Is.EqualTo("Diff nicht lesbar: Name nicht eindeutig"));
+        Assert.That(server.DateiAbhaken.Stand().Dateien.Abgehakt, Is.Zero, "keine der beiden Dateien ist gesetzt");
+        Assert.That(liste.Split("\"sperrgrund\":\"Diff nicht lesbar: Name nicht eindeutig\"").Length - 1, Is.EqualTo(2), "beide Einträge der Liste tragen den Sperrgrund");
+    }
 
     [Test]
     public async Task Wenn_eine_Stelle_der_Auswahl_abgehakt_dann_200_mit_1_von_2_und_der_Stand_nennt_sie()
@@ -183,11 +208,11 @@ public class HakenEndpunktTests
         Assert.That(speicher.Schnappschuss().Anzahl, Is.Zero);
     }
 
-    private static async Task<Webserver> StarteServer(TestUebersichtsquelle quelle)
+    private static async Task<Webserver> StarteServer(TestUebersichtsquelle quelle, TestZusammenquelle? zusammenquelle = null)
     {
         var commits = new Commitzeilen([new Commitzeile(HashA, "Testperson", "2026-01-01T09:00:00+00:00", "Erster Commit", "")]);
         var protokoll = new StderrProtokoll(new StringWriter(), TimeProvider.System, Protokollstufe.Warnung);
-        return await Webserver.StartenAsync(0, commits, TestDateiquelle.Leer(), TestDiffquelle.Leer(), quelle, TestZusammenquelle.Leer(), Oberflaeche.AusDemProgramm(), protokoll);
+        return await Webserver.StartenAsync(0, commits, TestDateiquelle.Leer(), TestDiffquelle.Leer(), quelle, zusammenquelle ?? TestZusammenquelle.Leer(), Oberflaeche.AusDemProgramm(), protokoll);
     }
 
     private static async Task<(HttpStatusCode Status, JsonElement Json)> Sende(HttpClient client, Webserver server, string koerper, string? origin = null, string? host = null, string inhaltstyp = "application/json")

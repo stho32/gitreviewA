@@ -94,6 +94,11 @@ internal sealed class DateiAbhakenInteractor
         {
             return Abgelehnt(Hakenausgang.NichtLesbar, NichtLesbarGrund);
         }
+        var sperrgrundDesNamens = nettoListe.Sperrgrund(stapel.Datei);
+        if (sperrgrundDesNamens.Length > 0)
+        {
+            return Abgelehnt(Hakenausgang.Ungueltig, sperrgrundDesNamens);
+        }
         var stellen = StellenDerDatei(treffer.Dateien);
         if (stellen.Count == 0)
         {

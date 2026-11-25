@@ -46,4 +46,21 @@ function repoNMitV(ordner) {
   return { ordner, hashes: { ...repo.hashes, v: git(ordner, 'rev-parse', 'HEAD') } };
 }
 
-module.exports = { repoN, repoNMitV };
+const SKRIPT_GLEICHER_NAME = String.raw`set -e
+git init -q -b main
+printf 'literal\n' > 'a⟨U+202E⟩.txt'
+printf 'echt\n' > $'a\u202e.txt'
+git add -A && git commit -q -m "Zwei Namen, ein Anzeigename"
+`;
+
+/**
+ * Repo (R00012, Befund M2): der Commit `c1` fügt zwei Dateien hinzu, deren Anzeigenamen gleich sind — `a⟨U+202E⟩.txt` wörtlich und
+ * `a` + U+202E + `.txt` mit dem echten Zeichen. Zwei Pfade, ein Anzeigename; Gleiches gilt für das Gegenstück in den NUnit-Tests.
+ */
+function repoMitGleichemAnzeigenamen(ordner) {
+  fs.mkdirSync(ordner, { recursive: true });
+  execFileSync('bash', ['-c', SKRIPT_GLEICHER_NAME], { cwd: ordner, env: GIT_UMGEBUNG, stdio: ['ignore', 'ignore', 'pipe'] });
+  return { ordner, hashes: { c1: git(ordner, 'rev-parse', 'HEAD') } };
+}
+
+module.exports = { repoN, repoNMitV, repoMitGleichemAnzeigenamen };

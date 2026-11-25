@@ -81,7 +81,7 @@ internal static class ZusammenEndpunkt
             var stellen = datei.Stellen
                 .Select(stelle => new StelleAntwort(stelle.Commit, UnsichtbareZeichen.AlsMarken(stelle.Datei.Pfad)))
                 .ToList();
-            dateien.Add(new NettoDateiAntwort(datei.Anzeigepfad, datei.Datei.Status, datei.Datei.Plus, datei.Datei.Minus, stellen, datei.ZustaendigerCommit));
+            dateien.Add(new NettoDateiAntwort(datei.Anzeigepfad, datei.Datei.Status, datei.Datei.Plus, datei.Datei.Minus, stellen, datei.ZustaendigerCommit, stand.Dateien.Sperrgrund(datei.Anzeigepfad)));
         }
         return new ZusammenListenAntwort(stand.Lueckenlos, stand.Basis, stand.Dateien.Beschriftung, dateien);
     }
@@ -90,8 +90,9 @@ internal static class ZusammenEndpunkt
 /// <summary>Antwortmodell von `GET /api/zusammen` für den JSON-Serialisierer.</summary>
 internal sealed record ZusammenListenAntwort(bool Lueckenlos, string Basis, string Beschriftung, List<NettoDateiAntwort> Dateien);
 
-/// <summary>Eine Datei der Netto-Liste; Stellen und zuständiger Commit stehen für den Haken und die Anmerkung bereit.</summary>
-internal sealed record NettoDateiAntwort(string Pfad, string Status, int? Plus, int? Minus, List<StelleAntwort> Stellen, string Zustaendiger);
+/// <summary>Eine Datei der Netto-Liste; Stellen und zuständiger Commit stehen für den Haken und die Anmerkung bereit. `Sperrgrund` ist
+/// gesetzt, wenn der Anzeigename keine Datei meint (R00014) — dann sperrt die Oberfläche das Kästchen mit diesem Text.</summary>
+internal sealed record NettoDateiAntwort(string Pfad, string Status, int? Plus, int? Minus, List<StelleAntwort> Stellen, string Zustaendiger, string Sperrgrund);
 
 /// <summary>Eine Stelle als Commit und Anzeigepfad (mit Marken).</summary>
 internal sealed record StelleAntwort(string Commit, string Pfad);

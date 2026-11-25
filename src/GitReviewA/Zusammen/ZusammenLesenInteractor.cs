@@ -62,6 +62,17 @@ internal sealed class ZusammenLesenInteractor : INettoDateiliste
         return new NettoDateitreffer(stand.IstLesbar, stand.Dateien.MitAnzeigepfad(anzeigepfad));
     }
 
+    /// <summary>Der Sperrgrund des Anzeigenamens in der Netto-Liste (mehrdeutig → Name nicht eindeutig); leer, wenn die Liste nicht lesbar ist.</summary>
+    public string Sperrgrund(string anzeigepfad)
+    {
+        var stand = Stand();
+        if (!stand.IstLesbar)
+        {
+            return string.Empty;
+        }
+        return stand.Dateien.Sperrgrund(anzeigepfad);
+    }
+
     public ZusammenDiffergebnis Diff(Zusammenanfrage anfrage)
     {
         var stand = Stand();

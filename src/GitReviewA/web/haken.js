@@ -154,7 +154,7 @@
   }
 
   function istDateiGesperrt(datei) {
-    return datei.stellen.some(stelle => sperrgrundAnzeige(stelle) !== '');
+    return dateiSperrgrund(datei) !== '';
   }
 
   function sperrgrundRoh(schluessel) {
@@ -216,8 +216,12 @@
     zeileElement.querySelector('.haken-grund').textContent = grund;
   }
 
-  /** Der erste Sperrgrund der Datei; leer, wenn keine ihrer Stellen gesperrt ist. */
+  /** Der Sperrgrund der Datei: der Anzeigename der Netto-Liste meint keine Datei, sonst die erste gesperrte Stelle; leer, wenn keine
+      ihrer Stellen gesperrt ist. */
   function dateiSperrgrund(datei) {
+    if (datei.sperrgrund) {
+      return datei.sperrgrund;
+    }
     for (const stelle of datei.stellen) {
       const grund = sperrgrundAnzeige(stelle);
       if (grund !== '') {

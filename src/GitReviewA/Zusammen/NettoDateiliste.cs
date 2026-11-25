@@ -1,3 +1,5 @@
+using GitReviewA.Haken;
+
 namespace GitReviewA.Zusammen;
 
 /// <summary>
@@ -29,6 +31,13 @@ internal sealed class NettoDateiliste
     public NettoDatei[] MitAnzeigepfad(string anzeigepfad)
     {
         return dateien.Where(datei => datei.Anzeigepfad == anzeigepfad).ToArray();
+    }
+
+    /// <summary>Leer, wenn genau ein Eintrag den Anzeigenamen trägt; sonst derselbe Grund, mit dem der Diff den Namen abweist
+    /// (R00014). Sperre und Stapel vergleichen damit denselben Schlüssel: den Anzeigenamen.</summary>
+    public string Sperrgrund(string anzeigepfad)
+    {
+        return MitAnzeigepfad(anzeigepfad).Length > 1 ? Sperrgruende.NameNichtEindeutig : string.Empty;
     }
 
     public IEnumerator<NettoDatei> GetEnumerator()

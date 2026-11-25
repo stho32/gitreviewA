@@ -38,6 +38,10 @@ function repoAnlegen(gr, art) {
       const repo = fremdeNamen.repoNMitV(path.join(gr.eigenerOrdner(), 'repo'));
       return { ordner: repo.ordner, startordner: repo.ordner, hashes: repo.hashes };
     }
+    case 'Namenskollision': {
+      const repo = fremdeNamen.repoMitGleichemAnzeigenamen(path.join(gr.eigenerOrdner(), 'repo'));
+      return { ordner: repo.ordner, startordner: repo.ordner, hashes: repo.hashes };
+    }
     case 'fremde Konfiguration': {
       return gr.gemerktesRepo(fremdKonfiguriertesRepo());
     }
