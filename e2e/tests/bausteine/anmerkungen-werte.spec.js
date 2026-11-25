@@ -2,7 +2,7 @@
 // Bausteintests (ohne Browser) der Anmerkungs-Rechnung: welche Diff-Zeile annotierbar ist und welche Anmerkungen eine Ansicht zeigt (R00010)
 // und wie der Stand nach einer geänderten Anmerkung aussieht (R00018).
 const { test, expect } = require('@playwright/test');
-const { zeilenziel, anmerkungsstand, hinweisAusserhalb, mitGeaendertemText, ohneAnmerkung, ENTFERNT_HINWEIS } = require('../../../src/GitReviewA/web/anmerkungen-werte.js');
+const { zeilenziel, anmerkungsstand, anmerkungsstandJeSicht, hinweisAusserhalb, hinweisAusserhalbMitCommits, mitGeaendertemText, ohneAnmerkung, ENTFERNT_HINWEIS } = require('../../../src/GitReviewA/web/anmerkungen-werte.js');
 
 const Q = 'q'.repeat(40);
 const P = 'p'.repeat(40);
@@ -49,7 +49,7 @@ test.describe('Baustein Anmerkungsstand', () => {
     expect(stand.ausserhalb).toEqual({ anzahl: 0, zeilen: [] });
   });
 
-  test('soll Anmerkungen anderer Commits und anderer Dateien mit derselben Nummer nicht zeigen', () => {
+  test('soll eine Anmerkung eines anderen Commits derselben Datei außerhalb nennen, andere Dateien und Namen aber nicht zeigen', () => {
     const anmerkungen = [
       anmerkung(1, 18, 'in p', { commit: P }),
       anmerkung(2, 18, 'in b', { datei: 'src/b.txt' }),
@@ -59,7 +59,7 @@ test.describe('Baustein Anmerkungsstand', () => {
     const stand = anmerkungsstand(anmerkungen, Q, 'lang.txt', NUR_AENDERUNGEN_LANG);
 
     expect(stand.jeZeile.size).toBe(0);
-    expect(stand.ausserhalb).toEqual({ anzahl: 0, zeilen: [] });
+    expect(stand.ausserhalb).toEqual({ anzahl: 1, zeilen: [18] });
   });
 
   test('soll zwei Anmerkungen an einer Zeile in Anlegereihenfolge halten', () => {
@@ -96,6 +96,75 @@ test.describe('Baustein Anmerkungsstand', () => {
 
     expect(stand.jeZeile.size).toBe(0);
     expect(stand.ausserhalb).toEqual({ anzahl: 0, zeilen: [] });
+  });
+});
+
+const Z1 = '1'.repeat(40);
+const Z2 = '2'.repeat(40);
+const Z3 = '3'.repeat(40);
+const kurz = hash => hash.slice(0, 7);
+
+test.describe('Baustein Anmerkungsstand je Sicht (R00012)', () => {
+  test('soll die Anmerkung des Netto-Commits unter ihrer Zeile zeigen und eine fremde Commit-Anmerkung außerhalb nennen', () => {
+    const anmerkungen = [anmerkung(1, 4, 'vier', { commit: Z3, datei: 'src/a.txt' }), anmerkung(2, 2, 'ZWEI', { commit: Z2, datei: 'src/a.txt' })];
+
+    const stand = anmerkungsstandJeSicht(anmerkungen, 'src/a.txt', [{ commit: Z3, gezeigteNummern: new Set([1, 2, 3, 4]) }]);
+
+    expect([...stand.jeSicht[0].entries()]).toEqual([[4, [anmerkung(1, 4, 'vier', { commit: Z3, datei: 'src/a.txt' })]]]);
+    expect(stand.ausserhalb).toEqual([{ commit: Z2, zeile: 2 }]);
+  });
+
+  test('soll ohne Kette je Abschnitt nur die Anmerkungen des Abschnitts unter dessen Zeile zeigen (gleiche Zeilennummer in beiden Abschnitten)', () => {
+    const anmerkungen = [anmerkung(1, 1, 'in z1', { commit: Z1, datei: 'src/a.txt' }), anmerkung(2, 1, 'in z3', { commit: Z3, datei: 'src/a.txt' }), anmerkung(3, 2, 'fremd', { commit: Z2, datei: 'src/a.txt' })];
+
+    const stand = anmerkungsstandJeSicht(anmerkungen, 'src/a.txt', [
+      { commit: Z1, gezeigteNummern: new Set([1, 2, 3]) },
+      { commit: Z3, gezeigteNummern: new Set([1, 2, 3, 4]) },
+    ]);
+
+    expect([...stand.jeSicht[0].keys()]).toEqual([1]);
+    expect(stand.jeSicht[0].get(1).map(eintrag => eintrag.text)).toEqual(['in z1']);
+    expect([...stand.jeSicht[1].keys()]).toEqual([1]);
+    expect(stand.jeSicht[1].get(1).map(eintrag => eintrag.text)).toEqual(['in z3']);
+    expect(stand.ausserhalb).toEqual([{ commit: Z2, zeile: 2 }]);
+  });
+
+  test('soll eine Anmerkung einer gezeigten Sicht an einer nicht gezeigten Zeile außerhalb nennen (mit ihrem Commit)', () => {
+    const anmerkungen = [anmerkung(1, 10, 'versteckt', { commit: Z3, datei: 'src/a.txt' })];
+
+    const stand = anmerkungsstandJeSicht(anmerkungen, 'src/a.txt', [{ commit: Z3, gezeigteNummern: new Set([1, 2, 3, 4]) }]);
+
+    expect(stand.jeSicht[0].size).toBe(0);
+    expect(stand.ausserhalb).toEqual([{ commit: Z3, zeile: 10 }]);
+  });
+
+  test('soll Anmerkungen anderer Dateien und Dateianmerkungen unberücksichtigt lassen', () => {
+    const anmerkungen = [anmerkung(1, 1, 'andere Datei', { commit: Z3, datei: 'src/b.txt' }), anmerkung(2, null, 'ganze Datei', { commit: Z3, datei: 'src/a.txt' })];
+
+    const stand = anmerkungsstandJeSicht(anmerkungen, 'src/a.txt', [{ commit: Z3, gezeigteNummern: new Set([1, 2, 3, 4]) }]);
+
+    expect(stand.jeSicht[0].size).toBe(0);
+    expect(stand.ausserhalb).toEqual([]);
+  });
+});
+
+test.describe('Baustein Hinweis außerhalb mit Commit (R00012)', () => {
+  test('soll eine Anmerkung des gezeigten Commits ohne Commit nennen (wie bisher)', () => {
+    expect(hinweisAusserhalbMitCommits([{ commit: Z3, zeile: 10 }], kurz, new Set([Z3]))).toBe('1 Anmerkung an einer Zeile, die diese Ansicht nicht zeigt: Zeile 10');
+  });
+
+  test('soll eine Anmerkung eines fremden Commits derselben Datei mit Kurz-Hash und Zeile nennen', () => {
+    expect(hinweisAusserhalbMitCommits([{ commit: Z2, zeile: 2 }], kurz, new Set([Z3]))).toBe('1 Anmerkung an einer Zeile, die diese Ansicht nicht zeigt: Commit 2222222, Zeile 2');
+  });
+
+  test('soll gezeigte und fremde Commits unterscheiden und aufsteigend nach Zeile nennen', () => {
+    const hinweis = hinweisAusserhalbMitCommits([{ commit: Z2, zeile: 4 }, { commit: Z3, zeile: 10 }], kurz, new Set([Z3]));
+
+    expect(hinweis).toBe('2 Anmerkungen an Zeilen, die diese Ansicht nicht zeigen: Commit 2222222, Zeile 4, Zeile 10');
+  });
+
+  test('soll ohne Anmerkung außerhalb leer sein', () => {
+    expect(hinweisAusserhalbMitCommits([], kurz, new Set([Z3]))).toBe('');
   });
 });
 

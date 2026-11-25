@@ -230,6 +230,24 @@ function repoGross(ordner) {
   return { ordner, hashes: { w: commitAnlegen(ordner, { betreff: 'Große Diffs' }) } };
 }
 
+/** Repo Z (R00012): `z1` „Start“ legt `README.md` (`Lager`, `Beispiel`) und `src/a.txt` (`eins`, `zwei`, `drei`) an; `z2` „a ändern, b neu“
+    ändert in `src/a.txt` `zwei` zu `ZWEI` und legt `src/b.txt` (`x`, `y`) an; `z3` „a und b ändern“ hängt in `src/a.txt` `vier` an und
+    ändert in `src/b.txt` `y` zu `Y`. `z1 z2 z3` ist eine lückenlose Kette, `z1 z3` nicht. Netto über alle drei: `README.md` +2 −0,
+    `src/a.txt` +4 −0 (`eins`, `ZWEI`, `drei`, `vier`), `src/b.txt` +2 −0 (`x`, `Y`). */
+function repoZ(ordner) {
+  repoAnlegen(ordner);
+  dateiSchreiben(ordner, 'README.md', 'Lager\nBeispiel\n');
+  dateiSchreiben(ordner, 'src/a.txt', 'eins\nzwei\ndrei\n');
+  const z1 = commitAnlegen(ordner, { betreff: 'Start', datum: '2026-01-01T09:00:00+01:00' });
+  dateiSchreiben(ordner, 'src/a.txt', 'eins\nZWEI\ndrei\n');
+  dateiSchreiben(ordner, 'src/b.txt', 'x\ny\n');
+  const z2 = commitAnlegen(ordner, { betreff: 'a ändern, b neu', datum: '2026-01-01T09:05:00+01:00' });
+  dateiSchreiben(ordner, 'src/a.txt', 'eins\nZWEI\ndrei\nvier\n');
+  dateiSchreiben(ordner, 'src/b.txt', 'x\nY\n');
+  const z3 = commitAnlegen(ordner, { betreff: 'a und b ändern', datum: '2026-01-01T09:10:00+01:00' });
+  return { ordner, hashes: { z1, z2, z3 } };
+}
+
 /** Repo X (R00010): ein Commit `x` fügt die Datei `<b>x</b>.txt` mit der Zeile `eins` hinzu. */
 function repoX(ordner) {
   repoAnlegen(ordner);
@@ -258,4 +276,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoX, repoK, repoMitBidiPfad, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoX, repoK, repoZ, repoMitBidiPfad, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };

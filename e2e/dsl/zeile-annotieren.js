@@ -17,6 +17,7 @@ const VORBEREITUNGEN = {
   'Repo U': { anlegen: repos.repoU, commits: ['u'] },
   'Repo X': { anlegen: repos.repoX, commits: ['x'] },
   'Repo B': { anlegen: repos.repoMitBidiPfad, commits: ['b'] },
+  'Repo Z': { anlegen: repos.repoZ, commits: ['z1', 'z2', 'z3'] },
 };
 
 function annotierSprache(gr, page) {
@@ -24,17 +25,20 @@ function annotierSprache(gr, page) {
   let lauf;
   let dialogePruefen;
   let ersterCommit;
+  let startModus = null;
   const hash = name => repo.hashes[name];
 
-  async function starten({ vorbereitung = 'Repo A', verbose = false, seiteOeffnen = page !== null } = {}) {
+  async function starten({ vorbereitung = 'Repo A', verbose = false, seiteOeffnen = page !== null, commits, modus = null } = {}) {
     const art = VORBEREITUNGEN[vorbereitung];
     repo = art.anlegen(path.join(gr.eigenerOrdner(), 'repo'));
-    [ersterCommit] = art.commits;
+    const auswahl = commits || art.commits;
+    [ersterCommit] = auswahl;
+    startModus = modus;
     const zusatz = [];
     if (verbose) {
       zusatz.push('--verbose');
     }
-    lauf = await gr.gitreviewAStarten(repo, art.commits.map(hash), { zusatz });
+    lauf = await gr.gitreviewAStarten(repo, auswahl.map(hash), { zusatz });
     if (seiteOeffnen) {
       await oeffneSeite();
     }
@@ -44,6 +48,9 @@ function annotierSprache(gr, page) {
     await page.setViewportSize(FENSTER);
     dialogePruefen = seite.dialogeZaehlen(page);
     await gr.oberflaecheOeffnen(page, lauf);
+    if (startModus) {
+      await seite.modusWaehlen(page, startModus);
+    }
   }
 
   /** Name des Notizfelds wie in der Anforderung: „Anmerkung zu <Datei>, Zeile <n>“. */
@@ -52,6 +59,14 @@ function annotierSprache(gr, page) {
   /** Klick auf die Zeile, Text ins Feld, „Speichern“; danach ist das Feld zu. */
   async function annotieren(datei, neu, text) {
     await anmerkungSeite.zeileAnklicken(page, { neu });
+    await anmerkungSeite.textSchreiben(page, feldname(datei, neu), text);
+    await anmerkungSeite.speichern(page, feldname(datei, neu));
+    await anmerkungSeite.pruefeFeldZu(page, feldname(datei, neu));
+  }
+
+  /** Wie `annotieren`, aber im Abschnitt des Commits `commit` (`z1 z3` zeigt je Commit einen Abschnitt). */
+  async function annotierenImAbschnitt(commit, datei, neu, text) {
+    await anmerkungSeite.zeileImAbschnittAnklicken(page, hash(commit), { neu });
     await anmerkungSeite.textSchreiben(page, feldname(datei, neu), text);
     await anmerkungSeite.speichern(page, feldname(datei, neu));
     await anmerkungSeite.pruefeFeldZu(page, feldname(datei, neu));
@@ -78,6 +93,7 @@ function annotierSprache(gr, page) {
     },
 
     annotieren,
+    annotierenImAbschnitt,
     zeileAnklicken: ziel => anmerkungSeite.zeileAnklicken(page, ziel),
     zeileDoppeltAnklicken: (ziel, zelle) => anmerkungSeite.zeileDoppeltAnklicken(page, ziel, zelle),
     anzahlFelder: (datei, neu, anzahl) => anmerkungSeite.pruefeAnzahlFelder(page, feldname(datei, neu), anzahl),
@@ -92,6 +108,7 @@ function annotierSprache(gr, page) {
 
     /** `erwartet`: Texte der Anmerkungen unter der Zeile in ihrer Reihenfolge, je mit der Stelle `<datei>:<neu>`. */
     anmerkungenUnter: (datei, ziel, texte) => anmerkungSeite.pruefeAnmerkungenUnter(page, ziel, texte.map(text => ({ text, stelle: `${datei}:${ziel.neu}` }))),
+    anmerkungenUnterImAbschnitt: (commit, datei, ziel, texte) => anmerkungSeite.pruefeAnmerkungenUnterImAbschnitt(page, hash(commit), ziel, texte.map(text => ({ text, stelle: `${datei}:${ziel.neu}` }))),
     keineAnmerkungUnter: ziel => anmerkungSeite.pruefeAnmerkungenUnter(page, ziel, []),
     anzahlAnmerkungszeilen: anzahl => anmerkungSeite.pruefeAnzahlAnmerkungszeilen(page, anzahl),
     anmerkungszeilenSindKeineDiffzeilen: () => anmerkungSeite.pruefeAnmerkungszeilenSindKeineDiffzeilen(page),
@@ -161,6 +178,8 @@ function annotierSprache(gr, page) {
     },
 
     seiteOeffnen: oeffneSeite,
+    modusWaehlen: name => seite.modusWaehlen(page, name),
+    dateilisteZeigt: erwartet => seite.pruefeDateiliste(page, erwartet),
     anmerkungenRechtzeitigNachKlick: (datei, erwartet) => anmerkungSeite.pruefeAnmerkungenBinnen(page, () => seite.dateiWaehlen(page, datei), erwartet, LADEFRIST_MS),
 
     fremderTextBleibtText: async () => {

@@ -41,6 +41,13 @@ function beendenKnopf(page) {
   return page.getByRole('button', { name: 'Beenden' });
 }
 
+/** Wählt den Modus über den Umschalter im Kopf und wartet, bis er steht (`body[data-modus]`). */
+async function modusWaehlen(page, modus) {
+  const knopf = modus === 'zusammen' ? '#modus-zusammen' : '#modus-einzeln';
+  await page.locator(knopf).click();
+  await expect(page.locator('body')).toHaveAttribute('data-modus', modus);
+}
+
 function ergebnisKopierenKnopf(page) {
   return page.getByRole('button', { name: 'Ergebnis kopieren' });
 }
@@ -310,6 +317,6 @@ module.exports = {
   commitZeilenLesen, commitDetailsLesen, commitZeilen, aufZeilenWarten, commitWaehlen, gewaehlteCommits, messageSchalter, messageUmschalten, rumpf,
   dateilisteLesen, dateizeilen, aufDateizeilenWarten, dateiSumme, dateilistenMeldung, darstellungWaehlen, dateiWaehlen, gewaehlteDateien,
   dateiwahlenSammeln, gesammelteDateiwahlen, formatierungsElementeZaehlen,
-  beendenKnopf, beendenBetaetigen, beendetMeldung, beendenFehler, beendenScheitertMit,
+  beendenKnopf, beendenBetaetigen, beendetMeldung, beendenFehler, beendenScheitertMit, modusWaehlen,
   ergebnisKopierenKnopf, ergebnisKopierenBetaetigen, kopierenStatus, ergebnisAntwortZurueckhalten,
 };

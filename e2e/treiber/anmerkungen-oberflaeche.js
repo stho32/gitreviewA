@@ -24,6 +24,34 @@ function diffzeile(page, ziel) {
   return page.locator(`${DIFFZEILE}[data-neu="${ziel.neu}"]`);
 }
 
+/** Der Abschnitt einer Ansicht ohne Kette (`data-commit`) — bei doppelten Zeilennummern je Abschnitt eindeutig. */
+function abschnitt(page, commit) {
+  return page.locator(`#diff .diff-abschnitt[data-commit="${commit}"]`);
+}
+
+async function zeileImAbschnittAnklicken(page, commit, ziel) {
+  await abschnitt(page, commit).locator(`tr[data-art][data-neu="${ziel.neu}"] td`).last().click();
+}
+
+/** Anmerkungszeilen direkt unter der Zeile `ziel.neu` innerhalb des Abschnitts `commit` (wie `anmerkungenUnter`, aber je Abschnitt). */
+async function anmerkungenUnterImAbschnitt(page, commit, ziel) {
+  return abschnitt(page, commit).locator(`tr[data-art][data-neu="${ziel.neu}"]`).evaluate(zeile => {
+    const texte = [];
+    let naechste = zeile.nextElementSibling;
+    while (naechste && !naechste.hasAttribute('data-art')) {
+      if (naechste.classList.contains('anm')) {
+        texte.push({ text: naechste.querySelector('.anm-text').textContent, stelle: naechste.querySelector('.anm-stelle').textContent });
+      }
+      naechste = naechste.nextElementSibling;
+    }
+    return texte;
+  });
+}
+
+async function pruefeAnmerkungenUnterImAbschnitt(page, commit, ziel, erwartet) {
+  await expect.poll(() => anmerkungenUnterImAbschnitt(page, commit, ziel), `Anmerkungen unter ${commit}:${ziel.neu}`).toEqual(erwartet);
+}
+
 async function zeileAnklicken(page, ziel) {
   await diffzeile(page, ziel).locator('td').last().click();
 }
@@ -418,7 +446,7 @@ async function pruefeLoeschenFrei(page, nummer) {
 }
 
 module.exports = {
-  zeileAnklicken, zeileDoppeltAnklicken, pruefeAnzahlFelder, pruefeFeldtext, pruefeFeldOffenMitFokus, textSchreiben, speichern, zweimalSpeichern, pruefeFeldZu, pruefeKeinFeld, pruefeFeldmeldung,
+  zeileAnklicken, zeileDoppeltAnklicken, zeileImAbschnittAnklicken, pruefeAnmerkungenUnterImAbschnitt, pruefeAnzahlFelder, pruefeFeldtext, pruefeFeldOffenMitFokus, textSchreiben, speichern, zweimalSpeichern, pruefeFeldZu, pruefeKeinFeld, pruefeFeldmeldung,
   pruefeAnmerkungenUnter, pruefeAnzahlAnmerkungszeilen, pruefeAnmerkungszeilenSindKeineDiffzeilen,
   pruefeHinweisEntfernt, pruefeKeinHinweisEntfernt, pruefeHinweisAusserhalb, pruefeKeinHinweisAusserhalb,
   inDenDiffTabben, pfeilAbBis, taste, pruefeFokusAufZeile, anlegenAntwortetEinmal, anlegenVerzoegern, pruefeAnmerkungenBinnen,

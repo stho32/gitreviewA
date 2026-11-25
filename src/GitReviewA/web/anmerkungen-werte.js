@@ -22,30 +22,38 @@
     return { art: 'annotierbar', neu: zeile.neu };
   }
 
-  /** Anmerkungen des Laufs (Anlegereihenfolge) + gezeigte Datei + Menge der gezeigten Nummern neu →
-      `jeZeile`: Nummer neu → Anmerkungen in Anlegereihenfolge; `ausserhalb`: Anzahl und aufsteigende Zeilen, die die Ansicht nicht zeigt. */
-  function anmerkungsstand(anmerkungen, commit, datei, gezeigteNummern) {
-    const jeZeile = new Map();
-    const ausserhalbeZeilen = new Set();
-    let ausserhalbAnzahl = 0;
-    for (const anmerkung of anmerkungenAnZeilenDerDatei(anmerkungen, commit, datei)) {
-      if (!gezeigteNummern.has(anmerkung.zeile)) {
-        ausserhalbAnzahl += 1;
-        ausserhalbeZeilen.add(anmerkung.zeile);
+  /** Eine Sicht der gezeigten Datei ist ein Abschnitt: `{ commit, gezeigteNummern }`. Ein Netto-Diff hat eine Sicht, eine Ansicht
+      ohne lückenlose Kette je Commit im Abschnitt eine. Anmerkungen des Laufs (Anlegereihenfolge) + Datei + Sichten →
+      `jeSicht`: je Sicht eine Map Nummer neu → Anmerkungen in Anlegereihenfolge; `ausserhalb`: Anmerkungen an Zeilen, die keine
+      Sicht zeigt, je mit ihrem Commit (die Ansicht zeigt sie an einer anderen Stelle oder in einem anderen Abschnitt). */
+  function anmerkungsstandJeSicht(anmerkungen, datei, sichten) {
+    const jeSicht = sichten.map(() => new Map());
+    const ausserhalb = [];
+    for (const anmerkung of anmerkungen) {
+      if (anmerkung.datei !== datei || !Number.isInteger(anmerkung.zeile)) {
         continue;
       }
-      if (!jeZeile.has(anmerkung.zeile)) {
-        jeZeile.set(anmerkung.zeile, []);
+      const stelle = sichten.findIndex(sicht => sicht.commit === anmerkung.commit && sicht.gezeigteNummern.has(anmerkung.zeile));
+      if (stelle < 0) {
+        ausserhalb.push({ commit: anmerkung.commit, zeile: anmerkung.zeile });
+        continue;
       }
-      jeZeile.get(anmerkung.zeile).push(anmerkung);
+      if (!jeSicht[stelle].has(anmerkung.zeile)) {
+        jeSicht[stelle].set(anmerkung.zeile, []);
+      }
+      jeSicht[stelle].get(anmerkung.zeile).push(anmerkung);
     }
-    const zeilenAufsteigend = [...ausserhalbeZeilen].sort((links, rechts) => links - rechts);
-    return { jeZeile, ausserhalb: { anzahl: ausserhalbAnzahl, zeilen: zeilenAufsteigend } };
+    return { jeSicht, ausserhalb };
   }
 
-  /** Commit und Pfad genau gleich; Anmerkungen an der ganzen Datei (ohne Zeile) gehören zu keiner Zeile. */
-  function anmerkungenAnZeilenDerDatei(anmerkungen, commit, datei) {
-    return anmerkungen.filter(anmerkung => anmerkung.commit === commit && anmerkung.datei === datei && Number.isInteger(anmerkung.zeile));
+  /** Eine Sicht allein: Anmerkungen des Commits der Ansicht (wie `anmerkungsstandJeSicht`) + Anzahl und aufsteigende Zeilen außerhalb. */
+  function anmerkungsstand(anmerkungen, commit, datei, gezeigteNummern) {
+    const stand = anmerkungsstandJeSicht(anmerkungen, datei, [{ commit, gezeigteNummern }]);
+    return { jeZeile: stand.jeSicht[0], ausserhalb: { anzahl: stand.ausserhalb.length, zeilen: zeilenAufsteigend(stand.ausserhalb) } };
+  }
+
+  function zeilenAufsteigend(ausserhalb) {
+    return [...new Set(ausserhalb.map(eintrag => eintrag.zeile))].sort((links, rechts) => links - rechts);
   }
 
   /** „1 Anmerkung an einer Zeile, die diese Ansicht nicht zeigt: Zeile 10“; leer, wenn die Ansicht alle zeigt. */
@@ -53,16 +61,43 @@
     if (ausserhalb.anzahl === 0) {
       return '';
     }
-    let anmerkungen = `${ausserhalb.anzahl} Anmerkungen`;
-    if (ausserhalb.anzahl === 1) {
-      anmerkungen = '1 Anmerkung';
+    return hinweisText(ausserhalb.anzahl, ausserhalb.zeilen.map(zeile => `Zeile ${zeile}`));
+  }
+
+  /** Wie `hinweisAusserhalb`, nennt aber eine Anmerkung eines anderen Commits derselben Datei mit Kurz-Hash: eine Ansicht ohne
+      Kette zeigt je Abschnitt nur ihren Commit, und in „Einzeln“ gehört eine Anmerkung zu ihrem gewählten Commit. `ausserhalb`:
+      `{ commit, zeile }` in Anlegereihenfolge; `gezeigteCommits` die Commits der gezeigten Sichten. */
+  function hinweisAusserhalbMitCommits(ausserhalb, kurzVon, gezeigteCommits) {
+    if (ausserhalb.length === 0) {
+      return '';
     }
-    let zeilenteil = 'an Zeilen, die diese Ansicht nicht zeigen';
-    if (ausserhalb.zeilen.length === 1) {
-      zeilenteil = 'an einer Zeile, die diese Ansicht nicht zeigt';
+    const stellen = stellenMitCommit(ausserhalb, kurzVon, gezeigteCommits);
+    return hinweisText(ausserhalb.length, stellen);
+  }
+
+  /** Anmerkungen außerhalb, je Stelle (Commit, Zeile) einmal, aufsteigend nach Zeile; den gezeigten Commit ohne Hash, einen fremden mit. */
+  function stellenMitCommit(ausserhalb, kurzVon, gezeigteCommits) {
+    const stellen = [];
+    const gesehen = new Set();
+    for (const eintrag of [...ausserhalb].sort((links, rechts) => links.zeile - rechts.zeile)) {
+      const schluessel = `${eintrag.commit}:${eintrag.zeile}`;
+      if (gesehen.has(schluessel)) {
+        continue;
+      }
+      gesehen.add(schluessel);
+      if (gezeigteCommits.has(eintrag.commit)) {
+        stellen.push(`Zeile ${eintrag.zeile}`);
+        continue;
+      }
+      stellen.push(`Commit ${kurzVon(eintrag.commit)}, Zeile ${eintrag.zeile}`);
     }
-    const liste = ausserhalb.zeilen.map(zeile => `Zeile ${zeile}`).join(', ');
-    return `${anmerkungen} ${zeilenteil}: ${liste}`;
+    return stellen;
+  }
+
+  function hinweisText(anzahl, stellen) {
+    const anmerkungen = anzahl === 1 ? '1 Anmerkung' : `${anzahl} Anmerkungen`;
+    const zeilenteil = stellen.length === 1 ? 'an einer Zeile, die diese Ansicht nicht zeigt' : 'an Zeilen, die diese Ansicht nicht zeigen';
+    return `${anmerkungen} ${zeilenteil}: ${stellen.join(', ')}`;
   }
 
   /** Anmerkungen (Anlegereihenfolge) + Nummer + neuer Text → dieselbe Liste in derselben Reihenfolge; nur der Text der Anmerkung mit
@@ -82,5 +117,5 @@
     return anmerkungen.filter(anmerkung => anmerkung.nummer !== nummer);
   }
 
-  Object.assign(ziel, { zeilenziel, anmerkungsstand, hinweisAusserhalb, mitGeaendertemText, ohneAnmerkung, ENTFERNT_HINWEIS });
+  Object.assign(ziel, { zeilenziel, anmerkungsstand, anmerkungsstandJeSicht, hinweisAusserhalb, hinweisAusserhalbMitCommits, mitGeaendertemText, ohneAnmerkung, ENTFERNT_HINWEIS });
 })(typeof module !== 'undefined' ? module.exports : window);

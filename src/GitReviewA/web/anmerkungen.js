@@ -66,8 +66,9 @@
     zeigeAnmerkungen(ansicht);
   }
 
-  /** Zeichnet die Anmerkungen des gezeigten Diffs neu: je Anmerkung eine Anmerkungszeile mit Kopf unter ihrer Diff-Zeile, darüber der Hinweis
-      auf Anmerkungen an Zeilen, die die Ansicht nicht zeigt. Offene Notiz- wie Änderungsfelder bleiben stehen und behalten ihre Eingabe. */
+  /** Zeichnet die Anmerkungen des gezeigten Diffs neu: je Sicht (Netto-Diff oder Abschnitt einer Ansicht ohne Kette) unter ihren Zeilen;
+      Anmerkungen an einer Zeile, die keine Sicht zeigt — auch die eines anderen Commits derselben Datei — stehen im Hinweis über dem Diff.
+      Offene Notiz- wie Änderungsfelder bleiben stehen und behalten ihre Eingabe. */
   function zeigeAnmerkungen(ansicht) {
     const gezeichnet = zustand.gezeichnet;
     const diffIstVerworfen = !gezeichnet || !gezeichnet.ersterBlockElement.isConnected;
@@ -78,16 +79,49 @@
     for (const altesElement of bereichElement.querySelectorAll('tr.anm, .anmerkungen-ausserhalb')) {
       altesElement.remove();
     }
-    const zeileNachNummerNeu = zeilenMitNummerNeu(bereichElement);
-    const stand = anmerkungsstand(zustand.anmerkungen, gezeichnet.commit, gezeichnet.pfad, new Set(zeileNachNummerNeu.keys()));
-    for (const [nummerNeu, anmerkungen] of stand.jeZeile) {
-      zeileNachNummerNeu.get(nummerNeu).after(...anmerkungen.map(anmerkung => anmerkungszeileElement(ansicht, anmerkung)));
-    }
-    const hinweis = hinweisAusserhalb(stand.ausserhalb);
+    const sichten = sichtenDerAnsicht(gezeichnet);
+    const stand = anmerkungsstandJeSicht(zustand.anmerkungen, gezeichnet.pfad, sichten.map(sicht => ({ commit: sicht.commit, gezeigteNummern: new Set(sicht.zeileNachNummerNeu.keys()) })));
+    sichten.forEach((sicht, stelle) => {
+      for (const [nummerNeu, anmerkungen] of stand.jeSicht[stelle]) {
+        sicht.zeileNachNummerNeu.get(nummerNeu).after(...anmerkungen.map(anmerkung => anmerkungszeileElement(ansicht, anmerkung)));
+      }
+    });
+    const hinweis = hinweisFuerAusserhalb(stand.ausserhalb, sichten);
     if (hinweis) {
       bereichElement.prepend(ausserhalbElement(hinweis));
     }
     haengeAenderungsfelderAn(ansicht);
+  }
+
+  /** Die Sichten des gezeigten Diffs: ohne Kette je Abschnitt eine (`gezeichnet.abschnitte`), sonst eine über den ganzen Bereich
+      (Netto-Diff und „Einzeln“). Je Sicht die Zeilen mit Nummer neu, an die ihre Anmerkungen kommen. */
+  function sichtenDerAnsicht(gezeichnet) {
+    const abschnitte = gezeichnet.abschnitte && gezeichnet.abschnitte.length > 0
+      ? gezeichnet.abschnitte
+      : [{ commit: gezeichnet.commit, bereichElement: gezeichnet.bereichElement }];
+    return abschnitte.map(abschnitt => ({ commit: abschnitt.commit, zeileNachNummerNeu: zeilenMitNummerNeu(abschnitt.bereichElement) }));
+  }
+
+  /** Der Commit der Anmerkung: in einem Abschnitt dessen Commit, sonst der der Ansicht (Netto-Diff oder „Einzeln“). */
+  function commitDerZeile(gezeichnet, zeileElement) {
+    const abschnitt = zeileElement.closest('.diff-abschnitt');
+    if (abschnitt && abschnitt.dataset.commit) {
+      return abschnitt.dataset.commit;
+    }
+    return gezeichnet.commit;
+  }
+
+  /** Hinweis über dem Diff für Anmerkungen an einer Zeile, die keine Sicht zeigt; ein fremder Commit des Diffs nennt seinen Kurz-Hash. */
+  function hinweisFuerAusserhalb(ausserhalb, sichten) {
+    const gezeigteCommits = new Set(sichten.map(sicht => sicht.commit));
+    return hinweisAusserhalbMitCommits(ausserhalb, kurzVon, gezeigteCommits);
+  }
+
+  function kurzVon(hash) {
+    if (window.gitreviewaCommits && window.gitreviewaCommits.kurzVon) {
+      return window.gitreviewaCommits.kurzVon(hash);
+    }
+    return String(hash).slice(0, 7);
   }
 
   /** Offene Änderungsfelder unter ihre neu gezeichnete Anmerkungszeile hängen; ein Feld, dessen Anmerkung nicht mehr existiert, fällt samt Zeile weg. Eine
@@ -292,7 +326,7 @@
 
   function oeffneFeld(ansicht, zeileElement, nummerNeu) {
     const gezeichnet = zustand.gezeichnet;
-    const ziel = { commit: gezeichnet.commit, datei: gezeichnet.pfad, zeile: nummerNeu };
+    const ziel = { commit: commitDerZeile(gezeichnet, zeileElement), datei: gezeichnet.pfad, zeile: nummerNeu };
     const feld = {
       ansicht,
       zeileElement,
