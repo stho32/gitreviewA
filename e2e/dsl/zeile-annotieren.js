@@ -18,6 +18,7 @@ const VORBEREITUNGEN = {
   'Repo U': { anlegen: repos.repoU, commits: ['u'] },
   'Repo X': { anlegen: repos.repoX, commits: ['x'] },
   'Repo B': { anlegen: repos.repoMitBidiPfad, commits: ['b'] },
+  'Repo I': { anlegen: repos.repoMitUnsichtbarenNamen, commits: ['i'] },
   'Repo Z': { anlegen: repos.repoZ, commits: ['z1', 'z2', 'z3'] },
   'Repo mit Rumpf': { anlegen: repos.repoMitRumpf, commits: ['p', 'q', 'r'] },
 };
@@ -175,6 +176,8 @@ function annotierSprache(gr, page) {
     dateiFeldTextSchreiben: (datei, text) => anmerkungSeite.textSchreiben(page, dateiFeldname(datei), text),
     dateiFeldSpeichern: datei => anmerkungSeite.speichern(page, dateiFeldname(datei)),
     dateiFeldZu: datei => anmerkungSeite.pruefeFeldZu(page, dateiFeldname(datei)),
+    dateiZweimalSpeichern: datei => anmerkungSeite.zweimalSpeichern(page, dateiFeldname(datei)),
+    dateiAbbrechen: datei => anmerkungSeite.abbrechen(page, dateiFeldname(datei)),
     dateiFeldMeldet: (datei, meldung, text) => anmerkungSeite.pruefeFeldmeldung(page, dateiFeldname(datei), meldung, text),
     dateiFeldEnthaelt: (datei, text) => anmerkungSeite.pruefeFeldtext(page, dateiFeldname(datei), text),
     dateiSpeichernIstGesperrt: datei => anmerkungSeite.pruefeSpeichernGesperrt(page, dateiFeldname(datei)),

@@ -201,6 +201,14 @@ function repoMitBidiPfad(ordner) {
   return { ordner, hashes: { b: commitAnlegen(ordner, { betreff: 'Bidi im Namen' }) } };
 }
 
+/** Repo I (R00022 Kriterium 9): `i` fügt eine Datei mit U+202E, U+200B und U+E0041 im Namen hinzu. */
+function repoMitUnsichtbarenNamen(ordner) {
+  repoAnlegen(ordner);
+  dateiSchreiben(ordner, 'unsichtbar.txt', 'eins\n');
+  dateiSchreiben(ordner, 'a\u202Eb\u200Bc\u{E0041}d.txt', 'inhalt\n');
+  return { ordner, hashes: { i: commitAnlegen(ordner, { betreff: 'Unsichtbare Namen' }) } };
+}
+
 /** Repo U: ein Commit `u` mit `gross.txt` aus 20 000 Zeilen. */
 function repoU(ordner) {
   repoAnlegen(ordner);
@@ -331,4 +339,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoX, repoK, repoZ, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoX, repoK, repoZ, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };

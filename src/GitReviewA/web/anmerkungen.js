@@ -12,18 +12,23 @@
 
   /** `anmerkungen`: Stand des Servers in Anlegereihenfolge; `ladung`: nur die jüngste Liste zählt; `gezeichnet`: Detail des letzten
       `diff-gezeichnet`; `fokusZeileElement`: die Diff-Zeile mit dem wandernden tabindex; `aenderungen`: offene Änderungsfelder;
-      `loeschungen`: Nummern, deren Löschung gerade läuft (ihr Knopf bleibt auch nach einem Neuzeichnen gesperrt). */
-  const zustand = { anmerkungen: [], ladung: 0, gezeichnet: null, fokusZeileElement: null, aenderungen: [], loeschungen: [] };
+      `loeschungen`: Nummern, deren Löschung gerade läuft (ihr Knopf bleibt auch nach einem Neuzeichnen gesperrt); `dateiFeld`: das
+      offene „Datei anmerken“-Feld (ohne Zeile) oder null. */
+  const zustand = { anmerkungen: [], ladung: 0, gezeichnet: null, fokusZeileElement: null, aenderungen: [], loeschungen: [], dateiFeld: null };
 
   function init() {
     const wurzelElement = document.getElementById('diff');
     const ansicht = {
       rollElement: wurzelElement.querySelector('.df-sc'),
       hinweisElement: wurzelElement.querySelector('.anmerkung-hinweis'),
+      dateiKnopfElement: wurzelElement.querySelector('.datei-anmerken'),
+      dateiKnopfZiel: wurzelElement.querySelector('.diff-datei-anmerken'),
     };
     ansicht.rollElement.addEventListener('click', ereignis => waehleZeilePerKlick(ansicht, ereignis));
     ansicht.rollElement.addEventListener('keydown', ereignis => bedieneZeilenPerTastatur(ansicht, ereignis));
+    ansicht.dateiKnopfElement.addEventListener('click', () => oeffneOderFokussiereDateiFeld(ansicht));
     document.addEventListener('diff-gezeichnet', ereignis => merkeUndZeigeAn(ansicht, ereignis.detail));
+    document.addEventListener('diff-geleert', () => zeigeDateiKnopf(ansicht, false));
     document.addEventListener('datei-gewaehlt', () => zeigeHinweis(ansicht, ''));
     document.addEventListener('commit-gewaehlt', () => zeigeHinweis(ansicht, ''));
     ladeAnmerkungen(ansicht);
@@ -63,6 +68,7 @@
   function merkeUndZeigeAn(ansicht, gezeichnet) {
     zustand.gezeichnet = gezeichnet;
     zustand.fokusZeileElement = null;
+    zeigeDateiKnopf(ansicht, true);
     zeigeAnmerkungen(ansicht);
   }
 
@@ -244,9 +250,10 @@
     return hinweisElement;
   }
 
-  /** Unsichtbare und richtungsändernde Zeichen eines Pfads als Marke im Text (wie über dem Diff). */
+  /** Unsichtbare und richtungsändernde Zeichen eines Pfads als Marke im Text — dieselbe eine Zeichenliste wie R00011/R00012
+      (`sichtbarerName`), nie der rohe Pfad. */
   function sichtbarerPfad(pfad) {
-    return sichtbarTeile(pfad).map(teil => teil.text).join('');
+    return window.sichtbarerName ? window.sichtbarerName(pfad) : pfad;
   }
 
   function zeigeHinweis(ansicht, text) {
@@ -492,12 +499,76 @@
     return { meldung: SPEICHERN_GESCHEITERT };
   }
 
-  /** Schließt das Feld; steht die Zeile noch im Dokument, bekommt sie den Fokus zurück. */
+  /** Schließt das Feld; steht die Zeile noch im Dokument, bekommt sie den Fokus zurück. Ein Feld mit `nachSchliessen` räumt selbst auf
+      (das Datei-Feld gibt den Fokus an seinen Knopf zurück). */
   function schliesseFeld(feld) {
     feld.feldzeileElement.remove();
+    if (feld.nachSchliessen) {
+      feld.nachSchliessen();
+      return;
+    }
     if (feld.zeileElement.isConnected) {
       setzeZeilenfokus(feld.zeileElement, true);
     }
+  }
+
+  /* ── „Datei anmerken“: Feld ohne Zeile über den Diff-Zeilen ── */
+
+  /** „Datei anmerken“: höchstens ein Feld — ein offenes Datei-Feld bekommt den Fokus, sonst öffnet eins über den Diff-Zeilen. */
+  function oeffneOderFokussiereDateiFeld(ansicht) {
+    const gezeichnet = zustand.gezeichnet;
+    const diffIstVerworfen = !gezeichnet || !gezeichnet.ersterBlockElement.isConnected;
+    if (diffIstVerworfen) {
+      return;
+    }
+    if (zustand.dateiFeld && zustand.dateiFeld.feldzeileElement.isConnected) {
+      zustand.dateiFeld.eingabeElement.focus();
+      return;
+    }
+    zustand.dateiFeld = null;
+    const feld = {
+      ansicht,
+      ziel: { commit: gezeichnet.commit, datei: gezeichnet.pfad, zeile: null },
+      feldname: feldnameDerDatei(gezeichnet.pfad),
+      zeilenklasse: 'anm-feld',
+      vorbelegung: '',
+      speichertGerade: false,
+    };
+    feld.speichern = () => speichere(feld);
+    feld.abbrechen = () => schliesseFeld(feld);
+    feld.nachSchliessen = () => {
+      zustand.dateiFeld = null;
+      raeumeLeerenDateiblockAuf(ansicht);
+      ansicht.dateiKnopfElement.focus();
+    };
+    feld.feldzeileElement = notizfeldzeileElement(feld);
+    dateirumpf(ansicht).append(feld.feldzeileElement);
+    zustand.dateiFeld = feld;
+    feld.eingabeElement.focus();
+  }
+
+  /** Der Rumpf des Datei-Blocks über den Diff-Zeilen; legt den Block an, wenn es noch keinen gibt. */
+  function dateirumpf(ansicht) {
+    const vorhandener = ansicht.rollElement.querySelector('.anm-datei tbody');
+    if (vorhandener) {
+      return vorhandener;
+    }
+    const blockElement = dateianmerkungsblockElement(ansicht, []);
+    ansicht.rollElement.prepend(blockElement);
+    return blockElement.querySelector('tbody');
+  }
+
+  /** Einen Datei-Block ohne Anmerkung und ohne Feld wieder entfernen. */
+  function raeumeLeerenDateiblockAuf(ansicht) {
+    const blockElement = ansicht.rollElement.querySelector('.anm-datei');
+    if (blockElement && blockElement.querySelectorAll('tr.anm, tr.anm-feld').length === 0) {
+      blockElement.remove();
+    }
+  }
+
+  /** „Datei anmerken“-Knopf im Diff-Kopf nur zeigen, wenn ein Diff gezeichnet ist. */
+  function zeigeDateiKnopf(ansicht, sichtbar) {
+    ansicht.dateiKnopfZiel.hidden = !sichtbar;
   }
 
   /* ── Änderung: Feld unter der Anmerkung, eine Anfrage je Feld ── */
@@ -535,13 +606,17 @@
     return ansicht.rollElement.querySelector(`tr.anm[data-anmerkung="${nummer}"]`);
   }
 
-  /** Name des Änderungsfelds wie beim Anlegen: „Anmerkung zu <Datei>, Zeile <n>“; ohne Zeile nur „Anmerkung zu <Datei>“. */
+  /** Name des Änderungsfelds wie beim Anlegen: „Anmerkung zu <Datei>, Zeile <n>“; ohne Zeile „Anmerkung zu <Datei> (ganze Datei)“ (R00022). */
   function feldnameDerAnmerkung(anmerkung) {
-    const pfad = sichtbarerPfad(anmerkung.datei);
     if (anmerkung.zeile === null) {
-      return `Anmerkung zu ${pfad}`;
+      return feldnameDerDatei(anmerkung.datei);
     }
-    return `Anmerkung zu ${pfad}, Zeile ${anmerkung.zeile}`;
+    return `Anmerkung zu ${sichtbarerPfad(anmerkung.datei)}, Zeile ${anmerkung.zeile}`;
+  }
+
+  /** Name des „Datei anmerken“-Felds: dieselbe Stelle wie im Ergebnis (`<Datei> (ganze Datei)`), für Screenreader unterscheidbar. */
+  function feldnameDerDatei(pfad) {
+    return `Anmerkung zu ${sichtbarerPfad(pfad)} (ganze Datei)`;
   }
 
   /** Genau eine Anfrage je Feld zur Zeit. Die Antwort ersetzt den Text an ihrer stabilen Nummer — auch wenn währenddessen eine andere
