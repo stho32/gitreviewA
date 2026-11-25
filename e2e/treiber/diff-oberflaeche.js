@@ -256,13 +256,13 @@ async function diffAnfragenBeobachten(page) {
   return anfragen;
 }
 
-/** Beantwortet die Diff-Anfrage von `pfad` in der Leerraum-Stellung `leerraum` (`null` = „beachten“) mit einem eigenen Rumpf —
-    nach `verzoegerungMs` oder als Fehler `status`. */
-async function diffAntwortErsetzen(page, { pfad, leerraum = null, patch = null, status = 200, verzoegerungMs = 0 }) {
+/** Beantwortet die Diff-Anfrage von `pfad` im Umfang `umfang` (`null` = „nur Änderungen“) und der Leerraum-Stellung `leerraum`
+    (`null` = „beachten“) mit einem eigenen Rumpf — nach `verzoegerungMs` oder als Fehler `status`. */
+async function diffAntwortErsetzen(page, { pfad, umfang = null, leerraum = null, patch = null, status = 200, verzoegerungMs = 0 }) {
   const istAnfrage = url => {
     const adresse = url.toString();
     const abfrage = new URL(adresse).searchParams;
-    return adresse.includes('/diff?') && abfrage.get('pfad') === pfad && abfrage.get('leerraum') === leerraum;
+    return adresse.includes('/diff?') && abfrage.get('pfad') === pfad && abfrage.get('umfang') === umfang && abfrage.get('leerraum') === leerraum;
   };
   const eingetroffen = page.waitForResponse(response => istAnfrage(response.url()));
   await page.route(istAnfrage, async route => {
@@ -285,6 +285,45 @@ async function diffAntwortErsetzen(page, { pfad, leerraum = null, patch = null, 
       await page.evaluate(() => new Promise(fertig => requestAnimationFrame(() => requestAnimationFrame(fertig))));
     },
   };
+}
+
+/** Die Lücken-Bedienelemente der gezeigten Ansicht: Zahl der verborgenen Zeilen und die Beschriftungen der beiden Knöpfe. */
+async function lueckenLesen(page) {
+  return page.locator(`${ROLLBEREICH} .dz-l`).evaluateAll(elemente => elemente.map(element => ({
+    text: element.querySelector('.dz-l-text').textContent,
+    schritt: element.querySelector('.dz-l-auf:not([data-ganz])').textContent,
+    ganz: element.querySelector('.dz-l-auf[data-ganz]').textContent,
+  })));
+}
+
+/** Betätigt den Knopf der `nummer`-ten Lücke (ab 1); `ganz` wählt statt des Schritts „Ganz aufklappen“, `perTastatur` Enter. */
+async function lueckeAufklappen(page, nummer, ganz = false, perTastatur = false) {
+  const luecke = page.locator(`${ROLLBEREICH} .dz-l`).nth(nummer - 1);
+  let knopf = luecke.locator('.dz-l-auf:not([data-ganz])');
+  if (ganz) {
+    knopf = luecke.locator('.dz-l-auf[data-ganz]');
+  }
+  if (perTastatur) {
+    await knopf.focus();
+    await page.keyboard.press('Enter');
+    return;
+  }
+  await knopf.click();
+}
+
+/** Zahl der gezeichneten Diff-Zeilen. */
+async function zeilenZaehlen(page) {
+  return page.locator(ZEILE).count();
+}
+
+/** Ob eine Zeile mit Nummer neu `neu` im Dokument steht. */
+async function zeileVorhanden(page, neu) {
+  return (await page.locator(`${ZEILE}[data-neu="${neu}"]`).count()) > 0;
+}
+
+/** Der Text der Zeile mit Nummer neu `neu` (Kontextzeile ohne Lesetext). */
+async function zeilentextLesen(page, neu) {
+  return page.locator(`${ZEILE}[data-neu="${neu}"] .c`).textContent();
 }
 
 /** Knotenzahl je Block (`.dz-b`): Elemente **und** Textknoten, samt dem Block selbst — dieselbe Zahl, die der Browser auslegt. */
@@ -472,4 +511,5 @@ module.exports = {
   pruefeSprungzeile, pruefeSprungzeileName, sprungzeileLiegtImVerborgenen, pruefeSprungkopfName, sprungHunkLink, zeileWaehlen,
   pruefeSprungVerweis, pruefeSprungGrund, pruefeSprungHinweis, sprungAntwortVerzoegern, sprungAntwortScheitern,
   leerraumUmschalten, leerraumPerTastaturUmschalten, pruefeLeerraumStellung, diffAnfragenBeobachten, diffAntwortErsetzen,
+  lueckenLesen, lueckeAufklappen, zeilenZaehlen, zeileVorhanden, zeilentextLesen,
 };

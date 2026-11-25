@@ -2,8 +2,10 @@
    alt und neu, als „nur Änderungen“ oder „ganze Datei“ (Diffansicht); der Wechsel des Commits (`commit-gewaehlt`) hebt die Wahl auf
    und fordert zum Wählen auf. Nach jedem Zeichnen meldet das Ereignis `diff-gezeichnet` Commit, Pfad, Ansicht und Bereich. Jede Zeile
    mit Nummer neu und jeder Abschnittskopf tragen einen Link nach VS Code, der Verweis „In VS Code“ im Kopf zeigt auf die gewählte
-   Zeile (R00021); das Ziel kommt als Attribut aus `sprung-geladen`, nie aus fremdem Text. Zeilenaufbau nach kanbanD
-   web/diff.js (zeileHtml), aber als DOM-Knoten mit textContent: Diff-Text, Pfade und Hunk-Titel sind fremder Text.
+   Zeile (R00021); das Ziel kommt als Attribut aus `sprung-geladen`, nie aus fremdem Text. Der Umschalter „Leerraum“ stellt den
+   Vergleich um (`-w`), die Lücken von „nur Änderungen“ deckt ein Bedienelement schrittweise oder ganz auf (R00026) — die Zeilen dazu
+   kommen aus der Ansicht „ganze Datei“, die je Datei höchstens einmal und erst auf die erste Betätigung gelesen wird.
+   Zeilenaufbau nach kanbanD web/diff.js (zeileHtml), aber als DOM-Knoten mit textContent: Diff-Text, Pfade und Hunk-Titel sind fremder Text.
    Syntaxfarben (R00007) kommen als Auflage nach dem Zeichnen: Prism rechnet im Worker (faerben.js) und liefert nur Zahlen. */
 (function () {
   'use strict';
@@ -25,7 +27,7 @@
       `sprung`: das Ziel der gewählten Datei aus `sprung-geladen` (null, solange keine Antwort da ist); `gezeichnet`: Commit, Pfad und
       Zeilen des zuletzt gezeichneten Diffs (null ohne Wahl) — daran hängt, ob ein Ziel noch gilt; `gewaehlteZeile`: die angeklickte
       Zeile neu, sonst null. */
-  const zustand = { letzteLadung: 0, datei: null, alsText: false, diffansicht: 'aenderungen', leerraum: 'beachten', zugeklappt: null, anzeige: 0, sprung: null, gezeichnet: null, gewaehlteZeile: null };
+  const zustand = { letzteLadung: 0, datei: null, alsText: false, diffansicht: 'aenderungen', leerraum: 'beachten', zugeklappt: null, anzeige: 0, sprung: null, gezeichnet: null, gewaehlteZeile: null, anzeigeDaten: null, ganz: null, gesamt: null, aufgedeckt: {} };
 
   function init() {
     const ansicht = ansichtElemente();
@@ -39,6 +41,7 @@
     ansicht.alsTextElement.addEventListener('click', () => ladeDiff(ansicht, zustand.datei, true));
     ansicht.trotzdemLadenElement.addEventListener('click', () => klappeAuf(ansicht));
     ansicht.rollElement.addEventListener('click', ereignis => waehleZeile(ansicht, ereignis));
+    ansicht.rollElement.addEventListener('click', ereignis => klappeLueckeAuf(ansicht, ereignis));
     document.addEventListener('commit-gewaehlt', () => verwerfeWahl(ansicht));
     document.addEventListener('datei-gewaehlt', ereignis => ladeDiff(ansicht, ereignis.detail, false));
     document.addEventListener('sprung-geladen', ereignis => uebernehmeSprung(ansicht, ereignis.detail));
@@ -116,6 +119,10 @@
     zustand.letzteLadung = ladung;
     zustand.datei = datei;
     zustand.alsText = alsText;
+    // Neue Wahl, neue Lücken: der Zustand je Lücke lebt nur für die gezeigte Stelle (R00026).
+    zustand.ganz = null;
+    zustand.gesamt = null;
+    zustand.aufgedeckt = {};
     const vorherGezeichnet = zustand.gezeichnet;
     zustand.gezeichnet = { commit: datei.commit, pfad: datei.pfad, zeilen: [] };
     const istDieselbeStelle = vorherGezeichnet !== null && vorherGezeichnet.commit === datei.commit && vorherGezeichnet.pfad === datei.pfad;
@@ -214,7 +221,20 @@
       zeigeZugeklappt(ansicht, antwort, zeilen, zuLangGrund);
       return;
     }
-    zeichneZeilen(ansicht, antwort, zeilen);
+    zeichneAnsicht(ansicht, antwort, zeilen, diffansicht);
+  }
+
+  /** „nur Änderungen“ zeigt die Lücken vor dem ersten, zwischen zwei und nach dem letzten Abschnitt (R00026);
+      „ganze Datei“ zeigt alles — dort gibt es keine Lücken. */
+  function zeichneAnsicht(ansicht, antwort, zeilen, diffansicht) {
+    const kenntLuecken = diffansicht !== 'ganz';
+    if (!kenntLuecken) {
+      zustand.anzeigeDaten = null;
+      zeichneZeilen(ansicht, antwort, zeilen);
+      return;
+    }
+    zustand.anzeigeDaten = { antwort, zeilen };
+    zeichneZeilen(ansicht, antwort, zeilen, luecken(zeilen, zustand.gesamt));
   }
 
   function zeilenDerDiffansicht(patch, diffansicht) {
@@ -251,16 +271,18 @@
     zeichneZeilen(ansicht, zugeklappt.antwort, zugeklappt.zeilen);
   }
 
-  /** `antwort`: Pfad und Patch der gezeigten Ansicht — an ihnen hängen Sprache und Grenze der Färbung. */
-  function zeichneZeilen(ansicht, antwort, zeilen) {
+  /** `antwort`: Pfad und Patch der gezeigten Ansicht — an ihnen hängen Sprache und Grenze der Färbung. `lueckenliste`: die Lücken der
+      Ansicht (R00026) oder null; das offene Bedienelement einer Lücke ist eine eigene Zeile über der Spaltenbreite, sie zählt nicht
+      zu den Diff-Zeilen — `zustand.gezeichnet.zeilen` und die Farbschicht bleiben deshalb unberührt. */
+  function zeichneZeilen(ansicht, antwort, zeilen, lueckenliste = null) {
     zeigeMeldung(ansicht, '', false);
     if (zustand.gezeichnet) {
       zustand.gezeichnet.zeilen = zeilen;
     }
     const name = `Änderungen in ${antwort.pfad}`;
     const sammelElement = document.createDocumentFragment();
-    for (const block of bloecke(zeilen)) {
-      sammelElement.append(blockElement(block, name));
+    for (const block of blockelemente(zeilen, lueckenliste, name)) {
+      sammelElement.append(block);
     }
     ansicht.rollElement.setAttribute('aria-label', name);
     ansicht.rollElement.replaceChildren(sammelElement);
@@ -269,6 +291,176 @@
     aktualisiereSprungkopf(ansicht);
     faerbeZeilen(ansicht, antwort, zeilen);
     meldeGezeichnet(ansicht, antwort.pfad);
+  }
+
+  /** Die Blöcke der Ansicht in Reihenfolge: je Folge zusammenhängender Diff-Zeilen ein Block (höchstens 500 Zeilen), dazwischen
+      das Bedienelement der Lücke. */
+  function blockelemente(zeilen, lueckenliste, name) {
+    const bloeckeDerAnsicht = [];
+    let segment = [];
+    const spueleSegment = () => {
+      for (const block of bloecke(segment)) {
+        bloeckeDerAnsicht.push(blockElement(block, name));
+      }
+      segment = [];
+    };
+    for (const teil of anzeigeTeile(zeilen, lueckenliste)) {
+      if (teil.luecke) {
+        spueleSegment();
+        bloeckeDerAnsicht.push(lueckenElement(teil));
+        continue;
+      }
+      segment.push(teil.zeile);
+    }
+    spueleSegment();
+    return bloeckeDerAnsicht;
+  }
+
+  /** Die Ansicht als Folge `{zeile}` oder `{luecke, rest}`: an der Stelle einer Lücke steht zuerst ihr Bedienelement (solange noch
+      Zeilen verborgen sind), danach die aufgedeckten Zeilen aus der ganzen Datei. */
+  function anzeigeTeile(zeilen, lueckenliste) {
+    if (lueckenliste === null) {
+      return zeilen.map(zeile => ({ zeile }));
+    }
+    const lueckeNachStelle = new Map(lueckenliste.map(luecke => [luecke.stelle, luecke]));
+    const teile = [];
+    for (let stelle = 0; stelle <= zeilen.length; stelle += 1) {
+      const luecke = lueckeNachStelle.get(stelle);
+      if (luecke) {
+        const verborgen = lueckenRest(luecke);
+        if (verborgen > 0) {
+          teile.push({ luecke, rest: verborgen });
+        }
+        for (const aufgedeckteZeile of aufgedeckteZeilen(luecke)) {
+          teile.push({ zeile: aufgedeckteZeile });
+        }
+      }
+      if (stelle < zeilen.length) {
+        teile.push({ zeile: zeilen[stelle] });
+      }
+    }
+    return teile;
+  }
+
+  /** Wie viele Zeilen dieser Lücke schon aufgedeckt sind (nur im Speicher der Seite, R00026). */
+  function aufgedecktVon(luecke) {
+    const bisher = zustand.aufgedeckt[lueckenschluessel(luecke)];
+    if (bisher === undefined) {
+      return 0;
+    }
+    return bisher;
+  }
+
+  function lueckenRest(luecke) {
+    return rest(luecke, aufgedecktVon(luecke));
+  }
+
+  /** Die aufgedeckten Zeilen der Lücke aus der ganzen Datei; ohne gelesene ganze Datei ist nichts aufgedeckt. */
+  function aufgedeckteZeilen(luecke) {
+    const anzahl = aufgedecktVon(luecke);
+    if (anzahl === 0 || zustand.ganz === null) {
+      return [];
+    }
+    return aufgedeckt(luecke, anzahl, zustand.ganz.zeilen);
+  }
+
+  /** Eine Lücke ist über ihre Nummernspanne neu benannt: sie bleibt dieselbe, solange die Stelle gezeigt wird. */
+  function lueckenschluessel(luecke) {
+    return String(luecke.neuVon);
+  }
+
+  /** Das Bedienelement einer Lücke: die Zahl der verborgenen Zeilen und je ein Knopf für den nächsten Schritt und „ganz“;
+      beide sind per Tastatur bedienbar und tragen ihren Text als Namen (R00026). */
+  function lueckenElement({ luecke, rest: verborgen }) {
+    const element = document.createElement('div');
+    element.className = 'dz-l';
+    const textElement = document.createElement('span');
+    textElement.className = 'dz-l-text';
+    textElement.textContent = `${verborgen.toLocaleString('de-DE')} verborgene Zeile${verborgen === 1 ? '' : 'n'}`;
+    element.append(textElement, lueckenKnopf(luecke, verborgen, false), lueckenKnopf(luecke, verborgen, true));
+    return element;
+  }
+
+  function lueckenKnopf(luecke, verborgen, ganz) {
+    const knopfElement = document.createElement('button');
+    knopfElement.type = 'button';
+    knopfElement.className = 'btn dz-l-auf';
+    knopfElement.dataset.luecke = lueckenschluessel(luecke);
+    if (ganz) {
+      knopfElement.dataset.ganz = 'wahr';
+      knopfElement.textContent = 'Ganz aufklappen';
+      knopfElement.setAttribute('aria-label', `${verborgen} verborgene Zeilen: ganz aufklappen`);
+      return knopfElement;
+    }
+    const schritt = Math.min(SCHRITT, verborgen);
+    knopfElement.textContent = `${schritt} aufklappen`;
+    knopfElement.setAttribute('aria-label', `${verborgen} verborgene Zeilen: ${schritt} weitere aufklappen`);
+    return knopfElement;
+  }
+
+  /** Ein Klick oder Enter auf das Bedienelement einer Lücke: die ganze Datei bei Bedarf lesen, die Lücke füllen, neu zeichnen. */
+  async function klappeLueckeAuf(ansicht, ereignis) {
+    const knopfElement = ereignis.target.closest('.dz-l-auf');
+    if (!knopfElement) {
+      return;
+    }
+    const daten = zustand.anzeigeDaten;
+    const luecke = lueckeZumSchluessel(daten, knopfElement.dataset.luecke);
+    if (!luecke || zustand.datei === null) {
+      return;
+    }
+    const ganze = await holeGanzeDatei(ansicht);
+    if (!ganze || zustand.anzeigeDaten !== daten) {
+      return;
+    }
+    const bisher = aufgedecktVon(luecke);
+    const anzahl = knopfElement.dataset.ganz === 'wahr' ? luecke.zahl : naechsterSchritt(luecke, bisher);
+    zustand.aufgedeckt[lueckenschluessel(luecke)] = anzahl;
+    zeichneAnsicht(ansicht, daten.antwort, daten.zeilen, 'aenderungen');
+  }
+
+  function lueckeZumSchluessel(daten, schluessel) {
+    if (!daten) {
+      return null;
+    }
+    const gefunden = luecken(daten.zeilen, zustand.gesamt).filter(luecke => lueckenschluessel(luecke) === schluessel);
+    if (gefunden.length === 0) {
+      return null;
+    }
+    return gefunden[0];
+  }
+
+  /** Die Zeilen der ganzen Datei der gezeigten Stelle: höchstens einmal je Datei und Leerraum-Stellung, erst auf die erste
+      Aufklapp-Betätigung (R00026). Eine späte Antwort einer früheren Wahl wird verworfen. */
+  async function holeGanzeDatei(ansicht) {
+    const schluessel = dateischluessel();
+    if (zustand.ganz !== null && zustand.ganz.schluessel === schluessel) {
+      return zustand.ganz;
+    }
+    let antwort;
+    try {
+      antwort = await diffAbrufen(zustand.datei, false, 'ganz', zustand.leerraum);
+    } catch (fehler) {
+      if (schluessel === dateischluessel()) {
+        zeigeMeldung(ansicht, fehlertextZu(fehler), true);
+      }
+      return null;
+    }
+    if (schluessel !== dateischluessel() || antwort.zuGross || antwort.patch === undefined) {
+      return null;
+    }
+    const ganzeZeilen = ganzeDateiZeilen(antwort.patch);
+    zustand.ganz = { schluessel, zeilen: ganzeZeilen };
+    zustand.gesamt = gesamtzeilen(ganzeZeilen);
+    return zustand.ganz;
+  }
+
+  /** Die Stelle, für die eine ganze Datei gelesen wird: Datei, Commit und Leerraum-Stellung. */
+  function dateischluessel() {
+    if (zustand.datei === null) {
+      return '';
+    }
+    return `${zustand.datei.commit}|${zustand.datei.pfad}|${zustand.leerraum}`;
   }
 
   /** `ersterBlockElement` erkennt der Empfänger wieder: ist er nicht mehr im Dokument, ist dieser Diff verworfen. */

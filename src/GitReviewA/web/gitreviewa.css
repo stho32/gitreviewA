@@ -79,6 +79,10 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .dz tr.minus>*{background:var(--kd-c-red)}.dz tr.minus .m{color:var(--kd-status-error-ink);font-weight:600}
 .dz tr.hk>td{background:var(--kd-sunken);color:var(--kd-muted);padding:0 10px;border-top:1px solid var(--kd-line);border-bottom:1px solid var(--kd-line);white-space:pre}
 .dz tr.hinweis .c{color:var(--kd-muted);font-style:italic}
+/* Lücke in „nur Änderungen“ (R00026): die verborgene Zahl und die beiden Knöpfe, über die ganze Spaltenbreite der Ansicht */
+.dz-l{display:flex;flex-wrap:wrap;align-items:center;gap:var(--kd-s2) var(--kd-s3);padding:var(--kd-s1,4px) 10px;background:var(--kd-sunken);border-top:1px solid var(--kd-line);border-bottom:1px solid var(--kd-line);font:12px/1.5 var(--kd-font);color:var(--kd-muted)}
+.dz-l-text{font-variant-numeric:tabular-nums}
+.dz-l .btn{flex:none}
 .mk-z{display:inline-flex;align-items:center;margin:0 1px;padding:0 3px;border:1px solid var(--kd-status-warn-ink);background:var(--kd-status-warn-bg);color:var(--kd-status-warn-ink);font:600 11px/1.3 var(--kd-mono);white-space:nowrap}
 .vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 .diff-schalter{display:flex;flex-wrap:wrap;align-items:center;gap:var(--kd-s2) var(--kd-s4)}

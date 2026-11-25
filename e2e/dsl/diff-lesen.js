@@ -116,6 +116,13 @@ function diffSprache(gr, page) {
     },
     /** Beantwortet die Diff-Anfrage in der Stellung `leerraum` mit einem Ersatz-Patch (oder einem Fehler), wahlweise verzögert. */
     antwortErsetzen: optionen => diffSeite.diffAntwortErsetzen(page, optionen),
+    /** Die Lücken der gezeigten Ansicht (R00026), ihr Betätigen und die gezeichneten Zeilen. */
+    luecken: () => diffSeite.lueckenLesen(page),
+    lueckeAufklappen: (nummer, ganz = false, perTastatur = false) => diffSeite.lueckeAufklappen(page, nummer, ganz, perTastatur),
+    zeilenzahl: () => diffSeite.zeilenZaehlen(page),
+    hatZeile: neu => diffSeite.zeileVorhanden(page, neu),
+    zeilentext: neu => diffSeite.zeilentextLesen(page, neu),
+    anfragenGezaehlt: () => anfragen,
     langeZeileEinzeilig: (neu, text) => diffSeite.pruefeEinzeilig(page, neu, text),
     langeZeileUmbrochen: (neu, text) => diffSeite.pruefeUmbrochen(page, neu, text),
     fremderTextBleibtText: async () => {
