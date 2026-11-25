@@ -22,6 +22,15 @@ function breiteSprache(seit, page) {
     ziehen: (deltaX, optionen) => trenner.ziehen(page, deltaX, optionen),
     doppelklick: () => trenner.doppelklick(page),
     fokusAufTrenner: () => trenner.fokusAufTrenner(page),
+    fokussiereTrenner: () => trenner.fokussiereTrenner(page),
+    fokusring: () => trenner.fokusring(page),
+    fokusringSichtbar: async () => {
+      const ring = await trenner.fokusring(page);
+      if (!ring.sichtbar || ring.stil === 'none' || parseFloat(ring.breite) < 2) {
+        throw new Error(`kein sichtbarer Fokusring am Trenner: ${JSON.stringify(ring)}`);
+      }
+    },
+    valuenow: async () => Number((await trenner.trennerAngaben(page)).jetzt),
 
     /* ── Neuladen ── */
     neuLaden: async () => {

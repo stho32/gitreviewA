@@ -69,6 +69,26 @@ async function doppelklick(page) {
   await page.locator(TRENNER).dblclick();
 }
 
+/** Den Trenner per Tastatur fokussieren (programmatischer Fokus plus eine Tastaturbewegung, damit `:focus-visible` gilt). */
+async function fokussiereTrenner(page) {
+  await page.locator(TRENNER).focus();
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Tab');
+}
+
+/** Der Fokusring am Trenner: Breite, Stil, Farbe und ob `:focus-visible` gilt. */
+function fokusring(page) {
+  return page.evaluate(sel => {
+    const element = document.querySelector(sel);
+    const stil = getComputedStyle(element);
+    return {
+      breite: stil.outlineWidth,
+      stil: stil.outlineStyle,
+      sichtbar: element.matches(':focus-visible') || element.classList.contains('aktiv'),
+    };
+  }, TRENNER);
+}
+
 /** Der Abstand der Seitenleiste zum Diff-Bereich (der Trenner sitzt dazwischen) und die Breite des Diff-Bereichs. */
 function lageSeitenleiste(page) {
   return page.evaluate(([links, diff]) => {
@@ -108,6 +128,6 @@ async function pruefeTrennerAria(page, erwarteteBreite) {
 module.exports = {
   SEITENLEISTE, TRENNER, DIFF,
   breiteDerSeitenleiste, pruefeBreite, trennerAngaben, trennerVorhanden, fokusAufTrenner,
-  ziehen, doppelklick, lageSeitenleiste,
+  ziehen, doppelklick, fokussiereTrenner, fokusring, lageSeitenleiste,
   pruefeTrennerVorhanden, pruefeTrennerAnDerGrenze, pruefeTrennerAria,
 };
