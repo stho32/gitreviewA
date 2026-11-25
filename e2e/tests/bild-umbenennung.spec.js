@@ -123,6 +123,27 @@ test.describe('R00024 Anzeige (Browser-Eigenes)', () => {
     expect(schmal[0].oben, 'untereinander unter 600 dp').not.toBe(schmal[1].oben);
   });
 
+  // Lehre #7 (I0007): ein Anzeigeverfahren nimmt die orthogonalen Verbraucher mit — die Anordnung gilt auch für das Bild:
+  // jeder Wechsel fragt den Diff neu an, das Bild bleibt samt beiden Fassungen stehen (R00024, Anzeige).
+  test('soll das Bild in der Nebeneinander-Anordnung zeigen und den Wechsel zurück überstehen', async ({ gr, page }) => {
+    const { lauf } = await starte(gr);
+    await page.setViewportSize(FENSTER);
+    await gr.oberflaecheOeffnen(page, lauf, 'einzeln');
+    await seite.dateiWaehlen(page, 'logo.png');
+
+    await page.locator('#diff .anordnung-wahl [data-anordnung="nebeneinander"]').click();
+    await expect(page.locator('body')).toHaveAttribute('data-anordnung', 'nebeneinander');
+    expect(await diffSeite.bilderLesen(page), 'beide Fassungen in der Nebeneinander-Anordnung').toHaveLength(2);
+    await expect(page.locator('#diff .dz')).toHaveCount(0);
+    await diffSeite.pruefeNurImgImBildbereich(page);
+
+    await page.locator('#diff .anordnung-wahl [data-anordnung="untereinander"]').click();
+    await expect(page.locator('body')).toHaveAttribute('data-anordnung', 'untereinander');
+    const bilder = await diffSeite.bilderLesen(page);
+    expect(bilder, 'beide Fassungen nach dem Wechsel zurück').toHaveLength(2);
+    expect(bilder.every(bild => bild.naturbreite > 0), 'beide Bilder geladen').toBe(true);
+  });
+
   test('soll bei karte.svg und keinbild.png keinen Bildbereich zeigen', async ({ gr, page }) => {
     const { lauf } = await starte(gr);
     await page.setViewportSize(FENSTER);

@@ -64,7 +64,7 @@ test.describe('Nebeneinander-Ansicht — Färbung, große Dateien, Anmerken', ()
     await neben.anordnungWaehlen('nebeneinander');
 
     await neben.dateiAnsehen('LIESMICH.md');
-    await neben.zustand('LIESMICH.md', 'Keine Zeilenänderungen');
+    await neben.zustand('LIESMICH.md ← README.md', 'Keine Zeilenänderungen');
     await neben.dateiAnsehen('logo.bin');
     await neben.zustand('logo.bin', 'Binärdatei — enthält Null-Bytes');
   });
