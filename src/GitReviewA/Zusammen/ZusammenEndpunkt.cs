@@ -1,15 +1,15 @@
 using GitReviewA.Diff;
 using GitReviewA.Fremdtext;
-using GitReviewA.Git;
 using GitReviewA.Server;
 
 namespace GitReviewA.Zusammen;
 
 /// <summary>
 /// Adapter zwischen HTTP und <see cref="ZusammenLesenInteractor"/>: `GET /api/zusammen` liefert Kette und Netto-Dateiliste,
-/// `GET /api/zusammen/diff?pfad=…&umfang=…` den Diff einer Datei. Beide nur hinter der Host-Prüfung und ohne CORS-Freigabe.
-/// Ohne `pfad` oder mit unbekanntem `umfang` 400; ein Pfad außerhalb der Netto-Liste 404 ohne git-Aufruf; ein nicht eindeutiger
-/// Anzeigename 422 (wie R00013); über der Ausgabegrenze 200 mit Kennzeichen und Meldung statt eines Patches (wie R00017).
+/// `GET /api/zusammen/diff?pfad=…&umfang=…&leerraum=…` den Diff einer Datei. Beide nur hinter der Host-Prüfung und ohne CORS-Freigabe.
+/// Ohne `pfad`, mit unbekanntem `umfang` oder mit unbekanntem `leerraum` 400 (R00026, dieselbe feste Liste wie der Einzel-Endpunkt);
+/// ein Pfad außerhalb der Netto-Liste 404 ohne git-Aufruf; ein nicht eindeutiger Anzeigename 422 (wie R00013); über der Ausgabegrenze
+/// 200 mit Kennzeichen und Meldung statt eines Patches (wie R00017).
 /// </summary>
 internal static class ZusammenEndpunkt
 {
@@ -36,11 +36,13 @@ internal static class ZusammenEndpunkt
     {
         return (string? pfad, HttpRequest http) =>
         {
-            if (pfad is null || !Umfangsparameter.Lies(http.Query[Umfangsparameter.Name], out var umfang))
+            var istBekannterUmfang = Umfangsparameter.Lies(http.Query[Umfangsparameter.Name], out var umfang);
+            var istBekannteStellung = Leerraumparameter.Lies(http.Query[Leerraumparameter.Name], out var leerraum);
+            if (pfad is null || !istBekannterUmfang || !istBekannteStellung)
             {
                 return Results.BadRequest();
             }
-            return AlsDiffantwort(interactor.Diff(new Zusammenanfrage(pfad, umfang, Leerraum.Beachten)));
+            return AlsDiffantwort(interactor.Diff(new Zusammenanfrage(pfad, umfang, leerraum)));
         };
     }
 

@@ -9,7 +9,8 @@ namespace GitReviewA.Zusammen;
 /// <summary>
 /// Interaction „Zusammen-Ansicht lesen“: für die Auswahl die Kette und die Netto-Dateiliste (einmal gelesen — Commits sind
 /// unveränderlich) sowie je Datei den Diff (bei Bedarf). Lückenlos ist der Diff netto gegen den Elternstand des ältesten Commits,
-/// sonst je Commit ein Abschnitt in Auswahlreihenfolge. Die Übersicht der Dateien ist dieselbe gemerkte wie für Haken und Anmerkung.
+/// sonst je Commit ein Abschnitt in Auswahlreihenfolge; die Leerraum-Stellung der Anfrage gilt in beiden Zweigen (`-w`, R00026).
+/// Die Übersicht der Dateien ist dieselbe gemerkte wie für Haken und Anmerkung.
 /// Ein Name mit LF oder CR endet vor jedem git-Aufruf als „Name nicht lesbar“; über der Ausgabegrenze als „zu groß“ ohne Patch.
 /// </summary>
 internal sealed class ZusammenLesenInteractor : INettoDateiliste
@@ -101,7 +102,7 @@ internal sealed class ZusammenLesenInteractor : INettoDateiliste
         protokoll.Melde(Protokollstufe.Debug, Anfragekontext, $"GET /api/zusammen/diff Datei {datei.Anzeigepfad}");
         try
         {
-            return ZusammenDiffergebnis.Gelesen(Antwort(datei, stand, anfrage.Umfang));
+            return ZusammenDiffergebnis.Gelesen(Antwort(datei, stand, anfrage.Umfang, anfrage.Leerraum));
         }
         catch (GitZuGross zuGross)
         {
@@ -146,7 +147,7 @@ internal sealed class ZusammenLesenInteractor : INettoDateiliste
         return dateiMitZeilenende || stelleMitZeilenende;
     }
 
-    private ZusammenDiffAntwort Antwort(NettoDatei datei, Zusammenstand stand, Diffumfang umfang)
+    private ZusammenDiffAntwort Antwort(NettoDatei datei, Zusammenstand stand, Diffumfang umfang, Leerraum leerraum)
     {
         if (stand.Lueckenlos)
         {
@@ -155,20 +156,20 @@ internal sealed class ZusammenLesenInteractor : INettoDateiliste
             {
                 return Diffaufbereitung.Netto(datei.Datei, string.Empty, diffquelle.BinaerGrund(stand.Spitze, datei.Datei), commitsDerDatei);
             }
-            var patch = quelle.NettoDiff(stand.Basis, stand.Spitze, datei.Datei, umfang, Leerraum.Beachten);
+            var patch = quelle.NettoDiff(stand.Basis, stand.Spitze, datei.Datei, umfang, leerraum);
             return Diffaufbereitung.Netto(datei.Datei, patch, null, commitsDerDatei);
         }
-        return Diffaufbereitung.Abschnitte(datei.Datei, datei.Stellen.Select(stelle => Abschnitt(stelle, umfang)));
+        return Diffaufbereitung.Abschnitte(datei.Datei, datei.Stellen.Select(stelle => Abschnitt(stelle, umfang, leerraum)));
     }
 
-    private Diffabschnitt Abschnitt(NettoStelle stelle, Diffumfang umfang)
+    private Diffabschnitt Abschnitt(NettoStelle stelle, Diffumfang umfang, Leerraum leerraum)
     {
         var art = Diffaufbereitung.ArtVon(stelle.Datei);
         if (art == Diffaufbereitung.ArtBinaer)
         {
             return new Diffabschnitt(stelle.Commit, art, diffquelle.BinaerGrund(stelle.Commit, stelle.Datei), string.Empty);
         }
-        return new Diffabschnitt(stelle.Commit, art, null, diffquelle.Lesen(stelle.Commit, stelle.Datei, umfang, Leerraum.Beachten));
+        return new Diffabschnitt(stelle.Commit, art, null, diffquelle.Lesen(stelle.Commit, stelle.Datei, umfang, leerraum));
     }
 
     private static CommitHashes HashesDerAuswahl(Commitzeilen commits)

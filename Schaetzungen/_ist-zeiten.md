@@ -55,3 +55,4 @@ Nie vom User erfragen.
 | 2026-11-24 | R00014 Haken und Anmerkung bei nicht lesbarem Diff sperren | B1305 Gesperrte Kästchen und Zähler | unklar | 2-4h | 0,05h | 0,05h | autonom |
 | 2026-11-24 | R00014 Haken und Anmerkung bei nicht lesbarem Diff sperren | B1306 E2E und Wegwerf-Repo mit Commit v | unklar | 2-4h | 0,03h | 0,03h | autonom |
 | 2026-11-25 | R00019 Anmerkung löschen | Nacharbeit B1: Sperre überlebt das Neuzeichnen | Bug-Fix | – | 0,3h | – | autonom |
+| 2026-11-25 | R00012 Oberfläche Liste–Detail (Zusammen als Standard) | Nacharbeit I0027: Leerraum-Umschalter wirkt in „Zusammen“ (Netto-Diff und Abschnitte mit -w) | Bug-Fix | – | 0,4h | – | autonom |

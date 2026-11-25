@@ -101,10 +101,12 @@ public class ZusammenEndpunktTests
         using var client = new HttpClient();
 
         var ignorieren = await client.GetAsync(new Uri(new Uri(server.Adresse), "api/zusammen/diff?pfad=src%2Fa.txt&leerraum=ignorieren"));
-        var ohneAngabe = await client.GetAsync(new Uri(new Uri(server.Adresse), "api/zusammen/diff?pfad=src%2Fa.txt"));
 
         Assert.That((int)ignorieren.StatusCode, Is.EqualTo(200));
         Assert.That(quelle.ZuletztLeerraum, Is.EqualTo(Leerraum.Ignorieren));
+
+        var ohneAngabe = await client.GetAsync(new Uri(new Uri(server.Adresse), "api/zusammen/diff?pfad=src%2Fa.txt"));
+
         Assert.That((int)ohneAngabe.StatusCode, Is.EqualTo(200));
         Assert.That(quelle.ZuletztLeerraum, Is.EqualTo(Leerraum.Beachten), "ohne Angabe gilt der Startwert");
     }
