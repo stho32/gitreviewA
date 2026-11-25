@@ -1,3 +1,4 @@
+using System.Text.Json;
 using GitReviewA.Anmerkungen;
 using GitReviewA.Aufruf;
 using GitReviewA.Beenden;
@@ -47,9 +48,9 @@ internal sealed class AnmerkungAendernTreiber
         sperre = new Stellensperre(new GemerkteUebersicht(quelle), protokoll);
     }
 
-    public Anlegeantwort LegeAn(string commit, string datei, int? zeile, string text)
+    public Anlegeantwort LegeAn(string commit, string datei, int? zeile, string text, JsonElement art = default)
     {
-        var ergebnis = anlegen.LegeAn(new NeueAnmerkung(commit, datei, zeile, text));
+        var ergebnis = anlegen.LegeAn(new NeueAnmerkung(commit, datei, zeile, text, Art: art));
         switch (ergebnis.Ausgang)
         {
             case Annotierenausgang.Angelegt:
@@ -63,9 +64,29 @@ internal sealed class AnmerkungAendernTreiber
         }
     }
 
+    /// <summary>Ändert den Text; ohne `art` im Körper bleibt die gespeicherte Art (R00036).</summary>
     public Aenderantwort Aendere(int nummer, string text)
     {
         return AlsAntwort(new AnmerkungAendernInteractor(speicher, sperre, protokoll).Aendere(new Aenderungswunsch(nummer, text)));
+    }
+
+    /// <summary>Setzt oder wechselt die Art (R00036).</summary>
+    public Aenderantwort AendereMitArt(int nummer, string text, string art)
+    {
+        return AlsAntwort(new AnmerkungAendernInteractor(speicher, sperre, protokoll).Aendere(new Aenderungswunsch(nummer, text, JsonSerializer.SerializeToElement(art))));
+    }
+
+    /// <summary>Entfernt die Art mit ausdrücklichem `null` (R00036).</summary>
+    public Aenderantwort AendereOhneArt(int nummer, string text)
+    {
+        return AlsAntwort(new AnmerkungAendernInteractor(speicher, sperre, protokoll).Aendere(new Aenderungswunsch(nummer, text, JsonSerializer.SerializeToElement<string?>(null))));
+    }
+
+    /// <summary>Eine Art, die keine ist — roh in den Körper, wie eine fremde Anfrage (R00036 Kriterium 4).</summary>
+    public Aenderantwort AendereMitRohart(int nummer, string text, string roh)
+    {
+        using var dokument = JsonDocument.Parse(roh);
+        return AlsAntwort(new AnmerkungAendernInteractor(speicher, sperre, protokoll).Aendere(new Aenderungswunsch(nummer, text, dokument.RootElement)));
     }
 
     /// <summary>Ein Körper, der keine Änderung ist — wie ein JSON-Objekt ohne Text.</summary>
@@ -81,7 +102,7 @@ internal sealed class AnmerkungAendernTreiber
         var stolpernd = new SpeicherOhneErsetzen();
         foreach (var anmerkung in speicher.Schnappschuss())
         {
-            stolpernd.VersucheAnzuhaengen(new GepruefteAnmerkung(anmerkung.Commit, anmerkung.Datei, anmerkung.Zeile, anmerkung.Text), out _);
+            stolpernd.VersucheAnzuhaengen(new GepruefteAnmerkung(anmerkung.Commit, anmerkung.Datei, anmerkung.Zeile, anmerkung.Text, anmerkung.Von, anmerkung.Bis, anmerkung.Art), out _);
         }
         return AlsAntwort(new AnmerkungAendernInteractor(stolpernd, sperre, protokoll).Aendere(new Aenderungswunsch(nummer, text)));
     }
@@ -89,7 +110,7 @@ internal sealed class AnmerkungAendernTreiber
     /// <summary>Ein Speicher, in dem die Anmerkung beim Ersetzen fehlt — ohne den Löschweg (I0024).</summary>
     private sealed class SpeicherOhneErsetzen : Anmerkungsspeicher
     {
-        public override Aenderungsausgang VersucheZuAendern(int nummer, string text, out Anmerkung? geaendert)
+        public override Aenderungsausgang VersucheZuAendern(int nummer, string text, Artangabe art, out Anmerkung? geaendert)
         {
             geaendert = null;
             return Aenderungsausgang.NichtGefunden;
@@ -101,7 +122,7 @@ internal sealed class AnmerkungAendernTreiber
         var eintraege = new List<Listeneintrag>();
         foreach (var anmerkung in anlegen.Liste())
         {
-            eintraege.Add(new Listeneintrag(anmerkung.Nummer, anmerkung.Commit, anmerkung.Datei, anmerkung.Zeile, anmerkung.Text));
+            eintraege.Add(new Listeneintrag(anmerkung.Nummer, anmerkung.Commit, anmerkung.Datei, anmerkung.Zeile, anmerkung.Text, anmerkung.Von, anmerkung.Bis, anmerkung.Art));
         }
         return eintraege.ToArray();
     }
@@ -110,6 +131,12 @@ internal sealed class AnmerkungAendernTreiber
     public string Beenden()
     {
         speicher.VersucheAbzuschliessen();
+        return Ergebnis();
+    }
+
+    /// <summary>Das Ergebnis, ohne den Lauf zu beenden — derselbe Formatierer wie „Beenden“ und „Ergebnis kopieren“.</summary>
+    public string Ergebnis()
+    {
         return ErgebnisFormatierer.Formatiere(speicher.Schnappschuss(), new Dateienstand([]));
     }
 
@@ -124,7 +151,7 @@ internal sealed class AnmerkungAendernTreiber
         {
             case Aenderungsausgang.Geaendert:
                 var geaenderte = ergebnis.Geaenderte!;
-                return new Aenderantwort("geändert", new Listeneintrag(geaenderte.Nummer, geaenderte.Commit, geaenderte.Datei, geaenderte.Zeile, geaenderte.Text), "");
+                return new Aenderantwort("geändert", new Listeneintrag(geaenderte.Nummer, geaenderte.Commit, geaenderte.Datei, geaenderte.Zeile, geaenderte.Text, geaenderte.Von, geaenderte.Bis, geaenderte.Art), "");
             case Aenderungsausgang.Ungueltig:
                 return new Aenderantwort("ungültig", null, ergebnis.Grund);
             case Aenderungsausgang.NichtGefunden:

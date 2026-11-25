@@ -50,9 +50,15 @@ internal class Anmerkungsspeicher
         }
     }
 
-    /// <summary>Ersetzt allein den Text; Nummer, Stelle und Position in der Liste bleiben. Nach dem Abschluss wird abgelehnt.
-        /// Virtuell, damit eine Probe den Zwischenzustand „zwischen Finden und Ersetzen weggefallen“ (Löschen) deterministisch stellen kann.</summary>
-    public virtual Aenderungsausgang VersucheZuAendern(int nummer, string text, out Anmerkung? geaendert)
+    /// <summary>Ersetzt allein den Text; die gespeicherte Art bleibt (R00036).</summary>
+    public Aenderungsausgang VersucheZuAendern(int nummer, string text, out Anmerkung? geaendert)
+    {
+        return VersucheZuAendern(nummer, text, Artangabe.Fehlt, out geaendert);
+    }
+
+    /// <summary>Ersetzt den Text und, wenn angegeben, die Art; Nummer, Stelle und Position in der Liste bleiben. Nach dem Abschluss wird
+        /// abgelehnt. Virtuell, damit eine Probe den Zwischenzustand „zwischen Finden und Ersetzen weggefallen“ (Löschen) deterministisch stellen kann.</summary>
+    public virtual Aenderungsausgang VersucheZuAendern(int nummer, string text, Artangabe art, out Anmerkung? geaendert)
     {
         lock (sperre)
         {
@@ -68,7 +74,7 @@ internal class Anmerkungsspeicher
                 geaendert = null;
                 return Aenderungsausgang.NichtGefunden;
             }
-            geaendert = anmerkungen[stelle] with { Text = text };
+            geaendert = anmerkungen[stelle] with { Text = text, Art = art.IstAngegeben ? art.Wert : anmerkungen[stelle].Art };
             anmerkungen[stelle] = geaendert;
             return Aenderungsausgang.Geaendert;
         }

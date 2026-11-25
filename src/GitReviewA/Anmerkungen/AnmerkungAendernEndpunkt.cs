@@ -33,7 +33,7 @@ internal static class AnmerkungAendernEndpunkt
                 await JsonAntwort.SendeMeldungAsync(kontext, StatusCodes.Status400BadRequest, Unlesbar);
                 return;
             }
-            var ergebnis = interactor.Aendere(new Aenderungswunsch(nummer.Value, lesung.Text));
+            var ergebnis = interactor.Aendere(new Aenderungswunsch(nummer.Value, lesung.Text, lesung.Art));
             await SendeAsync(kontext, ergebnis);
         };
     }
@@ -54,11 +54,11 @@ internal static class AnmerkungAendernEndpunkt
         try
         {
             var koerper = await JsonSerializer.DeserializeAsync<Aenderungskoerper>(anfrage.Body, JsonAntwort.Optionen, anfrage.HttpContext.RequestAborted);
-            return new Lesung(true, koerper?.Text);
+            return new Lesung(true, koerper?.Text, koerper?.Art ?? default);
         }
         catch (JsonException)
         {
-            return new Lesung(false, null);
+            return new Lesung(false, null, default);
         }
     }
 
@@ -80,5 +80,5 @@ internal static class AnmerkungAendernEndpunkt
         }
     }
 
-    private sealed record Lesung(bool IstLesbar, string? Text);
+    private sealed record Lesung(bool IstLesbar, string? Text, JsonElement Art);
 }

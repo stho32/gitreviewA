@@ -21,7 +21,12 @@ internal sealed class AnmerkungAendernInteractor(Anmerkungsspeicher speicher, St
         {
             return Abgelehnt(Aenderungsausgang.Ungueltig, textGrund);
         }
-        var nummer = wunsch!.Nummer;
+        var art = Anmerkungsart.Lies(wunsch!.Art);
+        if (!art.IstGueltig)
+        {
+            return Abgelehnt(Aenderungsausgang.Ungueltig, art.Grund);
+        }
+        var nummer = wunsch.Nummer;
         var anmerkung = speicher.Finde(nummer);
         if (anmerkung is null)
         {
@@ -37,7 +42,7 @@ internal sealed class AnmerkungAendernInteractor(Anmerkungsspeicher speicher, St
         {
             return Abgelehnt(Aenderungsausgang.Ungueltig, sperrgrund);
         }
-        var ausgang = speicher.VersucheZuAendern(nummer, text, out var geaenderte);
+        var ausgang = speicher.VersucheZuAendern(nummer, text, art.Angabe, out var geaenderte);
         if (ausgang is not Aenderungsausgang.Geaendert)
         {
             return Abgelehnt(ausgang, GrundFuer(ausgang, nummer));
@@ -56,7 +61,8 @@ internal sealed class AnmerkungAendernInteractor(Anmerkungsspeicher speicher, St
     {
         var nummer = geaenderte.Nummer.ToString(CultureInfo.InvariantCulture);
         var textlaenge = geaenderte.Text.Length.ToString(CultureInfo.InvariantCulture);
-        protokoll.Melde(Protokollstufe.Debug, Kontext, $"Nummer {nummer} geändert (Textlänge {textlaenge})");
+        var artwert = Anmerkungsart.Protokollwert(geaenderte.Art);
+        protokoll.Melde(Protokollstufe.Debug, Kontext, $"Nummer {nummer} geändert (Textlänge {textlaenge}, art={artwert})");
     }
 
     private static string NichtGefundenGrund(int nummer)

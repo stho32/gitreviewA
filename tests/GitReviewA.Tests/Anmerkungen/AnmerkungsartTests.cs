@@ -84,7 +84,7 @@ public class AnmerkungsartTests
     [Test]
     public void Wenn_das_Feld_fehlt_dann_gueltig_und_nicht_angegeben()
     {
-        var ergebnis = Anmerkungsart.Lies(null);
+        var ergebnis = Anmerkungsart.Lies(default);
 
         Assert.That(ergebnis.IstGueltig, Is.True);
         Assert.That(ergebnis.Angabe.IstAngegeben, Is.False);

@@ -262,9 +262,73 @@ public class AnmerkungAendernTests
         gr.Aendere(1, Regex.Unescape(@"GEHEIMWORT \u001B zwei"));
 
         var zeilen = gr.Protokollzeilen();
-        Assert.That(zeilen, Has.Exactly(1).Contains("Nummer 1 geändert (Textlänge 14)"));
+        Assert.That(zeilen, Has.Exactly(1).Contains("Nummer 1 geändert (Textlänge 14, art=ohne)"));
         Assert.That(zeilen, Has.Exactly(1).Contains($"abgelehnt: {SteuerOderRichtung}"));
         Assert.That(gr.Protokoll(), Does.Not.Contain("GEHEIMWORT"));
+    }
+
+    [Test]
+    [Description("R00036 Kriterium 5: Art setzen, wechseln und entfernen; Nummer, Stelle und Position bleiben; danach 409")]
+    public void Wenn_die_Art_von_Muss_auf_Frage_und_dann_auf_ohne_wechselt_dann_bleiben_Nummer_Stelle_und_Position()
+    {
+        using var repo = DiffRepo.A();
+        var gr = AnmerkungAendernSprache.Aufruf(repo, ["q", "p"]);
+        gr.LegeAnMitArt("q", "lang.txt", 18, "Klammer fehlt", "muss");
+        gr.LegeAn("q", "src/b.txt", 2, "zweite");
+
+        var aufFrage = gr.AendereMitArt(1, "Klammer fehlt", "frage");
+        var zwischenstand = gr.Anmerkungen();
+        var aufOhne = gr.AendereOhneArt(1, "Klammer fehlt");
+        var endstand = gr.Anmerkungen();
+
+        Assert.That((aufFrage.Ausgang, aufOhne.Ausgang), Is.EqualTo(("geändert", "geändert")));
+        Assert.That(zwischenstand, Is.EqualTo(new[]
+        {
+            gr.AnmerkungMitArt(1, "q", "lang.txt", 18, "Klammer fehlt", "frage"),
+            gr.Anmerkung(2, "q", "src/b.txt", 2, "zweite"),
+        }));
+        Assert.That(endstand, Is.EqualTo(new[]
+        {
+            gr.Anmerkung(1, "q", "lang.txt", 18, "Klammer fehlt"),
+            gr.Anmerkung(2, "q", "src/b.txt", 2, "zweite"),
+        }), "Nummer und Stelle bleiben, die Art ist entfernt");
+
+        gr.Beenden();
+        var nachBeenden = gr.AendereMitArt(1, "spät", "idee");
+
+        Assert.That((nachBeenden.Ausgang, nachBeenden.Grund), Is.EqualTo(("beendet", "Review ist beendet — keine Anmerkung mehr möglich")));
+        Assert.That(gr.Anmerkungen(), Is.EqualTo(endstand), "nach dem Beenden bleibt der Stand");
+    }
+
+    [Test]
+    [Description("R00036: ohne `art` im Körper bleibt die gespeicherte Art — der Text ist weiter allein änderbar")]
+    public void Wenn_nur_der_Text_geaendert_wird_dann_bleibt_die_Art()
+    {
+        using var repo = DiffRepo.A();
+        var gr = AnmerkungAendernSprache.Aufruf(repo, ["q", "p"]);
+        gr.LegeAnMitArt("q", "lang.txt", 18, "Klammer fehlt", "idee");
+
+        var antwort = gr.Aendere(1, "Klammer und Typ fehlt");
+
+        Assert.That(antwort.Ausgang, Is.EqualTo("geändert"));
+        Assert.That(gr.Anmerkungen(), Is.EqualTo(new[] { gr.AnmerkungMitArt(1, "q", "lang.txt", 18, "Klammer und Typ fehlt", "idee") }));
+    }
+
+    [TestCase("\"MUSS\"")]
+    [TestCase("\"muss \"")]
+    [TestCase("\"\"")]
+    [TestCase("7")]
+    [Description("R00036 Kriterium 4: eine unbekannte Art beim Ändern → 400 „Art unbekannt“, Text und Art bleiben")]
+    public void Wenn_die_Art_beim_Aendern_unbekannt_dann_abgelehnt_und_die_Anmerkung_bleibt(string roh)
+    {
+        using var repo = DiffRepo.A();
+        var gr = AnmerkungAendernSprache.Aufruf(repo, ["q", "p"]);
+        gr.LegeAnMitArt("q", "lang.txt", 18, "alt", "muss");
+
+        var antwort = gr.AendereMitRohart(1, "neu", roh);
+
+        Assert.That((antwort.Ausgang, antwort.Grund), Is.EqualTo(("ungültig", "Art unbekannt")));
+        Assert.That(gr.Anmerkungen(), Is.EqualTo(new[] { gr.AnmerkungMitArt(1, "q", "lang.txt", 18, "alt", "muss") }));
     }
 
     private static string[] Ueberschriften(string ergebnis)

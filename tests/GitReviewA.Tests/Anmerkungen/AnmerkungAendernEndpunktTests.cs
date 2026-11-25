@@ -223,6 +223,66 @@ public class AnmerkungAendernEndpunktTests
         Assert.That(kopfzeilen, Has.None.StartsWith("Access-Control-"));
     }
 
+    [Test]
+    [Description("R00036 Kriterium 4 und 5: POST mit art wechselt die Art, GET nennt sie")]
+    public async Task Wenn_mit_art_geaendert_dann_200_und_die_Liste_nennt_die_neue_Art()
+    {
+        await using var server = await StarteServer();
+        using var client = new HttpClient();
+        await Sende(client, server, "api/anmerkungen", AnlegenMitArt("muss"));
+
+        var antwort = await Sende(client, server, "api/anmerkungen/1", "{\"text\":\"Klammer fehlt\",\"art\":\"frage\"}");
+        var liste = await Hole(client, server);
+
+        Assert.That(antwort.Status, Is.EqualTo(HttpStatusCode.OK));
+        Assert.That(liste, Does.Contain("\"art\":\"frage\""));
+        Assert.That(server.Anmerkungen.Schnappschuss().AlsArray().Select(anmerkung => (anmerkung.Nummer, anmerkung.Text, Anmerkungsart.Wert(anmerkung.Art))), Is.EqualTo(new[] { (1, "Klammer fehlt", (string?)"frage") }));
+    }
+
+    [Test]
+    [Description("R00036: ausdrückliches null entfernt die Art; ohne das Feld bleibt sie")]
+    public async Task Wenn_ausdruecklich_ohne_art_dann_ist_sie_entfernt_und_ohne_Feld_bleibt_sie()
+    {
+        await using var server = await StarteServer();
+        using var client = new HttpClient();
+        await Sende(client, server, "api/anmerkungen", AnlegenMitArt("muss"));
+        await Sende(client, server, "api/anmerkungen", AnlegenMitArt("idee", zeile: 1, datei: "src/b.txt"));
+
+        var ohne = await Sende(client, server, "api/anmerkungen/1", "{\"text\":\"Klammer fehlt\",\"art\":null}");
+        var ohneFeld = await Sende(client, server, "api/anmerkungen/2", "{\"text\":\"zwei\"}");
+        var liste = await Hole(client, server);
+
+        Assert.That((ohne.Status, ohneFeld.Status), Is.EqualTo((HttpStatusCode.OK, HttpStatusCode.OK)));
+        Assert.That(server.Anmerkungen.Schnappschuss().AlsArray().Select(anmerkung => Anmerkungsart.Wert(anmerkung.Art)), Is.EqualTo(new string?[] { null, "idee" }));
+        Assert.That(liste, Does.Contain("\"art\":null"));
+        Assert.That(liste, Does.Contain("\"art\":\"idee\""));
+    }
+
+    [TestCase("\"MUSS\"")]
+    [TestCase("\"muss \"")]
+    [TestCase("\"\"")]
+    [TestCase("7")]
+    [TestCase("true")]
+    [TestCase("{}")]
+    [Description("R00036 Kriterium 4: unbekannte Art → 400 „Art unbekannt“, die Anmerkung bleibt unverändert")]
+    public async Task Wenn_die_Art_unbekannt_dann_400_mit_Art_unbekannt_und_Text_und_Art_bleiben(string art)
+    {
+        await using var server = await StarteServer();
+        using var client = new HttpClient();
+        await Sende(client, server, "api/anmerkungen", AnlegenMitArt("muss"));
+
+        var antwort = await Sende(client, server, "api/anmerkungen/1", "{\"text\":\"neu\",\"art\":" + art + "}");
+
+        Assert.That((antwort.Status, antwort.Json.GetProperty("meldung").GetString()), Is.EqualTo((HttpStatusCode.BadRequest, "Art unbekannt")));
+        var anmerkung = server.Anmerkungen.Schnappschuss().AlsArray().Single();
+        Assert.That((anmerkung.Text, Anmerkungsart.Wert(anmerkung.Art)), Is.EqualTo(("Klammer fehlt", (string?)"muss")));
+    }
+
+    private static string AnlegenMitArt(string art, int zeile = 18, string datei = "lang.txt")
+    {
+        return "{\"commit\":\"" + HashA + "\",\"datei\":\"" + datei + "\",\"zeile\":" + zeile + ",\"text\":\"Klammer fehlt\",\"art\":\"" + art + "\"}";
+    }
+
     private static Task<Webserver> StarteServer()
     {
         return StarteServer(TestUebersichtsquelle.Leer());

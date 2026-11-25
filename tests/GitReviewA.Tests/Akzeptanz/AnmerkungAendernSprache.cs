@@ -37,9 +37,40 @@ internal sealed class AnmerkungAendernSprache
         return treiber.LegeAn(repo.Hash(commit), datei, nummerNeu, text);
     }
 
+    /// <summary>Eine Anmerkung mit Art anlegen (R00036): `art` ist `muss`, `frage` oder `idee`.</summary>
+    public Anlegeantwort LegeAnMitArt(string commit, string datei, int? nummerNeu, string text, string art)
+    {
+        return treiber.LegeAn(repo.Hash(commit), datei, nummerNeu, text, System.Text.Json.JsonSerializer.SerializeToElement(art));
+    }
+
+    /// <summary>Ändert den Text; ohne Art im Körper bleibt die gespeicherte Art (R00036).</summary>
     public Aenderantwort Aendere(int nummer, string text)
     {
         return treiber.Aendere(nummer, text);
+    }
+
+    /// <summary>Setzt oder wechselt die Art (R00036).</summary>
+    public Aenderantwort AendereMitArt(int nummer, string text, string art)
+    {
+        return treiber.AendereMitArt(nummer, text, art);
+    }
+
+    /// <summary>Entfernt die Art (ausdrückliches `null` im Körper, R00036).</summary>
+    public Aenderantwort AendereOhneArt(int nummer, string text)
+    {
+        return treiber.AendereOhneArt(nummer, text);
+    }
+
+    /// <summary>Eine rohe Art im Körper — etwa `"MUSS"`, `7` oder `""` (R00036 Kriterium 4).</summary>
+    public Aenderantwort AendereMitRohart(int nummer, string text, string roh)
+    {
+        return treiber.AendereMitRohart(nummer, text, roh);
+    }
+
+    /// <summary>Das Ergebnis, ohne den Lauf zu beenden (wie „Ergebnis kopieren“).</summary>
+    public string Ergebnis()
+    {
+        return treiber.Ergebnis();
     }
 
     public Aenderantwort AendereOhneWunsch()
@@ -61,6 +92,12 @@ internal sealed class AnmerkungAendernSprache
     public Listeneintrag Anmerkung(int nummer, string commit, string datei, int? nummerNeu, string text)
     {
         return new Listeneintrag(nummer, repo.Hash(commit), datei, nummerNeu, text);
+    }
+
+    /// <summary>Ein Listeneintrag mit Art (R00036): `art` ist `muss`, `frage`, `idee` oder `null`.</summary>
+    public Listeneintrag AnmerkungMitArt(int nummer, string commit, string datei, int? nummerNeu, string text, string art)
+    {
+        return new Listeneintrag(nummer, repo.Hash(commit), datei, nummerNeu, text, Art: GitReviewA.Anmerkungen.Anmerkungsart.Pruefe(art).Angabe.Wert);
     }
 
     public string Beenden()

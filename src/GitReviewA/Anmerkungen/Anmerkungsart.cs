@@ -36,21 +36,21 @@ internal static class Anmerkungsart
     /// Die Art aus dem JSON-Körper: fehlt das Feld, ist die Art nicht angegeben; ausdrückliches `null` heißt „ohne Art“; jede
     /// Zeichenkette geht durch <see cref="Pruefe"/>; jede andere Form (Zahl, Wahrheitswert, Objekt, Liste) ist „Art unbekannt“.
     /// </summary>
-    public static Artergebnis Lies(JsonElement? roh)
+    public static Artergebnis Lies(JsonElement roh)
     {
-        if (roh is not { } element)
+        if (roh.ValueKind == JsonValueKind.Undefined)
         {
             return Artergebnis.Gueltig(Artangabe.Fehlt);
         }
-        if (element.ValueKind == JsonValueKind.Null)
+        if (roh.ValueKind == JsonValueKind.Null)
         {
             return Artergebnis.Gueltig(Artangabe.Ohne);
         }
-        if (element.ValueKind != JsonValueKind.String)
+        if (roh.ValueKind != JsonValueKind.String)
         {
             return Artergebnis.Abgelehnt();
         }
-        return Pruefe(element.GetString());
+        return Pruefe(roh.GetString());
     }
 
     /// <summary>Das Wort der Art („Muss“, „Frage“, „Idee“) für den Anmerkungskopf; ohne Art keins.</summary>

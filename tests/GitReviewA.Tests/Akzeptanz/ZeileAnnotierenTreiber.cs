@@ -107,7 +107,7 @@ internal sealed class ZeileAnnotierenTreiber
 
     private static Listeneintrag AlsEintrag(Anmerkung anmerkung)
     {
-        return new Listeneintrag(anmerkung.Nummer, anmerkung.Commit, anmerkung.Datei, anmerkung.Zeile, anmerkung.Text, anmerkung.Von, anmerkung.Bis);
+        return new Listeneintrag(anmerkung.Nummer, anmerkung.Commit, anmerkung.Datei, anmerkung.Zeile, anmerkung.Text, anmerkung.Von, anmerkung.Bis, anmerkung.Art);
     }
 
     private static string AusgangAlsWort(Aenderungsausgang ausgang)
@@ -137,7 +137,7 @@ internal sealed class ZeileAnnotierenTreiber
         var eintraege = new List<Listeneintrag>();
         foreach (var anmerkung in interactor.Liste())
         {
-            eintraege.Add(new Listeneintrag(anmerkung.Nummer, anmerkung.Commit, anmerkung.Datei, anmerkung.Zeile, anmerkung.Text, anmerkung.Von, anmerkung.Bis));
+            eintraege.Add(new Listeneintrag(anmerkung.Nummer, anmerkung.Commit, anmerkung.Datei, anmerkung.Zeile, anmerkung.Text, anmerkung.Von, anmerkung.Bis, anmerkung.Art));
         }
         return eintraege.ToArray();
     }
@@ -157,5 +157,5 @@ internal sealed class ZeileAnnotierenTreiber
 
 internal sealed record Anlegeantwort(string Ausgang, int? Nummer, string Grund);
 
-internal sealed record Listeneintrag(int Nummer, string Commit, string Datei, int? Zeile, string Text, int? Von = null, int? Bis = null);
+internal sealed record Listeneintrag(int Nummer, string Commit, string Datei, int? Zeile, string Text, int? Von = null, int? Bis = null, Art? Art = null);
 
