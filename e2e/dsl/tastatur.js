@@ -29,6 +29,9 @@ function tastaturSprache(gr, page) {
     lauf = await gr.gitreviewAStarten(repo, auswahl.map(hash));
     await page.setViewportSize(FENSTER);
     await gr.oberflaecheOeffnen(page, lauf, modus);
+    // Bereit, wenn Liste und Haken-Stand stehen (vorher ist „Nächste ungeprüfte“ gesperrt).
+    await expect(page.locator('#kopf-fortschritt .haken-zaehler')).not.toHaveText('', { timeout: 5000 });
+    await expect(page.locator('#datei-zeilen .datei-zeile').first()).toBeVisible({ timeout: 5000 });
   }
 
   /** Eine Datei wählen wie mit der Maus (Wahl samt Diff laden) und warten, bis ihr Diff steht. */
@@ -68,12 +71,28 @@ function tastaturSprache(gr, page) {
     diffZeigt: erwartet => diffSeite.pruefeDiff(page, erwartet),
     fortschritt: text => seite.pruefeFortschritt(page, text),
     kopfZahlen: text => seite.pruefeKopfZahlen(page, text),
-    anmerkungenUnter: (stelle, texte) => anmerkungSeite.pruefeAnmerkungenUnter(page, stelle, texte),
+    anmerkungenUnter: (stelle, texte) => tastatur.pruefeAnmerkungstexteUnter(page, stelle, texte),
     feldOffenMitFokus: name => anmerkungSeite.pruefeFeldOffenMitFokus(page, name),
     feldZu: name => anmerkungSeite.pruefeFeldZu(page, name),
     keinFeld: () => anmerkungSeite.pruefeKeinFeld(page),
     fokusAufKopf: nummer => anmerkungSeite.pruefeFokusAufKopf(page, nummer),
+    fokussiereKopf: nummer => page.locator(`#diff tr.anm[data-anmerkung="${nummer}"] .anm-kopf`).focus(),
     aenderungOeffnen: nummer => anmerkungSeite.aenderungOeffnen(page, nummer),
+    aenderungsfeldMitText: text => tastatur.pruefeAenderungsfeld(page, text),
+    aenderungsfelder: anzahl => tastatur.pruefeAenderungsfelder(page, anzahl),
+    /** Die Dateiliste in den Fokus bringen (Tab landet auf dem ersten Kästchen). */
+    inDieDateiliste: () => tastatur.inDieDateiliste(page),
+    fokussiereAusserhalb: () => tastatur.fokusAufSeite(page),
+    fokusAufLuecke: stelle => tastatur.pruefeFokusLuecke(page, stelle),
+    /** Der Modus der Seite (`body[data-modus]`). */
+    modus: async name => {
+      await expect(page.locator('body')).toHaveAttribute('data-modus', name);
+    },
+    commit: name => tastatur.pruefeCommit(page, hash(name)),
+    ansicht: wert => tastatur.pruefeAnsicht(page, wert),
+    umbruch: an => tastatur.pruefeUmbruch(page, an),
+    leerraum: an => tastatur.pruefeLeerraum(page, an),
+    tippe: text => page.keyboard.type(text),
     inVsCodeHref: () => page.locator('#diff .sprung-knopf').getAttribute('href'),
     /** Installiert einen Zähler für Klicks auf VS-Code-Verweise — kein Test startet VS Code. */
     vsCodeKlickZaehlen: () => page.evaluate(() => {

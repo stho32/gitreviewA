@@ -203,6 +203,102 @@ async function aufDiffWarten(page, pfad) {
   await expect(page.locator(DIFFZEILE).first()).toBeVisible({ timeout: 5000 });
 }
 
+/** Zustand eines Kästchen-/Radio-Schalters. */
+async function pruefeSchalter(page, selektor, erwartet) {
+  await expect(page.locator(selektor)).toHaveJSProperty('checked', erwartet);
+}
+
+async function pruefeUmbruch(page, an) {
+  await pruefeSchalter(page, '#diff .umbruch-schalter', an);
+}
+
+async function pruefeLeerraum(page, an) {
+  await pruefeSchalter(page, '#diff .leerraum-schalter', an);
+}
+
+/** Die gewählte Diff-Ansicht (`aenderungen` oder `ganz`). */
+async function ansichtWert(page) {
+  return page.evaluate(() => {
+    const gewaehlt = [...document.querySelectorAll('#diff input[name="diffansicht"]')].find(feld => feld.checked);
+    return gewaehlt ? gewaehlt.value : null;
+  });
+}
+
+async function pruefeAnsicht(page, wert) {
+  await expect.poll(() => ansichtWert(page), { message: `Ansicht ${wert}`, timeout: 5000 }).toBe(wert);
+}
+
+/** Der gewählte Commit (Hash) aus der Commit-Leiste. */
+async function gewaehlterCommit(page) {
+  return page.evaluate(() => {
+    const zeile = document.querySelector('#commit-liste .commit-zeile[aria-current="true"]');
+    return zeile ? zeile.dataset.hash : null;
+  });
+}
+
+async function pruefeCommit(page, hash) {
+  await expect.poll(() => gewaehlterCommit(page), { message: `Commit ${hash}`, timeout: 5000 }).toBe(hash);
+}
+
+async function keineDateiGewaehlt(page) {
+  return page.locator(`${DATEIZEILE}[aria-current="true"]`).count().then(anzahl => anzahl === 0);
+}
+
+async function beobachteteTasten(page) {
+  return page.evaluate(() => window.__tasten || []);
+}
+
+/** Die Dateiliste in den Fokus bringen — der Weg per Tab: das erste Kästchen. */
+async function inDieDateiliste(page) {
+  await page.locator('#datei-zeilen input.haken').first().focus();
+}
+
+/** Fokus nirgends (Dokumentkörper) — für Fälle ohne Anmerkungskopf. */
+async function fokusAufSeite(page) {
+  await page.evaluate(() => document.activeElement.blur());
+}
+
+/** Der Fokus steht auf dem `stelle`-ten Aufklapp-Knopf einer Lücke (0-basiert, Schritt-Knopf). */
+async function pruefeFokusLuecke(page, stelle) {
+  await expect.poll(() => page.evaluate(plaetze => {
+    const knoepfe = [...document.querySelectorAll('#diff .df-sc .dz-l-auf:not([data-ganz])')];
+    return knoepfe.indexOf(document.activeElement) === plaetze;
+  }, stelle), { message: `Fokus auf Lücke ${stelle}`, timeout: 5000 }).toBe(true);
+}
+
+/** Die Texte der Anmerkungszeilen unter einer Diff-Zeile (ohne Feldzeilen), in Reihenfolge. */
+async function anmerkungstexteUnter(page, ziel) {
+  return page.evaluate(([selektor, neu]) => {
+    const zeile = [...document.querySelectorAll(selektor)].find(element => element.dataset.art && element.dataset.neu === String(neu));
+    const texte = [];
+    let naechste = zeile ? zeile.nextElementSibling : null;
+    while (naechste && !naechste.hasAttribute('data-art')) {
+      if (naechste.classList.contains('anm')) {
+        texte.push(naechste.querySelector('.anm-text').textContent);
+      }
+      naechste = naechste.nextElementSibling;
+    }
+    return texte;
+  }, [DIFFZEILE, ziel.neu]);
+}
+
+async function pruefeAnmerkungstexteUnter(page, ziel, texte) {
+  await expect.poll(() => anmerkungstexteUnter(page, ziel), { message: `Anmerkungen unter ${JSON.stringify(ziel)}`, timeout: 5000 }).toEqual(texte);
+}
+
+/** Zahl der offenen Änderungsfelder. */
+async function pruefeAenderungsfelder(page, anzahl) {
+  await expect(page.locator('#diff tr.anm-aendern')).toHaveCount(anzahl);
+}
+
+/** Das offene Änderungsfeld trägt den vorhandenen Text und hat den Fokus. */
+async function pruefeAenderungsfeld(page, text) {
+  const feld = page.locator('#diff tr.anm-aendern textarea');
+  await expect(feld).toHaveCount(1);
+  await expect(feld).toHaveValue(text);
+  await expect(feld).toBeFocused();
+}
+
 module.exports = {
   taste,
   aufDiffWarten,
@@ -229,4 +325,17 @@ module.exports = {
   pruefeAnsage,
   pruefeAnsageLeer,
   diffZeilen,
+  pruefeSchalter,
+  pruefeUmbruch,
+  pruefeLeerraum,
+  pruefeAnsicht,
+  pruefeCommit,
+  keineDateiGewaehlt,
+  beobachteteTasten,
+  inDieDateiliste,
+  fokusAufSeite,
+  pruefeFokusLuecke,
+  pruefeAenderungsfeld,
+  pruefeAenderungsfelder,
+  pruefeAnmerkungstexteUnter,
 };

@@ -25,3 +25,212 @@ test.describe('R00030 Abschnitte — n und p', () => {
     await tast.fokusAufDiffzeile(2);
   });
 });
+
+test.describe('R00030 Dateiliste und Haken — j, k, x, m, u, [, ]', () => {
+  test('j, j, k wählen src/a.txt, src/b.txt und wieder src/a.txt; der Fokus steht auf der Zeile und der Diff lädt', async ({ tast }) => {
+    await tast.starten();
+    await tast.inDieDateiliste();
+
+    await tast.druecke('j');
+    await tast.gewaehlt('src/a.txt');
+    await tast.fokusAufDateizeile('src/a.txt');
+    await tast.diffZeigt({
+      pfad: 'src/a.txt',
+      zeilen: [
+        { kopf: '@@ -0,0 +1,4 @@' },
+        { plus: 'eins', neu: 1 },
+        { plus: 'ZWEI', neu: 2 },
+        { plus: 'drei', neu: 3 },
+        { plus: 'vier', neu: 4 },
+      ],
+    });
+
+    await tast.druecke('j');
+    await tast.gewaehlt('src/b.txt');
+    await tast.fokusAufDateizeile('src/b.txt');
+
+    await tast.druecke('k');
+    await tast.gewaehlt('src/a.txt');
+    await tast.fokusAufDateizeile('src/a.txt');
+  });
+
+  test('x hakt die gewählte Datei ab, lässt Wahl und Diff stehen, nimmt den Haken wieder weg und sagt es an', async ({ tast }) => {
+    await tast.starten();
+    await tast.dateiAnsehen('README.md');
+    await tast.haken('README.md', 'false');
+
+    await tast.druecke('x');
+    await tast.haken('README.md', 'true');
+    await tast.fortschritt('1 von 3 Dateien abgehakt');
+    await tast.gewaehlt('README.md');
+    await tast.ansage('README.md abgehakt');
+
+    await tast.druecke('x');
+    await tast.haken('README.md', 'false');
+    await tast.fortschritt('0 von 3 Dateien abgehakt');
+    await tast.ansage('Haken für README.md entfernt');
+  });
+
+  test('[ und ] wechseln in „Einzeln“ den Commit samt Liste, in „Zusammen“ haben sie keine Wirkung', async ({ tast }) => {
+    await tast.starten({ modus: 'einzeln' });
+    await tast.commit('z1');
+
+    await tast.druecke(']');
+    await tast.commit('z2');
+    await tast.dateiAnsehen('src/a.txt');
+    await tast.druecke('[');
+    await tast.commit('z1');
+
+    await tast.druecke('m');
+    await tast.commit('z1');
+    await tast.druecke(']');
+    await tast.commit('z1');
+  });
+
+  test('m wechselt den Modus wie der Umschalter, die Wahl folgt der Regel des Wechsels', async ({ tast }) => {
+    await tast.starten();
+    await tast.dateiAnsehen('src/a.txt');
+
+    await tast.druecke('m');
+    await tast.modus('einzeln');
+    await tast.gewaehlt('src/a.txt');
+    await tast.ansage('Modus Einzeln');
+
+    await tast.druecke('m');
+    await tast.modus('zusammen');
+    await tast.gewaehlt('src/a.txt');
+    await tast.ansage('Modus Zusammen');
+  });
+
+  test('u springt der Reihe nach zu README.md, src/a.txt, src/b.txt und wieder README.md; der Fokus steht auf der neuen Zeile', async ({ tast }) => {
+    await tast.starten();
+
+    await tast.druecke('u');
+    await tast.gewaehlt('README.md');
+    await tast.fokusAufDateizeile('README.md');
+
+    await tast.druecke('u');
+    await tast.gewaehlt('src/a.txt');
+    await tast.fokusAufDateizeile('src/a.txt');
+
+    await tast.druecke('u');
+    await tast.gewaehlt('src/b.txt');
+    await tast.fokusAufDateizeile('src/b.txt');
+
+    await tast.druecke('u');
+    await tast.gewaehlt('README.md');
+    await tast.fokusAufDateizeile('README.md');
+  });
+
+  test('h tut nichts, solange der Schalter „Abgehakte ausblenden“ nicht gebaut ist', async ({ tast }) => {
+    await tast.starten();
+    await tast.dateiAnsehen('README.md');
+    const vorher = await tast.fokus();
+
+    await tast.druecke('h');
+    await tast.gewaehlt('README.md');
+    expect(await tast.fokus()).toEqual(vorher);
+  });
+});
+
+test.describe('R00030 Diff und Anmerkung — Enter, a, e, s, w, l, o, g', () => {
+  test('Enter öffnet das Feld der Zeile, Strg+Enter speichert mit Fokus zurück auf der Zeile, Esc verwirft', async ({ tast }) => {
+    await tast.starten();
+    await tast.dateiAnsehen('src/a.txt');
+    await tast.inDenDiffTabben();
+    await tast.pfeilAbBis(2);
+    await tast.fokusAufDiffzeile(2);
+
+    await tast.druecke('Enter');
+    await tast.feldOffenMitFokus('Anmerkung zu src/a.txt, Zeile 2');
+    await tast.tippe('Klammer fehlt');
+    await tast.druecke('Control+Enter');
+    await tast.anmerkungenUnter({ neu: 2 }, ['Klammer fehlt']);
+    await tast.fokusAufDiffzeile(2);
+
+    await tast.druecke('Enter');
+    await tast.feldOffenMitFokus('Anmerkung zu src/a.txt, Zeile 2');
+    await tast.tippe('wieder weg');
+    await tast.druecke('Escape');
+    await tast.keinFeld();
+    await tast.anmerkungenUnter({ neu: 2 }, ['Klammer fehlt']);
+    await tast.fokusAufDiffzeile(2);
+  });
+
+  test('a öffnet „Anmerkung zu <Datei> (ganze Datei)“ wie der Knopf im Diff-Kopf', async ({ tast }) => {
+    await tast.starten();
+    await tast.dateiAnsehen('src/a.txt');
+
+    await tast.druecke('a');
+    await tast.feldOffenMitFokus('Anmerkung zu src/a.txt (ganze Datei)');
+  });
+
+  test('e öffnet „Ändern“ nur im Anmerkungskopf und mit dem vorhandenen Text; sonst hat es keine Wirkung', async ({ tast }) => {
+    await tast.starten();
+    await tast.dateiAnsehen('src/a.txt');
+    await tast.inDenDiffTabben();
+    await tast.pfeilAbBis(2);
+    await tast.druecke('Enter');
+    await tast.tippe('Erster Text');
+    await tast.druecke('Control+Enter');
+    await tast.anmerkungenUnter({ neu: 2 }, ['Erster Text']);
+    await tast.fokussiereKopf(1);
+    await tast.fokusAufKopf(1);
+
+    await tast.druecke('e');
+    await tast.aenderungsfeldMitText('Erster Text');
+
+    await tast.druecke('Escape');
+    await tast.fokusAufKopf(1);
+    await tast.aenderungsfelder(0);
+    await tast.fokussiereAusserhalb();
+    await tast.druecke('e');
+    await tast.aenderungsfelder(0);
+  });
+
+  test('s, w und l schalten Ansicht, Umbruch und Leerraum wie ihre Bedienelemente um', async ({ tast }) => {
+    await tast.starten();
+    await tast.dateiAnsehen('src/a.txt');
+
+    await tast.druecke('s');
+    await tast.ansicht('ganz');
+    await tast.druecke('s');
+    await tast.ansicht('aenderungen');
+
+    await tast.druecke('w');
+    await tast.umbruch(true);
+    await tast.druecke('w');
+    await tast.umbruch(false);
+
+    await tast.druecke('l');
+    await tast.leerraum(true);
+    await tast.druecke('l');
+    await tast.leerraum(false);
+  });
+
+  test('o betätigt den Verweis „In VS Code“ mit demselben Ziel; v und / tun nichts, solange ihre Bedienelemente fehlen', async ({ tast }) => {
+    await tast.starten();
+    await tast.dateiAnsehen('src/a.txt');
+    const ziel = await tast.inVsCodeHref();
+    expect(ziel, 'Ziel des Verweises').toMatch(/^vscode:\/\/file\//);
+    await tast.vsCodeKlickZaehlen();
+
+    await tast.druecke('o');
+    expect(await tast.vsCodeKlicks()).toEqual([ziel]);
+
+    await tast.druecke('v');
+    await tast.druecke('/');
+    await tast.gewaehlt('src/a.txt');
+  });
+
+  test('g springt zur nächsten Lücke und setzt den Fokus auf ihren Aufklapp-Knopf', async ({ tast }) => {
+    await tast.starten({ vorbereitung: 'Repo W', modus: 'einzeln' });
+    await tast.dateiAnsehen('weit.txt');
+
+    await tast.inDenDiffTabben();
+    await tast.druecke('g');
+    await tast.fokusAufLuecke(0);
+    await tast.druecke('g');
+    await tast.fokusAufLuecke(1);
+  });
+});

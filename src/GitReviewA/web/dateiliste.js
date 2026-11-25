@@ -226,6 +226,8 @@
     }
     const datei = zeile.datei;
     const dateiElement = eintragElement('datei-zeile', zeile.tiefe);
+    // Die Zeile ist selbst kein Tab-Stopp (das Kästchen ist einer), nimmt aber den Fokus der Kürzel `j`/`k`/`u` auf (R00030).
+    dateiElement.tabIndex = -1;
     const istGewaehlt = zustand.gewaehlterPfad !== null && sichtbarerName(datei.pfad) === sichtbarerName(zustand.gewaehlterPfad);
     dateiElement.setAttribute('aria-current', String(istGewaehlt));
     dateiElement.dataset.pfad = datei.pfad;
