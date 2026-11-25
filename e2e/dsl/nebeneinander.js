@@ -1,0 +1,59 @@
+'use strict';
+// Testsprache „Nebeneinander-Ansicht“ (R00023): Commits und Repos heißen wie in der User Story (G mit g1, g2, g3; A mit p, q),
+// die Sprache kennt ihre Hashes, die Treiber darunter kennen Seite, Prozess und git.
+const path = require('path');
+const { test: basis, expect } = require('./gitreviewa.js');
+const seite = require('../treiber/oberflaeche.js');
+const diffSeite = require('../treiber/diff-oberflaeche.js');
+const nebenSeite = require('../treiber/nebeneinander-oberflaeche.js');
+const repos = require('../treiber/diff-repos.js');
+
+const FENSTER = { width: 1280, height: 800 };
+
+const VORBEREITUNGEN = {
+  'Repo G': { anlegen: repos.repoG, commits: ['g2'] },
+  'Repo A': { anlegen: repos.repoA, commits: ['q', 'p'] },
+};
+
+function nebenSprache(gr, page) {
+  let repo;
+  let lauf;
+  const hash = name => repo.hashes[name];
+
+  /** Startet gitreviewA im Repo der Vorbereitung und öffnet die Seite; `anordnung` ist der Startwert der Seite. */
+  async function starten({ vorbereitung = 'Repo G', commits, anordnung = null, modus = null } = {}) {
+    const art = VORBEREITUNGEN[vorbereitung];
+    repo = art.anlegen(path.join(gr.eigenerOrdner(), 'repo'));
+    const namen = commits || art.commits;
+    lauf = await gr.gitreviewAStarten(repo, namen.map(hash), {});
+    await page.setViewportSize(FENSTER);
+    if (anordnung) {
+      await page.addInitScript(wert => { window.gitreviewaStartAnordnung = wert; }, anordnung);
+    }
+    await gr.oberflaecheOeffnen(page, lauf, modus);
+  }
+
+  return {
+    starten,
+    hash: name => hash(name),
+    commitAnsehen: name => seite.commitWaehlen(page, hash(name).slice(0, 7)),
+    dateiAnsehen: name => seite.dateiWaehlen(page, name),
+    anordnungWaehlen: wert => nebenSeite.anordnungWaehlen(page, wert),
+    anordnungIst: wert => nebenSeite.pruefeAnordnung(page, wert),
+    zeilenPaareSind: erwartet => nebenSeite.pruefeZeilenPaare(page, erwartet),
+    spaltenkoepfeSind: () => nebenSeite.pruefeSpaltenkoepfe(page),
+    kontextEinmalGelesen: () => nebenSeite.pruefeKontextEinmalGelesen(page),
+    umfangWaehlen: name => diffSeite.ansichtWaehlen(page, name),
+    umfangIst: name => diffSeite.pruefeAnsicht(page, name),
+    fordertZurWahlAuf: () => diffSeite.pruefeAufforderungZurWahl(page),
+    neuLaden: () => page.reload(),
+  };
+}
+
+const test = basis.extend({
+  neben: async ({ gr, page }, verwenden) => {
+    await verwenden(nebenSprache(gr, page));
+  },
+});
+
+module.exports = { test, expect };

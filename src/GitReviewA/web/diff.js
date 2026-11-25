@@ -53,10 +53,15 @@
     document.addEventListener('wahl-aufgehoben', () => verwerfeWahl(ansicht));
     document.addEventListener('datei-gewaehlt', ereignis => ladeDiff(ansicht, ereignis.detail, false));
     document.addEventListener('sprung-geladen', ereignis => uebernehmeSprung(ansicht, ereignis.detail));
+    document.addEventListener('anordnung-gewechselt', () => anordnungGewechselt(ansicht));
   }
 
   function istZusammen() {
     return window.gitreviewaModus ? window.gitreviewaModus.istZusammen() : false;
+  }
+
+  function istNebeneinander() {
+    return window.gitreviewaAnordnung ? window.gitreviewaAnordnung.istNebeneinander() : false;
   }
 
   function ansichtElemente() {
@@ -107,6 +112,14 @@
       return;
     }
     ladeDiff(ansicht, zustand.datei, zustand.alsText);
+  }
+
+  /** Die Anordnung (R00023) liegt am Bereich wie Umbruch und Ansicht: sie gilt für jede weitere Datei und jeden weiteren Commit.
+      Eine gewählte Datei wird in der neuen Anordnung neu gezeichnet; `ladeDiff` verwirft dabei eine späte Antwort der alten. */
+  function anordnungGewechselt(ansicht) {
+    if (zustand.datei) {
+      ladeDiff(ansicht, zustand.datei, zustand.alsText);
+    }
   }
 
   /** Ein Commit-Wechsel verdrängt auch eine noch laufende Ladung: deren Antwort wird verworfen. */
@@ -476,6 +489,10 @@
       zur gezeichneten Folge, die Links und Färbung als einzige Quelle lesen. */
   function zeichneZeilen(ansicht, antwort, zeilen, lueckenliste = null) {
     zeigeMeldung(ansicht, '', false);
+    if (istNebeneinander()) {
+      zeichneNebeneinander(ansicht, antwort, zeilen);
+      return;
+    }
     const teile = anzeigeTeile(zeilen, lueckenliste);
     // Die gezeichnete Folge ist die eine Quelle für Links und Färbung: die Diff-Zeilen samt den aufgedeckten Zeilen, in
     // Reihenfolge der DOM-Zeilen (`tr[data-art]`). Ohne sie paaren die beiden indexbasierten Verbraucher Zeile und Nummer
@@ -495,6 +512,27 @@
     setzeSprunglinks(ansicht);
     aktualisiereSprungkopf(ansicht);
     faerbeZeilen(ansicht, antwort, gezeichneteZeilen);
+    const bereiche = zustand.datei && zustand.datei.modus === 'zusammen'
+      ? [{ commit: zustand.datei.commit, betreff: betreffVon(zustand.datei.commit), bereichElement: ansicht.rollElement }]
+      : null;
+    meldeGezeichnet(ansicht, antwort.pfad, bereiche);
+  }
+
+  /** Nebeneinander (R00023): dieselben Zeilen der Ansicht, in zwei Spalten gepaart (alt links, neu rechts). Die Zeichenrechnung
+      bleibt die der Zeilen (keine zweite); die Textinhalte baut `textzellenInhalt` — Lesetexte, Marken und später Farbstücke.
+      Färbung (B2205), Zuklappen und Blockgrenze (B2206) und die Zeilenziele (B2207) folgen; hier steht die Paarung und die Tabelle. */
+  function zeichneNebeneinander(ansicht, antwort, zeilen) {
+    const tabelle = gegenueberstellen(zeilen);
+    if (zustand.gezeichnet) {
+      zustand.gezeichnet.zeilen = [];
+    }
+    const name = bereichsname(antwort);
+    const textzellen = zeile => textzellenInhalt(zeile, sichtbarTeile(zeile.text));
+    ansicht.rollElement.setAttribute('aria-label', name);
+    ansicht.rollElement.replaceChildren(window.gitreviewaNebeneinander.tabelleBauen(tabelle, zeilen, name, textzellen));
+    ansicht.rollElement.hidden = false;
+    ansicht.rollElement.dataset.farbe = 'nein';
+    aktualisiereSprungkopf(ansicht);
     const bereiche = zustand.datei && zustand.datei.modus === 'zusammen'
       ? [{ commit: zustand.datei.commit, betreff: betreffVon(zustand.datei.commit), bereichElement: ansicht.rollElement }]
       : null;

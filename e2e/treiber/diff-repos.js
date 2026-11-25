@@ -326,6 +326,19 @@ function repoStill(ordner) {
 }
 
 /** Repo X (R00010): ein Commit `x` fügt die Datei `<b>x</b>.txt` mit der Zeile `eins` hinzu. */
+/** Repo G (R00023, Nebeneinander): `g1` „Start“, `g2` „Zwei weg, drei her“ (t.txt: 2 entfernt, 3 hinzugefügt → Überhang rechts),
+    `g3` „Nur vier weg“ (ein entfernter Lauf ohne hinzugefügten). */
+function repoG(ordner) {
+  repoAnlegen(ordner);
+  dateiSchreiben(ordner, 't.txt', 'eins\nzwei\ndrei\nvier\nfünf\nsechs\n');
+  const g1 = commitAnlegen(ordner, { betreff: 'Start' });
+  dateiSchreiben(ordner, 't.txt', 'eins\nX\nY\nZ\nvier\nfünf\nsechs\n');
+  const g2 = commitAnlegen(ordner, { betreff: 'Zwei weg, drei her' });
+  dateiSchreiben(ordner, 't.txt', 'eins\nX\nY\nZ\nfünf\nsechs\n');
+  const g3 = commitAnlegen(ordner, { betreff: 'Nur vier weg' });
+  return { ordner, hashes: { g1, g2, g3 } };
+}
+
 function repoX(ordner) {
   repoAnlegen(ordner);
   dateiSchreiben(ordner, '<b>x</b>.txt', 'eins\n');
@@ -353,4 +366,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoX, repoK, repoZ, repoQ, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoG, repoX, repoK, repoZ, repoQ, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };

@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="gitreviewa.css">
 <script src="modus-werte.js" defer></script>
 <script src="modus.js" defer></script>
+<script src="anordnung.js" defer></script>
 <script src="commit-werte.js" defer></script>
 <script src="ausblenden-werte.js" defer></script>
 <script src="ausblenden.js" defer></script>
@@ -26,6 +27,8 @@
 <script src="luecken-werte.js" defer></script>
 <script src="farbe-werte.js" defer></script>
 <script src="farbschlange.js" defer></script>
+<script src="nebeneinander-werte.js" defer></script>
+<script src="nebeneinander.js" defer></script>
 <script src="diff.js" defer></script>
 <script src="sprung.js" defer></script>
 <script src="anmerkungen-werte.js" defer></script>
@@ -119,6 +122,10 @@
           <div class="seg diffansicht-wahl" role="radiogroup" aria-label="Ansicht">
             <label><input type="radio" name="diffansicht" value="aenderungen" autocomplete="off" checked>nur Änderungen</label>
             <label><input type="radio" name="diffansicht" value="ganz" autocomplete="off">ganze Datei</label>
+          </div>
+          <div class="seg anordnung-wahl" role="group" aria-label="Anordnung">
+            <button type="button" data-anordnung="untereinander" aria-pressed="true">untereinander</button>
+            <button type="button" data-anordnung="nebeneinander" aria-pressed="false">nebeneinander</button>
           </div>
           <label class="ru-sch"><input type="checkbox" class="leerraum-schalter">Leerraum ignorieren</label>
           <label class="ru-sch"><input type="checkbox" class="umbruch-schalter">Umbruch</label>
