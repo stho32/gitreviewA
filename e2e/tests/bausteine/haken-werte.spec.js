@@ -4,7 +4,7 @@
 const { test, expect } = require('@playwright/test');
 const {
   fortschrittText, balkenAnteil, stellenSchluessel, naechsterZielzustand, kaestchenBezeichnung,
-  dateiZustand, dateiZaehler, fortschrittZusammen, fortschrittEinzeln,
+  dateiZustand, dateiZaehler, fortschrittZusammen, fortschrittEinzeln, commitZaehler, zaehlerZusatz,
 } = require('../../../src/GitReviewA/web/haken-werte.js');
 
 const HASH_P = '13ba46c707f0744779fe7c52c3e935814b908017';
@@ -17,6 +17,11 @@ function stelle(commit, pfad) {
 
 function standMit(...abgehakte) {
   return new Map(abgehakte.map(([commit, pfad]) => [stellenSchluessel(commit, pfad), true]));
+}
+
+/** Eine Stelle des Stands (`GET /api/haken`): der Pfad heißt dort `datei`, dazu der Sperrgrund. */
+function standStelle(commit, datei, sperrgrund = '') {
+  return { commit, datei, sperrgrund };
 }
 
 test.describe('Baustein Haken-Werte', () => {
@@ -111,5 +116,39 @@ test.describe('Baustein Haken-Werte', () => {
 
     expect(fortschrittEinzeln(stellen, 0, 6)).toEqual({ abgehakt: 0, gesamt: 6, nichtLesbar: 1 });
     expect(fortschrittEinzeln(stellen, 3, 6)).toEqual({ abgehakt: 3, gesamt: 6, nichtLesbar: 1 });
+  });
+
+  test('soll die Stellen je Commit zählen — Grundlage für das Menü des Wählers (R00012, Kriterium 8)', () => {
+    const stellen = [
+      standStelle(HASH_P, 'README.md'), standStelle(HASH_P, 'src/a.txt'),
+      standStelle(HASH_Q, 'src/a.txt'), standStelle(HASH_Q, 'src/b.txt'),
+      standStelle(HASH_R, 'src/a.txt'), standStelle(HASH_R, 'src/b.txt'),
+    ];
+
+    expect(commitZaehler([], new Map()).size).toBe(0);
+    expect([...commitZaehler(stellen, new Map()).entries()]).toEqual([
+      [HASH_P, { abgehakt: 0, gesamt: 2 }],
+      [HASH_Q, { abgehakt: 0, gesamt: 2 }],
+      [HASH_R, { abgehakt: 0, gesamt: 2 }],
+    ]);
+
+    const alleA = standMit([HASH_P, 'src/a.txt'], [HASH_Q, 'src/a.txt'], [HASH_R, 'src/a.txt']);
+    expect([...commitZaehler(stellen, alleA).values()]).toEqual([
+      { abgehakt: 1, gesamt: 2 }, { abgehakt: 1, gesamt: 2 }, { abgehakt: 1, gesamt: 2 },
+    ]);
+    const mitB = new Map([...alleA, [stellenSchluessel(HASH_Q, 'src/b.txt'), true]]);
+    expect([...commitZaehler(stellen, mitB).values()]).toEqual([
+      { abgehakt: 1, gesamt: 2 }, { abgehakt: 2, gesamt: 2 }, { abgehakt: 1, gesamt: 2 },
+    ]);
+    const ohneA = new Map([[stellenSchluessel(HASH_Q, 'src/b.txt'), true]]);
+    expect([...commitZaehler(stellen, ohneA).values()]).toEqual([
+      { abgehakt: 0, gesamt: 2 }, { abgehakt: 1, gesamt: 2 }, { abgehakt: 0, gesamt: 2 },
+    ]);
+  });
+
+  test('soll den Zusatz am Menüeintrag als „ · k von n“ schreiben und ohne Stelle leer lassen (R00012, Kriterium 8)', () => {
+    expect(zaehlerZusatz({ abgehakt: 0, gesamt: 2 })).toBe(' · 0 von 2');
+    expect(zaehlerZusatz({ abgehakt: 1, gesamt: 2 })).toBe(' · 1 von 2');
+    expect(zaehlerZusatz(undefined)).toBe('');
   });
 });

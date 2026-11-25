@@ -3,6 +3,7 @@
 const { expect } = require('@playwright/test');
 const ZEILE = '#commit-liste .commit-zeile';
 const DATEILISTE = '#dateiliste';
+const WAEHLER_MENUE = '#waehler-auswahl';
 const LISTENEINTRAG = '#datei-zeilen > li';
 const DATEIZEILE = '#datei-zeilen .datei-zeile';
 
@@ -319,6 +320,12 @@ async function pruefeGewaehlterCommit(page, kurzHash) {
   await expect(page.locator(`${ZEILE}[aria-current="true"] .kurz-hash`)).toHaveText([kurzHash]);
 }
 
+/** Das Menü des Commit-Wählers nennt genau diese Einträge in dieser Reihenfolge (R00012, Kriterien 6 und 8). */
+async function pruefeWaehlerMenue(page, erwarteteEintraege) {
+  const eintraege = () => page.locator(`${WAEHLER_MENUE} option`).evaluateAll(optionen => optionen.map(option => option.textContent));
+  await expect.poll(eintraege, 'Einträge des Commit-Menüs').toEqual(erwarteteEintraege);
+}
+
 /** Summe und Einträge der Dateiliste (je Eintrag nur die genannten Angaben); `reihenfolgeEgal` vergleicht nach Namen sortiert. */
 async function pruefeDateiliste(page, { summe, eintraege, reihenfolgeEgal = false }) {
   await expect(dateiSumme(page)).toHaveText(summe);
@@ -399,7 +406,7 @@ function dialogeZaehlen(page) {
 
 module.exports = {
   dateiMitPfadWaehlen, dateizeileMitPfadWaehlen,
-  pruefeLeiste, pruefeMessageVerborgen, pruefeMessage, pruefeOhneMessage, pruefeKeineFormatierung, pruefeGewaehlterCommit, pruefeDateiliste,
+  pruefeLeiste, pruefeMessageVerborgen, pruefeMessage, pruefeOhneMessage, pruefeKeineFormatierung, pruefeGewaehlterCommit, pruefeWaehlerMenue, pruefeDateiliste,
   pruefeDateilistenMeldung, pruefeRichtungszeichenNurAlsMarke, pruefeGewaehlteDateien, pruefeDateiwahlen, pruefeZeilenBinnen, pruefeDateizeilenBinnenNachKlick,
   dateienAntwortZurueckhalten, dialogeZaehlen,
   commitZeilenLesen, commitDetailsLesen, commitZeilen, aufZeilenWarten, commitWaehlen, gewaehlteCommits, messageSchalter, messageUmschalten, rumpf,

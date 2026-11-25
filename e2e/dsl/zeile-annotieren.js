@@ -7,6 +7,7 @@ const { test: basis, expect } = require('./gitreviewa.js');
 const seite = require('../treiber/oberflaeche.js');
 const diffSeite = require('../treiber/diff-oberflaeche.js');
 const anmerkungSeite = require('../treiber/anmerkungen-oberflaeche.js');
+const hakenSeite = require('../treiber/haken-oberflaeche.js');
 const repos = require('../treiber/diff-repos.js');
 
 const FENSTER = { width: 1280, height: 800 };
@@ -179,6 +180,10 @@ function annotierSprache(gr, page) {
 
     seiteOeffnen: oeffneSeite,
     modusWaehlen: name => seite.modusWaehlen(page, name),
+    /** Betätigt das Kästchen der Datei: in „Zusammen“ alle ihre Stellen, in „Einzeln“ die Stelle des gewählten Commits. */
+    abhaken: name => hakenSeite.kaestchenBetaetigen(page, name),
+    /** Das Menü des Commit-Wählers nennt genau diese Einträge in dieser Reihenfolge. */
+    waehlerMenue: eintraege => seite.pruefeWaehlerMenue(page, eintraege),
     dateilisteZeigt: erwartet => seite.pruefeDateiliste(page, erwartet),
     kopfZahlen: text => seite.pruefeKopfZahlen(page, text),
     fortschritt: text => seite.pruefeFortschritt(page, text),
