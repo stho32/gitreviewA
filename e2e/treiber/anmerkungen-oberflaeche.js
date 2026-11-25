@@ -136,10 +136,17 @@ async function anmerkungenUnter(page, ziel) {
 
 /* ── Bereich (R00031) ── */
 
+/** Die Textzelle der Zeile, an der ein Klick die Zeile wählt: einspaltig `td.c`, nebeneinander die Seite der Nummer neu. */
+async function textzelle(page, neu) {
+  const zeile = diffzeile(page, { neu });
+  const nebeneinanderZelle = zeile.locator('td.c-neu');
+  return (await nebeneinanderZelle.count()) > 0 ? nebeneinanderZelle.first() : zeile.locator('td.c').first();
+}
+
 /** Ein Bereich über Umschalt-Klick: Klick auf die Zeile `von`, dann Umschalt-Klick auf `bis`. */
 async function bereichWaehlen(page, von, bis) {
-  await diffzeile(page, { neu: von }).locator('td.c').click();
-  await diffzeile(page, { neu: bis }).locator('td.c').click({ modifiers: ['Shift'] });
+  await (await textzelle(page, von)).click();
+  await (await textzelle(page, bis)).click({ modifiers: ['Shift'] });
 }
 
 /** Ein Bereich über Ziehen: Druck auf die Nummer-neu-Zelle von `von`, Zug bis `bis`, loslassen. */
@@ -150,6 +157,11 @@ async function bereichZiehen(page, von, bis) {
   await page.mouse.down();
   await page.mouse.move(ende.x + ende.width / 2, ende.y + ende.height / 2, { steps: 5 });
   await page.mouse.up();
+}
+
+/** Die Anordnung umstellen (untereinander | nebeneinander, R00023). */
+async function anordnungWaehlen(page, wert) {
+  await page.locator(`#diff [data-anordnung="${wert}"]`).click();
 }
 
 /** Die markierten Zeilen (Klasse `bereich`) als Nummern neu in Reihenfolge. */
@@ -597,6 +609,7 @@ async function pruefeLoeschenFrei(page, nummer) {
 }
 
 module.exports = {
+  anordnungWaehlen,
   bereichWaehlen,
   bereichZiehen,
   pruefeMarkiert,

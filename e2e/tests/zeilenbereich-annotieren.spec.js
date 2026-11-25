@@ -58,6 +58,29 @@ test.describe('Bereich markieren und anmerken (Szenario 1, 3)', () => {
   });
 });
 
+test.describe('Der Bereich wirkt in jedem Anzeigeverfahren', () => {
+  test('soll in „Zusammen“ (netto) markieren und die Anmerkung unter ihrem Ende zeigen', async ({ anm }) => {
+    await anm.starten({ vorbereitung: 'Repo R (Bereich)', modus: 'zusammen' });
+    await anm.dateiAnsehen('lang.txt');
+
+    await anm.bereichAnnotieren('lang.txt', 3, 7, 'netto');
+
+    await anm.markiert([3, 4, 5, 6, 7]);
+    await anm.bereichAnmerkungenUnter('lang.txt', 7, 3, 7, ['netto']);
+  });
+
+  test('soll nebeneinander markieren und die Anmerkung unter ihrem Ende zeigen', async ({ anm }) => {
+    await anm.starten({ vorbereitung: 'Repo R (Bereich)' });
+    await anm.dateiAnsehen('lang.txt');
+    await anm.anordnungWaehlen('nebeneinander');
+
+    await anm.bereichAnnotieren('lang.txt', 3, 7, 'zweispaltig');
+
+    await anm.markiert([3, 4, 5, 6, 7]);
+    await anm.bereichAnmerkungenUnter('lang.txt', 7, 3, 7, ['zweispaltig']);
+  });
+});
+
 test.describe('Grenzen der Auswahl (Szenario 2)', () => {
   test('soll über einen Abschnitt hinweg keinen Bereich bilden und es sagen (z05 bis z25)', async ({ anm }) => {
     await anm.starten({ vorbereitung: 'Repo R (Bereich)' });

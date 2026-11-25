@@ -110,6 +110,7 @@ function annotierSprache(gr, page) {
 
     /* ── Bereich (R00031) ── */
     bereichFeldname,
+    anordnungWaehlen: wert => anmerkungSeite.anordnungWaehlen(page, wert),
     bereichWaehlen: (von, bis) => anmerkungSeite.bereichWaehlen(page, von, bis),
     bereichZiehen: (von, bis) => anmerkungSeite.bereichZiehen(page, von, bis),
     markiert: nummern => anmerkungSeite.pruefeMarkiert(page, nummern),
