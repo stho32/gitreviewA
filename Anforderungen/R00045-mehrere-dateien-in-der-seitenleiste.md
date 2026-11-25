@@ -46,6 +46,11 @@ Vorbereitung: Ordner D aus `user-stories/R00043.md`, dazu `001.sql`, `002.sql`, 
 - [ ] 5. Gegeben drei Dateien und die Antwort für `002.sql` um 1,5 s verzögert, wenn man `002.sql` und sofort `001.sql` wählt, dann steht am Ende `001.sql` da, nicht die späte Antwort; eine Markierung in `001.sql` ist nach `j`/`k` zurück nicht mehr da, der ausgeschaltete Umbruch bleibt aus. *Ebene: Playwright (verzögerte Antwort über `route`, Browser-Eigenes).*
 - [ ] 6. Gegeben 50 Dateien mit Namen von je 120 Zeichen, dann scrollt die Seitenleiste für sich, jeder Name steht einzeilig gekürzt, Kopf und Inhalt bleiben an Ort und Höhe; ein Name mit U+202E steht als `⟨U+202E⟩`. *Ebene: Playwright (Darstellung, DOM-Sicherheit).*
 
+### Angriffsmatrix (security-reviewer, vor dem Bau; Matrix `Dokumentation/Sicherheit/angriffsmatrix-dateiansicht.md`)
+
+- [ ] 7. Gegeben 50 Angaben zu je 8 MiB (Dateien und/oder Commitquellen), wenn man startet, dann bricht das Lesen ab, sobald die Summe (32 MiB) überschritten ist (gelesene Bytes ≤ 32 MiB + 8 MiB + 1, nicht 400 MiB), „zusammen zu groß (über 32 MiB)“ steht auf stderr, Exit 2. *Ebene: Integration (Zähler, G4). Matrix L10.*
+- [ ] 8. Gegeben mehrere Angaben, von denen eine beim Lesen eine Ausnahme auslöst (EIO über `/proc/self/mem`, verschwundene Datei), wenn man startet, dann Exit 2 mit genau einer auf 400 Zeichen gekürzten `FEHLER [Dateiansicht]`-Grundzeile je fehlerhafter Angabe, kein Stacktrace, nie Exit 1 oder 134. *Ebene: Prozess (P8, P9, X8). Matrix L14.*
+
 Grenz- und Leerfälle bedacht: 50/51 und 32 MiB genau/+1 (3), eine Angabe (Liste mit einer Zeile, R00043 gilt), doppelte Angabe (4), alle Angaben fehlerhaft (2 mit nur Fehlern, ein Test beim Bauen). Verworfen: fehlerhafte Angaben in der Liste mit Grund zeigen und die übrigen öffnen (entschieden, PO Zeile 203: ganzer Start abgelehnt, Exit 2).
 
 **Pflichtpunkte der Detailplanung**: 1 Grenzen — Kriterien 3, 6 (Anzahl, Summe, Namenslänge, stderr je Angabe); 2 Anzeigeverfahren — Wechsel unter Umbruch an (Standard) und aus (Kriterium 5), zugeklappte Datei in der Liste wie R00043; 3 festes Layout — Kriterium 6 (Seitenleiste ist Rollbereich, Namen einzeilig); 4 Ausführungsort — Startgründe stderr, Wählen nur Browser; 5 eine Stelle — die Quellenliste mit ihrer Nummer (Kriterien 1, 4: Liste, Endpunkt, Kopf, Kürzel).
