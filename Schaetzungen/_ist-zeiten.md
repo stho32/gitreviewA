@@ -60,3 +60,4 @@ Nie vom User erfragen.
 | 2026-11-25 | R00022 Datei annotieren | Nacharbeit Code-Review: B1 „Datei anmerken“ im Meldungszustand, B2 offenes Feld übersteht das Neuzeichnen | Bug-Fix | – | 0,25h | – | autonom |
 | 2026-11-25 | R00022 Datei annotieren | Nacharbeit Security-Review: Sperre/Stapel/Netto/Ergebnis vergleichen den Anzeigenamen | Bug-Fix | – | 0,2h | – | autonom |
 | 2026-11-25 | R00028 Nächste ungeprüfte Datei | Nacharbeit I0025 S6: ausgeblendete Dateien überspringen (Test zuerst) | Bug-Fix | – | 0,4h | – | autonom |
+| 2026-11-25 | R00024 Umbenennung, Bild, Binärdatei | Nacharbeit Code-Review: B1 kurzer RIFF-Kopf, B2 Bildart vor der Größe, S3 Bild in „Zusammen“ | Bug-Fix | – | 0,3h | – | autonom |
