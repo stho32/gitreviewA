@@ -110,5 +110,15 @@
     return 1;
   }
 
-  Object.assign(ziel, { summeText, zahlenText, groessteAenderung, balkenTeile, sichtbarerName, flacheZeilen, baumZeilen });
+  /** Flache oder Baum-Zeilen aus der Sicht (R00029, B2802): beide Darstellungen aus **derselben** sichtbaren Liste; ein Ordner,
+      in dem nach dem Ausblenden keine sichtbare Datei mehr steht (auch in keinem Unterordner), verschwindet samt Zeile. */
+  function sichtbareZeilen(sicht, darstellung) {
+    const dateien = sicht.sichtbare.map(eintrag => eintrag.datei);
+    if (darstellung === 'baum') {
+      return baumZeilen(dateien);
+    }
+    return flacheZeilen(dateien);
+  }
+
+  Object.assign(ziel, { summeText, zahlenText, groessteAenderung, balkenTeile, sichtbarerName, flacheZeilen, baumZeilen, sichtbareZeilen });
 })(typeof module !== 'undefined' ? module.exports : window);

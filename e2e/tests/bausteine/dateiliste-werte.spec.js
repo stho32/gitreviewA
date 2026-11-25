@@ -1,7 +1,7 @@
 'use strict';
 // Bausteintests (ohne Browser) der reinen Funktionen der Dateiliste: Summe, Zahlen, Balken, flache und Baum-Zeilen.
 const { test, expect } = require('@playwright/test');
-const { summeText, zahlenText, groessteAenderung, balkenTeile, flacheZeilen, baumZeilen } = require('../../../src/GitReviewA/web/dateiliste-werte.js');
+const { summeText, zahlenText, groessteAenderung, balkenTeile, flacheZeilen, baumZeilen, sichtbareZeilen } = require('../../../src/GitReviewA/web/dateiliste-werte.js');
 
 const datei = (pfad, plus = 1, minus = 0, status = 'A') => ({ status, pfad, alterPfad: null, plus, minus });
 const binaer = pfad => ({ status: 'A', pfad, alterPfad: null, plus: null, minus: null });
@@ -57,6 +57,45 @@ test.describe('Baustein Dateiliste-Werte', () => {
     const dateizeile = baumZeilen(dateien).find(zeile => zeile.art === 'datei');
 
     expect(dateizeile.datei).toBe(dateien[0]);
+  });
+
+  test('soll flach und Baum aus derselben Sicht bauen und Ordner ohne sichtbare Datei weglassen (R00029, B2802)', () => {
+    const readme = datei('README.md');
+    const a = datei('src/a.txt');
+    const api = datei('src/generated/api.cs');
+    const sicht = { sichtbare: [{ datei: readme }, { datei: a }, { datei: api }] };
+
+    const flach = sichtbareZeilen(sicht, 'flach').map(zeile => `${zeile.art}:${zeile.name}`);
+    const baum = sichtbareZeilen(sicht, 'baum').map(zeile => `${zeile.art}:${'  '.repeat(zeile.tiefe)}${zeile.name}`);
+
+    expect(flach).toEqual(['datei:README.md', 'datei:src/a.txt', 'datei:src/generated/api.cs']);
+    expect(baum).toEqual(['ordner:src', 'ordner:  generated', 'datei:    api.cs', 'datei:  a.txt', 'datei:README.md']);
+  });
+
+  test('soll einen Ordner, dessen alleinige Datei ausgeblendet ist, samt Zeile weglassen', () => {
+    const readme = datei('README.md');
+    const log = datei('build/out.log');
+    const sicht = { sichtbare: [{ datei: readme }] };
+
+    const baum = sichtbareZeilen(sicht, 'baum').map(zeile => `${zeile.art}:${'  '.repeat(zeile.tiefe)}${zeile.name}`);
+
+    expect(baum).toEqual(['datei:README.md']);
+    expect(sichtbareZeilen(sicht, 'flach').map(zeile => zeile.name)).toEqual(['README.md']);
+    expect(log.pfad).toBe('build/out.log');
+  });
+
+  test('soll einen Ordner mit mindestens einer sichtbaren Datei zeigen und die ausgeblendete weglassen', () => {
+    const a = datei('src/a.txt');
+    const sicht = { sichtbare: [{ datei: a }] };
+
+    const baum = sichtbareZeilen(sicht, 'baum').map(zeile => `${zeile.art}:${'  '.repeat(zeile.tiefe)}${zeile.name}`);
+
+    expect(baum).toEqual(['ordner:src', 'datei:  a.txt']);
+  });
+
+  test('soll eine leere Sicht als leere Liste und leeren Baum liefern', () => {
+    expect(sichtbareZeilen({ sichtbare: [] }, 'flach')).toEqual([]);
+    expect(sichtbareZeilen({ sichtbare: [] }, 'baum')).toEqual([]);
   });
 
   test('soll richtungsändernde Zeichen in Pfaden flach und im Baum als Marke zeigen und den Pfad der Datei roh lassen', () => {

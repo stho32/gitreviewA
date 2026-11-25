@@ -174,21 +174,18 @@
       meldeGezeichnet();
       return;
     }
-    const sichtbar = sichtbareListe(zustand.dateien);
+    const sicht = sichtVon(zustand.dateien);
     ansicht.meldungElement.textContent = '';
     ansicht.meldungElement.classList.remove('fehler');
     ansicht.summeElement.textContent = summeText(zustand.dateien);
-    if (sichtbar.length === 0) {
+    if (sicht.sichtbare.length === 0) {
       ansicht.meldungElement.textContent = 'Alle Dateien ausgeblendet';
       ansicht.zeilenElement.replaceChildren();
       meldeGezeichnet();
       return;
     }
     const groesste = groessteAenderung(zustand.dateien);
-    let zeilen = flacheZeilen(sichtbar);
-    if (zustand.darstellung === 'baum') {
-      zeilen = baumZeilen(sichtbar);
-    }
+    const zeilen = sichtbareZeilen(sicht, zustand.darstellung);
     const sammelElement = document.createDocumentFragment();
     for (const zeile of zeilen) {
       sammelElement.append(listeneintragElement(zeile, groesste));
@@ -197,12 +194,13 @@
     meldeGezeichnet();
   }
 
-  /** Ausblenden ist eine Sicht (R00025): nur die Anzeige filtert, die Auswahl bleibt vollständig. */
-  function sichtbareListe(dateien) {
-    if (!window.gitreviewaAusblenden) {
-      return dateien;
+  /** Die Sicht auf die gezeigte Liste (R00029): Muster (R00025) und Abgehakte (Schalter). Ohne den Baustein bleibt es beim Muster-Abgleich. */
+  function sichtVon(dateien) {
+    if (window.gitreviewaAbgehakte) {
+      return window.gitreviewaAbgehakte.sicht(dateien, zustand.modus, zustand.commit);
     }
-    return window.gitreviewaAusblenden.sichtbare(dateien);
+    const sichtbar = window.gitreviewaAusblenden ? window.gitreviewaAusblenden.sichtbare(dateien) : dateien;
+    return { sichtbare: sichtbar.map(datei => ({ datei })), ausgeblendetAbgehakt: 0, ausgeblendetMuster: 0 };
   }
 
   function meldeGezeichnet() {
