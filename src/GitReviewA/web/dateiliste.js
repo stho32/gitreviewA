@@ -184,7 +184,9 @@
     ansicht.meldungElement.classList.remove('fehler');
     ansicht.summeElement.textContent = summeText(zustand.dateien);
     if (sicht.sichtbare.length === 0) {
-      ansicht.meldungElement.textContent = 'Alle Dateien ausgeblendet';
+      ansicht.meldungElement.textContent = window.gitreviewaAbgehakteWerte
+        ? window.gitreviewaAbgehakteWerte.meldung(0, zustand.dateien.length)
+        : 'Alle Dateien ausgeblendet';
       ansicht.zeilenElement.replaceChildren();
       meldeGezeichnet();
       return;

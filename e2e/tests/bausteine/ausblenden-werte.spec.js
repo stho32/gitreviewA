@@ -2,7 +2,7 @@
 // Bausteintests (ohne Browser) des reinen Ausblend-Bausteins: Glob-Abgleich, Ausgeblendete je Liste, Zählertext, Musterprüfung (R00025, B2403).
 const { test, expect } = require('@playwright/test');
 const {
-  passt, sichtbareDateien, anzahlAusgeblendet, zaehlertext, musterFehler,
+  passt, sichtbareDateien, anzahlAusgeblendet, musterFehler,
 } = require('../../../src/GitReviewA/web/ausblenden-werte.js');
 
 const datei = pfad => ({ status: 'A', pfad, alterPfad: null, plus: 1, minus: 0 });
@@ -68,13 +68,6 @@ test.describe('Baustein Ausblenden-Werte', () => {
     expect(sichtbar.map(d => d.pfad)).toEqual(['README.md', 'docs/README.md']);
     expect(anzahlAusgeblendet(dateien, ['*.lock', 'build/**'])).toBe(2);
     expect(anzahlAusgeblendet(dateien, [])).toBe(0);
-  });
-
-  test('soll den Zählertext mit Anteil je Grund bilden und bei 0 nichts zeigen', () => {
-    expect(zaehlertext(0, 0)).toBe('');
-    expect(zaehlertext(1, 1)).toBe('1 ausgeblendet, davon 1 Muster');
-    expect(zaehlertext(1000, 1000)).toBe('1000 ausgeblendet, davon 1000 Muster');
-    expect(zaehlertext(3, 0)).toBe('3 ausgeblendet');
   });
 
   test('soll ein Muster im Feld nach derselben Regel prüfen', () => {

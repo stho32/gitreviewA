@@ -17,8 +17,11 @@
       zustand.dateien = ereignis.detail.dateien;
       zustand.modus = ereignis.detail.modus;
       zustand.commit = ereignis.detail.commit;
+      zeichneZaehler();
       zeichneHinweis();
     });
+    document.addEventListener('haken-stand-geladen', meldeGeaendert);
+    document.addEventListener('haken-geaendert', meldeGeaendert);
     document.addEventListener('datei-gewaehlt', ereignis => {
       zustand.gewaehlterPfad = ereignis.detail.pfad;
       zeichneHinweis();
@@ -34,7 +37,21 @@
       return;
     }
     zustand.an = an;
+    meldeGeaendert();
+  }
+
+  /** Eine Änderung an Haken-Stand oder Schalter rechnet die Sicht neu; die Liste zeichnet `dateiliste.js` neu und meldet es. */
+  function meldeGeaendert() {
     document.dispatchEvent(new CustomEvent('abgehakte-geaendert'));
+  }
+
+  /** Der Zähler im Kopf nennt beide Anteile (R00025/R00029); bei 0 Ausgeblendeten steht kein Zusatz. */
+  function zeichneZaehler() {
+    const element = document.querySelector('#kopf-fortschritt .ausblenden-zaehler');
+    if (!element) {
+      return;
+    }
+    element.textContent = werte().zaehlertext(sicht(zustand.dateien, zustand.modus, zustand.commit));
   }
 
   /** Die Sicht auf die gezeigte Liste: je Muster (R00025) und je Haken (nur bei eingeschaltetem Schalter) ausgeblendet. */

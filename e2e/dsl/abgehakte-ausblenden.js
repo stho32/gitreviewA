@@ -41,12 +41,16 @@ function sprache(gr, page) {
     const angelegt = repoAnlegen(gr, vorbereitung);
     repo = angelegt.repo;
     namen = angelegt.namen;
-    const auswahl = (commits || namen).map(name => repo.hashes[name] ?? repo.hash);
+    const auswahl = (commits || namen).map(name => hash(name));
     lauf = await gr.gitreviewAStarten({ ordner: repo.ordner }, auswahl, { zusatz });
     if (page) {
       await gr.oberflaecheOeffnen(page, lauf, modus);
     }
     return lauf;
+  }
+
+  function hash(name) {
+    return (repo.hashes ? repo.hashes[name] : undefined) ?? repo.hash;
   }
 
   async function dateinamen() {
@@ -61,8 +65,8 @@ function sprache(gr, page) {
 
   return {
     starten,
-    hash: name => (repo.hashes[name] ?? repo.hash),
-    kurz: name => (repo.hashes[name] ?? repo.hash).slice(0, 7),
+    hash: name => (repo.hashes ? repo.hashes[name] : undefined) ?? repo.hash,
+    kurz: name => hash(name).slice(0, 7),
     dateinamen,
     ordnernamen,
     /** Die Namen der Dateizeilen in Anzeigereihenfolge oder im Baum (Ordnerzeilen mit `ordner:` gekennzeichnet). */

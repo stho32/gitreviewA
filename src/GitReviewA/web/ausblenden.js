@@ -4,14 +4,10 @@
 (function () {
   'use strict';
 
-  const zustand = { muster: [], dateien: [] };
+  const zustand = { muster: [] };
 
   function init() {
     const ansicht = ansichtElemente();
-    document.addEventListener('dateiliste-gezeichnet', ereignis => {
-      zustand.dateien = ereignis.detail.dateien;
-      zeichneZaehler(ansicht);
-    });
     ansicht.eingabeElement.addEventListener('keydown', ereignis => beiTasteEingabe(ansicht, ereignis));
     ansicht.musterElement.addEventListener('click', ereignis => entfernePerKlick(ansicht, ereignis));
     ladeMuster(ansicht);
@@ -22,7 +18,6 @@
       eingabeElement: document.getElementById('ausblenden-eingabe'),
       musterElement: document.getElementById('ausblenden-muster'),
       fehlerElement: document.getElementById('ausblenden-fehler'),
-      zaehlerElement: document.querySelector('#kopf-fortschritt .ausblenden-zaehler'),
     };
   }
 
@@ -104,11 +99,6 @@
     entfernenElement.textContent = 'Entfernen';
     eintragElement.append(textElement, entfernenElement);
     return eintragElement;
-  }
-
-  function zeichneZaehler(ansicht) {
-    const unsichtbare = anzahlAusgeblendet(zustand.dateien, zustand.muster);
-    ansicht.zaehlerElement.textContent = zaehlertext(unsichtbare, unsichtbare);
   }
 
   function meldeGeaendert() {

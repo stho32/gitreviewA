@@ -21,17 +21,6 @@
     return dateien.length - sichtbareDateien(dateien, muster).length;
   }
 
-  /** „n ausgeblendet, davon b Muster“; ohne Ausgeblendete kein Zähler, ein Anteil von 0 wird weggelassen. */
-  function zaehlertext(anzahl, musterAnteil) {
-    if (anzahl === 0) {
-      return '';
-    }
-    if (musterAnteil === 0) {
-      return `${anzahl} ausgeblendet`;
-    }
-    return `${anzahl} ausgeblendet, davon ${musterAnteil} Muster`;
-  }
-
   /** Prüft ein Muster im Feld nach derselben Regel wie der Aufruf (Länge, Zeichen, Anzahl); `null`, wenn gültig. */
   function musterFehler(text, anzahlBisher) {
     const hoechsteLaenge = 200;
@@ -222,5 +211,5 @@
     return teil.bereiche.some(bereich => code >= bereich[0] && code <= bereich[1]);
   }
 
-  Object.assign(ziel, { passt, sichtbareDateien, anzahlAusgeblendet, zaehlertext, musterFehler });
+  Object.assign(ziel, { passt, sichtbareDateien, anzahlAusgeblendet, musterFehler });
 })(typeof module !== 'undefined' ? module.exports : window);
