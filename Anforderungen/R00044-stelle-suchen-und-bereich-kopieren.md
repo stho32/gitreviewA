@@ -48,6 +48,11 @@ Vorbereitung: Ordner D aus `user-stories/R00043.md`, dazu `mig.sql` (`user-stori
 - [ ] 5. Gegeben `breit.sql` aus Ordner D (eine Zeile, 50 000 Zeichen) und die Zeile 1 markiert, wenn man sie kopiert, dann sind es 50 000 Zeichen plus LF, nicht die gezeigten 10 000. *Ebene: Unit (Ausschnitt) und Playwright.*
 - [ ] 6. Gegeben `mig.sql`, wenn man `/` drückt und `Teil 4` sucht, dann steht „1 von 1“ und Zeile 4 ist im Blick; markiert man danach 4–4 und schaltet den Umbruch aus und wieder an, bleibt die Markierung. Gegeben `trojan.sql`, dann findet die Suche `⟨U+202E⟩`. *Ebene: Playwright (Suche, Browser-Eigenes).*
 
+### Angriffsmatrix (security-reviewer, vor dem Bau; Matrix `Dokumentation/Sicherheit/angriffsmatrix-dateiansicht.md`)
+
+- [ ] 7. Gegeben `cr.sql` mit einem einzelnen CR ohne LF in einer markierten Zeile (`-- harmlos` + CR + `DROP TABLE x;`), wenn man den Bereich kopiert, dann enthält die Zwischenablage das CR byte-gleich (kein LF daraus, keine Marke); die Anzeige bleibt wie in R00043 (Marke `⟨U+000D⟩`, kein Zeilenende). *Ebene: Unit (Ausschnitt) und Playwright (Zwischenablage). Matrix L4.*
+- [ ] 8. Gegeben `breit.sql` (eine Zeile, 50 000 Zeichen; ein Suchbegriff steht nur jenseits Zeichen 10 000), wenn man sucht, dann nennt die Suche den Treffer im nur gekürzt gezeigten Teil (gesucht wird über den vollen Text der Zeile, nicht nur über die gezeigten 10 000 Zeichen). *Ebene: Unit (Suchzählung) und Playwright. Matrix L5, Entscheidung E3.*
+
 Grenz- und Leerfälle bedacht: einzeiliger Bereich (1), letzte Zeile ohne Zeilenende (2), lange Zeile (5), leere Datei (keine Zeile, nichts zu markieren — kein eigenes Kriterium), zugeklappte Datei (Markieren erst nach „Trotzdem laden“, ein Test beim Bauen). Verworfen: Bereich über das Neuladen behalten (Seitenzustand, Vision „Nichts wird gespeichert“).
 
 **Pflichtpunkte der Detailplanung**: 1 Grenzen — Kriterien 1, 5 und die Suchgrenzen aus R00027; 2 Anzeigeverfahren — ganze Datei mit Umbruch an (Standard) und aus (Kriterium 6), zugeklappt (Grenzfall); 3 festes Layout — „Zeilen 3–5 markiert“ und „Bereich kopieren“ stehen in der einzeiligen Werkzeugleiste, die Bestätigung ersetzt die vorige Meldung (keine wachsende Liste); 4 Ausführungsort — nur Browser; 5 eine Stelle — das Kopierziel (Kriterien 2–4: Knopf, `y`, Strg+C, Ersatzweg nutzen dieselbe Funktion wie „Datei kopieren“ aus R00043).
