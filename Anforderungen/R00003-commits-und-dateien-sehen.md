@@ -28,7 +28,7 @@ Bevor der Mensch einen Diff liest, muss er wissen, was die KI überhaupt angefas
 - Ein Commit ist gewählt (hervorgehoben); beim Start ist es der erste der Leiste. Ein Klick auf einen anderen Commit wählt ihn.
 - Rechts zeigt die Dateiliste des gewählten Commits je Datei: Statusbuchstabe `A`, `M`, `D` oder `R`, den Pfad und die `+`-/`−`-Zahlen mit Balken; über der Liste steht die Summe (`<n> Dateien · +<x> −<y>`).
 - Dateiliste wahlweise flach (ein Eintrag je Datei mit vollem Pfad, Reihenfolge wie `git` sie liefert) oder als Baum (Ordner als eingerückte Zeilen, darunter ihre Dateien; Ordner vor Dateien, je alphabetisch ohne Beachtung der Groß-/Kleinschreibung). Beim Start flach; die Wahl bleibt beim Wechsel des Commits erhalten.
-- Eine umbenannte Datei trägt `R` und ihren neuen Pfad (der alte Pfad und die Darstellung der Umbenennung gehören zu I0012). Eine Binärdatei trägt ihren Status und statt der Zahlen einen Strich; sie zählt nicht in die Summe (das Bild und die Darstellung gehören zu I0012). Jeder andere Status von `git` (etwa Typwechsel) erscheint als `M`.
+- Eine umbenannte Datei trägt `R` und ihren neuen Pfad (der alte Pfad und die Darstellung der Umbenennung gehören zu I0012). Eine Binärdatei trägt ihren Status und statt der Zahlen das Wort „binär“; sie zählt nicht in die Summe (das Bild und die Darstellung gehören zu I0012). Jeder andere Status von `git` (etwa Typwechsel) erscheint als `M`.
 - Ein Klick auf eine Datei wählt sie (hervorgehoben, genau eine je Ansicht); Wechsel des Commits hebt die Wahl auf. Die Wahl ist ein benannter Zustand der Oberfläche (Commit, Pfad), an den I0006 anschließt.
 - Die Dateiliste eines Commits wird erst bei seiner Auswahl gelesen (ein Lesevorgang je gewähltem Commit), nicht für alle vorab.
 - Ein Commit ohne Dateien zeigt „Keine Dateien geändert“; kann die Dateiliste nicht gelesen werden, zeigt die Dateiliste eine Fehlermeldung, die Commit-Leiste bleibt bedienbar.
@@ -53,7 +53,7 @@ Vorbereitung (herstellbar mit `git` allein, Wegwerf-Repo): Commit `p` „Start�
 
 ### Dateiliste
 - [ ] Gegeben der Aufruf `gitreviewA p q r`, wenn die Seite geladen ist, dann ist `p` gewählt, und die Dateiliste zeigt in dieser Reihenfolge 4 Einträge `A` (`README.md` +2 −0, `alt.txt` +4 −0, `src/a.txt` +3 −0, `src/b.txt` +2 −0) mit der Summe „4 Dateien · +11 −0“.
-- [ ] Gegeben dasselbe, wenn man auf `q` klickt, dann zeigt die Liste 4 Einträge (Reihenfolge nicht festgelegt): `M` `src/b.txt` +2 −1, `D` `alt.txt` +0 −4, `R` `LIESMICH.md` +0 −0, `A` `logo.bin` mit einem Strich statt der Zahlen, und die Summe „4 Dateien · +2 −5“ (Rechnung: +2 +0 +0 +0 = 2 hinzugefügt, −1 −4 −0 = 5 entfernt; die Binärdatei zählt nicht).
+- [ ] Gegeben dasselbe, wenn man auf `q` klickt, dann zeigt die Liste 4 Einträge (Reihenfolge nicht festgelegt): `M` `src/b.txt` +2 −1, `D` `alt.txt` +0 −4, `R` `LIESMICH.md` +0 −0, `A` `logo.bin` mit dem Wort „binär“ statt der Zahlen, und die Summe „4 Dateien · +2 −5“ (Rechnung: +2 +0 +0 +0 = 2 hinzugefügt, −1 −4 −0 = 5 entfernt; die Binärdatei zählt nicht).
 - [ ] Gegeben `r` (leerer Commit), wenn man auf `r` klickt, dann steht in der Dateiliste „Keine Dateien geändert“ statt einer leeren Fläche.
 - [ ] Gegeben ein Commit mit den Dateien `ä ö.txt` und `<b>fett</b>.txt` (je 1 hinzugefügte Zeile), wenn man ihn wählt, dann stehen beide Pfade mit Umlauten und spitzen Klammern als sichtbarer Text da (nicht in Anführungszeichen mit Oktalcodes, nicht fett), jeweils `A` +1 −0.
 - [ ] Gegeben `q` gewählt, wenn man auf „Baum“ umschaltet, dann zeigt die Liste in dieser Reihenfolge: den Ordner `src` mit `b.txt` eingerückt darunter (ohne `src/` im Namen), danach auf oberster Ebene `alt.txt`, `LIESMICH.md`, `logo.bin`; schaltet man auf „flach“ zurück, stehen wieder die vollen Pfade; wählt man danach `p`, bleibt die zuletzt gewählte Darstellung erhalten.
@@ -110,7 +110,7 @@ Nach `~/.claude/skills/test-pyramide/SKILL.md`: User-Story-Szenarien werden Test
 - Abhängig von: I0001 Mit Commit-Hashes aufrufen (R00001; Gerüst, Commit-Liste, Wegwerf-Repo-Hilfsklasse, E2E-Gerüst) — Karte #1 gerade im Bau, rot bis dahin.
 - Blockiert: I0006 Diff einer Datei lesen (braucht die Dateiwahl), I0013 Ausblenden und Suchen.
 
-Nicht Teil dieser Anforderung (eigene Karten): Diff (I0006), Abhaken (I0016), Ausblenden und Suchen in der Dateiliste (I0013), Darstellung von Umbenennung mit altem Pfad, Bildern und Binärdateien (I0012; hier nur der Buchstabe `R` und der Strich), Tastaturbedienung (I0015), Zusammen-Ansicht über alle Commits (I0010).
+Nicht Teil dieser Anforderung (eigene Karten): Diff (I0006), Abhaken (I0016), Ausblenden und Suchen in der Dateiliste (I0013), Darstellung von Umbenennung mit altem Pfad, Bildern und Binärdateien (I0012; hier nur der Buchstabe `R` und das Wort „binär“), Tastaturbedienung (I0015), Zusammen-Ansicht über alle Commits (I0010).
 
 ## Offene Fragen
 1. An den product-owner: Ist die **Vorwahl des ersten Commits** beim Start gewollt (Empfehlung: ja — spart einen Klick, kostet einen Lesevorgang)?
@@ -152,3 +152,9 @@ Gewählt: 1.
 - Option 3: der Server liefert eine flache Liste, der Baum ist reine Darstellung.
 - Schnitt in „Leiste“ und „Dateiliste“ als zwei Slices: die Dateiliste ist ohne Auswahl in der Leiste nicht prüfbar, und die Leiste allein liefert gegenüber R00001 nur Autor und Datum — nach Schichten geschnitten. Als erste Schnittstelle, falls der Slice im Bau zu groß wird: die **Baumdarstellung** als Ausbaustufe (dasselbe Verhalten reifer, für sich auslieferbar).
 - Typischer Dateiwechsel ≤ 200 ms als E2E-Kriterium: im Browser-Test nicht belastbar messbar; nur die Obergrenze ≤ 1 s ist Kriterium.
+
+## Änderungshistorie
+
+| Datum | Änderung | Grund |
+|---|---|---|
+| 2026-11-25 | Binärdatei in der Dateiliste: „einen Strich“ → das Wort „binär“ (Funktionale Anforderung Z. 31, Kriterium Z. 56, „Nicht Teil dieser Anforderung“ Z. 113); das Kriterium wird rot, bis I0012 (B2302) es baut | Entscheidung des product-owner 2026-11-25 (`AI-Team/po-entscheidungen.md`, Zeilen 129–134, Commit 2373651): das Wort sagt, warum die Zahlen fehlen, und bleibt ohne Farbe lesbar; ein Strich liest sich als „0“ |
