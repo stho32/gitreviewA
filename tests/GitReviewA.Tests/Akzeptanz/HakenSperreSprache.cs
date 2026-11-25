@@ -39,6 +39,12 @@ internal sealed class HakenSperreSprache
         return treiber.LegeAn(repo.Hash(commit), datei, zeile, "Prüfen");
     }
 
+    /// <summary>Eine Dateianmerkung anlegen: derselbe Request ohne `zeile` (R00022).</summary>
+    public Anlegeantwort AnnotiereDatei(string commit, string datei, string text)
+    {
+        return treiber.LegeAnAlsDatei(repo.Hash(commit), datei, text);
+    }
+
     /// <summary>„Nummer. Datei:Zeile“ je Anmerkung.</summary>
     public string[] Anmerkungen()
     {

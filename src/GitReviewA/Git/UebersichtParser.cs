@@ -38,10 +38,10 @@ internal static class UebersichtParser
     private static List<Uebersichtsstelle> StellenDesCommits(string hash, Dateiaenderungen dateienDesCommits)
     {
         var stellen = new List<Uebersichtsstelle>(dateienDesCommits.Anzahl);
-        foreach (var datei in dateienDesCommits)
+        var faelle = Namenspruefung.FaelleJeDatei(dateienDesCommits);
+        for (var stelle = 0; stelle < dateienDesCommits.Anzahl; stelle++)
         {
-            var fall = Namenspruefung.Pruefe(dateienDesCommits, datei.Pfad).Fall;
-            stellen.Add(new Uebersichtsstelle(new Stelle(hash, datei.Pfad), Sperrgruende.Aus(fall)));
+            stellen.Add(new Uebersichtsstelle(new Stelle(hash, dateienDesCommits[stelle].Pfad), Sperrgruende.Aus(faelle[stelle])));
         }
         return stellen;
     }

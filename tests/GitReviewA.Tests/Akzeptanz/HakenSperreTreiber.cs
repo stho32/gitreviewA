@@ -72,6 +72,17 @@ internal sealed class HakenSperreTreiber
 
     public Anlegeantwort LegeAn(string commit, string datei, int zeile, string text)
     {
+        return LegeAn(commit, datei, (int?)zeile, text);
+    }
+
+    /// <summary>Eine Dateianmerkung anlegen: derselbe Request ohne `zeile` (R00022).</summary>
+    public Anlegeantwort LegeAnAlsDatei(string commit, string datei, string text)
+    {
+        return LegeAn(commit, datei, null, text);
+    }
+
+    private Anlegeantwort LegeAn(string commit, string datei, int? zeile, string text)
+    {
         var ergebnis = annotieren.LegeAn(new NeueAnmerkung(commit, datei, zeile, text));
         switch (ergebnis.Ausgang)
         {
