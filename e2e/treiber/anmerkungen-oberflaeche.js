@@ -6,6 +6,9 @@ const ROLLBEREICH = '#diff .df-sc';
 const DIFFZEILE = '#diff .dz tr[data-art]';
 const ANMERKUNGSZEILE = '#diff .dz tr.anm';
 const FELDZEILE = '#diff .dz tr.anm-feld, #diff .dz tr.anm-aendern';
+const DATEI_ANMERKUNGSZEILE = '#diff .anm-datei tr.anm';
+const DATEI_KNOPF = '#diff .diff-datei-anmerken';
+const DATEI_KNOPF_BUTTON = '#diff .datei-anmerken';
 const HINWEIS_ENTFERNT = '#diff .anmerkung-hinweis';
 const HINWEIS_AUSSERHALB = '#diff .anmerkungen-ausserhalb';
 const ANLEGEN = '**/api/anmerkungen';
@@ -134,6 +137,54 @@ async function pruefeAnmerkungenUnter(page, ziel, erwartet) {
 
 async function pruefeAnzahlAnmerkungszeilen(page, anzahl) {
   await expect(page.locator(ANMERKUNGSZEILE)).toHaveCount(anzahl);
+}
+
+/* ── Dateianmerkungen über den Diff-Zeilen (R00022) ── */
+
+/** Die Dateianmerkungen über den Diff-Zeilen: je Eintrag Text und Stelle, in Reihenfolge. */
+async function dateianmerkungenOben(page) {
+  return page.locator(DATEI_ANMERKUNGSZEILE).evaluateAll(zeilen => zeilen.map(zeile => ({
+    text: zeile.querySelector('.anm-text').textContent,
+    stelle: zeile.querySelector('.anm-stelle').textContent,
+  })));
+}
+
+async function pruefeDateianmerkungenOben(page, erwartet) {
+  await expect.poll(() => dateianmerkungenOben(page), 'Dateianmerkungen über den Diff-Zeilen').toEqual(erwartet);
+}
+
+async function pruefeKeineDateianmerkung(page) {
+  await expect(page.locator(DATEI_ANMERKUNGSZEILE)).toHaveCount(0);
+}
+
+async function anzahlDateianmerkungen(page, anzahl) {
+  await expect(page.locator(DATEI_ANMERKUNGSZEILE)).toHaveCount(anzahl);
+}
+
+/** Die Dateianmerkungen stehen im Dokument über den Diff-Zeilen und auf dem Bildschirm über der ersten (Positivkontrolle). */
+async function pruefeDateianmerkungUeberDenZeilen(page) {
+  const obenImDokument = await page.evaluate(() => {
+    const block = document.querySelector('#diff .anm-datei');
+    const ersteZeile = document.querySelector('#diff .dz tr[data-art]');
+    return Boolean(block && ersteZeile && (block.compareDocumentPosition(ersteZeile) & Node.DOCUMENT_POSITION_FOLLOWING));
+  });
+  expect(obenImDokument, 'Dateianmerkung im Dokument vor der ersten Diff-Zeile').toBe(true);
+  const block = await page.locator('#diff .anm-datei').boundingBox();
+  const ersteZeile = await page.locator('#diff .dz tr[data-art]').first().boundingBox();
+  expect(block.y + block.height, 'auf dem Bildschirm über der ersten Diff-Zeile').toBeLessThanOrEqual(ersteZeile.y + 1);
+}
+
+/** Der Knopf „Datei anmerken“ im Diff-Kopf (sichtbar nur, wenn ein Diff gezeichnet ist). */
+async function dateiAnmerken(page) {
+  await page.locator(DATEI_KNOPF_BUTTON).click();
+}
+
+async function pruefeDateiKnopfSichtbar(page) {
+  await expect(page.locator(DATEI_KNOPF)).toBeVisible();
+}
+
+async function pruefeDateiKnopfVerborgen(page) {
+  await expect(page.locator(DATEI_KNOPF)).toBeHidden();
 }
 
 /** Positiv geprüft: die Anmerkungszeilen tragen keine Merkmale einer Diff-Zeile und keine Zeilenklassen der Färbung. */
@@ -448,6 +499,7 @@ async function pruefeLoeschenFrei(page, nummer) {
 module.exports = {
   zeileAnklicken, zeileDoppeltAnklicken, zeileImAbschnittAnklicken, pruefeAnmerkungenUnterImAbschnitt, pruefeAnzahlFelder, pruefeFeldtext, pruefeFeldOffenMitFokus, textSchreiben, speichern, zweimalSpeichern, pruefeFeldZu, pruefeKeinFeld, pruefeFeldmeldung,
   pruefeAnmerkungenUnter, pruefeAnzahlAnmerkungszeilen, pruefeAnmerkungszeilenSindKeineDiffzeilen,
+  dateianmerkungenOben, pruefeDateianmerkungenOben, pruefeKeineDateianmerkung, anzahlDateianmerkungen, pruefeDateianmerkungUeberDenZeilen, dateiAnmerken, pruefeDateiKnopfSichtbar, pruefeDateiKnopfVerborgen,
   pruefeHinweisEntfernt, pruefeKeinHinweisEntfernt, pruefeHinweisAusserhalb, pruefeKeinHinweisAusserhalb,
   inDenDiffTabben, pfeilAbBis, taste, pruefeFokusAufZeile, anlegenAntwortetEinmal, anlegenVerzoegern, pruefeAnmerkungenBinnen,
   pruefeAnmerkungOhneHtml, sichtbarerAnmerkungstext,

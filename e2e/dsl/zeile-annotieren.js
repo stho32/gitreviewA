@@ -55,6 +55,9 @@ function annotierSprache(gr, page) {
   /** Name des Notizfelds wie in der Anforderung: „Anmerkung zu <Datei>, Zeile <n>“. */
   const feldname = (datei, neu) => `Anmerkung zu ${datei}, Zeile ${neu}`;
 
+  /** Name des „Datei anmerken“-Felds (R00022): dieselbe Stelle wie im Ergebnis, `<Datei> (ganze Datei)`. */
+  const dateiFeldname = datei => `Anmerkung zu ${datei} (ganze Datei)`;
+
   /** Klick auf die Zeile, Text ins Feld, „Speichern“; danach ist das Feld zu. */
   async function annotieren(datei, neu, text) {
     await anmerkungSeite.zeileAnklicken(page, { neu });
@@ -81,6 +84,7 @@ function annotierSprache(gr, page) {
     starten,
     hash,
     feldname,
+    dateiFeldname,
     dateiAnsehen: name => seite.dateiWaehlen(page, name),
     commitAnsehen: name => seite.commitWaehlen(page, hash(name).slice(0, 7)),
     ansichtWaehlen: name => diffSeite.ansichtWaehlen(page, name),
@@ -151,6 +155,29 @@ function annotierSprache(gr, page) {
       expect(antwort.status, `Anlegen ${datei}:${zeile}`).toBe(201);
       return antwort;
     },
+    /** Eine **Dateianmerkung** über die Schnittstelle anlegen: derselbe Request ohne `zeile` (R00022). */
+    dateianmerkungUeberDieSchnittstelleAnlegen: async (commit, datei, text) => {
+      const antwort = await gr.anmerkungAnlegen(lauf, { commit: hash(commit), datei, text });
+      expect(antwort.status, `Anlegen ${datei} (ganze Datei)`).toBe(201);
+      return antwort;
+    },
+
+    /* ── Datei anmerken (R00022) ── */
+    dateiAnmerken: () => anmerkungSeite.dateiAnmerken(page),
+    dateiKnopfSichtbar: () => anmerkungSeite.pruefeDateiKnopfSichtbar(page),
+    dateiKnopfVerborgen: () => anmerkungSeite.pruefeDateiKnopfVerborgen(page),
+    /** `erwartet`: `{ text, stelle }` je Dateianmerkung über den Diff-Zeilen, in Reihenfolge. */
+    dateianmerkungenOben: erwartet => anmerkungSeite.pruefeDateianmerkungenOben(page, erwartet),
+    keineDateianmerkung: () => anmerkungSeite.pruefeKeineDateianmerkung(page),
+    anzahlDateianmerkungen: anzahl => anmerkungSeite.anzahlDateianmerkungen(page, anzahl),
+    dateianmerkungUeberDenZeilen: () => anmerkungSeite.pruefeDateianmerkungUeberDenZeilen(page),
+    dateiFeldOffenMitFokus: datei => anmerkungSeite.pruefeFeldOffenMitFokus(page, dateiFeldname(datei)),
+    dateiFeldTextSchreiben: (datei, text) => anmerkungSeite.textSchreiben(page, dateiFeldname(datei), text),
+    dateiFeldSpeichern: datei => anmerkungSeite.speichern(page, dateiFeldname(datei)),
+    dateiFeldZu: datei => anmerkungSeite.pruefeFeldZu(page, dateiFeldname(datei)),
+    dateiFeldMeldet: (datei, meldung, text) => anmerkungSeite.pruefeFeldmeldung(page, dateiFeldname(datei), meldung, text),
+    dateiFeldEnthaelt: (datei, text) => anmerkungSeite.pruefeFeldtext(page, dateiFeldname(datei), text),
+    dateiSpeichernIstGesperrt: datei => anmerkungSeite.pruefeSpeichernGesperrt(page, dateiFeldname(datei)),
     /** Text der Anmerkung mit dieser stabilen Nummer über die Schnittstelle ändern; liefert Status, Nummer und Text der Antwort. */
     ueberDieSchnittstelleAendern: async (nummer, text) => {
       const antwort = await gr.anmerkungAendern(lauf, nummer, text);

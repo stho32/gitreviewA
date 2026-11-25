@@ -66,9 +66,10 @@
     zeigeAnmerkungen(ansicht);
   }
 
-  /** Zeichnet die Anmerkungen des gezeigten Diffs neu: je Sicht (Netto-Diff oder Abschnitt einer Ansicht ohne Kette) unter ihren Zeilen;
-      Anmerkungen an einer Zeile, die keine Sicht zeigt — auch die eines anderen Commits derselben Datei — stehen im Hinweis über dem Diff.
-      Offene Notiz- wie Änderungsfelder bleiben stehen und behalten ihre Eingabe. */
+  /** Zeichnet die Anmerkungen des gezeigten Diffs neu: die Dateianmerkungen der Stelle (Commit, Datei) über den Zeilen; je Sicht
+      (Netto-Diff oder Abschnitt einer Ansicht ohne Kette) die Zeilenanmerkungen unter ihren Zeilen; Anmerkungen an einer Zeile, die keine
+      Sicht zeigt — auch die eines anderen Commits derselben Datei — stehen im Hinweis über dem Diff. Offene Notiz- wie Änderungsfelder
+      bleiben stehen und behalten ihre Eingabe. */
   function zeigeAnmerkungen(ansicht) {
     const gezeichnet = zustand.gezeichnet;
     const diffIstVerworfen = !gezeichnet || !gezeichnet.ersterBlockElement.isConnected;
@@ -76,10 +77,13 @@
       return;
     }
     const bereichElement = gezeichnet.bereichElement;
-    for (const altesElement of bereichElement.querySelectorAll('tr.anm, .anmerkungen-ausserhalb')) {
+    for (const altesElement of bereichElement.querySelectorAll('tr.anm, .anmerkungen-ausserhalb, .anm-datei')) {
       altesElement.remove();
     }
     const sichten = sichtenDerAnsicht(gezeichnet);
+    for (const sicht of sichten) {
+      zeichneDateianmerkungen(ansicht, sicht, gezeichnet.pfad);
+    }
     const stand = anmerkungsstandJeSicht(zustand.anmerkungen, gezeichnet.pfad, sichten.map(sicht => ({ commit: sicht.commit, gezeigteNummern: new Set(sicht.zeileNachNummerNeu.keys()) })));
     sichten.forEach((sicht, stelle) => {
       for (const [nummerNeu, anmerkungen] of stand.jeSicht[stelle]) {
@@ -93,13 +97,42 @@
     haengeAenderungsfelderAn(ansicht);
   }
 
+  /** Die Dateianmerkungen der Stelle (Commit, Datei) über den Diff-Zeilen der Sicht; ein Abschnitt trägt sie unter seinem Kopf. */
+  function zeichneDateianmerkungen(ansicht, sicht, pfad) {
+    const anmerkungen = dateianmerkungen(zustand.anmerkungen, sicht.commit, pfad);
+    if (anmerkungen.length === 0) {
+      return;
+    }
+    const blockElement = dateianmerkungsblockElement(ansicht, anmerkungen);
+    const kopfElement = sicht.bereichElement.querySelector(':scope > .diff-abschnitt-kopf');
+    if (kopfElement) {
+      kopfElement.after(blockElement);
+    } else {
+      sicht.bereichElement.prepend(blockElement);
+    }
+  }
+
+  /** Der Block über den Diff-Zeilen: eine eigene Tabelle mit den Anmerkungszeilen (kein `data-art`, keine Zeilennummer, keine
+      Farbzellen — die Zeilenzählung und die Farbauflage bleiben unberührt). */
+  function dateianmerkungsblockElement(ansicht, anmerkungen) {
+    const blockElement = document.createElement('div');
+    blockElement.className = 'anm-datei';
+    const tabelleElement = document.createElement('table');
+    tabelleElement.className = 'dz';
+    const rumpfElement = document.createElement('tbody');
+    rumpfElement.append(...anmerkungen.map(anmerkung => anmerkungszeileElement(ansicht, anmerkung)));
+    tabelleElement.append(rumpfElement);
+    blockElement.append(tabelleElement);
+    return blockElement;
+  }
+
   /** Die Sichten des gezeigten Diffs: ohne Kette je Abschnitt eine (`gezeichnet.abschnitte`), sonst eine über den ganzen Bereich
-      (Netto-Diff und „Einzeln“). Je Sicht die Zeilen mit Nummer neu, an die ihre Anmerkungen kommen. */
+      (Netto-Diff und „Einzeln“). Je Sicht die Zeilen mit Nummer neu, an die ihre Anmerkungen kommen, und ihr Bereich. */
   function sichtenDerAnsicht(gezeichnet) {
     const abschnitte = gezeichnet.abschnitte && gezeichnet.abschnitte.length > 0
       ? gezeichnet.abschnitte
       : [{ commit: gezeichnet.commit, bereichElement: gezeichnet.bereichElement }];
-    return abschnitte.map(abschnitt => ({ commit: abschnitt.commit, zeileNachNummerNeu: zeilenMitNummerNeu(abschnitt.bereichElement) }));
+    return abschnitte.map(abschnitt => ({ commit: abschnitt.commit, bereichElement: abschnitt.bereichElement, zeileNachNummerNeu: zeilenMitNummerNeu(abschnitt.bereichElement) }));
   }
 
   /** Der Commit der Anmerkung: in einem Abschnitt dessen Commit, sonst der der Ansicht (Netto-Diff oder „Einzeln“). */
