@@ -153,6 +153,25 @@ public class LeerraumUndLueckenTests
         Assert.That(ignorieren.Zeilen, Is.Empty);
     }
 
+    [Test]
+    public void Wenn_eine_Anmerkung_an_drei_geaendert_haengt_dann_bleibt_sie_beim_Umschalten_des_Leerraums_an_Zeile_3_und_im_Ergebnis()
+    {
+        using var repo = DiffRepo.W();
+        var annotieren = ZeileAnnotierenSprache.Aufruf(repo, ["w1", "w2"]);
+        var sprache = DiffLesenSprache(repo);
+
+        var angelegt = annotieren.Annotiere("w2", "leerraum.txt", 3, "drei geaendert");
+
+        var ignorieren = sprache.Lesen(repo.Hash("w2"), "leerraum.txt", Diffumfang.Aenderungen, Leerraum.Ignorieren);
+        var zurueck = sprache.Lesen(repo.Hash("w2"), "leerraum.txt", Diffumfang.Aenderungen, Leerraum.Beachten);
+        var ergebnis = annotieren.Beenden();
+
+        Assert.That(angelegt, Is.EqualTo(new Anlegeantwort("angelegt", 1, "")));
+        Assert.That(ignorieren.TexteMitNummerNeu()[2], Is.EqualTo("drei geaendert"), "die Anmerkung hängt an der Nummer neu 3");
+        Assert.That(zurueck.TexteMitNummerNeu()[2], Is.EqualTo("drei geaendert"));
+        Assert.That(ergebnis, Is.EqualTo("# Ergebnis manueller Review\n\nAnmerkungen: 1\n\n" + annotieren.Ergebnisabschnitt(1, "leerraum.txt:3", "w2", "> drei geaendert")));
+    }
+
     private static DiffSprache DiffLesenSprache(DiffRepo repo)
     {
         var treiber = DiffLesenTreiber.Starten(repo.Ordner, [repo.Hash("w1"), repo.Hash("w2")]);
