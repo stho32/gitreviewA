@@ -190,3 +190,8 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Netzabbruch 22:48 (ECONNRESET zu OpenRouter, alle drei laufenden Rollen gleichzeitig): Läufe mit `--fortsetzen <sitzung>` und kurzem Fortsetzungsauftrag wieder aufgenommen, Board-Timer per `timer stoppen --ende 22:48` + `beginne` (idempotent) korrigiert; die Laufdauer im Journal zählt die Pause noch mit.
 - Lehre: Nach einem Abbruch zuerst `pgrep` und das Ende der `.jsonl` lesen — `error … ECONNRESET` heißt Netz, nicht Rolle; Commits im Worktree zeigen, wie weit die Rolle kam.
 - Gate: NUnit 839/839, Playwright 324/324 zweimal.
+| 2026-11-25 | #10 | Reviews | code-reviewer | bestanden | 8 min | opencode: Nachprüfung bestanden · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 10-code-reviewer-2 · 0,10 $ · Karte gesamt 1,31 $ |
+| 2026-11-25 | #10 | Reviews | security-reviewer | bestanden | 8 min | opencode: Nachprüfung bestanden · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 10-security-reviewer-2 · 0,12 $ · Karte gesamt 1,43 $ |
+| 2026-11-25 | #23 | Reviews | code-reviewer | bestanden | 8 min | opencode: Nachprüfung bestanden · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 23-code-reviewer-2 · 0,060 $ · Karte gesamt 0,90 $ |
+| 2026-11-25 | #23 | Reviews | security-reviewer | bestanden | 8 min | opencode: Nachprüfung bestanden · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 23-security-reviewer-2 · 0,20 $ · Karte gesamt 1,10 $ |
+| 2026-11-25 | #11 | Detailplanung | planer | bestanden | 7 min | opencode: I0011 bis Bubble (B2001–B2009), R00021, 4 Fragen an PO; 8bbfdeb · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 11-planer-1 · 0,13 $ · Karte gesamt 0,13 $ |
