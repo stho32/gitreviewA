@@ -24,11 +24,11 @@ Manche Dateien liest man in der Breite (lange Zeilen, nebeneinander, 20 000 Zeil
 
 ## Funktionale Anforderungen
 
-- **Bedienelement und Ort**: ein Knopf am **Trenner** (R00034), sichtbar an der Grenze; er klappt ein und aus und trägt `role="button"`, `aria-expanded` (`true` ausgeklappt, `false` eingeklappt), einen Namen, der mit dem sichtbaren Text beginnt („Seitenleiste einklappen“ / „Seitenleiste ausklappen“), und ein sichtbares Bild der Wirkung (Pfeilrichtung). Per Tab erreichbar, Fokusring sichtbar (R00030, B2907). Das Kürzel (Empfehlung `b`) ist ein Eintrag im Katalog von I0015 (R00030), keine zweite Liste.
+- **Bedienelement und Ort**: ein Knopf am **Trenner** (R00034), sichtbar an der Grenze; er klappt ein und aus und trägt `role="button"`, `aria-expanded` (`true` ausgeklappt, `false` eingeklappt), einen Namen, der mit dem sichtbaren Text beginnt („Seitenleiste einklappen“ / „Seitenleiste ausklappen“), und ein sichtbares Bild der Wirkung (Pfeilrichtung). Per Tab erreichbar, Fokusring sichtbar (R00030, B2907). Das Kürzel `b` ist ein Eintrag im Katalog von I0015 (`web/tasten-werte.js`) mit `ziel` auf den Knopf, keine zweite Liste.
 - **Eingeklappt**: die Seitenleiste (Commit-Zeile und Dateiliste) ist nicht sichtbar und **nicht** im Tab-/Lese-Weg (`hidden`/`inert`); der **Diff nimmt die volle Breite**; an der Grenze bleibt ein **schmaler Streifen** mit dem Ausklapp-Knopf stehen. Der **Fortschritt** bleibt im Kopf (der eine Zähler); der Streifen wiederholt ihn nicht.
 - **Fokus**: beim Einklappen wandert der Fokus auf das Bedienelement (er bleibt erreichbar und bedienbar); beim Ausklappen bleibt der Fokus auf demselben Bedienelement. `aria-expanded` und der Name ändern sich mit dem Zustand.
 - **Ausgeklappt**: die Seitenleiste steht wie in R00033; die zuletzt gesetzte **Breite** (R00034) gilt nach dem Ausklappen weiter, und der Trenner ist wieder bedienbar. Eingeklappt gibt es den Trenn-Zug nicht (keine Breite zu ziehen); die gemerkte Breite bleibt erhalten.
-- **Nächste ungeprüfte eingeklappt**: der Knopf „Nächste ungeprüfte“ (I0025) bzw. die Taste `u` (R00030) bleibt bedienbar und zeigt den Diff der gewählten Stelle (der Diff-Bereich ist sichtbar); ist der Knopf in der eingeklappten Liste, wird er im Streifen oder im Kopf erreichbar gehalten (Empfehlung: der Streifen trägt den Ausklapp-Knopf; der Weg zu „Nächste ungeprüfte“ führt über die Taste `u` und den leeren Diff-Bereich, wie in I0025/B2704 „Erste ungeprüfte öffnen“).
+- **Nächste ungeprüfte eingeklappt**: der Knopf „Nächste ungeprüfte“ (I0025) bzw. die Taste `u` (R00030) bleibt bedienbar und zeigt den Diff der gewählten Stelle (der Diff-Bereich ist sichtbar); ist der Knopf in der eingeklappten Liste, wird er im Streifen oder im Kopf erreichbar gehalten (entschieden: der Streifen trägt den Ausklapp-Knopf; der Weg zu „Nächste ungeprüfte“ führt über die Taste `u` und den leeren Diff-Bereich, wie in I0025/B2704 „Erste ungeprüfte öffnen“).
 - **Zustand**: der Zustand „eingeklappt“ ist ein Zustand der Seite (nur RAM); er bleibt beim Wechsel von Datei, Commit, Modus, Ansicht und Anordnung; nach dem Neuladen ist die Seitenleiste wieder ausgeklappt (nichts wird gespeichert).
 - **Ohne Neuzeichnen** (Lehre #23): das Ein-/Ausklappen wirkt über das Layout (eine Klasse an der Rahmenfläche), **ohne** den Diff neu zu zeichnen. Ein offenes Notizfeld, Markierungen, die Treffer der Suche (R00027) und die Bildlaufposition des Diffs bleiben; beim Ausklappen kommt die Liste in der zuletzt gesetzten Breite und der gewählten Zeile zurück, und die gewählte Zeile wird **in den Blick gescrollt** (R00033).
 - **Gilt in allen Anzeigeverfahren** (Lehre #7): in beiden Modi („Zusammen“/„Einzeln“), beiden Ansichten („nur Änderungen“/„ganze Datei“) und beiden Anordnungen („untereinander“/„nebeneinander“, R00023).
@@ -59,6 +59,9 @@ Vorbereitung: **Repo Z** (aus [R00012](R00012-oberflaeche-liste-detail-zusammen.
 - [ ] Gegeben Repo Z in „Zusammen“, eingeklappt, eine Datei noch ungeprüft, wenn man die Taste `u` drückt, dann wechselt der Diff zur nächsten ungeprüften Stelle und beginnt oben (die Seitenleiste bleibt eingeklappt); ist im leeren Diff-Bereich der Knopf „Erste ungeprüfte öffnen“ (I0025/B2704) sichtbar, dann ist er bedienbar, auch wenn die Liste eingeklappt ist. *Ebene: Playwright (Browser-Eigenes).*
 - [ ] Gegeben alle Lesbaren abgehakt und eingeklappt, wenn man `u` drückt, dann bleibt der Diff stehen und es erscheint die Meldung aus R00028 („Alles abgehakt“ bzw. „Alles Lesbare abgehakt, k nicht lesbar“). *Ebene: Playwright (Browser-Eigenes).*
 
+### Katalog (Kürzel `b`)
+- [ ] Gegeben der gebaute Katalog (`web/tasten-werte.js`), wenn man die Hilfe öffnet und den Knopf am Trenner betrachtet, dann steht `b` genau einmal im Katalog, mit der Aktion „Seitenleiste ein-/ausklappen“ und `ziel` auf den Knopf; der Knopf trägt den Hinweis `b` und `aria-keyshortcuts="b"`, und die Hilfe nennt `b` aus derselben Quelle. *Ebene: Unit (Katalog: Eintrag, `ziel`, keine Doppelung) und Playwright (Hinweis am Knopf, Hilfe).*
+
 ### Zustand und Anzeigeverfahren (Lehre #7/#23)
 - [ ] Gegeben eingeklappt, wenn man die Datei wechselt, den Commit wechselt, auf „Einzeln“/„Zusammen“, auf „ganze Datei“/„nebeneinander“ umschaltet und danach die Seite neu lädt, dann bleibt die Seitenleiste bei allen Wechseln eingeklappt und ist nach dem Neuladen wieder ausgeklappt (nichts gespeichert). *Ebene: Playwright (Browser-Eigenes) und Integration (Oberfläche gegen Fake: Zustand).*
 - [ ] Gegeben `src/a.txt` mit einem **offenen** Notizfeld an einer Zeile (Text „Klammer fehlt“) und einem Suchtreffer, wenn man ein- und wieder ausklappt, dann bleiben das offene Feld samt Text und Fokus, die Markierung und der Suchtreffer erhalten; es wird keine neue Diff-Anfrage gestellt. *Ebene: Playwright (Browser-Eigenes; Lehre #23).*
@@ -72,7 +75,7 @@ Wie in [R00001](R00001-mit-commit-hashes-aufrufen.md) und R00033/R00034 (Oberfl�
 - `web/index.html` — der Knopf am Trenner und der Streifen.
 - `web/gitreviewa.css` — der eingeklappte Zustand (Seitenleiste `hidden`/`inert`, Diff volle Breite, Streifen).
 - `web/einklappen.js` (neu, Oberfläche) — Zustand, Knopf, `aria-expanded`, Fokus, Anschluss an den Katalog (I0015) und an `datei-gewaehlt`.
-- `web/tasten-werte.js` — Katalogeintrag für das Kürzel (I0015).
+- `web/tasten-werte.js` — Katalogeintrag `b` mit `ziel` (I0015; R00030 bleibt unverändert).
 - `e2e/` — Playwright-Specs (Einklappen, Fokus, `aria-expanded`, Tab-Reihenfolge, nächste ungeprüfte, offenes Feld).
 
 ## Technische Überlegungen
@@ -94,7 +97,7 @@ Wie in [R00001](R00001-mit-commit-hashes-aufrufen.md) und R00033/R00034 (Oberfl�
 **Wichtige Einstiegsstellen:** `web/index.html` (Knopf, Streifen), `gitreviewa.css`, `tasten-werte.js` (I0015), das Ereignis `datei-gewaehlt` (R00033/B3203), der Trenner aus R00034.
 
 - `einklappen.js` (Oberfläche) — Zustand `Eingeklappt` (RAM, Start ausgeklappt), Knopf mit `aria-expanded`, Fokus, Streifen, Anschluss an `datei-gewaehlt`, `eingeklappt-geaendert`.
-- Katalog (`tasten-werte.js`, I0015) — ein Eintrag mit `ziel` (der Knopf), damit Hilfe, Statuszeile und Hinweis aus derselben Quelle lesen.
+- Katalog (`tasten-werte.js`, I0015) — ein Eintrag `b` mit `ziel` (der Knopf), damit Hilfe, Statuszeile und Hinweis aus derselben Quelle lesen.
 
 ### Änderungen an bestehenden Klassen
 
@@ -104,26 +107,26 @@ Wie in [R00001](R00001-mit-commit-hashes-aufrufen.md) und R00033/R00034 (Oberfl�
 
 Nach Test-Pyramide und Konfiguration (Interactor je Interaction; Playwright nur Hot Path und Browser-Eigenes). Der Zustand ist eine kleine Logik → **Integration** (Oberfläche gegen Fake bzw. Zustandseinheit); das Einklappen, der Fokus, `aria-expanded`, die Tab-Reihenfolge und das offene Feld sind **Browser-Eigenes** → Playwright. Kein Serverweg; das Einklappen liegt nicht auf dem Hot Path.
 
-**Unit/Integration:** Zustand (Start ausgeklappt, Wechsel, Neuladen), `aria-expanded` und Name je Zustand, Katalogeintrag (R00030).
-**E2E (Playwright headless):** Einklappen/Ausklappen (Sichtbarkeit, volle Breite, Streifen), Fokus und `aria-*`, Tab-Reihenfolge mit `hidden`/`inert`, `u` eingeklappt, offenes Feld/Suchtreffer/Markierung überstehen (Lehre #23), alle Anzeigeverfahren (Lehre #7), Neuladen. Messwert „wirkt ≤ 1 s“ (Messwert ≤ 0,7 s) ereignisgenau, mit Positivkontrolle. Lehre „Wert aus einer Einstellung als Spanne prüfen“ nur, wo eine Zahl im Spiel ist (hier die gemerkte Breite aus R00034).
+**Unit/Integration:** Zustand (Start ausgeklappt, Wechsel, Neuladen), `aria-expanded` und Name je Zustand, Katalogeintrag `b` mit `ziel` (R00030).
+**E2E (Playwright headless):** Einklappen/Ausklappen (Sichtbarkeit, volle Breite, Streifen), Fokus und `aria-*`, Hinweis `b`/`aria-keyshortcuts`, Tab-Reihenfolge mit `hidden`/`inert`, `u` eingeklappt, offenes Feld/Suchtreffer/Markierung überstehen (Lehre #23), alle Anzeigeverfahren (Lehre #7), Neuladen. Messwert „wirkt ≤ 1 s“ (Messwert ≤ 0,7 s) ereignisgenau, mit Positivkontrolle. Lehre „Wert aus einer Einstellung als Spanne prüfen“ nur, wo eine Zahl im Spiel ist (hier die gemerkte Breite aus R00034).
 
 ## Abhängigkeiten
 
 - Abhängig von: I0035 Breite der Seitenleiste ziehen ([R00034](R00034-breite-der-seitenleiste-ziehen.md), rot — der Knopf sitzt am dort gebauten Trenner) und I0027 Oberfläche Liste–Detail ([R00012](R00012-oberflaeche-liste-detail-zusammen.md), grün); fachlich benachbart: I0034 Seitenleiste bleibt stehen ([R00033](R00033-seitenleiste-bleibt-stehen.md), rot — der Streifen und das Ausklappen in den Blick).
 - Blockiert: nichts.
 - Mitgenutzt und unverändert: I0025 (nächste ungeprüfte, bleibt eingeklappt bedienbar), I0015 (Tastenkatalog, Fokusring), I0007/I0009/I0014/I0022/I0031 (Anzeigeverfahren, Rollbereich), I0017/I0018/I0032 (offenes Feld), I0026/I0013 (ausgeblendete Sicht).
-- **Vorgabe an I0015** (R00030, nicht Abnahme dieser Karte): der Katalogeintrag für das Kürzel des Ein-/Ausklappens (Empfehlung `b`) trägt sein `ziel` (den Knopf), damit Hilfe, Statuszeile und Hinweis aus derselben Quelle lesen.
+- **Katalogeintrag** (Bauaufgabe dieser Karte, R00030 bleibt unverändert): der Eintrag für `b` (Aktion „Seitenleiste ein-/ausklappen“) steht in `web/tasten-werte.js` und trägt sein `ziel` (den Knopf), damit Hilfe, Statuszeile und Hinweis aus derselben Quelle lesen; der Katalog ist laut R00030 erweiterbar, die Karte des neuen Bedienelements ergänzt ihren Eintrag.
 
 ## Offene Fragen
 
-Offen beim product-owner (Gestalt, nicht Vertrag):
+Keine offenen. Der product-owner hat alle vier Fragen am 2026-11-25 entschieden (`AI-Team/po-entscheidungen.md`, Zeilen 170–180, Commit `feb3296`); die Entscheidungen sind eingearbeitet:
 
-1. **Was bleibt eingeklappt sichtbar**: Empfehlung: ein **schmaler Streifen** mit dem Ausklapp-Knopf an der Grenze (der Weg zurück bleibt sichtbar); der **Fortschritt** bleibt im Kopf (der eine Zähler) und wird im Streifen nicht wiederholt. Alternative: nichts bleibt, dann führt nur der Knopf im Kopf zurück.
-2. **Ort des Knopfes**: Empfehlung: **am Trenner** (die Grenze ist dort, der Blick ist dort, wenn man mehr Diff-Breite will); deshalb `Braucht I0035`. Alternative: im Kopf der Anwendung (unabhängig vom Trenner, dann kein `Braucht`).
-3. **Kürzel**: Empfehlung: ja, ein Kürzel über den Katalog von I0015 (Vorschlag `b`), damit es wie die übrigen Sichten per Tastatur geht; Alternative: kein Kürzel, nur Knopf.
-4. **Zustand beim Neuladen**: Empfehlung: nach dem Neuladen wieder ausgeklappt (nichts gespeichert, wie die übrigen Schalter).
+1. **Was bleibt eingeklappt sichtbar**: ein schmaler Streifen mit dem Ausklapp-Knopf; der Fortschritt bleibt allein im Kopf und wird im Streifen nicht wiederholt.
+2. **Ort des Knopfes**: am Trenner — deshalb `Braucht I0035`.
+3. **Kürzel**: `b` als Katalogeintrag mit `ziel` in `web/tasten-werte.js`; R00030 bleibt unverändert, der Eintrag ist Kriterium dieser Karte.
+4. **Zustand beim Neuladen**: nach dem Neuladen wieder ausgeklappt (nichts gespeichert).
 
-Ohne Rückfrage entschieden (Empfehlung des planers, gilt bis zur Antwort): die Breite (R00034) bleibt über das Ein-/Ausklappen erhalten; eingeklappt gibt es den Trenn-Zug nicht; die eingeklappte Seitenleiste ist `hidden`/`inert`; das Ausklappen bringt die gewählte Zeile in den Blick; kein Neuzeichnen des Diffs (Lehre #23); kein neuer Serverweg.
+Ohne Rückfrage entschieden und vom product-owner bestätigt: die Breite (R00034) bleibt über das Ein-/Ausklappen erhalten; eingeklappt gibt es den Trenn-Zug nicht; die eingeklappte Seitenleiste ist `hidden`/`inert`; das Ausklappen bringt die gewählte Zeile in den Blick; kein Neuzeichnen des Diffs (Lehre #23); kein neuer Serverweg.
 
 ## Manuelle Vorbereitungstätigkeiten
 
@@ -135,7 +138,7 @@ Ohne Rückfrage entschieden (Empfehlung des planers, gilt bis zur Antwort): die 
 
 ## Umfang
 
-Gezählt (bis Bubble geplant, Richtwerte ungemessen, keine Hypothese): 5 Bubbles unterhalb I0036 (B3401–B3405), davon 2 klar (2 h) und 3 unklar (2–4 h) — Untergrenze 10 h, obere Schätzung 16 h. Enthalten: nur I0036. Keine Ausbaustufen. Die Vorgabe an I0015 ist nicht gezählt.
+Gezählt (bis Bubble geplant, Richtwerte ungemessen, keine Hypothese): 5 Bubbles unterhalb I0036 (B3401–B3405), davon 2 klar (2 h) und 3 unklar (2–4 h) — Untergrenze 10 h, obere Schätzung 16 h. Enthalten: nur I0036. Keine Ausbaustufen. Der Katalogeintrag `b` ist in B3402 mitgezählt (eine Zeile im Katalog, kein eigener Aufwand).
 
 ## Warum löst diese Anforderung das Problem? (Pflicht)
 
