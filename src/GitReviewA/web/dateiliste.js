@@ -230,8 +230,14 @@
     dateiElement.setAttribute('aria-current', String(istGewaehlt));
     dateiElement.dataset.pfad = datei.pfad;
     const statusElement = textElement(`status status-${datei.status}`, datei.status);
-    dateiElement.append(hakenElement(datei), statusElement, textElement('pfad', zeile.name), textElement('haken-grund', ''), balkenElement(datei, groesste), textElement('zahlen mono', zahlenText(datei)));
+    dateiElement.append(hakenElement(datei), statusElement, textElement('pfad', pfadText(datei, zeile)), textElement('haken-grund', ''), balkenElement(datei, groesste), textElement('zahlen mono', zahlenText(datei)));
     return dateiElement;
+  }
+
+  /** Der Zeilentext einer Umbenennung nennt beide Namen (`neu ← alt`, PO 2026-11-25); sonst der angezeigte Pfad. */
+  function pfadText(datei, zeile) {
+    const umbenennung = window.umbenennungsText ? window.umbenennungsText(datei) : null;
+    return umbenennung || zeile.name;
   }
 
   /** Kästchen vor dem Pfad (Vorlage kanbanD „Gesehen“); gesperrt, bis haken.js den Stand kennt. */

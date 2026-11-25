@@ -3,7 +3,7 @@
 (function (ziel) {
   'use strict';
 
-  const STRICH = '–';
+  const BINAER = 'binär';
 
   const istBinaer = datei => datei.plus === null;
 
@@ -22,9 +22,10 @@
     return `${anzahlText} · +${plus} −${minus}`;
   }
 
+  /** Das Wort „binär“ statt der Zahlen; die Datei zählt in der Summe als Datei, aber nicht in die Zeilen (PO 2026-11-25). */
   function zahlenText(datei) {
     if (istBinaer(datei)) {
-      return STRICH;
+      return BINAER;
     }
     return `+${datei.plus} −${datei.minus}`;
   }

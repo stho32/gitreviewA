@@ -249,8 +249,8 @@ test.describe('Datei annotieren — Bedienweg und Browser-Eigenes', () => {
   test('Befund B1: im Zustand „Keine Zeilenänderungen“ ist „Datei anmerken“ sichtbar, bedienbar und trägt (R00022)', async ({ anm }) => {
     await anm.starten({ modus: 'einzeln' });
 
-    await anm.dateiAnsehen('LIESMICH.md');
-    await anm.diffMeldet('LIESMICH.md', 'Keine Zeilenänderungen');
+    await anm.dateiAnsehen('LIESMICH.md ← README.md');
+    await anm.diffMeldet('LIESMICH.md ← README.md', 'Keine Zeilenänderungen');
     await anm.dateiKnopfSichtbar();
     await anm.dateiKnopfBedienbar();
 

@@ -84,8 +84,8 @@ test.describe('Diff einer Datei lesen', () => {
   test('soll bei einer unveränderten Umbenennung und einer Binärdatei nur eine Meldung zeigen', async ({ diff }) => {
     await diff.starten();
 
-    await diff.dateiAnsehen('LIESMICH.md');
-    await diff.diffMeldet('LIESMICH.md', 'Keine Zeilenänderungen');
+    await diff.dateiAnsehen('LIESMICH.md ← README.md');
+    await diff.diffMeldet('LIESMICH.md ← README.md', 'Keine Zeilenänderungen');
     await diff.dateiAnsehen('logo.bin');
     await diff.binaerMeldet('logo.bin', 'enthält Null-Bytes');
   });
@@ -176,7 +176,7 @@ test.describe('Diff erst bei Auswahl laden', () => {
 
   test('soll einen nicht lesbaren Diff melden und die Dateiliste bedienbar lassen', async ({ diff }) => {
     await diff.starten({ verbose: true });
-    await diff.dateienSind(['LIESMICH.md', 'alt.txt', 'breit.txt', 'ende.txt', 'fremd.txt', 'k.txt', 'lang.txt', 'logo.bin', 'src/b.txt']);
+    await diff.dateienSind(['LIESMICH.md ← README.md', 'alt.txt', 'breit.txt', 'ende.txt', 'fremd.txt', 'k.txt', 'lang.txt', 'logo.bin', 'src/b.txt']);
     diff.commitObjektEntfernen('q');
 
     await diff.dateiAnsehen('src/b.txt');

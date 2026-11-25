@@ -17,8 +17,8 @@ const DATEIEN_VON_Q = {
   eintraege: [
     { status: 'M', name: 'src/b.txt', zahlen: '+2 −1' },
     { status: 'D', name: 'alt.txt', zahlen: '+0 −4' },
-    { status: 'R', name: 'LIESMICH.md', zahlen: '+0 −0' },
-    { status: 'A', name: 'logo.bin', zahlen: '–' },
+    { status: 'R', name: 'LIESMICH.md ← README.md', zahlen: '+0 −0' },
+    { status: 'A', name: 'logo.bin', zahlen: 'binär' },
   ],
 };
 
@@ -151,7 +151,7 @@ test.describe('Dateien eines Commits sehen', () => {
     await review.dateienZeigen({
       summe: DATEIEN_VON_Q.summe,
       eintraege: [
-        { ordner: true, name: 'src', tiefe: 0 }, { name: 'b.txt', tiefe: 1 }, { name: 'alt.txt', tiefe: 0 }, { name: 'LIESMICH.md', tiefe: 0 }, { name: 'logo.bin', tiefe: 0 },
+        { ordner: true, name: 'src', tiefe: 0 }, { name: 'b.txt', tiefe: 1 }, { name: 'alt.txt', tiefe: 0 }, { name: 'LIESMICH.md ← README.md', tiefe: 0 }, { name: 'logo.bin', tiefe: 0 },
       ],
     });
 
@@ -173,8 +173,8 @@ test.describe('Dateien eines Commits sehen', () => {
 
     await review.dateiAnsehen('src/b.txt');
     await review.gewaehlteDateien(['src/b.txt']);
-    await review.dateiAnsehen('LIESMICH.md');
-    await review.gewaehlteDateien(['LIESMICH.md']);
+    await review.dateiAnsehen('LIESMICH.md ← README.md');
+    await review.gewaehlteDateien(['LIESMICH.md ← README.md']);
     await review.commitAnsehen('p');
     await review.dateienZeigen(DATEIEN_VON_P);
     await review.gewaehlteDateien([]);

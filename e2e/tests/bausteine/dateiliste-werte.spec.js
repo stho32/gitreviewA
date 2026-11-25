@@ -13,9 +13,9 @@ test.describe('Baustein Dateiliste-Werte', () => {
     expect(summeText(Array.from({ length: 2000 }, (_, i) => datei(`f${i}`)))).toBe('2000 Dateien · +2000 −0');
   });
 
-  test('soll Zahlen als +x −y zeigen und bei Binärdateien einen Strich', () => {
+  test('soll Zahlen als +x −y zeigen und bei Binärdateien das Wort „binär“', () => {
     expect(zahlenText(datei('a', 12, 3))).toBe('+12 −3');
-    expect(zahlenText(binaer('b'))).toBe('–');
+    expect(zahlenText(binaer('b'))).toBe('binär');
   });
 
   test('soll die Balken als Anteile an der größten Änderung der Liste rechnen', () => {

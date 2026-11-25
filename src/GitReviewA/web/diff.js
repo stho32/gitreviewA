@@ -138,6 +138,12 @@
     zeigeMeldung(ansicht, HINWEIS_ZUR_WAHL, false);
   }
 
+  /** Der Diff-Kopf nennt bei einer Umbenennung beide Namen (`neu ← alt`, PO 2026-11-25); der neue Pfad führt, sonst der Pfad. */
+  function setzePfad(ansicht, datei) {
+    const umbenennung = window.umbenennungsText ? window.umbenennungsText(datei) : null;
+    ansicht.pfadElement.replaceChildren(...sichtbarTeile(umbenennung || datei.pfad).map(teilKnoten));
+  }
+
   /** Die jüngste Wahl gewinnt: eine Antwort zählt nur, wenn seit ihrer Anfrage keine andere Datei, kein anderer Commit, keine andere
       Diffansicht und keine andere Leerraum-Stellung gewählt wurde. `alsText`: der Mensch hat bei einer Binärdatei „Als Text zeigen“
       gewählt — nur dann liest der Server ihre Bytes. */
@@ -161,7 +167,7 @@
     }
     const diffansicht = zustand.diffansicht;
     const leerraum = zustand.leerraum;
-    ansicht.pfadElement.replaceChildren(...sichtbarTeile(datei.pfad).map(teilKnoten));
+    setzePfad(ansicht, datei);
     zeigeMeldung(ansicht, 'Diff wird geladen …', false);
     let antwort;
     try {
@@ -244,6 +250,7 @@
   }
 
   function zeichneAntwort(ansicht, antwort, alsText, diffansicht) {
+    setzePfad(ansicht, antwort);
     if (antwort.zuGross) {
       zeigeMeldung(ansicht, antwort.meldung, false);
       return;
