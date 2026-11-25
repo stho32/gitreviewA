@@ -57,3 +57,5 @@ Nie vom User erfragen.
 | 2026-11-25 | R00019 Anmerkung löschen | Nacharbeit B1: Sperre überlebt das Neuzeichnen | Bug-Fix | – | 0,3h | – | autonom |
 | 2026-11-25 | R00012 Oberfläche Liste–Detail (Zusammen als Standard) | Nacharbeit I0027: Leerraum-Umschalter wirkt in „Zusammen“ (Netto-Diff und Abschnitte mit -w) | Bug-Fix | – | 0,4h | – | autonom |
 | 2026-11-25 | R00012 Oberfläche Liste–Detail (Zusammen als Standard) | Nacharbeit I0027: Menüzähler je Commit im Wähler veraltet (Test zuerst) | Bug-Fix | – | 0,4h | – | autonom |
+| 2026-11-25 | R00022 Datei annotieren | Nacharbeit Code-Review: B1 „Datei anmerken“ im Meldungszustand, B2 offenes Feld übersteht das Neuzeichnen | Bug-Fix | – | 0,25h | – | autonom |
+| 2026-11-25 | R00022 Datei annotieren | Nacharbeit Security-Review: Sperre/Stapel/Netto/Ergebnis vergleichen den Anzeigenamen | Bug-Fix | – | 0,2h | – | autonom |
