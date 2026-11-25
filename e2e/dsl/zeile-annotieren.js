@@ -154,6 +154,10 @@ function annotierSprache(gr, page) {
       });
       await page.waitForFunction(() => window.__zeichnungen > 0);
     },
+    /** Text ins offene Bereichsfeld schreiben und speichern (R00031) — der Art-Weg setzt dazwischen die Gruppe (R00036). */
+    bereichFeldTextSchreiben: (datei, von, bis, text) => anmerkungSeite.textSchreiben(page, bereichFeldname(datei, von, bis), text),
+    bereichFeldSpeichern: (datei, von, bis) => anmerkungSeite.speichern(page, bereichFeldname(datei, von, bis)),
+    bereichFeldZu: (datei, von, bis) => anmerkungSeite.pruefeFeldZu(page, bereichFeldname(datei, von, bis)),
     /** Das offene Bereichsfeld hat Fokus und ist leer (R00031). */
     bereichFeldOffenMitFokus: (datei, von, bis) => anmerkungSeite.pruefeFeldOffenMitFokus(page, bereichFeldname(datei, von, bis)),
     /** `erwartet`: Texte der Bereichsanmerkungen unter der Zeile `zielNeu`, je mit der Stelle `<datei>:<von>-<bis>`. */
@@ -217,6 +221,8 @@ function annotierSprache(gr, page) {
     aenderungsfeldTextSchreiben: (nummer, text) => anmerkungSeite.aenderungsfeldTextSchreiben(page, nummer, text),
     aenderungsfeldEnthaelt: (nummer, text) => anmerkungSeite.pruefeAenderungsfeldText(page, nummer, text),
     aenderungsfeldSpeichern: nummer => anmerkungSeite.aenderungsfeldSpeichern(page, nummer),
+    /** Speichern und auf die Antwort des Servers warten (die nächste Anfrage überholt die Änderung sonst). */
+    aenderungsfeldSpeichernUndWarten: nummer => anmerkungSeite.aenderungsfeldSpeichernUndWarten(page, nummer),
     caretPosition: (datei, neu) => anmerkungSeite.caretPosition(page, feldname(datei, neu)),
     fokusAufKnopf: (datei, neu, knopfname) => anmerkungSeite.fokusAufKnopf(page, feldname(datei, neu), knopfname),
     knopfHatFokus: (datei, neu, knopfname) => anmerkungSeite.pruefeKnopfHatFokus(page, feldname(datei, neu), knopfname),
@@ -233,6 +239,15 @@ function annotierSprache(gr, page) {
       expect(antwort.status, `Anlegen ${datei} (ganze Datei)`).toBe(201);
       return antwort;
     },
+
+    /* ── Art der Anmerkung (R00036) ── */
+    /** Das offene Feld trägt die Gruppe „Art“ mit diesen Wahlen in dieser Reihenfolge, vor dem Textfeld `name`. */
+    artGruppeZeigt: (name, wahlen) => anmerkungSeite.pruefeArtgruppe(page, name, wahlen),
+    artIstGewaehlt: name => anmerkungSeite.pruefeArtGewaehlt(page, name),
+    artWaehlen: name => anmerkungSeite.artWaehlen(page, name),
+    artMitTastaturWaehlen: name => anmerkungSeite.artMitTastaturWaehlen(page, name),
+    /** Der Stand aller Anmerkungen vom Server (mit `art`). */
+    anmerkungenAufDemServer: () => anmerkungSeite.anmerkungenAufDemServer(page),
 
     /* ── Datei anmerken (R00022) ── */
     dateiAnmerken: () => anmerkungSeite.dateiAnmerken(page),

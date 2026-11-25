@@ -251,7 +251,7 @@ test.describe('Zeile annotieren', () => {
     await anm.ueberDieSchnittstelleAnlegen('q', 'lang.txt', 18, 'GEHEIMWORT eins');
 
     expect(anm.stdoutBisher()).toBe('');
-    await expect.poll(() => anm.stderrBisher()).toContain('Nummer 1 angelegt (Textlänge 15)');
+    await expect.poll(() => anm.stderrBisher()).toContain('Nummer 1 angelegt (Textlänge 15, art=ohne)');
     expect(anm.stderrBisher()).not.toContain('GEHEIMWORT');
   });
 });

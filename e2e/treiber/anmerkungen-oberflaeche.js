@@ -448,6 +448,57 @@ async function anlegenVerzoegern(page) {
   return { eingetroffen: () => antwort };
 }
 
+/* ── Art der Anmerkung (R00036) ── */
+
+/** Die Gruppe „Art“ des jüngsten offenen Felds (Zeile, Bereich, Datei oder Ändern). */
+function artgruppe(page) {
+  return page.locator(`${ANMERKUNGSBEREICH} [role="radiogroup"][aria-label="Art"]`).last();
+}
+
+/** Die Gruppe steht im Feld, trägt genau diese Wahlen in dieser Reihenfolge und liegt vor dem Textfeld. */
+async function pruefeArtgruppe(page, name, wahlen) {
+  const gruppe = artgruppe(page);
+  await expect(gruppe).toBeVisible();
+  await expect(gruppe.locator('.anm-art-wahl')).toHaveText(wahlen);
+  const gruppeHandle = await gruppe.elementHandle();
+  const feldHandle = await feld(page, name).elementHandle();
+  const liegtDavor = await page.evaluate(([gruppeElement, feldElement]) => Boolean(gruppeElement.compareDocumentPosition(feldElement) & Node.DOCUMENT_POSITION_FOLLOWING), [gruppeHandle, feldHandle]);
+  expect(liegtDavor, 'die Gruppe „Art“ steht vor dem Textfeld').toBe(true);
+}
+
+/** Die Wahl dieses Namens („ohne“, „Muss“, „Frage“, „Idee“) ist die gewählte. */
+async function pruefeArtGewaehlt(page, name) {
+  await expect(artgruppe(page).getByRole('radio', { name, exact: true })).toBeChecked();
+}
+
+/** Die Wahl mit der Maus treffen. */
+async function artWaehlen(page, name) {
+  await artgruppe(page).getByRole('radio', { name, exact: true }).check();
+}
+
+/** Vom Textfeld mit Umschalt+Tab in die Gruppe, dann mit den Pfeiltasten bis zur Wahl — die Bedienung ohne Maus. */
+async function artMitTastaturWaehlen(page, name) {
+  const gruppe = artgruppe(page);
+  const ziel = gruppe.getByRole('radio', { name, exact: true });
+  await page.keyboard.press('Shift+Tab');
+  await expect(gruppe.locator('input[type="radio"]:checked')).toBeFocused();
+  for (let versuch = 0; versuch < 4; versuch += 1) {
+    if (await ziel.isChecked()) {
+      return;
+    }
+    await page.keyboard.press('ArrowRight');
+  }
+  await expect(ziel).toBeChecked();
+}
+
+/** Der Stand aller Anmerkungen, wie ihn `GET /api/anmerkungen` liefert (mit `art`). */
+async function anmerkungenAufDemServer(page) {
+  return page.evaluate(async () => {
+    const antwort = await fetch('api/anmerkungen', { headers: { Accept: 'application/json' } });
+    return antwort.json();
+  });
+}
+
 /** Anmerkungszeile über ihre stabile Nummer im Kopf („Anmerkung n“), nicht über ihre Stelle. */
 function anmerkungszeile(page, nummer) {
   return page.locator(`${ANMERKUNGSZEILE}[data-anmerkung="${nummer}"]`);
@@ -489,6 +540,13 @@ async function pruefeAenderungsfeldText(page, nummer, text) {
 
 async function aenderungsfeldSpeichern(page, nummer) {
   await page.locator(aenderungsfeldziele(nummer)).getByRole('button', { name: 'Speichern', exact: true }).click();
+}
+
+/** Wie `aenderungsfeldSpeichern`, aber erst weiter, wenn der Server geantwortet hat — sonst überholt die nächste Anfrage die Änderung. */
+async function aenderungsfeldSpeichernUndWarten(page, nummer) {
+  const antwort = anfrageBeantwortet(page);
+  await aenderungsfeldSpeichern(page, nummer);
+  await antwort;
 }
 
 /** Caret-Stelle (`selectionStart`) des offenen Felds: prüft, dass die Pfeiltaste den Caret bewegt statt den Fokus zu reißen. */
@@ -699,7 +757,8 @@ module.exports = {
   pruefeAnmerkungOhneHtml, sichtbarerAnmerkungstext,
   aenderungOeffnen, pruefeKopfNenntNummer, pruefeFokusAufKopf, pruefeAnzahlAenderungsfelder, pruefeAnmerkungszeileEnthaelt, abbrechen, pruefeSpeichernGesperrt,
   aenderungAntwortetEinmal, aenderungVerzoegern,
-  aenderungsfeldTextSchreiben, pruefeAenderungsfeldText, aenderungsfeldSpeichern, caretPosition, fokusAufKnopf, pruefeKnopfHatFokus,
+  aenderungsfeldTextSchreiben, pruefeAenderungsfeldText, aenderungsfeldSpeichern, aenderungsfeldSpeichernUndWarten, caretPosition, fokusAufKnopf, pruefeKnopfHatFokus,
+  pruefeArtgruppe, pruefeArtGewaehlt, artWaehlen, artMitTastaturWaehlen, anmerkungenAufDemServer,
   loeschungOeffnen, zweimalLoeschen, loeschenPerTastatur, pruefeKeineAnmerkungszeile, pruefeLoeschenGesperrt, pruefeKopfmeldung,
   loeschungAntwortetEinmal, loeschungVerzoegern, loeschungVerzoegertAntworten, loeschenErneut, pruefeLoeschenFrei,
 };

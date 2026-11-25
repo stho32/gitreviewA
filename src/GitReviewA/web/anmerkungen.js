@@ -677,6 +677,7 @@
       feldname: feldnameDesZiels(ziel),
       zeilenklasse: 'anm-feld',
       vorbelegung: '',
+      art: null,
       speichertGerade: false,
     };
     feld.speichern = () => speichere(feld);
@@ -741,9 +742,65 @@
     const knoepfeElement = document.createElement('div');
     knoepfeElement.className = 'anm-knoepfe';
     knoepfeElement.append(feld.speichernElement, abbrechenElement);
-    zelleElement.append(feld.eingabeElement, feld.fehlerElement, knoepfeElement);
+    zelleElement.append(artgruppeElement(feld), feld.eingabeElement, feld.fehlerElement, knoepfeElement);
     zeileElement.append(zelleElement);
     return zeileElement;
+  }
+
+  /* ── Art der Anmerkung im Feld (R00036) ── */
+
+  let artgruppenZaehler = 0;
+
+  /** Die Gruppe „Art“ **vor** dem Textfeld: ohne, Muss, Frage, Idee als Optionsfelder. Tab und Pfeiltasten sind die des Browsers,
+      `1`–`3` wählen in der Gruppe (Katalog `tasten-werte.js` für die Zeilenebene). Start ist „ohne“ bzw. die gespeicherte Art. */
+  function artgruppeElement(feld) {
+    artgruppenZaehler += 1;
+    const gruppeElement = document.createElement('div');
+    gruppeElement.className = 'anm-art';
+    gruppeElement.setAttribute('role', 'radiogroup');
+    gruppeElement.setAttribute('aria-label', 'Art');
+    const titelElement = document.createElement('span');
+    titelElement.className = 'anm-art-titel';
+    titelElement.setAttribute('aria-hidden', 'true');
+    titelElement.textContent = 'Art';
+    gruppeElement.append(titelElement);
+    feld.art = artwert(feld.art);
+    for (const wahl of ARTEN) {
+      const wahlElement = document.createElement('label');
+      wahlElement.className = 'anm-art-wahl';
+      const eingabeElement = document.createElement('input');
+      eingabeElement.type = 'radio';
+      eingabeElement.name = `anm-art-${artgruppenZaehler}`;
+      eingabeElement.value = wahl.wert === null ? '' : wahl.wert;
+      eingabeElement.checked = wahl.wert === feld.art;
+      eingabeElement.addEventListener('change', () => { feld.art = wahl.wert; });
+      wahlElement.append(eingabeElement, document.createTextNode(wahl.wort));
+      gruppeElement.append(wahlElement);
+    }
+    gruppeElement.addEventListener('keydown', ereignis => bedieneArtgruppePerTastatur(feld, gruppeElement, ereignis));
+    feld.artgruppeElement = gruppeElement;
+    return gruppeElement;
+  }
+
+  /** `1`, `2`, `3` wählen in der Gruppe Muss, Frage, Idee (R00036); mit Strg, Alt oder Meta bleiben die Ziffern beim Browser. */
+  function bedieneArtgruppePerTastatur(feld, gruppeElement, ereignis) {
+    const stelle = { '1': 1, '2': 2, '3': 3 }[ereignis.key];
+    const istModifikator = ereignis.ctrlKey || ereignis.altKey || ereignis.metaKey;
+    if (stelle === undefined || istModifikator) {
+      return;
+    }
+    ereignis.preventDefault();
+    setzeArt(feld, gruppeElement, ARTEN[stelle].wert);
+  }
+
+  function setzeArt(feld, gruppeElement, art) {
+    feld.art = artwert(art);
+    for (const eingabeElement of gruppeElement.querySelectorAll('input[type="radio"]')) {
+      eingabeElement.checked = (eingabeElement.value === '' ? null : eingabeElement.value) === feld.art;
+      if (eingabeElement.checked) {
+        eingabeElement.focus();
+      }
+    }
   }
 
   function knopfElement(klassen, text, beiKlick) {
@@ -778,14 +835,15 @@
     feld.speichernElement.disabled = true;
     feld.fehlerElement.textContent = '';
     const text = feld.eingabeElement.value;
-    const ausgang = await anmerkungAnlegen({ ...feld.ziel, text });
+    const art = artwert(feld.art);
+    const ausgang = await anmerkungAnlegen({ ...feld.ziel, text, art });
     feld.speichertGerade = false;
     feld.speichernElement.disabled = false;
     if (ausgang.meldung) {
       feld.fehlerElement.textContent = ausgang.meldung;
       return;
     }
-    zustand.anmerkungen = [...zustand.anmerkungen, { nummer: ausgang.nummer, ...feld.ziel, text }];
+    zustand.anmerkungen = [...zustand.anmerkungen, { nummer: ausgang.nummer, ...feld.ziel, text, art }];
     schliesseFeld(feld);
     setzeAuswahl(feld.ansicht, null);
     zeigeAnmerkungen(feld.ansicht);
@@ -863,6 +921,7 @@
       feldname: feldnameDerDatei(stelle.pfad),
       zeilenklasse: 'anm-feld',
       vorbelegung: '',
+      art: null,
       speichertGerade: false,
     };
     feld.speichern = () => speichere(feld);
@@ -932,6 +991,7 @@
       feldname: feldnameDerAnmerkung(anmerkung),
       zeilenklasse: 'anm-aendern',
       vorbelegung: anmerkung.text,
+      art: anmerkung.art,
       speichertGerade: false,
     };
     feld.speichern = () => speichereAenderung(feld);
@@ -965,7 +1025,8 @@
     feld.speichertGerade = true;
     feld.speichernElement.disabled = true;
     feld.fehlerElement.textContent = '';
-    const ausgang = await anmerkungAendern(feld.anmerkung.nummer, feld.eingabeElement.value);
+    const art = artwert(feld.art);
+    const ausgang = await anmerkungAendern(feld.anmerkung.nummer, feld.eingabeElement.value, art);
     feld.speichertGerade = false;
     feld.speichernElement.disabled = false;
     if (ausgang.meldung) {
@@ -973,15 +1034,15 @@
       return;
     }
     entferneAenderung(feld);
-    zustand.anmerkungen = mitGeaendertemText(zustand.anmerkungen, ausgang.nummer, ausgang.text);
+    zustand.anmerkungen = mitGeaenderterArt(mitGeaendertemText(zustand.anmerkungen, ausgang.nummer, ausgang.text), ausgang.nummer, art);
     zeigeAnmerkungen(feld.ansicht);
     fokussiereKopf(feld.ansicht, ausgang.nummer);
     ladeAnmerkungen(feld.ansicht, ausgang.nummer);
   }
 
   /** `{nummer, text}` bei Erfolg; sonst `{meldung}`: der Satz des Servers bei 4xx, bei 5xx und ohne Antwort der allgemeine Satz. */
-  async function anmerkungAendern(nummer, text) {
-    const ausgang = await sendeAnfrage(`api/anmerkungen/${nummer}`, JSON.stringify({ text }), AENDERN_GESCHEITERT);
+  async function anmerkungAendern(nummer, text, art) {
+    const ausgang = await sendeAnfrage(`api/anmerkungen/${nummer}`, JSON.stringify({ text, art }), AENDERN_GESCHEITERT);
     if (!ausgang.ok) {
       return { meldung: ausgang.meldung };
     }

@@ -2,7 +2,7 @@
 // Bausteintests (ohne Browser) der Anmerkungs-Rechnung: welche Diff-Zeile annotierbar ist und welche Anmerkungen eine Ansicht zeigt (R00010)
 // und wie der Stand nach einer geänderten Anmerkung aussieht (R00018).
 const { test, expect } = require('@playwright/test');
-const { zeilenziel, anmerkungsstand, anmerkungsstandJeSicht, anmerkungsstelle, stellentext, hinweisAusserhalb, hinweisAusserhalbMitCommits, mitGeaendertemText, ohneAnmerkung, dateianmerkungen, artDerAnmerkung, ENTFERNT_HINWEIS } = require('../../../src/GitReviewA/web/anmerkungen-werte.js');
+const { zeilenziel, anmerkungsstand, anmerkungsstandJeSicht, anmerkungsstelle, stellentext, hinweisAusserhalb, hinweisAusserhalbMitCommits, mitGeaendertemText, mitGeaenderterArt, ohneAnmerkung, dateianmerkungen, artDerAnmerkung, ARTEN, artwert, artWort, ENTFERNT_HINWEIS } = require('../../../src/GitReviewA/web/anmerkungen-werte.js');
 
 const Q = 'q'.repeat(40);
 const P = 'p'.repeat(40);
@@ -316,5 +316,44 @@ test.describe('Baustein Dateianmerkungen (R00022)', () => {
 
     expect(dateianmerkungen([dateiAnmerkung], Q, 'a\u202Eb.txt')).toEqual([dateiAnmerkung]);
     expect(dateianmerkungen([dateiAnmerkung], Q, 'a⟨U+202E⟩b.txt')).toEqual([]);
+  });
+});
+
+test.describe('Baustein Art der Anmerkung (R00036)', () => {
+  test('soll die vier Wahlen in der Reihenfolge ohne, Muss, Frage, Idee führen', () => {
+    expect(ARTEN).toEqual([
+      { wert: null, wort: 'ohne' },
+      { wert: 'muss', wort: 'Muss' },
+      { wert: 'frage', wort: 'Frage' },
+      { wert: 'idee', wort: 'Idee' },
+    ]);
+  });
+
+  test('soll das Wort der gespeicherten Art nennen und für ohne nichts', () => {
+    expect(['muss', 'frage', 'idee'].map(artWort)).toEqual(['Muss', 'Frage', 'Idee']);
+    expect(artWort(null)).toBe('');
+    expect(artWort(undefined)).toBe('');
+  });
+
+  test('soll einen unbekannten Wert als „ohne“ lesen, nie als eigene Art', () => {
+    for (const wert of ['MUSS', 'muss ', '', 7, true, {}, 'Frage']) {
+      expect(artwert(wert), `Wert ${JSON.stringify(wert)}`).toBeNull();
+      expect(artWort(wert), `Wert ${JSON.stringify(wert)}`).toBe('');
+    }
+  });
+
+  test('soll die Art an ihrer Nummer setzen, wechseln und entfernen', () => {
+    const anmerkungen = [{ nummer: 1, art: 'muss' }, { nummer: 2, art: null }];
+
+    expect(mitGeaenderterArt(anmerkungen, 1, 'frage').map(eintrag => eintrag.art)).toEqual(['frage', null]);
+    expect(mitGeaenderterArt(anmerkungen, 1, null).map(eintrag => eintrag.art)).toEqual([null, null]);
+    expect(mitGeaenderterArt(anmerkungen, 1, 'idee')[1]).toEqual({ nummer: 2, art: null });
+  });
+
+  test('soll eine unbekannte Nummer unverändert lassen und die Eingabe nicht verändern', () => {
+    const anmerkungen = [{ nummer: 1, art: 'muss' }];
+
+    expect(mitGeaenderterArt(anmerkungen, 7, 'idee')).toEqual(anmerkungen);
+    expect(anmerkungen[0].art).toBe('muss');
   });
 });

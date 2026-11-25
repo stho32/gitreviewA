@@ -161,11 +161,43 @@
     });
   }
 
+  /** Die Wahl der Art im Notizfeld (R00036): Wert für den Server und das Wort in der Oberfläche; `null` ist „ohne“. Die Werte
+      sind dieselben, die `Anmerkungsart` auf dem Server annimmt. */
+  const ARTEN = [
+    { wert: null, wort: 'ohne' },
+    { wert: 'muss', wort: 'Muss' },
+    { wert: 'frage', wort: 'Frage' },
+    { wert: 'idee', wort: 'Idee' },
+  ];
+
+  /** Der Wert einer Art für den Server: einer der drei oder `null`; ein unbekannter Wert gilt als „ohne“. */
+  function artwert(wert) {
+    return ARTEN.some(eintrag => eintrag.wert !== null && eintrag.wert === wert) ? wert : null;
+  }
+
+  /** Das Wort der Art für den Anmerkungskopf: „Muss“, „Frage“, „Idee“; ohne Art leer (R00036: die Art ist nie allein Farbe). */
+  function artWort(wert) {
+    const bekannt = artwert(wert);
+    const eintrag = ARTEN.find(wahl => wahl.wert === bekannt);
+    return eintrag.wert === null ? '' : eintrag.wort;
+  }
+
+  /** Anmerkungen (Anlegereihenfolge) + Nummer + Art → dieselbe Liste in derselben Reihenfolge; nur die Art der Anmerkung mit dieser
+      Nummer wechselt (auf `null` = entfernt). Eine unbekannte Nummer lässt den Inhalt unverändert. */
+  function mitGeaenderterArt(anmerkungen, nummer, art) {
+    return anmerkungen.map(anmerkung => {
+      if (anmerkung.nummer !== nummer) {
+        return anmerkung;
+      }
+      return { ...anmerkung, art: artwert(art) };
+    });
+  }
+
   /** Anmerkungen (Anlegereihenfolge) + Nummer → dieselbe Liste in derselben Reihenfolge ohne den Eintrag mit dieser Nummer.
       Eine unbekannte Nummer lässt den Inhalt unverändert; die anderen behalten Stelle und Reihenfolge. */
   function ohneAnmerkung(anmerkungen, nummer) {
     return anmerkungen.filter(anmerkung => anmerkung.nummer !== nummer);
   }
 
-  Object.assign(ziel, { zeilenziel, anmerkungsstand, anmerkungsstandJeSicht, anmerkungsstelle, stellentext, artDerAnmerkung, hinweisAusserhalb, hinweisAusserhalbMitCommits, mitGeaendertemText, ohneAnmerkung, dateianmerkungen, ENTFERNT_HINWEIS });
+  Object.assign(ziel, { zeilenziel, anmerkungsstand, anmerkungsstandJeSicht, anmerkungsstelle, stellentext, artDerAnmerkung, hinweisAusserhalb, hinweisAusserhalbMitCommits, mitGeaendertemText, mitGeaenderterArt, ohneAnmerkung, dateianmerkungen, ARTEN, artwert, artWort, ENTFERNT_HINWEIS });
 })(typeof module !== 'undefined' ? module.exports : window);
