@@ -86,7 +86,20 @@ Vorbereitung: **Ordner D** außerhalb jedes Repositories, angelegt mit dem Skrip
 - [ ] 9. Gegeben ein Browser, in dem die Zwischenablage fehlt oder mit `NotAllowedError` ablehnt (`addInitScript`), wenn man „Datei kopieren“ betätigt, dann steht „Zwischenablage verweigert — Strg+C kopiert die Datei“, und ein folgendes Strg+C legt denselben Text wie Kriterium 8 ab; der Inhalt erscheint in keinem zweiten Feld. Gegeben `leer.sql`, dann ist „Datei kopieren“ gesperrt mit „Datei ist leer“. *Ebene: Playwright (Browser-Eigenes).*
 
 ### Nur über die Nummer
-- [ ] 10. Gegeben ein laufender Lauf mit `a.sql`, wenn man `GET /api/dateiansicht/1`, `/-1`, `/01`, `/0x0`, `/..%2f..%2fetc%2fpasswd`, `/0?pfad=/etc/passwd` und die Review-Endpunkte abfragt, dann liefert nur `/0` den Inhalt von `a.sql` (`/0?pfad=…` liefert ihn ebenfalls oder 400, nie einen anderen Inhalt), alle anderen 400 oder 404 ohne Dateiinhalt; eine Anfrage mit fremdem Host oder Origin, und `POST /api/schliessen` ohne Anfrageschutz, werden abgelehnt wie in R00002 (der Lauf läuft weiter). *Ebene: Integration (Endpunkte gegen echten Server).*
+- [ ] 10. Gegeben ein laufender Lauf mit `a.sql`, wenn man `GET /api/dateiansicht/1`, `/-1`, `/01`, `/0x0`, `/..%2f..%2fetc%2fpasswd`, `/0?pfad=/etc/passwd` und die Review-Endpunkte abfragt, dann liefert nur `/0` den Inhalt von `a.sql` (`/0?pfad=…` liefert ihn ebenfalls oder 400, nie einen anderen Inhalt), alle anderen 400 oder 404 ohne Dateiinhalt; eine Anfrage mit fremdem Host oder Origin, und `POST /api/schliessen` ohne Anfrageschutz, werden abgelehnt wie in R00002 (der Lauf läuft weiter); die Dateiansicht nutzt den Anfrageschutz aus #55 (L6/L15/L18). *Ebene: Integration (Endpunkte gegen echten Server).*
+
+### Angriffsmatrix (security-reviewer, vor dem Bau; Lücken L1–L20, Matrix `Dokumentation/Sicherheit/angriffsmatrix-dateiansicht.md`)
+
+- [ ] 11. Gegeben Ordner D mit der Angabe `f\xFF.sql` (ungültiges Byte, über python3 angelegt), **daneben** eine Datei mit echtem Ersatzzeichen `f\uFFFD.sql` (verschiedene Marker), wenn man `--dateien f\xFF.sql` startet, dann Exit 2 „Name nicht übergebbar (ungültiges Byte oder Ersatzzeichen U+FFFD)“, keine Zeile mit `http://127.0.0.1`, und der Inhalt von `f\uFFFD.sql` erscheint nie in Antwort oder stderr; eine Angabe mit echtem U+FFFD wird ebenso abgelehnt, auch wenn die Datei so heißt. *Ebene: Integration gegen den `DateiansichtStartInteractor` (Probe N5). Matrix L1, Entscheidung E4.*
+- [ ] 12. Gegeben eine Datei, die nach der Art-Prüfung und vor dem Öffnen durch einen symbolischen Link auf `/etc/hostname` (Marker `ZIEL-4711`), eine FIFO ohne Schreiber oder ein Verzeichnis ersetzt wird (Haken zwischen Prüfen und Öffnen), wenn man startet, dann Exit 2 („ist ein symbolischer Link“ / „keine reguläre Datei“ / „ist ein Verzeichnis“) in ≤ 2 s ohne Hängen, 0 Bytes gelesen, kein Marker in Antwort oder stderr; Anzeige, Größe, Zeilenzahl und Kopie stammen aus **denselben** gelesenen Bytes (kein zweiter Lesevorgang). *Ebene: Integration mit Haken (Proben T1–T3, T5). Matrix L2.*
+- [ ] 13. Gegeben `bin.dat` mit genau einem Null-Byte an Stelle 1, 8 000, 8 001, 1 MiB oder letzter Stelle, wenn man startet, dann Exit 2 „Binärdatei — enthält Null-Bytes“ an **jeder** Position; geprüft wird die ganze gelesene Datei, nicht nur die ersten 8 000 Bytes. *Ebene: Unit (Tabelle I1). Matrix L3.*
+- [ ] 14. Gegeben `cr.sql` mit einem einzelnen CR ohne LF mitten in einer Zeile (`-- harmlos` + CR + `DROP TABLE x;`), wenn die Seite steht, dann ist das CR kein Zeilenende und keine unsichtbare Lücke, sondern erscheint als Marke `⟨U+000D⟩`, und der Kopf nennt „Zeilenende: gemischt“ nur bei LF und CRLF. *Ebene: Unit und Playwright (I7, B9). Matrix L4.*
+- [ ] 15. Gegeben `breit.sql` (eine Zeile, 50 000 Zeichen; ein Anhang `; DROP TABLE x;` steht jenseits Zeichen 10 000), wenn man „Datei kopieren“ betätigt, dann nennt die Bestätigung „Datei kopiert (1 Zeile, davon 1 nur gekürzt gezeigt)“ und der Kopf trägt denselben Hinweis; kopiert werden trotzdem alle 50 000 Zeichen. *Ebene: Integration (Text am Interactor) und Playwright (I11). Matrix L5, Entscheidung E3.*
+- [ ] 16. Gegeben eine Datei, die mehrere Gründe zugleich erfüllt (UTF-16-BOM, Null-Byte und über 8 MiB), wenn man startet, dann gilt die Rangfolge Art → Größe → UTF-16/32-BOM → Null-Byte → UTF-8; bei ungültigem UTF-8 ist die „Stelle“ die Byteposition ab 1 ab Dateianfang (mit BOM); die Zeilenzahl folgt einer Definition (Anzahl der Zeilenenden, +1 bei Rest) und ist in Kopf, Liste und Bestätigung gleich. *Ebene: Unit (I2, I3, I6). Matrix L9.*
+- [ ] 17. Gegeben 50 Angaben zu je 8 MiB, wenn man startet, dann bricht das Lesen ab, sobald die Summe (32 MiB) überschritten ist (gelesene Bytes ≤ 32 MiB + 8 MiB + 1, nicht 400 MiB), und ein gemeinsamer Zähler bucht Datei- und Commitquellen; der RSS-Zuwachs bleibt ≤ 10 × Summe + 100 MiB und die Antwort ≤ 6 × Dateigröße + 1 KiB (Hypothesen, vor dem Bau messen und eintragen), Marken entstehen nur für gezeigte Zeilen; „Schließen“ antwortet in ≤ 1 s. *Ebene: Integration (Zähler, G4) und Prozess (RSS/Antwortgröße, G7). Matrix L10.*
+- [ ] 18. Gegeben `/proc/self/mem` (Lesen scheitert mit EIO), eine leere Angabe, ein Pfad von 5 000 Zeichen oder eine beim Lesen verschwundene Datei, wenn man startet, dann Exit 2 mit genau einer auf 400 Zeichen gekürzten `FEHLER [Dateiansicht]`-Grundzeile, kein Stacktrace, nie Exit 1 oder 134; der Browser-Öffner erhält nur die Adresse. *Ebene: Prozess (P8, P9, X8, X9). Matrix L14.*
+- [ ] 19. Gegeben ein Lauf mit drei Dateien (Marker `M0 M1 M2`), wenn man `/01`, `/00`, `/+0`, `/%200`, `/0x0`, `/0.0`, `/٠` (U+0660), `/０` (U+FF10), `/2147483648`, `/4294967296`, `/99999999999999999999`, `/0/`, `/0/x`, `//0` abfragt, dann liefert nur `/0` (gleichwertig `/%30`) den Inhalt von Datei 0, alles andere 400 oder 404 ohne Dateiinhalt; in keiner Antwort steht ein fremder Marker. *Ebene: Prozess (H1). Matrix L15.*
+- [ ] 20. Gegeben ein laufender Lauf, wenn nach Laden, 3 s Warten, Neuladen, `w`, Suche, Dateiwechsel, „Trotzdem laden“, Fokus- und Sichtbarkeitswechsel die Zähler für `navigator.clipboard.writeText/write/readText/read`, `document.execCommand('copy')` und das `copy`-Ereignis mit `setData` gelesen werden, dann sind sie alle 0 (kein Schreiben und kein Lesen der Zwischenablage ohne Geste). *Ebene: Playwright (Spy, B4). Matrix L17.*
 
 Grenz- und Leerfälle bedacht: 8 MiB genau und + 1 (Kriterium 3), leere Datei (9), 20 000/20 001 Zeilen (Grenze aus R00017, Test im Bau), Zeile 10 000/10 001 Zeichen (5, Unit), Datei ohne Schluss-LF (8). Verworfen: Datei nach dem Start ändern und neu laden (Stand beim Start ist Regel, ein Test genügt beim Bauen); Latin-1/UTF-16 anzeigen (entschieden, PO Zeile 209: spätere Ausbaustufe, bis dahin Exit 2 — Notiz unten).
 
@@ -102,13 +115,13 @@ Grenz- und Leerfälle bedacht: 8 MiB genau und + 1 (Kriterium 3), leere Datei (9
 
 ## Technische Überlegungen
 
-**Vorplanung** — Bubbles B4201–B4208 unter I0044; was gebaut wird, entscheidet der entwickler.
+**Vorplanung** — Bubbles B4201–B4209 unter I0044; was gebaut wird, entscheidet der entwickler.
 
 ### Ablauf
 
 1. **Aufruf lesen** (B4201) → `Dateiaufruf` oder `Aufruffehler` (Exit 2).
 2. **Datei lesen** (B4202) — Link im letzten Teil nicht folgen, Art am geöffneten Handle prüfen (regulär), höchstens Grenze + 1 Byte lesen.
-3. **Einordnen** (B4203) — Binärregel (Null-Byte in den ersten 8 000 Bytes, wie `Diffaufbereitung`), BOM, UTF-16, UTF-8 streng, Zeilenende, Zeilen.
+3. **Einordnen** (B4203) — Binärregel (Null-Byte in der ganzen gelesenen Datei), BOM, UTF-16, UTF-8 streng, Zeilenende (einzelnes CR als Marke), Zeilen; Rangfolge der Gründe und eine Definition der Zeilenzahl.
 4. **Start** (B4204) — Grund → stderr + Exit 2; sonst Server mit `Dateiansichtsstand` im RAM.
 5. **Liefern** (B4205) — Liste und Text nach Nummer; `POST /api/schliessen` → Exit 0.
 6. **Zeigen und kopieren** (B4206, B4207) — Seite, Kopf, Zeilen, Kopierstelle mit Ersatzweg.
@@ -160,7 +173,7 @@ Keine offenen. Der product-owner hat die Fragen am 2026-11-25 entschieden (`AI-T
 
 ## Umfang
 
-Gezählt (bis Bubble, Richtwerte ungemessen): 8 Bubbles unterhalb I0044 (B4201–B4208), 2 klar (2 h), 6 unklar (2–4 h) — 16–28 h. Keine Ausbaustufen.
+Gezählt (bis Bubble, Richtwerte ungemessen): 9 Bubbles unterhalb I0044 (B4201–B4209), 2 klar (2 h), 7 unklar (2–4 h) — 18–32 h. Keine Ausbaustufen.
 
 ## Warum löst diese Anforderung das Problem? (Pflicht)
 
