@@ -131,6 +131,14 @@ async function pruefeAbschnittZeile(page, commit, neu, text) {
   await expect(bereich.locator('.diff-abschnitt-hinweis')).toHaveCount(0);
 }
 
+/** Der Kopf des Abschnitts nennt Kurz-Hash und Betreff wie die Commit-Zeile; `rohzeichen` steht dort nie. */
+async function pruefeAbschnittskopf(page, commit, erwartet, rohzeichen) {
+  const kopf = abschnitt(page, commit).locator('.diff-abschnitt-kopf');
+  await expect(kopf).toHaveText(erwartet);
+  const text = await kopf.textContent();
+  expect(text, 'rohe Steuerzeichen im Abschnittskopf').not.toContain(rohzeichen);
+}
+
 async function pruefeZeile(page, neu, text) {
   await expect(page.locator(`${ZEILE}[data-neu="${neu}"] .c`)).toHaveText(`hinzugefügt: ${text}`);
   await expect(page.locator(MELDUNG)).toHaveText('');
@@ -582,7 +590,7 @@ module.exports = {
   pruefeBedienbarNachAlsText, ansichtWaehlen, ansichtPerTastaturWechseln, pruefeAnsicht, zeilenfarbenLesen, pruefeZeilenfarben, pruefeKontextzeileBinnen,
   pruefeDiff, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, pruefeHerkunft, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, diffAntwortVerzoegern,
   pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
-  pruefeAbschnittZugeklappt, abschnittTrotzdemLaden, pruefeAbschnittZeile,
+  pruefeAbschnittZugeklappt, abschnittTrotzdemLaden, pruefeAbschnittZeile, pruefeAbschnittskopf,
   diffAntwortZuGross, ganzDateiErstScheitern, blockKnoten, warteAufFarbe, langeAufgabenBeimScrollen, zugeklapptRechtzeitigNachKlick, zugeklapptRechtzeitigNachAktion,
   pruefeSprungzeile, pruefeSprungzeileName, sprungzeileLiegtImVerborgenen, pruefeSprungkopfName, sprungHunkLink, zeileWaehlen,
   pruefeSprungVerweis, pruefeSprungGrund, pruefeSprungHinweis, sprungAntwortVerzoegern, sprungAntwortScheitern,

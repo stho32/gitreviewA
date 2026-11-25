@@ -33,5 +33,12 @@
     };
   }
 
-  Object.assign(ziel, { datumText, zeilenwerte });
+  /** Der Betreff eines Commits der Auswahl, genau wie ihn die Commit-Zeile zeigt; leer, wenn der Hash nicht vorkommt.
+      Jede andere Ansicht (etwa der Abschnittskopf ohne Kette) nimmt ihn hier, damit fremder Text nirgends roh erscheint. */
+  function betreffVon(commits, hash) {
+    const commit = commits.find(eintrag => eintrag.hash === hash);
+    return commit ? ohneSteuerzeichen(commit.betreff) : '';
+  }
+
+  Object.assign(ziel, { datumText, zeilenwerte, betreffVon });
 })(typeof module !== 'undefined' ? module.exports : window);

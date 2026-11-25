@@ -247,6 +247,19 @@ function repoGrossOhneKette(ordner) {
   return { ordner, hashes: { x1, x2, x3 } };
 }
 
+/** Repo (R00012, Befund M1): `b1` legt `a.txt` an und trägt im Betreff das richtungsändernde Zeichen U+202E, `b2` legt `b.txt` an,
+    `b3` ändert `a.txt`. `b1 b3` ist keine lückenlose Kette → Abschnitte, deren Köpfe den Betreff nennen. */
+function repoMitBidiBetreff(ordner) {
+  repoAnlegen(ordner);
+  dateiSchreiben(ordner, 'a.txt', 'eins\nzwei\n');
+  const b1 = commitAnlegen(ordner, { betreff: 'Start \u202Eoberflaeche' });
+  dateiSchreiben(ordner, 'b.txt', 'x\n');
+  const b2 = commitAnlegen(ordner, { betreff: 'b neu' });
+  dateiSchreiben(ordner, 'a.txt', 'eins\nzwei\ndrei\n');
+  const b3 = commitAnlegen(ordner, { betreff: 'a wächst' });
+  return { ordner, hashes: { b1, b2, b3 } };
+}
+
 /** Repo Z (R00012): `z1` „Start“ legt `README.md` (`Lager`, `Beispiel`) und `src/a.txt` (`eins`, `zwei`, `drei`) an; `z2` „a ändern, b neu“
     ändert in `src/a.txt` `zwei` zu `ZWEI` und legt `src/b.txt` (`x`, `y`) an; `z3` „a und b ändern“ hängt in `src/a.txt` `vier` an und
     ändert in `src/b.txt` `y` zu `Y`. `z1 z2 z3` ist eine lückenlose Kette, `z1 z3` nicht. Netto über alle drei: `README.md` +2 −0,
@@ -293,4 +306,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoX, repoK, repoZ, repoMitBidiPfad, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoX, repoK, repoZ, repoMitBidiPfad, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };

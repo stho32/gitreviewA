@@ -287,10 +287,8 @@
     hole: () => zustand.commits,
     gewaehlt: () => zustand.gewaehlt,
     kurzVon,
-    betreffVon: hash => {
-      const commit = zustand.commits.find(eintrag => eintrag.hash === hash);
-      return commit ? commit.betreff : '';
-    },
+    /** Der Betreff in der Anzeigeform der Commit-Zeile (ohne Steuerzeichen), nie roh. */
+    betreffVon: hash => window.betreffVon(zustand.commits, hash),
   };
 
   document.addEventListener('DOMContentLoaded', init);

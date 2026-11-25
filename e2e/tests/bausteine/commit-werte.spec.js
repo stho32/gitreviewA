@@ -1,7 +1,7 @@
 'use strict';
 // Bausteintests (ohne Browser) der reinen Anzeigefunktionen der Commit-Leiste.
 const { test, expect } = require('@playwright/test');
-const { datumText, zeilenwerte } = require('../../../src/GitReviewA/web/commit-werte.js');
+const { datumText, zeilenwerte, betreffVon } = require('../../../src/GitReviewA/web/commit-werte.js');
 
 test.describe('Baustein Commit-Werte', () => {
   test('soll das Datum als TT.MM.JJJJ HH:MM in der Ortszeit zeigen', () => {
@@ -33,5 +33,12 @@ test.describe('Baustein Commit-Werte', () => {
     const werte = zeilenwerte({ kurzHash: 'a', autor: 'A\u202Eb\u200F', datum: '', betreff: '\u2066x\u2069\u061C', rumpf: 'r\u202D\u200E' });
 
     expect([werte.autor, werte.betreff, werte.rumpf]).toEqual(['Ab', 'x', 'r']);
+  });
+
+  test('soll den Betreff eines Commits so liefern, wie die Zeile ihn zeigt (M1: nie roh)', () => {
+    const commits = [{ hash: 'abc1234', kurzHash: 'abc1234', autor: '', datum: '', betreff: 'Start \u202Eoberflaeche\u2066', rumpf: '' }];
+
+    expect(betreffVon(commits, 'abc1234')).toBe('Start oberflaeche');
+    expect(betreffVon(commits, 'fedcba9')).toBe('');
   });
 });

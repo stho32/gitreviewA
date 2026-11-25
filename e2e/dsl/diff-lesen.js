@@ -23,6 +23,7 @@ const VORBEREITUNGEN = {
   'Binärausgabe des Repos': { anlegen: repos.repoMitBinaerausgabe, commits: ['w'] },
   Merge: { anlegen: repos.repoM, commits: ['m'] },
   'Bidi im Dateinamen': { anlegen: repos.repoMitBidiPfad, commits: ['b'] },
+  'Bidi im Betreff': { anlegen: repos.repoMitBidiBetreff, commits: ['b1', 'b3'] },
   'große Binärdateien': { anlegen: repos.repoK, commits: ['k'] },
   '20 000 Zeilen': { anlegen: repos.repoU, commits: ['u'] },
   '20 000 Zeilen, eine geändert': { anlegen: repos.repoUMitV, commits: ['v'] },
@@ -79,6 +80,8 @@ function diffSprache(gr, page) {
 
   return {
     starten,
+    hash: name => hash(name),
+    kurz: name => kurz(name),
     commitGewaehlt: commit => seite.pruefeGewaehlterCommit(page, kurz(commit)),
     commitAnsehen: commit => seite.commitWaehlen(page, kurz(commit)),
     dateiAnsehen: name => seite.dateiWaehlen(page, name),
@@ -103,6 +106,8 @@ function diffSprache(gr, page) {
     abschnittZugeklappt: (name, meldung) => diffSeite.pruefeAbschnittZugeklappt(page, hash(name), meldung),
     abschnittTrotzdemLaden: name => diffSeite.abschnittTrotzdemLaden(page, hash(name)),
     abschnittZeileZeigt: (name, neu, text) => diffSeite.pruefeAbschnittZeile(page, hash(name), neu, text),
+    /** Der Abschnittskopf nennt Kurz-Hash und Betreff wie die Commit-Zeile; `rohzeichen` steht dort nie (M1). */
+    abschnittskopfZeigt: (name, erwartet, rohzeichen) => diffSeite.pruefeAbschnittskopf(page, hash(name), erwartet, rohzeichen),
     /** Wählt `datei` und misst vom Klick bis zum Zuklapphinweis `meldung`; liefert den Messwert. */
     zugeklapptNachKlick: (datei, pfad, meldung, fristMs = 1000) => diffSeite.zugeklapptRechtzeitigNachKlick(page, () => seite.dateiWaehlen(page, datei), pfad, meldung, fristMs),
     /** Schaltet auf `ansicht` und misst bis zum Zuklapphinweis `meldung`; liefert den Messwert. */
