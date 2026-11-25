@@ -72,8 +72,12 @@ an die KI zurückzugeben.
   Art gilt je Anmerkung und ist kein Gesamturteil.
 - **Einzelne Dateien ansehen und kopieren**: neben dem Review von Commits zeigt gitreviewA eine
   oder mehrere genannte Dateien ganz, ohne Diff und mit Syntaxhervorhebung — etwa SQL-Dateien,
-  die man ausführen soll —, und ihr Inhalt lässt sich ganz oder teilweise kopieren. Nur lesen:
-  nur die genannten Dateien, kein Durchwandern von Verzeichnissen, kein Editor.
+  die man ausführen soll —, und ihr Inhalt lässt sich ganz oder teilweise kopieren. Quellen sind
+  Dateien vom Datenträger (im Arbeitsbaum, auch ungetrackt oder ignoriert, oder außerhalb jedes
+  Repositories) und der Stand in einem Commit über `<commit>:<pfad>`; gelesen werden nur die beim
+  Start genannten Dateien. Nur lesen: kein Durchwandern von Verzeichnissen, kein Editor. Dieser
+  Lauf hat kein Ergebnis: stdout bleibt leer, „Schließen“ endet mit Exit 0, Strg+C oder Signal
+  wie im Review mit „Review abgebrochen“ auf stderr und Exit 130.
 - **Abbruch erkennbar**: wird der Review ohne „Beenden“ abgebrochen (Strg+C, Signal), erscheint
   kein Ergebnis auf stdout, sondern „Review abgebrochen“ auf stderr und Exit 130; ein
   geschlossener Tab beendet nichts, ein Zeitlimit gibt es nicht.
@@ -99,7 +103,8 @@ an die KI zurückzugeben.
   **genau eine ausführbare Datei** je Plattform (alles darin, kein Ordner; frameworkabhängig,
   setzt die .NET-10-Runtime voraus).
 - **Nur localhost**, freier Port, der Browser öffnet sich selbst; ein Mensch, ein Tab je Lauf.
-- **Git über die `git`-Kommandozeile**, damit Diffs genau denen von `git` entsprechen.
+- **Git über die `git`-Kommandozeile**, damit Diffs genau denen von `git` entsprechen; gilt für
+  Diffs und `<commit>:<pfad>`; genannte Dateien liest die Dateiansicht vom Datenträger.
 - **Nichts wird gespeichert**: Haken und Anmerkungen leben nur im Arbeitsspeicher des
   Laufs; das Ergebnis existiert nur als Ausgabe.
 - **stdout gehört allein dem Ergebnis.** Logging nur auf stderr: Standardstufe Warning,
@@ -127,12 +132,6 @@ an die KI zurückzugeben.
 
 - **Anbindung an kanbanD**: die Commits einer Karte direkt laden (`--karte <nr>`) —
   wann und wie eng?
-- **Dateiansicht: Quelle der Dateien** — nur Dateien aus dem Arbeitsbaum eines Repositories, auch
-  aus einem Commit, oder auch Dateien außerhalb von git? Die Leitplanke „Git über die
-  `git`-Kommandozeile“ trägt nur Inhalte aus git.
-- **Dateiansicht: Ergebnis** — nur Ansehen und Kopieren, oder auch Anmerkungen und ein Ergebnis
-  auf stdout wie im Review (etwa „Datei 2 ausgeführt“)? Die Leitplanke „stdout gehört allein dem
-  Ergebnis“ legt fest, was ein solcher Lauf ausgibt.
 
 ## Ergänzungshistorie
 
@@ -145,3 +144,4 @@ an die KI zurückzugeben.
 | 2026-11-24 | Richtungsfrage „Format des Ergebnisses“ entschieden: nur Markdown, JSON erst bei konkretem Bedarf (Empfehlung des product-owner; Betreiber: „Nimm einfach immer die Empfehlung vom Product Owner“) |
 | 2026-11-24 | Zielbild ergänzt um „Zusammen ist der Standard, die Dateien führen“ und „Beenden und Abbrechen im Kopf“ (Betreiber: „Die Dateien bitte über den Commits (sind wichtiger) und die Default-Anzeige ist ‚alle Änderungen zusammen‘.“, „Ja, Fassung 2 bitte einplanen.“; Entscheidungen des product-owner zu #27) |
 | 2026-11-25 | Zielbild ergänzt um „Arbeitsplatz mit entkoppelten Bereichen“ (Richtung A), „Abschlussschritt vor ‚Beenden‘“, „Art der Anmerkung“ (Muss/Frage/Idee als vorangestelltes `[Muss]` in der Textzeile, Format sonst unverändert, kein Gesamturteil) und den neuen Anwendungsfall „Einzelne Dateien ansehen und kopieren“; Kurzfassung, Nutzer und Nutzen, „Kein Editor“ ergänzt; zwei Richtungsfragen zur Dateiansicht offen (Betreiber: „Variante A, aber die Sidebars müssen vom Inhalt entkoppelt sein, ähnlich wie ein Texteditor.“ und „Außerdem brauch ich noch irgendwas um nur einzelne Dateien anzusehen. Zum Beispiel habe ich öfter das Problem, dass man eine oder mehrere SQL Dateien ausführen soll. Die könnte man mit dem Review Tool anzeigen. Man müsste natürlich den Inhalt ganz oder teilweise kopieren können.“; Abschlussschritt nach Empfehlung des Directors; Karten #41, #42) |
+| 2026-11-25 | Richtungsfragen „Dateiansicht: Quelle der Dateien“ und „Dateiansicht: Ergebnis“ entschieden (product-owner, `AI-Team/po-entscheidungen.md` Zeilen 200/201): das Zielbild nennt als Quellen Dateien vom Datenträger (auch außerhalb von git, nur die beim Start genannten) und `<commit>:<pfad>`; die Leitplanke „Git über die `git`-Kommandozeile“ gilt für Diffs und `<commit>:<pfad>`, genannte Dateien liest die Dateiansicht vom Datenträger; Ergebnis der Dateiansicht: stdout leer, Exit 0 beim Schließen, Exit 130 beim Abbruch (Strg+C oder Signal) |
