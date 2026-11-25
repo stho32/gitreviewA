@@ -295,3 +295,8 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-25 | #25 | Entwicklertest | product-owner | abgebrochen | 1 h 2 min | opencode: entgleist (Ausgabe Unsinn, kein Commit), wird wiederholt · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 25-product-owner-2 · 0,009 $ · Karte gesamt 1,08 $ |
 | 2026-11-25 | #13 | Entwicklertest | entwicklertester | bestanden | 1 h 2 min | opencode: alle Szenarien bestanden, kein Befund · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 13-entwicklertester-1 · 0,12 $ · Karte gesamt 1,07 $ |
 | 2026-11-25 | #18 | Nacharbeit | entwickler | bestanden | 1 h 2 min | opencode: B1, B2, M behoben, je rot→grün · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 18-entwickler-2 · 0,23 $ · Karte gesamt 1,07 $ |
+
+## Retrospektive #13 I0013 Dateien ausblenden (2026-11-25)
+- Durchlauf: planer schnitt I0013 (Suche → I0031 #30), product-owner 4 Fragen, Zähler im Kopf nachgezogen (aus #26), Bau 36 min (Commit je Bubble), beide Reviews ohne Muss (Marker-Probe: Muster nie an git), Entwicklertest ohne Befund. Karte gesamt 1,07 $ — eine der günstigsten Karten trotz neuer Aufrufoption.
+- Lehre: Eine Karte, die in Planung geschnitten und vor dem Bau mit der Nachbarkarte (#26) abgeglichen wurde, kam ohne Nacharbeit durch.
+- Gate: NUnit 1193/1193, Playwright 468/468 zweimal. Erste Karte mit Push und Release nach „Erledigt“ (v0.2.1).
