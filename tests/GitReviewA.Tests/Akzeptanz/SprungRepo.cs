@@ -65,6 +65,50 @@ internal sealed class SprungRepo : IDisposable
         return l;
     }
 
+    public static readonly string[] Markerdateien = ["marker-extern", "marker-textconv", "marker-command"];
+
+    /// <summary>Repo S mit `core.fsmonitor` auf ein Marker-Skript (liest der neue Lesepfad den Index, startet es).</summary>
+    public static SprungRepo SMitFsmonitor()
+    {
+        var s = S();
+        s.Git("config", "core.fsmonitor", s.MarkerSkript("marker-fsmonitor"));
+        return s;
+    }
+
+    /// <summary>Repo S mit drei Diff-Programmen in der Konfiguration und `.gitattributes` `*.txt diff=marker` (Marker-Probe).</summary>
+    public static SprungRepo SMitDiffProgrammen()
+    {
+        var s = S();
+        s.Git("config", "diff.external", s.MarkerSkript("marker-extern"));
+        s.Git("config", "diff.marker.textconv", s.MarkerSkript("marker-textconv"));
+        s.Git("config", "diff.marker.command", s.MarkerSkript("marker-command"));
+        s.Schreibe(".gitattributes", "*.txt diff=marker\n");
+        return s;
+    }
+
+    /// <summary>Repo S mit Einstellungen, die Kontext, Leerzeilen und Farben der Ausgabe von git verändern.</summary>
+    public static SprungRepo SMitFremdenEinstellungen()
+    {
+        var s = S();
+        s.Git("config", "diff.context", "0");
+        s.Git("config", "diff.suppressBlankEmpty", "true");
+        s.Git("config", "color.ui", "always");
+        return s;
+    }
+
+    public string[] VorhandeneMarker()
+    {
+        return Markerdateien.Where(marker => File.Exists(Path.Combine(Ordner, marker))).ToArray();
+    }
+
+    private string MarkerSkript(string marker)
+    {
+        var skript = Path.Combine(Ordner, ".git", $"{marker}.sh");
+        File.WriteAllText(skript, $"#!/bin/sh\ntouch '{Path.Combine(Ordner, marker)}'\ncat \"$1\" 2>/dev/null\n");
+        File.SetUnixFileMode(skript, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        return skript;
+    }
+
     private void Schreibe(string pfad, string inhalt)
     {
         repo.SchreibeDatei(pfad, inhalt);

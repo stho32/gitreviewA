@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;
 using GitReviewA.Aufruf;
+using GitReviewA.Diff;
 using GitReviewA.Fremdtext;
 using GitReviewA.Haken;
 using GitReviewA.Zusammen;
@@ -211,6 +212,45 @@ internal static class GitLeser
         return Ausfuehren(start, aufruf);
     }
 
+
+    /// <summary>
+    /// Ob der Arbeitsbaum für diesen Pfad vom Commit abweicht: `git diff --quiet` gegen den Commit und den Pfad, mit den Schutzoptionen
+    /// der übrigen Lesepfade. Exit 0 = unverändert, 1 = geändert, alles andere ein <see cref="GitFehler"/>. Ein Name mit Rohbytes oder
+    /// LF/CR geht nie an git — er wäre dort ein anderer Pfad (Gelerntes #28).
+    /// </summary>
+    public static bool ArbeitsbaumGeaendertLesen(string hash, Dateiaenderung datei, string arbeitsordner, Ausgabegrenze grenze)
+    {
+        var nameGehtNichtAnGit = datei.Rohpfad is not null || datei.RohAlterPfad is not null || Namenspruefung.TraegtZeilenende(datei);
+        if (nameGehtNichtAnGit)
+        {
+            throw new GitFehler("Arbeitsbaumprüfung abgewiesen: Name mit ungültigem Byte oder Zeilenende geht nicht an git");
+        }
+        var start = GitStart.Im(arbeitsordner);
+        start.ArgumentList.Add("--literal-pathspecs");
+        start.ArgumentList.Add("diff");
+        start.ArgumentList.Add("--quiet");
+        start.ArgumentList.Add("--no-ext-diff");
+        start.ArgumentList.Add("--no-textconv");
+        start.ArgumentList.Add("--ignore-submodules=none");
+        start.ArgumentList.Add("--no-relative");
+        start.ArgumentList.Add("--end-of-options");
+        start.ArgumentList.Add(hash);
+        start.ArgumentList.Add("--");
+        start.ArgumentList.Add(datei.Pfad);
+        var aufruf = $"git diff --quiet {hash} -- {UnsichtbareZeichen.AlsMarken(datei.Pfad)}";
+        var lauf = WarteAufEndeMitGrenze(Starte(start), aufruf, grenze);
+        var istUnveraendert = lauf.ExitCode == 0;
+        if (istUnveraendert)
+        {
+            return false;
+        }
+        var istGeaendert = lauf.ExitCode == 1;
+        if (istGeaendert)
+        {
+            return true;
+        }
+        throw new GitFehler($"{aufruf} endete mit {lauf.ExitCode}: {lauf.Fehlertext}");
+    }
 
     /// <summary>
     /// Ein Bereich ergibt dieselbe Liste wie <c>git rev-list</c>. Mehrere Bereiche ergeben die Vereinigung der einzelnen Bereiche,

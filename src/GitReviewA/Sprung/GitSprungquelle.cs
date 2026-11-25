@@ -1,3 +1,5 @@
+using GitReviewA.Git;
+
 namespace GitReviewA.Sprung;
 
 /// <summary>
@@ -6,9 +8,26 @@ namespace GitReviewA.Sprung;
 /// Ziel existiert; sonst zählt, ob das Endziel da ist. `File.Exists` allein genügt nicht: .NET meldet auch einen ins Leere
 /// zeigenden Symlink als vorhanden.
 /// </summary>
-internal sealed class GitSprungquelle(string repositorywurzel) : ISprungquelle
+internal sealed class GitSprungquelle : ISprungquelle
 {
-    public string Repositorywurzel { get; } = repositorywurzel;
+    private readonly Ausgabegrenze grenze;
+
+    public GitSprungquelle(string repositorywurzel) : this(repositorywurzel, Ausgabegrenze.Standard)
+    {
+    }
+
+    public GitSprungquelle(string repositorywurzel, Ausgabegrenze grenze)
+    {
+        Repositorywurzel = repositorywurzel;
+        this.grenze = grenze;
+    }
+
+    public string Repositorywurzel { get; }
+
+    public bool IstGeaendertSeit(string hash, Dateiaenderung datei)
+    {
+        return GitLeser.ArbeitsbaumGeaendertLesen(hash, datei, Repositorywurzel, grenze);
+    }
 
     public Sprungvorhandensein PruefeVorhandensein(string absoluterPfad)
     {
