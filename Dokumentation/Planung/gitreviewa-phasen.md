@@ -51,3 +51,4 @@ zuletzt: 2026-11-25
 | I0015 | Entwicklertest | 2026-11-25 | bestanden | Claude (autonom, entwicklertester + Director, Auftrag Stefan Hoffmann) | Szenarien R00030, US-18 nach Nacharbeit vom Director nachgeprüft, Karte #15 |
 | I0034 | Entwicklertest | 2026-11-25 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | Akzeptanz R00033 17/17, Karte #34 |
 | I0033 | Entwicklertest | 2026-11-25 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | Szenarien R00032, Karte #36 |
+| I0032 | Entwicklertest | 2026-11-25 | bestanden | Claude (autonom, entwicklertester + Director, Auftrag Stefan Hoffmann) | Szenarien R00031, Muss (doppelte Anzeige) nach Nacharbeit vom Director nachgeprüft, Karte #35 |
