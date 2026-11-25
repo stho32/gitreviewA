@@ -325,6 +325,40 @@ function repoStill(ordner) {
   return { ordner, hashes: { t1, t2 } };
 }
 
+/** Repo S (R00033): `s1` „Start“ legt `lang.txt` mit 200 Zeilen (`z001`…`z200`, die vierfache Fensterhöhe) und 60 kleine Dateien
+    `d01.txt`…`d60.txt` an; `s2` „Ändern“ ändert `z200` zu `Z200`. Die Netto-Liste von `s1` hat 61 Zeilen (60 Dateien und `lang.txt`),
+    der Diff von `lang.txt` ist höher als das Fenster — beide Rollbereiche scrollen wirklich. */
+function repoS(ordner) {
+  repoAnlegen(ordner);
+  const lang = zeilen(200, nummer => `z${String(nummer).padStart(3, '0')}`);
+  dateiSchreiben(ordner, 'lang.txt', lang);
+  for (let nummer = 1; nummer <= 60; nummer += 1) {
+    dateiSchreiben(ordner, `d${String(nummer).padStart(2, '0')}.txt`, `d${nummer}\n`);
+  }
+  const s1 = commitAnlegen(ordner, { betreff: 'Start', datum: '2026-01-01T09:00:00+01:00' });
+  dateiSchreiben(ordner, 'lang.txt', lang.replace('z200\n', 'Z200\n'));
+  const s2 = commitAnlegen(ordner, { betreff: 'Ändern', datum: '2026-01-01T09:05:00+01:00' });
+  return { ordner, hashes: { s1, s2 } };
+}
+
+/** Repo L (R00033, Lücken im Diff): `l1` „Start“ legt `weit.txt` mit 400 Zeilen und 60 kleine Dateien `d01.txt`…`d60.txt` an;
+    `l2` „Alle zwanzig“ ändert in `weit.txt` jede zwanzigste Zeile (`Z005`, `Z025`, …) und hängt in jeder kleinen Datei eine
+    Zeile an. Die Liste von `l2` hat 61 Zeilen; „nur Änderungen“ in „Einzeln“ zeigt 20 Abschnitte mit Lücken dazwischen. */
+function repoL(ordner) {
+  repoAnlegen(ordner);
+  dateiSchreiben(ordner, 'weit.txt', zeilen(400, nummer => `z${String(nummer).padStart(3, '0')}`));
+  for (let nummer = 1; nummer <= 60; nummer += 1) {
+    dateiSchreiben(ordner, `d${String(nummer).padStart(2, '0')}.txt`, `d${nummer}\n`);
+  }
+  const l1 = commitAnlegen(ordner, { betreff: 'Start', datum: '2026-01-01T09:00:00+01:00' });
+  dateiSchreiben(ordner, 'weit.txt', zeilen(400, nummer => (nummer % 20 === 5 ? `Z${String(nummer).padStart(3, '0')}` : `z${String(nummer).padStart(3, '0')}`)));
+  for (let nummer = 1; nummer <= 60; nummer += 1) {
+    dateiSchreiben(ordner, `d${String(nummer).padStart(2, '0')}.txt`, `d${nummer}\nneu\n`);
+  }
+  const l2 = commitAnlegen(ordner, { betreff: 'Alle zwanzig', datum: '2026-01-01T09:05:00+01:00' });
+  return { ordner, hashes: { l1, l2 } };
+}
+
 /** Repo X (R00010): ein Commit `x` fügt die Datei `<b>x</b>.txt` mit der Zeile `eins` hinzu. */
 /** Repo G (R00023, Nebeneinander): `g1` „Start“, `g2` „Zwei weg, drei her“ (t.txt: 2 entfernt, 3 hinzugefügt → Überhang rechts),
     `g3` „Nur vier weg“ (ein entfernter Lauf ohne hinzugefügten). */
@@ -366,4 +400,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoG, repoX, repoK, repoZ, repoQ, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoG, repoX, repoK, repoZ, repoQ, repoS, repoL, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };
