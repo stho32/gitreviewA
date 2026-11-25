@@ -106,6 +106,7 @@ Treiber `claude` läuft als Subagent des Directors, Treiber `opencode` über `we
 | security-reviewer | srev | opencode | openrouter/deepseek/deepseek-v4.1-flash | Angriffsfläche nach „Wissen/Sicherheit“, mit Probe; kurz bei Karten ohne neue Grenze. **Karten mit Label `sicherheit`: Treiber `claude`, Modell `sonnet`** (Betreiber 2026-11-25 — Flash stufte Befunde dort zu niedrig ein) |
 | entwicklertester | etst | opencode | openrouter/deepseek/deepseek-v4.1-flash | User Story wörtlich im echten Programm, in einem Wegwerf-Repo |
 | product-owner | po | claude | sonnet | Rückfragen der Rollen im Sinne der Vision entscheiden, Protokoll `AI-Team/po-entscheidungen.md` (Betreiber 2026-11-25: zurück auf Claude Sonnet — mit Flash wurden alle Empfehlungen des planers ungeprüft bestätigt) |
+| dokumentar | doku | claude | sonnet | README und Handbuch aus Sicht der Leser, mit echten Screenshots aus einem Wegwerf-Repo (Betreiber 2026-11-25: README mit Screenshots, Auftrag vom PO) |
 | realist-consultant | real | opencode | openrouter/deepseek/deepseek-v4.1-flash | nur als Vorschlag, wenn die Schleifenbremse greift (`realist: vorschlagen`) |
 
 ## Spalten
