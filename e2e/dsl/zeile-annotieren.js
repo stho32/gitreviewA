@@ -12,6 +12,9 @@ const repos = require('../treiber/diff-repos.js');
 
 const FENSTER = { width: 1280, height: 800 };
 const LADEFRIST_MS = 1000;
+/** Nach der Anzeige darf keine Aufgabe des Hauptfadens länger sein (R00017); „Beenden“ muss binnen einer Sekunde klickbar sein. */
+const BEDIENBAR_FRIST_MS = 150;
+const KLICK_FRIST_MS = 1000;
 
 const VORBEREITUNGEN = {
   'Repo A': { anlegen: repos.repoA, commits: ['q', 'p'] },
@@ -250,6 +253,17 @@ function annotierSprache(gr, page) {
     /** Beantwortet den Diff von `datei` mit `status` (etwa 500) statt des Patches. */
     diffAntwortScheitert: (datei, status) => diffSeite.diffAntwortErsetzen(page, { pfad: datei, status }),
     anmerkungenRechtzeitigNachKlick: (datei, erwartet) => anmerkungSeite.pruefeAnmerkungenBinnen(page, () => seite.dateiWaehlen(page, datei), erwartet, LADEFRIST_MS),
+    /** Sammelt ab jetzt die Aufgaben des Hauptfadens (> 50 ms) mit Startzeit — vor dem Klick auf die Datei aufrufen. */
+    aufgabenSammeln: () => seite.aufgabenSammeln(page),
+    /** Nach der Anzeige: keine Aufgabe des Hauptfadens über `aufgabenFristMs` (gemessen ab der Anzeige), „Beenden“ binnen
+        `klickFristMs` geklickt; betätigt „Beenden“ und liefert Aufgaben, Messwert, Exit-Code und Ergebnis. */
+    bedienbarNachDerAnzeige: async ({ aufgabenFristMs = BEDIENBAR_FRIST_MS, klickFristMs = KLICK_FRIST_MS } = {}) => {
+      const klickMs = await seite.beendenBetaetigenBinnen(page, klickFristMs);
+      const aufgaben = await seite.pruefeAufgabenNachAnzeige(page, aufgabenFristMs);
+      await seite.pruefeAufgabenZaehler(page);
+      const exitCode = await gr.aufEndeWarten(lauf);
+      return { aufgaben, klickMs, exitCode, ergebnis: gr.ergebnis(lauf) };
+    },
 
     fremderTextBleibtText: async () => {
       await anmerkungSeite.pruefeAnmerkungOhneHtml(page);

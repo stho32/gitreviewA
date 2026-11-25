@@ -173,6 +173,61 @@ async function beendenBetaetigen(page) {
   await beendenKnopf(page).click({ timeout: 5000 });
 }
 
+/** Betätigt „Beenden“ und misst bis zum Klick; die Frist gilt für die Bedienbarkeit der Seite nach der Anzeige. */
+async function beendenBetaetigenBinnen(page, fristMs) {
+  const startUmMs = Date.now();
+  await beendenBetaetigen(page);
+  const dauerMs = Date.now() - startUmMs;
+  expect(dauerMs, `„Beenden“ geklickt nach ${dauerMs} ms`).toBeLessThanOrEqual(fristMs);
+  return dauerMs;
+}
+
+/** Sammelt ab jetzt die Aufgaben des Hauptfadens (Long Tasks ab 50 ms) mit ihrer Startzeit; vor der Aktion aufrufen.
+    Die Anzeige stempelt ihre Zeit selbst (`gitreviewaAnzeigeUmMs`), so lassen sich die Aufgaben danach trennen. */
+async function aufgabenSammeln(page) {
+  await page.evaluate(() => {
+    window.gitreviewaAufgaben = [];
+    window.gitreviewaAnzeigeUmMs = null;
+    const beobachter = new PerformanceObserver(liste => {
+      for (const eintrag of liste.getEntries()) {
+        window.gitreviewaAufgaben.push({ start: Math.round(eintrag.startTime), dauer: Math.round(eintrag.duration) });
+      }
+    });
+    beobachter.observe({ type: 'longtask', buffered: false });
+  });
+}
+
+/** Die Aufgaben, die **nach** der Anzeige begonnen haben; keine darf länger als `fristMs` sein. Setzt `aufgabenSammeln` voraus. */
+async function pruefeAufgabenNachAnzeige(page, fristMs) {
+  const aufgaben = await page.evaluate(() => {
+    const zeiten = window.gitreviewaAufgaben;
+    if (!zeiten) {
+      return null;
+    }
+    const anzeigeUmMs = window.gitreviewaAnzeigeUmMs;
+    if (anzeigeUmMs === null) {
+      return zeiten;
+    }
+    return zeiten.filter(aufgabe => aufgabe.start >= anzeigeUmMs);
+  });
+  expect(aufgaben, 'die Aufgaben wurden seit dem Klick gesammelt (aufgabenSammeln)').not.toBeNull();
+  for (const aufgabe of aufgaben) {
+    expect(aufgabe.dauer, `Aufgabe des Hauptfadens nach der Anzeige: ${aufgabe.dauer} ms`).toBeLessThanOrEqual(fristMs);
+  }
+  return aufgaben;
+}
+
+/** Positivkontrolle des Aufgaben-Zählers: eine künstliche Aufgabe von 300 ms im Hauptfaden muss im Zähler erscheinen. */
+async function pruefeAufgabenZaehler(page) {
+  await page.evaluate(() => {
+    const endeUmMs = performance.now() + 300;
+    while (performance.now() < endeUmMs) {
+      // Der Hauptfaden ist beschäftigt, bis die Zeit um ist.
+    }
+  });
+  await page.waitForFunction(() => window.gitreviewaAufgaben.some(aufgabe => aufgabe.dauer >= 300), undefined, { polling: 'raf', timeout: 2000 });
+}
+
 function beendetMeldung(page) {
   return page.getByText('Review beendet', { exact: true });
 }
@@ -517,7 +572,7 @@ module.exports = {
   abgehakteSchalter, abgehakteSchalterBetatigen, pruefeAbgehakteSchalter, abgehakteHinweis,
   sucheFeld, sucheZaehler, sucheFehler, sucheSuchen, sucheWeiter, sucheZurueck, sucheMarken, sucheMarkenLesen,
   dateiwahlenSammeln, gesammelteDateiwahlen, formatierungsElementeZaehlen,
-  beendenKnopf, beendenBetaetigen, beendetMeldung, beendenFehler, beendenScheitertMit, modusWaehlen, neuLaden,
+  beendenKnopf, beendenBetaetigen, beendenBetaetigenBinnen, aufgabenSammeln, pruefeAufgabenNachAnzeige, pruefeAufgabenZaehler, beendetMeldung, beendenFehler, beendenScheitertMit, modusWaehlen, neuLaden,
   kopfZahlen, fortschrittZaehler, commitZeileZusammenfassung, commitZeileText, pruefeKopfZahlen, pruefeFortschritt, pruefeCommitZeileZusammenfassung,
   pruefeCommitZeileEnthaelt, pruefeCommitZeileEnthaeltNicht, zusammenAntwortVerzoegern, zusammenAntwortScheitert,
   commitZeileAufklappen, commitZeileZuklappen, pruefeCommitZeileUeberDerListe,

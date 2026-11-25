@@ -228,7 +228,7 @@ test.describe('Zeile annotieren', () => {
     expect(ergebnis).not.toContain('\u202E');
   });
 
-  test('Lastprofil: 500 Anmerkungen an gross.txt mit 20 000 Zeilen stehen binnen 1 s nach dem Klick', async ({ anm }) => {
+  test('Lastprofil: 500 Anmerkungen an gross.txt mit 20 000 Zeilen stehen binnen 1 s nach dem Klick, danach bleibt die Seite bedienbar', async ({ anm }) => {
     await anm.starten({ vorbereitung: 'Repo U', seiteOeffnen: false });
     const text = 'a'.repeat(200);
     for (let zeile = 1; zeile <= 500; zeile += 1) {
@@ -236,10 +236,12 @@ test.describe('Zeile annotieren', () => {
     }
     await anm.seiteOeffnen();
 
+    await anm.aufgabenSammeln();
     const dauerMs = await anm.anmerkungenRechtzeitigNachKlick('gross.txt', { letzteNeu: 20000, anmerkungNeu: 500, anzahl: 500 });
 
     test.info().annotations.push({ type: 'Messwert', description: `500 Anmerkungen an 20 000 Zeilen: ${dauerMs} ms` });
-    const { ergebnis } = await anm.beendenUndErgebnisLesen();
+    const { aufgaben, klickMs, ergebnis } = await anm.bedienbarNachDerAnzeige();
+    test.info().annotations.push({ type: 'Bedienbarkeit nach der Anzeige', description: `„Beenden“ geklickt nach ${klickMs} ms, Aufgaben über 150 ms: ${aufgaben.length}` });
     expect(ergebnis).toContain('Anmerkungen: 500\n');
   });
 

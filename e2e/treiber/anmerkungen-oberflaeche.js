@@ -424,7 +424,8 @@ async function aenderungVerzoegern(page) {
   return { eingetroffen: () => antwort, anzahl: () => anzahl };
 }
 
-/** Führt `waehlen` aus und misst bis zu dem Bild, in dem Zeile `letzteNeu`, die Anmerkung an `anmerkungNeu` und genau `anzahl` Anmerkungszeilen stehen. */
+/** Führt `waehlen` aus und misst bis zu dem Bild, in dem Zeile `letzteNeu`, die Anmerkung an `anmerkungNeu` und genau `anzahl` Anmerkungszeilen stehen.
+    In diesem Bild stempelt die Seite ihre Zeit (`gitreviewaAnzeigeUmMs`) — daran hängen die Aufgaben nach der Anzeige. */
 async function pruefeAnmerkungenBinnen(page, waehlen, { letzteNeu, anmerkungNeu, anzahl }, fristMs) {
   const klickUmMs = Date.now();
   await waehlen();
@@ -432,7 +433,11 @@ async function pruefeAnmerkungenBinnen(page, waehlen, { letzteNeu, anmerkungNeu,
     const letzteZeile = document.querySelector(`${diffzeileSelektor}[data-neu="${letzte}"]`);
     const zeileMitAnmerkung = document.querySelector(`${diffzeileSelektor}[data-neu="${an}"]`);
     const anmerkungDarunter = zeileMitAnmerkung && zeileMitAnmerkung.nextElementSibling && zeileMitAnmerkung.nextElementSibling.matches(anmerkungSelektor);
-    return letzteZeile !== null && anmerkungDarunter && document.querySelectorAll(anmerkungSelektor).length === erwartet;
+    const steht = letzteZeile !== null && anmerkungDarunter && document.querySelectorAll(anmerkungSelektor).length === erwartet;
+    if (steht) {
+      window.gitreviewaAnzeigeUmMs = performance.now();
+    }
+    return steht;
   }, [DIFFZEILE, ANMERKUNGSZEILE, letzteNeu, anmerkungNeu, anzahl], { polling: 'raf', timeout: 10000 });
   const dauerMs = Date.now() - klickUmMs;
   expect(dauerMs, `${anzahl} Anmerkungen nach ${dauerMs} ms`).toBeLessThanOrEqual(fristMs);
