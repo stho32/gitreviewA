@@ -235,6 +235,25 @@ async function farbeRollenLesen(page) {
   }));
 }
 
+/** Text und Farbstücke je Textzelle der Tabellenzeilen — für die Probe, dass auch Zeilen ohne Farbstücke in der Ansicht
+    bleiben und die Färbung der Zeilen danach nicht abbricht. Der Lesetext für Screenreader zählt nicht zum Text. */
+async function farbRollenMitTextLesen(page) {
+  return page.locator(ZEILE).evaluateAll(zeilen => zeilen.map(tr => {
+    const seite = zelle => {
+      if (!zelle) {
+        return null;
+      }
+      const lesetext = zelle.querySelector('.vh');
+      let text = zelle.textContent;
+      if (lesetext) {
+        text = text.slice(lesetext.textContent.length);
+      }
+      return { text, rollen: Array.from(zelle.querySelectorAll('span[class*="tk-"]')).map(span => span.className) };
+    };
+    return { links: seite(tr.querySelector('td.c-alt')), rechts: seite(tr.querySelector('td.c-neu')) };
+  }));
+}
+
 async function entferntHinweis(page) {
   return page.locator('#diff .anmerkung-hinweis').textContent();
 }
@@ -288,6 +307,6 @@ async function hatZeilenpaar(page, linksText, rechtsText) {
 module.exports = {
   anordnungWaehlen, pruefeAnordnung, pruefeGruppe, anordnungPerTastatur, warteAufZeichnung, zeilenPaareLesen, pruefeZeilenPaare, pruefePaarMitZeile, pruefeSpaltenkoepfe, pruefeKontextEinmalGelesen, pruefeBreiteUndUmbruch,
   spaltenbreitenLesen, pruefeSprungzeile, sprungzeileLiegtImVerborgenen, sprunglinksZaehlen,
-  linksTextzelleAnklicken, rechtsTextzelleAnklicken, farbeRollenLesen, entferntHinweis, hatZeilenpaar, anordnungKlicken, pruefePaarBinnen, ROLLBEREICH, ZEILE,
+  linksTextzelleAnklicken, rechtsTextzelleAnklicken, farbeRollenLesen, farbRollenMitTextLesen, entferntHinweis, hatZeilenpaar, anordnungKlicken, pruefePaarBinnen, ROLLBEREICH, ZEILE,
 };
 

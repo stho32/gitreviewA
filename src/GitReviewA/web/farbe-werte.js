@@ -59,8 +59,10 @@
   }
 
   /** Teile einer Zeile aus `sichtbarTeile` + Stücke (Versätze im Zeilentext) → Teile, Text ohne Marke an den Stückgrenzen geteilt, mit
-      `klasse` wo ein Stück liegt. Eine Marke hat Vorrang und bleibt ohne Farbe; sie steht für `anzahl` (sonst 1) Zeichen des Zeilentexts. */
-  function farbteile(teile, stuecke) {
+      `klasse` wo ein Stück liegt. Eine Marke hat Vorrang und bleibt ohne Farbe; sie steht für `anzahl` (sonst 1) Zeichen des Zeilentexts.
+      Eine Zeile ohne Token hat keine Stücke — `stueckeJeZeile` führt nur Zeilen mit Stücken, ihr `get` liefert `undefined`; dann bleiben
+      ihre Teile ungefärbt. */
+  function farbteile(teile, stuecke = []) {
     const aus = [];
     let stelle = 0;
     let naechstesStueck = 0;

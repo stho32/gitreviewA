@@ -20,6 +20,36 @@ test.describe('Nebeneinander-Ansicht — Färbung, große Dateien, Anmerken', ()
     expect(gepaart.length, 'beidseitig gefärbte Zeilen').toBeGreaterThan(0);
   });
 
+  /** Probe der Karte #43 in „nebeneinander“: `klammer.cs` zeigt im Hunk Leerzeilen und Zeilen nur mit `{`/`}`; die
+      Positivkontrolle ist je Umfang eine gefärbte Zeile hinter ihnen. */
+  const GEFARBT_NACH = { 'nur Änderungen': 'public int Zahl()', 'ganze Datei': 'return 42;' };
+
+  for (const umfang of ['nur Änderungen', 'ganze Datei']) {
+    test(`Kriterium 8: Zeilen ohne Farbstücke (Leerzeilen, nur \`}\`) brechen die Färbung in „${umfang}“ nicht ab (Karte #43)`, async ({ neben }) => {
+      await neben.starten({ vorbereitung: 'Repo Klammern', commits: ['h2'] });
+      await neben.anordnungWaehlen('nebeneinander');
+      await neben.dateiAnsehen('klammer.cs');
+      await neben.umfangWaehlen(umfang);
+
+      expect(await neben.farbeFertig()).toBe('ja');
+      await neben.seiteBleibtStill();
+
+      const zeilen = await neben.farbRollenMitText();
+      for (const [bezeichnung, text] of [['Leerzeilen', ''], ['Zeilen nur mit `}`', '}']]) {
+        const ohneStuecke = zeilen.filter(zeile => zeile.rechts && zeile.rechts.text.trim() === text);
+        expect(ohneStuecke.length, `${bezeichnung} in der Ansicht`).toBeGreaterThan(0);
+        for (const zeile of ohneStuecke) {
+          expect(zeile.rechts.rollen, `Farbstücke auf ${bezeichnung}`).toEqual([]);
+        }
+      }
+
+      // Positivkontrolle: eine gefärbte Zeile hinter den Zeilen ohne Farbstücke — die Auflage lief bis dorthin.
+      const gefaerbtZeile = zeilen.find(zeile => zeile.rechts && zeile.rechts.text.trim() === GEFARBT_NACH[umfang]);
+      expect(gefaerbtZeile, `Zeile „${GEFARBT_NACH[umfang]}“ in der Ansicht`).toBeDefined();
+      expect(gefaerbtZeile.rechts.rollen, 'Rollen der Zeile hinter den Zeilen ohne Farbstücke').toContain('tk-keyword');
+    });
+  }
+
   test('Kriterium 9: riesig.txt ist zweispaltig zugeklappt, jede Blockgrenze hält, gross.txt paart die geänderte Zeile', async ({ neben }) => {
     await neben.starten({ vorbereitung: 'Große Diffs', commits: ['w'] });
     await neben.anordnungWaehlen('nebeneinander');

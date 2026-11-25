@@ -82,6 +82,11 @@ test.describe('Baustein Teile mit Rolle', () => {
     expect(farbteile([], [])).toEqual([]);
   });
 
+  test('soll Text unverändert lassen, wenn die Karte für die Zeile keine Stücke führt', () => {
+    expect(farbteile(sichtbarTeile('}'), undefined)).toEqual([{ text: '}' }]);
+    expect(farbteile(sichtbarTeile(''), undefined)).toEqual([]);
+  });
+
   test('soll Marken ungefärbt mit Vorrang lassen, auch wenn ein Stück über sie reicht', () => {
     const text = 'var t = "a‮b";';
     const teile = farbteile(sichtbarTeile(text), [{ von: 0, bis: 3, klasse: 'tk-keyword' }, { von: 8, bis: 13, klasse: 'tk-string' }]);

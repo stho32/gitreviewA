@@ -7,6 +7,7 @@ const seite = require('../treiber/oberflaeche.js');
 const diffSeite = require('../treiber/diff-oberflaeche.js');
 const nebenSeite = require('../treiber/nebeneinander-oberflaeche.js');
 const anmerkungSeite = require('../treiber/anmerkungen-oberflaeche.js');
+const farbe = require('../treiber/farb-oberflaeche.js');
 const repos = require('../treiber/diff-repos.js');
 
 const FENSTER = { width: 1280, height: 800 };
@@ -17,6 +18,7 @@ const VORBEREITUNGEN = {
   'Repo C': { anlegen: repos.repoC, commits: ['c2', 'c1'] },
   'Repo W': { anlegen: repos.repoW, commits: ['w2', 'w1'] },
   'Repo U': { anlegen: repos.repoU, commits: ['u'] },
+  'Repo Klammern': { anlegen: repos.repoKlammern, commits: ['h2'] },
   'Große Diffs': { anlegen: repos.repoGross, commits: ['w'] },
   'Eine Zeile in 20 000': { anlegen: repos.repoUMitV, commits: ['v'] },
 };
@@ -24,6 +26,7 @@ const VORBEREITUNGEN = {
 function nebenSprache(gr, page) {
   let repo;
   let lauf;
+  let meldungen;
   const hash = name => repo.hashes[name];
 
   /** Startet gitreviewA im Repo der Vorbereitung und öffnet die Seite; `anordnung` ist der Startwert der Seite. */
@@ -33,6 +36,9 @@ function nebenSprache(gr, page) {
     const namen = commits || art.commits;
     lauf = await gr.gitreviewAStarten(repo, namen.map(hash), {});
     await page.setViewportSize(FENSTER);
+    meldungen = { konsole: [], seitenfehler: [] };
+    page.on('console', nachricht => meldungen.konsole.push(nachricht.text()));
+    page.on('pageerror', fehler => meldungen.seitenfehler.push(String(fehler)));
     if (anordnung) {
       await page.addInitScript(wert => { window.gitreviewaStartAnordnung = wert; }, anordnung);
     }
@@ -60,6 +66,9 @@ function nebenSprache(gr, page) {
     neuLaden: () => page.reload(),
     farbeFertig: () => diffSeite.warteAufFarbe(page),
     farbRollen: () => nebenSeite.farbeRollenLesen(page),
+    farbRollenMitText: () => nebenSeite.farbRollenMitTextLesen(page),
+    /** Konsole und Seitenfehler der Seite sind leer (kein Fehler beim Zeichnen und Färben). */
+    seiteBleibtStill: () => farbe.pruefeKonsoleLeer(meldungen, false),
     blockKnoten: () => diffSeite.blockKnoten(page),
     zugeklappt: (pfad, meldung) => diffSeite.pruefeZugeklappt(page, pfad, meldung),
     trotzdemLaden: () => diffSeite.trotzdemLaden(page),

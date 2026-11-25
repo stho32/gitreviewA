@@ -386,6 +386,39 @@ function repoG(ordner) {
   return { ordner, hashes: { g1, g2, g3 } };
 }
 
+/** Repo Klammern (Karte #43): `h1` „Anlegen“ legt `klammer.cs` an, `h2` „Gruss ändern“ stellt in ihm `return "Hallo "` auf
+    `return "Hallo, "` um. Die Änderung liegt zwischen Zeilen ohne Token (Leerzeile, Zeilen nur mit `{` und `}`), die die
+    Ansicht im Hunk zeigt — für die Probe, dass Zeilen ohne Farbstücke die Färbung nicht abbrechen. */
+function repoKlammern(ordner) {
+  repoAnlegen(ordner);
+  dateiSchreiben(ordner, 'klammer.cs', klammerInhalt('"Hallo "'));
+  const h1 = commitAnlegen(ordner, { betreff: 'Anlegen' });
+  dateiSchreiben(ordner, 'klammer.cs', klammerInhalt('"Hallo, "'));
+  const h2 = commitAnlegen(ordner, { betreff: 'Gruss ändern' });
+  return { ordner, hashes: { h1, h2 } };
+}
+
+function klammerInhalt(gruss) {
+  return [
+    'namespace Beispiel',
+    '{',
+    '    public class Gruss',
+    '    {',
+    '        public string Hallo(string name)',
+    '        {',
+    `            return ${gruss} + name;`,
+    '        }',
+    '',
+    '        public int Zahl()',
+    '        {',
+    '            return 42;',
+    '        }',
+    '    }',
+    '}',
+    '',
+  ].join('\n');
+}
+
 function repoX(ordner) {
   repoAnlegen(ordner);
   dateiSchreiben(ordner, '<b>x</b>.txt', 'eins\n');
@@ -426,4 +459,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoV, repoG, repoX, repoK, repoZ, repoZeilenbereich, repoQ, repoS, repoL, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoV, repoG, repoKlammern, repoX, repoK, repoZ, repoZeilenbereich, repoQ, repoS, repoL, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };
