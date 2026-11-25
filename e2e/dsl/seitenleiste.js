@@ -78,7 +78,6 @@ function seitenleisteSprache(gr, page) {
     wahlImRollbereich: () => rahmen.ganzImRollbereich(page, `${rahmen.DATEIZEILE}[aria-current="true"]`, rahmen.LISTE),
     abstandDerWahl: () => rahmen.abstandZumRand(page, `${rahmen.DATEIZEILE}[aria-current="true"]`, rahmen.LISTE),
     letzteLueckeInDenBlick: () => rahmen.letzteLueckeInDenBlick(page),
-    obersteSichtbareZeile: () => rahmen.obersteSichtbareZeile(page),
     abschnittWeiter: () => tastatur.taste(page, 'n'),
 
     /* ── Prüfungen ── */

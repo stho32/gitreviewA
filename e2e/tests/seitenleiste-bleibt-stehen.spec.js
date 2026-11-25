@@ -153,3 +153,101 @@ test.describe('Wahl in den Blick', () => {
     }
   });
 });
+
+test.describe('Alle Anzeigeverfahren und der Anschluss', () => {
+  test('der Rahmen trägt beide Modi, beide Ansichten und beide Anordnungen (Lehre #7)', async ({ seit }) => {
+    await seit.starten({ vorbereitung: 'Repo L', modus: 'zusammen' });
+    await seit.dateiAnsehen('weit.txt');
+
+    for (const modus of ['zusammen', 'einzeln']) {
+      await seit.modus(modus);
+      await seit.dateiAnsehen('weit.txt');
+      for (const ansicht of ['aenderungen', 'ganz']) {
+        await seit.ansicht(ansicht);
+        await seit.diffZeigt('weit.txt');
+        for (const anordnung of ['untereinander', 'nebeneinander']) {
+          await seit.anordnung(anordnung);
+          await seit.diffZeigt('weit.txt');
+          await seit.keinSeitenbildlauf();
+          await seit.listeIstRollbereich();
+          await seit.diffIstRollbereich();
+        }
+      }
+    }
+  });
+
+  test('das Aufklappen einer Lücke bewegt den Diff-Rollbereich, nicht die Seite', async ({ seit }) => {
+    await seit.starten({ vorbereitung: 'Repo L', modus: 'einzeln' });
+    await seit.dateiAnsehen('weit.txt');
+    await seit.listeGanzUnten();
+
+    const luecken = await seit.luecken();
+    expect(luecken.length, 'Lücken im Diff').toBeGreaterThan(1);
+    const listeVorher = (await seit.listeStand()).scrollTop;
+    const diffVorher = await seit.letzteLueckeInDenBlick();
+    const hoeheVorher = (await seit.diffStand()).scrollHeight;
+    expect(diffVorher, 'die Lücke stand im Blick').toBeGreaterThan(0);
+
+    await seit.lueckeAufklappen(luecken.length);
+    await expect.poll(async () => (await seit.diffStand()).scrollHeight, 'Höhe des Diff-Rollbereichs nach dem Aufklappen').toBeGreaterThan(hoeheVorher);
+
+    expect((await seit.diffStand()).scrollTop, 'der Diff-Rollbereich springt nicht an den Anfang').toBeGreaterThan(0);
+    await seit.versatzGleich(listeVorher, (await seit.listeStand()).scrollTop, 'Dateiliste');
+    await seit.keinSeitenbildlauf();
+    expect((await seit.seitenstand()).scrollTop, 'die Seite selbst steht').toBe(0);
+  });
+
+  test('der Abschnittswechsel n scrollt im Diff-Rollbereich, nicht auf der Seite', async ({ seit }) => {
+    await seit.starten({ vorbereitung: 'Repo L', modus: 'einzeln' });
+    await seit.dateiAnsehen('weit.txt');
+    await seit.listeGanzUnten();
+
+    const listeVorher = (await seit.listeStand()).scrollTop;
+    expect((await seit.diffStand()).scrollTop, 'Diff am Anfang').toBe(0);
+
+    for (let schritt = 0; schritt < 6; schritt += 1) {
+      await seit.abschnittWeiter();
+    }
+
+    expect((await seit.diffStand()).scrollTop, 'der Diff-Rollbereich ist dem Abschnittswechsel gefolgt').toBeGreaterThan(0);
+    await seit.versatzGleich(listeVorher, (await seit.listeStand()).scrollTop, 'Dateiliste');
+    expect((await seit.seitenstand()).scrollTop, 'die Seite selbst steht').toBe(0);
+    await seit.keinSeitenbildlauf();
+  });
+
+  test('ein Suchtreffer außerhalb des Blicks wird im Diff-Rollbereich in den Blick gescrollt, die Dateiliste steht', async ({ seit }) => {
+    await seit.starten({ vorbereitung: 'Repo L', modus: 'einzeln' });
+    await seit.dateiAnsehen('weit.txt');
+    await seit.listeGanzUnten();
+    await seit.setzeDiffVersatz(0);
+
+    const listeVorher = (await seit.listeStand()).scrollTop;
+    await seit.suchen('Z1');
+
+    const marken = await seit.sucheMarken();
+    expect(marken.length, 'Treffer im Diff').toBeGreaterThan(1);
+    const diffNachher = (await seit.diffStand()).scrollTop;
+    expect(diffNachher, 'der Diff-Rollbereich ist dem Treffer gefolgt').toBeGreaterThan(0);
+    await seit.versatzGleich(listeVorher, (await seit.listeStand()).scrollTop, 'Dateiliste');
+    expect((await seit.seitenstand()).scrollTop, 'die Seite selbst steht').toBe(0);
+    await seit.keinSeitenbildlauf();
+
+    await seit.sucheWeiter();
+    await seit.versatzGleich(listeVorher, (await seit.listeStand()).scrollTop, 'Dateiliste beim nächsten Treffer');
+    expect((await seit.seitenstand()).scrollTop, 'die Seite selbst steht auch beim nächsten Treffer').toBe(0);
+  });
+
+  test('die Blockgrenze (content-visibility) hält ihren Knotenzähler im Diff-Rollbereich', async ({ seit }) => {
+    await seit.starten({ vorbereitung: 'Repo L', modus: 'einzeln' });
+    await seit.dateiAnsehen('weit.txt');
+
+    const bloecke = await seit.bloecke();
+    const zeilen = await seit.diffZeilen();
+    expect(bloecke, 'Blöcke der Blockgrenze').toBeGreaterThan(1);
+    expect(zeilen, 'gezeichnete Diff-Zeilen').toBeGreaterThan(100);
+    // Auch nach einem Bildlauf durch den eigenen Rollbereich bleibt die Blockgrenze im Bereich: die Zeilen sind da.
+    await seit.diffGanzUnten();
+    expect(await seit.diffZeilen(), 'Diff-Zeilen nach dem Bildlauf').toBe(zeilen);
+    await seit.keinSeitenbildlauf();
+  });
+});

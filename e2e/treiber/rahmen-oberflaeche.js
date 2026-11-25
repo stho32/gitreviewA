@@ -225,20 +225,9 @@ async function letzteLueckeInDenBlick(page) {
   return (await rollstand(page, DIFF)).scrollTop;
 }
 
-/** Die oberste sichtbare Diff-Zeile des Rollbereichs — belegt, dass der Blick beim Aufklappen stehen bleibt. */
-function obersteSichtbareZeile(page) {
-  return page.evaluate(() => {
-    const roll = document.querySelector('#diff .df-sc');
-    const rr = roll.getBoundingClientRect();
-    const zeilen = [...roll.querySelectorAll('tr[data-art]')];
-    const sichtbar = zeilen.find(zeile => zeile.getBoundingClientRect().bottom > rr.top + 1);
-    return sichtbar ? { neu: sichtbar.dataset.neu || null, text: sichtbar.textContent.trim().slice(0, 24) } : null;
-  });
-}
-
 module.exports = {
   KOPF, COMMIT_ZEILE, DATEIEN_KOPF, DATEIEN_WERKZEUGE, LISTE, DIFF_KOPF, DIFF, STATUSZEILE, DATEIZEILE,
-  seite, rollstand, setzeRollversatz, lage, standbild, stehendeTeile, ganzImRollbereich, abstandZumRand, lageDerWahl, letzteLueckeInDenBlick, obersteSichtbareZeile,
+  seite, rollstand, setzeRollversatz, lage, standbild, stehendeTeile, ganzImRollbereich, abstandZumRand, lageDerWahl, letzteLueckeInDenBlick,
   pruefeKeinSeitenbildlauf, pruefeSeitenbildlauf, pruefeRollbereich, pruefeKeinRollbereich, pruefeUnveraendert,
   pruefeVersatzGleich, pruefeVersatzGeaendert, pruefeDiffOben, pruefeKeinTrennerKeinEinklappen, pruefeEineSpalte, pruefeZweiSpalten,
 };
