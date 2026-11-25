@@ -3,8 +3,10 @@ using GitReviewA.Aufruf;
 using GitReviewA.Beenden;
 using GitReviewA.Bild;
 using GitReviewA.Browser;
+using GitReviewA.Dateiansicht;
 using GitReviewA.Dateien;
 using GitReviewA.Diff;
+using GitReviewA.Fremdtext;
 using GitReviewA.Git;
 using GitReviewA.Haken;
 using GitReviewA.Protokoll;
@@ -27,15 +29,14 @@ internal static class Program
             NeuesProtokoll(Protokollstufe.Warnung).Melde(Protokollstufe.Fehler, "Aufruf", aufruf.Fehlermeldung);
             return AufruffehlerMeldungen.ExitCode;
         }
-        if (aufruf.Dateiaufruf is not null)
+        using var abbruchsignale = Abbruchsignale.Abfangen();
+        if (aufruf.Dateiaufruf is { } dateiaufruf)
         {
-            NeuesProtokoll(Protokollstufe.Warnung).Melde(Protokollstufe.Fehler, "Aufruf", "Die Dateiansicht ist noch nicht angebunden.");
-            return AufruffehlerMeldungen.ExitCode;
+            return await LaufeDateiansichtAsync(dateiaufruf, abbruchsignale);
         }
         var startauftrag = aufruf.Startauftrag
             ?? throw new InvalidOperationException("gültiger Aufruf ohne Startauftrag");
         var protokoll = NeuesProtokoll(startauftrag.Mindeststufe);
-        using var abbruchsignale = Abbruchsignale.Abfangen();
         var anfrage = new Aufrufanfrage(startauftrag, StandardeingabeDesProzesses(), Environment.CurrentDirectory);
         var folge = await AufrufInteractor.StarteAsync(anfrage, protokoll);
         if (!folge.IstErfolg)
@@ -57,6 +58,56 @@ internal static class Program
             protokoll.Melde(Protokollstufe.Fehler, "Server", $"Server ließ sich nicht starten: {fehler.Message}");
             return ExitLaufGescheitert;
         }
+    }
+
+    /// <summary>
+    /// Der Lauf der Dateiansicht (R00043, B4204): Gründe vor dem Serverstart als eine Zeile je Angabe, sonst Server und Warten.
+    /// „Schließen“ endet mit Exit 0, ein Signal oder ein anderes Ende mit „Review abgebrochen“ und Exit 130; stdout bleibt leer.
+    /// </summary>
+    private static async Task<int> LaufeDateiansichtAsync(Dateiaufruf aufruf, Abbruchsignale abbruchsignale)
+    {
+        const int ExitAbgebrochen = 130;
+        const int HoechsteGrundzeilenlaenge = 300;
+        var protokoll = NeuesProtokoll(aufruf.Mindeststufe);
+        var interactor = new DateiansichtStartInteractor(new DateiLeser(new Quellenbuchung()));
+        var ausgang = interactor.Starte(aufruf);
+        if (!ausgang.IstErfolg)
+        {
+            foreach (var fehler in ausgang.Fehler)
+            {
+                var grundzeile = $"{UnsichtbareZeichen.AlsMarken(fehler.Angabe)}: {QuellengrundMeldungen.Meldung(fehler.Grund)}";
+                protokoll.Melde(Protokollstufe.Fehler, "Dateiansicht", Kuerze(grundzeile, HoechsteGrundzeilenlaenge));
+            }
+            return AufruffehlerMeldungen.ExitCode;
+        }
+        if (abbruchsignale.IstAbbruchAngefordert)
+        {
+            protokoll.Melde(Protokollstufe.Warnung, "Abbruch", "Review abgebrochen");
+            return ExitAbgebrochen;
+        }
+        var stand = ausgang.Stand ?? throw new InvalidOperationException("Erfolg ohne Stand");
+        await using var server = await DateiansichtServer.StarteAsync(stand, aufruf.Port, Oberflaeche.AusDemProgramm(), protokoll);
+        protokoll.MeldeStart(server.Adresse);
+        if (aufruf.BrowserOeffnen)
+        {
+            OeffneBrowser(server.Adresse, protokoll);
+        }
+        await server.WartenBisBeendetAsync();
+        if (server.IstGeschlossen)
+        {
+            return 0;
+        }
+        protokoll.Melde(Protokollstufe.Warnung, "Abbruch", "Review abgebrochen");
+        return ExitAbgebrochen;
+    }
+
+    private static string Kuerze(string text, int hoechstlaenge)
+    {
+        if (text.Length <= hoechstlaenge)
+        {
+            return text;
+        }
+        return string.Concat(text.AsSpan(0, hoechstlaenge - 1), "…");
     }
 
     private static void MeldeAufruffehler(Aufruffehler fehler, StderrProtokoll protokoll)
