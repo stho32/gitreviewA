@@ -22,7 +22,7 @@ function senden(adresse, pfad, { methode, host, kopf = {}, koerper } = {}) {
       let antwortKoerper = '';
       antwort.setEncoding('utf8');
       antwort.on('data', daten => { antwortKoerper += daten; });
-      antwort.on('end', () => beantwortet({ status: antwort.statusCode, koerper: antwortKoerper }));
+      antwort.on('end', () => beantwortet({ status: antwort.statusCode, koerper: antwortKoerper, kopf: antwort.headers }));
     });
     anfrageObjekt.on('error', fehlgeschlagen);
     if (koerper !== undefined) {
