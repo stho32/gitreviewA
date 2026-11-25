@@ -266,31 +266,36 @@
     zeichneZeilen(ansicht, antwort, zeilen, luecken(zeilen, zustand.gesamt));
   }
 
-  /** „Zusammen“: netto ein Diff über die ganze Auswahl; ohne Kette je Commit ein Abschnitt mit eigener Beschriftung. */
+  /** „Zusammen“: netto ein Diff über die ganze Auswahl; ohne Kette je Commit ein Abschnitt mit eigener Beschriftung.
+      Die Herkunft setzt jeder Zweig nach dem Zeichnen, weil `zeigeMeldung` den Kopf bei jedem neuen Inhalt leert. */
   function zeichneZusammenAntwort(ansicht, antwort, alsText, diffansicht) {
     if (antwort.netto) {
-      ansicht.herkunftElement.textContent = `netto aus ${kurzListe(antwort.commits)}`;
+      const herkunft = `netto aus ${kurzListe(antwort.commits)}`;
       if (antwort.art === 'binaer' && !alsText) {
         zeigeBinaerdatei(ansicht, antwort.grund);
+        ansicht.herkunftElement.textContent = herkunft;
         return;
       }
       const zeilen = zeilenDerDiffansicht(antwort.patch, diffansicht);
       if (zeilen.length === 0) {
         zeigeMeldung(ansicht, KEINE_ZEILENAENDERUNGEN, false);
+        ansicht.herkunftElement.textContent = herkunft;
         return;
       }
       const zuLangGrund = zuLang(zeilen);
       if (zuLangGrund) {
         zeigeZugeklappt(ansicht, antwort, zeilen, zuLangGrund);
+        ansicht.herkunftElement.textContent = herkunft;
         return;
       }
       zeichneZeilen(ansicht, antwort, zeilen);
+      ansicht.herkunftElement.textContent = herkunft;
       return;
     }
-    ansicht.herkunftElement.textContent = 'je Commit, nicht netto — Es fehlen Commits der Auswahl';
     const abschnitte = antwort.abschnitte || [];
     if (abschnitte.length === 0) {
       zeigeMeldung(ansicht, KEINE_ZEILENAENDERUNGEN, false);
+      ansicht.herkunftElement.textContent = 'je Commit, nicht netto — Es fehlen Commits der Auswahl';
       return;
     }
     zeichneAbschnitte(ansicht, antwort, abschnitte, alsText, diffansicht);
