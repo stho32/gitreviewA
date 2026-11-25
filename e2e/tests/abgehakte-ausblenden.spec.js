@@ -37,4 +37,41 @@ test.describe('Abgehakte ausblenden (R00029)', () => {
     await abgehakte.zaehler('2 ausgeblendet, davon 1 abgehakt, 1 Muster');
     await expect.poll(async () => sortiert(await abgehakte.dateinamen())).toEqual(['README.md', 'docs/README.md', 'src/a.txt', 'src/b.txt', 'src/generated/api.cs']);
   });
+
+  test('soll die gewählte Datei ausblenden, ohne Wahl und Diff zu verlieren (Szenario 10)', async ({ abgehakte }) => {
+    await abgehakte.starten({ vorbereitung: 'Z', modus: 'zusammen' });
+    await abgehakte.aufZeilen(3);
+    await abgehakte.dateiAnsehen('README.md');
+    await abgehakte.gewaehlteDateien(['README.md']);
+    await abgehakte.schalterBetatigen();
+    await abgehakte.schalterIst(true);
+
+    await abgehakte.abhaken('README.md');
+
+    await expect.poll(async () => (await abgehakte.dateinamen()).includes('README.md')).toBe(false);
+    await abgehakte.hinweis('Die gewählte Datei ist ausgeblendet');
+    expect(await abgehakte.diffPfad()).toBe('README.md');
+
+    await abgehakte.schalterBetatigen();
+
+    await abgehakte.hinweis('');
+    await expect.poll(async () => (await abgehakte.dateinamen()).includes('README.md')).toBe(true);
+    await abgehakte.gewaehlteDateien(['README.md']);
+  });
+
+  test('soll den Schalter über Moduswechsel halten und nach dem Neuladen aus stehen (Szenario 9)', async ({ abgehakte }) => {
+    await abgehakte.starten({ vorbereitung: 'Z', modus: 'zusammen' });
+    await abgehakte.aufZeilen(3);
+    await abgehakte.schalterBetatigen();
+    await abgehakte.schalterIst(true);
+
+    await abgehakte.modusWaehlen('einzeln');
+    await abgehakte.schalterIst(true);
+    await abgehakte.modusWaehlen('zusammen');
+    await abgehakte.schalterIst(true);
+
+    await abgehakte.neuLaden();
+
+    await abgehakte.schalterIst(false);
+  });
 });
