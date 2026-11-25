@@ -342,7 +342,15 @@ function welt() {
     beendenFehler: oberflaeche.beendenFehler,
     beendenScheitertMit: oberflaeche.beendenScheitertMit,
     eigenerOrdner, gemerktesRepo, repoMitVorbereitung, repoMitDateien, repoMitFremdemText, repoMitUnterordner, repoMitVielenCommits, repoMitGrossemCommit, commitObjektEntfernen,
-    oberflaecheOeffnen: (page, lauf) => page.goto(lauf.adresse),
+    // Der Standard der Seite ist „Zusammen“ (B1108). Eine Spec, die den Ablauf in „Einzeln“ prüft, startet dort ohne Wechsel-Ereignis
+    // (ein Wechsel würde die erste Datei wählen); `modus` `null` lässt den Standard gelten. Der Startmodus ist ein Eingabewert der
+    // Seite (modus.js).
+    oberflaecheOeffnen: async (page, lauf, modus = 'einzeln') => {
+      if (modus) {
+        await page.addInitScript(startModus => { window.gitreviewaStartModus = startModus; }, modus);
+      }
+      await page.goto(lauf.adresse);
+    },
     ...oberflaeche,
   };
 }

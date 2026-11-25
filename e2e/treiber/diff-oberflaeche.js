@@ -5,6 +5,7 @@ const { expect } = require('@playwright/test');
 const BEREICH = '#diff';
 const PFAD = '#diff .diff-pfad';
 const MELDUNG = '#diff .diff-meldung';
+const HERKUNFT = '#diff .diff-herkunft';
 const ROLLBEREICH = '#diff .df-sc';
 /** Nur Diff-Zeilen: Anmerkungszeilen (R00010) tragen kein `data-art` und zählen nicht mit. */
 const ZEILE = '#diff .dz tr[data-art]';
@@ -120,6 +121,11 @@ async function pruefeAufforderungZurWahl(page) {
   await expect(page.locator(MELDUNG)).toHaveText(HINWEIS_ZUR_WAHL);
   await expect(page.locator(PFAD)).toHaveText('');
   await expect(page.locator(ZEILE)).toHaveCount(0);
+}
+
+/** Der Diff-Kopf nennt die Herkunft (R00012): „netto aus <Kurz-Hashes>“ bzw. „je Commit, nicht netto — <Grund>“. */
+async function pruefeHerkunft(page, text) {
+  await expect(page.locator(HERKUNFT)).toHaveText(text);
 }
 
 async function umbruchUmschalten(page) {
@@ -550,7 +556,7 @@ async function sprungAntwortScheitern(page, pfad, status = 500) {
 
 module.exports = {
   pruefeBedienbarNachAlsText, ansichtWaehlen, ansichtPerTastaturWechseln, pruefeAnsicht, zeilenfarbenLesen, pruefeZeilenfarben, pruefeKontextzeileBinnen,
-  pruefeDiff, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, diffAntwortVerzoegern,
+  pruefeDiff, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, pruefeHerkunft, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, diffAntwortVerzoegern,
   pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
   diffAntwortZuGross, ganzDateiErstScheitern, blockKnoten, warteAufFarbe, langeAufgabenBeimScrollen, zugeklapptRechtzeitigNachKlick, zugeklapptRechtzeitigNachAktion,
   pruefeSprungzeile, pruefeSprungzeileName, sprungzeileLiegtImVerborgenen, pruefeSprungkopfName, sprungHunkLink, zeileWaehlen,

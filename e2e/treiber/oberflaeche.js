@@ -48,6 +48,38 @@ async function modusWaehlen(page, modus) {
   await expect(page.locator('body')).toHaveAttribute('data-modus', modus);
 }
 
+function kopfZahlen(page) {
+  return page.locator('#kopf-zahlen');
+}
+
+function fortschrittZaehler(page) {
+  return page.locator('#kopf-fortschritt .haken-zaehler');
+}
+
+function commitZeileZusammenfassung(page) {
+  return page.locator('#commit-summary');
+}
+
+async function pruefeKopfZahlen(page, text) {
+  await expect(kopfZahlen(page)).toHaveText(text);
+}
+
+async function pruefeFortschritt(page, text) {
+  await expect(fortschrittZaehler(page)).toHaveText(text);
+}
+
+async function pruefeCommitZeileZusammenfassung(page, text) {
+  await expect(commitZeileZusammenfassung(page)).toHaveText(text);
+}
+
+/** Lädt die Seite neu; das Neuladen beginnt im Standard der Seite, ein Startmodus (Init-Skript) gilt weiter. */
+async function neuLaden(page, modus = null) {
+  await page.reload();
+  if (modus) {
+    await modusWaehlen(page, modus);
+  }
+}
+
 function ergebnisKopierenKnopf(page) {
   return page.getByRole('button', { name: 'Ergebnis kopieren' });
 }
@@ -317,6 +349,7 @@ module.exports = {
   commitZeilenLesen, commitDetailsLesen, commitZeilen, aufZeilenWarten, commitWaehlen, gewaehlteCommits, messageSchalter, messageUmschalten, rumpf,
   dateilisteLesen, dateizeilen, aufDateizeilenWarten, dateiSumme, dateilistenMeldung, darstellungWaehlen, dateiWaehlen, gewaehlteDateien,
   dateiwahlenSammeln, gesammelteDateiwahlen, formatierungsElementeZaehlen,
-  beendenKnopf, beendenBetaetigen, beendetMeldung, beendenFehler, beendenScheitertMit, modusWaehlen,
+  beendenKnopf, beendenBetaetigen, beendetMeldung, beendenFehler, beendenScheitertMit, modusWaehlen, neuLaden,
+  kopfZahlen, fortschrittZaehler, commitZeileZusammenfassung, pruefeKopfZahlen, pruefeFortschritt, pruefeCommitZeileZusammenfassung,
   ergebnisKopierenKnopf, ergebnisKopierenBetaetigen, kopierenStatus, ergebnisAntwortZurueckhalten,
 };

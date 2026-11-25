@@ -108,7 +108,7 @@ function reviewSprache(gr, page) {
     gewaehlteDateien: namen => seite.pruefeGewaehlteDateien(page, namen),
     dateiwahlenWaren: wahlen => seite.pruefeDateiwahlen(page, wahlen.map(({ commit, ...rest }) => ({ commit: hash(commit), modus: 'einzeln', alterPfad: null, ...rest }))),
     antwortFuerDateienZurueckhalten: commit => seite.dateienAntwortZurueckhalten(page, hash(commit)),
-    neuLaden: () => page.reload(),
+    neuLaden: () => seite.neuLaden(page),
     commitObjektEntfernen: commit => gr.commitObjektEntfernen(repo, hash(commit)),
 
     /** `jeCommit`: Name → Zahl der Lesevorgänge (Debug-Zeile mit vollem Hash und git show). */

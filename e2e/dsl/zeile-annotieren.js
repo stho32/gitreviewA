@@ -28,7 +28,7 @@ function annotierSprache(gr, page) {
   let startModus = null;
   const hash = name => repo.hashes[name];
 
-  async function starten({ vorbereitung = 'Repo A', verbose = false, seiteOeffnen = page !== null, commits, modus = null } = {}) {
+  async function starten({ vorbereitung = 'Repo A', verbose = false, seiteOeffnen = page !== null, commits, modus = 'einzeln' } = {}) {
     const art = VORBEREITUNGEN[vorbereitung];
     repo = art.anlegen(path.join(gr.eigenerOrdner(), 'repo'));
     const auswahl = commits || art.commits;
@@ -47,10 +47,7 @@ function annotierSprache(gr, page) {
   async function oeffneSeite() {
     await page.setViewportSize(FENSTER);
     dialogePruefen = seite.dialogeZaehlen(page);
-    await gr.oberflaecheOeffnen(page, lauf);
-    if (startModus) {
-      await seite.modusWaehlen(page, startModus);
-    }
+    await gr.oberflaecheOeffnen(page, lauf, startModus);
   }
 
   /** Name des Notizfelds wie in der Anforderung: „Anmerkung zu <Datei>, Zeile <n>“. */
@@ -86,10 +83,12 @@ function annotierSprache(gr, page) {
     commitAnsehen: name => seite.commitWaehlen(page, hash(name).slice(0, 7)),
     ansichtWaehlen: name => diffSeite.ansichtWaehlen(page, name),
     diffZeigt: erwartet => diffSeite.pruefeDiff(page, erwartet),
-    /** Neu laden; danach ist wieder der erste Commit des Aufrufs gewählt. */
+    /** Neu laden; in „Einzeln“ ist danach wieder der erste Commit des Aufrufs gewählt. */
     neuLaden: async () => {
-      await page.reload();
-      await seite.pruefeGewaehlterCommit(page, hash(ersterCommit).slice(0, 7));
+      await seite.neuLaden(page, startModus);
+      if (startModus === 'einzeln') {
+        await seite.pruefeGewaehlterCommit(page, hash(ersterCommit).slice(0, 7));
+      }
     },
 
     annotieren,
@@ -180,6 +179,11 @@ function annotierSprache(gr, page) {
     seiteOeffnen: oeffneSeite,
     modusWaehlen: name => seite.modusWaehlen(page, name),
     dateilisteZeigt: erwartet => seite.pruefeDateiliste(page, erwartet),
+    kopfZahlen: text => seite.pruefeKopfZahlen(page, text),
+    fortschritt: text => seite.pruefeFortschritt(page, text),
+    commitZeileText: text => seite.pruefeCommitZeileZusammenfassung(page, text),
+    diffAufforderung: () => diffSeite.pruefeAufforderungZurWahl(page),
+    diffHerkunft: text => diffSeite.pruefeHerkunft(page, text),
     anmerkungenRechtzeitigNachKlick: (datei, erwartet) => anmerkungSeite.pruefeAnmerkungenBinnen(page, () => seite.dateiWaehlen(page, datei), erwartet, LADEFRIST_MS),
 
     fremderTextBleibtText: async () => {

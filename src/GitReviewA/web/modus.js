@@ -1,11 +1,20 @@
-/* gitreviewA — Modus der Seite (R00012): „Zusammen“ ist der Standard des Zielbilds; bis B1108 startet die Seite in „Einzeln“.
-   Der Zustand lebt nur im Speicher (Neuladen: wieder der Startmodus). Jeder Wechsel meldet `modus-gewechselt` mit
-   `{ modus, vorher }`; Module, die beim Start schon laufen, lesen den Modus über `hole()`. */
+/* gitreviewA — Modus der Seite (R00012): „Zusammen“ ist der Standard des Zielbilds (B1108); das Neuladen beginnt wieder in „Zusammen“.
+   Der Zustand lebt nur im Speicher. Jeder Wechsel meldet `modus-gewechselt` mit `{ modus, vorher }`; Module, die beim Start schon
+   laufen, lesen den Modus über `hole()`. Der Startmodus ist ein Eingabewert: `window.gitreviewaStartModus` belegt ihn vor (die Tests
+   der Oberfläche brauchen einen echten Start in „Einzeln“, weil ein Wechsel die erste Datei wählt). */
 (function () {
   'use strict';
 
-  const STANDARD = 'einzeln';
-  const zustand = { modus: STANDARD };
+  const STANDARD = 'zusammen';
+  const zustand = { modus: startModus() };
+
+  function startModus() {
+    const vorgabe = window.gitreviewaStartModus;
+    if (vorgabe === 'zusammen' || vorgabe === 'einzeln') {
+      return vorgabe;
+    }
+    return STANDARD;
+  }
 
   function init() {
     const zusammen = document.getElementById('modus-zusammen');
