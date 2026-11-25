@@ -308,3 +308,8 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-25 | #26 | Entwicklung | entwickler | bestanden | 21 min | opencode: R00029 gebaut (B2801–B2806), NUnit 1193 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 26-entwickler-1 · 0,18 $ · Karte gesamt 0,41 $ |
 | 2026-11-25 | #25 | Entwicklertest | entwicklertester | befund | 12 min | opencode: S6 nicht erfüllt — Nächste ungeprüfte springt auf ausgeblendete Dateien · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 25-entwicklertester-2 · 0,058 $ · Karte gesamt 2,91 $ |
 | 2026-11-25 | #18 | Entwicklertest | entwicklertester | bestanden | 13 min | opencode: alle Szenarien bestanden, kein Befund · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 18-entwicklertester-1 · 0,091 $ · Karte gesamt 1,41 $ |
+
+## Retrospektive #18 I0018 Datei annotieren (2026-11-25)
+- Durchlauf: Detailplanung 8 min, Bau nach #27 70 min, Reviews 3 Muss („Datei anmerken“ fehlte in Meldungszuständen trotz PO-Entscheidung; Feld verlor Eingabe beim Neuzeichnen — Klasse #23; Sperre verglich anderen kanonischen Namen — Klasse #29/#27), Nacharbeit 31 min, enge Nachprüfung, Entwicklertest ohne Befund. Karte gesamt 1,41 $.
+- Lehre: Zwei wiederkehrende Klassen (Neuzeichnen verwirft Eingaben; Sperrschlüssel ≠ Anzeigeschlüssel) — gehören als Prüfpunkt in jeden Bauauftrag mit Eingabefeld oder Namensvergleich. Vorschlag für die Fabrik bei `/factory lehren`.
+- Gate: NUnit 1209/1209, Playwright 490/490 in Lauf 2 und 3; Lauf 1 drittes Auftreten von `grosse-diffs.spec.js:23` → Test-Härtung wird beauftragt.
