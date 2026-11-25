@@ -46,7 +46,7 @@ Vorbereitung: Ordner D aus `user-stories/R00043.md`, dazu `001.sql`, `002.sql`, 
 - [ ] 5. Gegeben drei Dateien und die Antwort für `002.sql` um 1,5 s verzögert, wenn man `002.sql` und sofort `001.sql` wählt, dann steht am Ende `001.sql` da, nicht die späte Antwort; eine Markierung in `001.sql` ist nach `j`/`k` zurück nicht mehr da, der ausgeschaltete Umbruch bleibt aus. *Ebene: Playwright (verzögerte Antwort über `route`, Browser-Eigenes).*
 - [ ] 6. Gegeben 50 Dateien mit Namen von je 120 Zeichen, dann scrollt die Seitenleiste für sich, jeder Name steht einzeilig gekürzt, Kopf und Inhalt bleiben an Ort und Höhe; ein Name mit U+202E steht als `⟨U+202E⟩`. *Ebene: Playwright (Darstellung, DOM-Sicherheit).*
 
-Grenz- und Leerfälle bedacht: 50/51 und 32 MiB genau/+1 (3), eine Angabe (Liste mit einer Zeile, R00043 gilt), doppelte Angabe (4), alle Angaben fehlerhaft (2 mit nur Fehlern, ein Test beim Bauen). Verworfen: fehlerhafte Angaben in der Liste mit Grund zeigen und die übrigen öffnen (offene Frage 2 in R00043, Empfehlung Exit 2).
+Grenz- und Leerfälle bedacht: 50/51 und 32 MiB genau/+1 (3), eine Angabe (Liste mit einer Zeile, R00043 gilt), doppelte Angabe (4), alle Angaben fehlerhaft (2 mit nur Fehlern, ein Test beim Bauen). Verworfen: fehlerhafte Angaben in der Liste mit Grund zeigen und die übrigen öffnen (entschieden, PO Zeile 203: ganzer Start abgelehnt, Exit 2).
 
 **Pflichtpunkte der Detailplanung**: 1 Grenzen — Kriterien 3, 6 (Anzahl, Summe, Namenslänge, stderr je Angabe); 2 Anzeigeverfahren — Wechsel unter Umbruch an (Standard) und aus (Kriterium 5), zugeklappte Datei in der Liste wie R00043; 3 festes Layout — Kriterium 6 (Seitenleiste ist Rollbereich, Namen einzeilig); 4 Ausführungsort — Startgründe stderr, Wählen nur Browser; 5 eine Stelle — die Quellenliste mit ihrer Nummer (Kriterien 1, 4: Liste, Endpunkt, Kopf, Kürzel).
 
@@ -87,10 +87,10 @@ Grenz- und Leerfälle bedacht: 50/51 und 32 MiB genau/+1 (3), eine Angabe (Liste
 
 ## Offene Fragen
 
-An den product-owner; bis zur Antwort gilt die Empfehlung.
+Keine offenen. Der product-owner hat beide Fragen am 2026-11-25 entschieden (`AI-Team/po-entscheidungen.md`, Zeilen 204, 210); die Antworten sind oben eingearbeitet:
 
-1. **Grenzen 50 Angaben und 32 MiB zusammen**: Empfehlung so (Hypothese: 50 deckt jeden Migrationssatz, den ein Mensch in einem Lauf liest; 32 MiB = vier Dateien an der Einzelgrenze, hält den RAM des Laufs unter ~100 MiB, weil der Inhalt beim Start gelesen und gehalten wird).
-2. **Doppelte Angaben**: gleicher Wortlaut einmal, verschiedener Wortlaut mit gleichem echten Pfad zweimal (Empfehlung: einfach, nichts verschwindet still außer der wörtlichen Wiederholung).
+1. **Grenzen 50 Angaben und 32 MiB zusammen** — entschieden (PO Zeile 204): 50 Angaben, zusammen 32 MiB, je Datei 8 MiB (Hypothesen mit Auslegung; 32 MiB = vier Dateien an der Einzelgrenze hält den RAM, weil der Inhalt beim Start gehalten wird).
+2. **Doppelte Angaben** — entschieden (PO Zeile 210): gleicher Wortlaut einmal, verschiedener Wortlaut mit gleichem echten Pfad zweimal.
 
 ## Manuelle Vorbereitungstätigkeiten
 
