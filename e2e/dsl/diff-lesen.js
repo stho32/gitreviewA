@@ -35,6 +35,7 @@ function diffSprache(gr, page) {
   let lauf;
   let zaehler;
   let dialogePruefen;
+  let anfragen = [];
   const hash = name => repo.hashes[name];
   const kurz = name => hash(name).slice(0, 7);
 
@@ -106,6 +107,15 @@ function diffSprache(gr, page) {
     leerraumUmschalten: () => diffSeite.leerraumUmschalten(page),
     leerraumPerTastaturUmschalten: () => diffSeite.leerraumPerTastaturUmschalten(page),
     leerraumIst: stellung => diffSeite.pruefeLeerraumStellung(page, stellung),
+    /** Merkt jede Diff-Anfrage; `anfragenEnthalten` prüft, dass eine mit diesen Werten dabei war (R00026). */
+    anfragenBeobachten: async () => {
+      anfragen = await diffSeite.diffAnfragenBeobachten(page);
+    },
+    anfragenEnthalten: async erwartet => {
+      await expect.poll(() => anfragen.filter(anfrage => anfrage.pfad === erwartet.pfad && anfrage.leerraum === erwartet.leerraum).length).toBeGreaterThan(0);
+    },
+    /** Beantwortet die Diff-Anfrage in der Stellung `leerraum` mit einem Ersatz-Patch (oder einem Fehler), wahlweise verzögert. */
+    antwortErsetzen: optionen => diffSeite.diffAntwortErsetzen(page, optionen),
     langeZeileEinzeilig: (neu, text) => diffSeite.pruefeEinzeilig(page, neu, text),
     langeZeileUmbrochen: (neu, text) => diffSeite.pruefeUmbrochen(page, neu, text),
     fremderTextBleibtText: async () => {

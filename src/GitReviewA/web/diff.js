@@ -75,9 +75,12 @@
   }
 
   /** Wie Umbruch und Ansicht liegt die Leerraum-Stellung am Bereich: sie gilt für jede weitere Datei und jeden weiteren Commit,
-      auch wenn noch keine Datei gewählt ist (R00026). */
+      auch wenn noch keine Datei gewählt ist (R00026). Eine gewählte Datei zeigt danach denselben Diff mit dem anderen Vergleich. */
   function schalteLeerraum(ansicht) {
     zustand.leerraum = ansicht.leerraumElement.checked ? 'ignorieren' : 'beachten';
+    if (zustand.datei) {
+      ladeDiff(ansicht, zustand.datei, zustand.alsText);
+    }
   }
 
   /** Wie der Umbruch liegt die Diffansicht am Bereich: sie gilt für jede weitere Datei, auch wenn noch keine gewählt ist. */
@@ -105,8 +108,9 @@
     zeigeMeldung(ansicht, HINWEIS_ZUR_WAHL, false);
   }
 
-  /** Die jüngste Wahl gewinnt: eine Antwort zählt nur, wenn seit ihrer Anfrage keine andere Datei, kein anderer Commit und keine andere
-      Diffansicht gewählt wurde. `alsText`: der Mensch hat bei einer Binärdatei „Als Text zeigen“ gewählt — nur dann liest der Server ihre Bytes. */
+  /** Die jüngste Wahl gewinnt: eine Antwort zählt nur, wenn seit ihrer Anfrage keine andere Datei, kein anderer Commit, keine andere
+      Diffansicht und keine andere Leerraum-Stellung gewählt wurde. `alsText`: der Mensch hat bei einer Binärdatei „Als Text zeigen“
+      gewählt — nur dann liest der Server ihre Bytes. */
   async function ladeDiff(ansicht, datei, alsText) {
     const ladung = zustand.letzteLadung + 1;
     zustand.letzteLadung = ladung;
@@ -120,11 +124,12 @@
       zustand.gewaehlteZeile = null;
     }
     const diffansicht = zustand.diffansicht;
+    const leerraum = zustand.leerraum;
     ansicht.pfadElement.replaceChildren(...sichtbarTeile(datei.pfad).map(teilKnoten));
     zeigeMeldung(ansicht, 'Diff wird geladen …', false);
     let antwort;
     try {
-      antwort = await diffAbrufen(datei, alsText, diffansicht);
+      antwort = await diffAbrufen(datei, alsText, diffansicht, leerraum);
     } catch (fehler) {
       if (ladung === zustand.letzteLadung) {
         zeigeMeldung(ansicht, fehlertextZu(fehler), true);
@@ -137,14 +142,17 @@
     zeichneAntwort(ansicht, antwort, alsText, diffansicht);
   }
 
-  /** Die ganze Datei liest der Server nur auf ausdrückliche Wahl der Diffansicht. */
-  async function diffAbrufen(datei, alsText, diffansicht) {
+  /** Die ganze Datei liest der Server nur auf ausdrückliche Wahl der Diffansicht; die Leerraum-Stellung gilt für beide Ansichten. */
+  async function diffAbrufen(datei, alsText, diffansicht, leerraum) {
     const abfrage = new URLSearchParams({ pfad: datei.pfad });
     if (alsText) {
       abfrage.set('alsText', 'true');
     }
     if (diffansicht === 'ganz') {
       abfrage.set('umfang', 'ganz');
+    }
+    if (leerraum === 'ignorieren') {
+      abfrage.set('leerraum', 'ignorieren');
     }
     const adresse = `api/commits/${encodeURIComponent(datei.commit)}/diff?${abfrage}`;
     const antwort = await fetch(adresse, { headers: { Accept: 'application/json' } });

@@ -244,6 +244,49 @@ async function diffAntwortZuGross(page, pfad, meldung) {
   }, route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ zuGross: true, meldung }) }));
 }
 
+/** Merkt jede Diff-Anfrage (`pfad`, `umfang`, `leerraum`) und lässt sie weiterlaufen; `fallback`, damit später gesetzte Routen (etwa
+    ein verzögerter Fake) zuerst greifen (R00026). */
+async function diffAnfragenBeobachten(page) {
+  const anfragen = [];
+  await page.route(url => url.toString().includes('/diff?'), route => {
+    const abfrage = new URL(route.request().url()).searchParams;
+    anfragen.push({ pfad: abfrage.get('pfad'), umfang: abfrage.get('umfang'), leerraum: abfrage.get('leerraum') });
+    return route.fallback();
+  });
+  return anfragen;
+}
+
+/** Beantwortet die Diff-Anfrage von `pfad` in der Leerraum-Stellung `leerraum` (`null` = „beachten“) mit einem eigenen Rumpf —
+    nach `verzoegerungMs` oder als Fehler `status`. */
+async function diffAntwortErsetzen(page, { pfad, leerraum = null, patch = null, status = 200, verzoegerungMs = 0 }) {
+  const istAnfrage = url => {
+    const adresse = url.toString();
+    const abfrage = new URL(adresse).searchParams;
+    return adresse.includes('/diff?') && abfrage.get('pfad') === pfad && abfrage.get('leerraum') === leerraum;
+  };
+  const eingetroffen = page.waitForResponse(response => istAnfrage(response.url()));
+  await page.route(istAnfrage, async route => {
+    if (verzoegerungMs > 0) {
+      await new Promise(weiter => setTimeout(weiter, verzoegerungMs));
+    }
+    if (status !== 200) {
+      await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify({ meldung: 'Diff konnte nicht gelesen werden' }) });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ pfad, status: 'M', alterPfad: null, art: 'text', grund: null, patch }),
+    });
+  });
+  return {
+    eingetroffen: async () => {
+      await eingetroffen;
+      await page.evaluate(() => new Promise(fertig => requestAnimationFrame(() => requestAnimationFrame(fertig))));
+    },
+  };
+}
+
 /** Knotenzahl je Block (`.dz-b`): Elemente **und** Textknoten, samt dem Block selbst — dieselbe Zahl, die der Browser auslegt. */
 async function blockKnoten(page) {
   return page.evaluate(() => Array.from(document.querySelectorAll('#diff .df-sc .dz-b'), block => {
@@ -428,5 +471,5 @@ module.exports = {
   diffAntwortZuGross, blockKnoten, warteAufFarbe, langeAufgabenBeimScrollen, zugeklapptRechtzeitigNachKlick, zugeklapptRechtzeitigNachAktion,
   pruefeSprungzeile, pruefeSprungzeileName, sprungzeileLiegtImVerborgenen, pruefeSprungkopfName, sprungHunkLink, zeileWaehlen,
   pruefeSprungVerweis, pruefeSprungGrund, pruefeSprungHinweis, sprungAntwortVerzoegern, sprungAntwortScheitern,
-  leerraumUmschalten, leerraumPerTastaturUmschalten, pruefeLeerraumStellung,
+  leerraumUmschalten, leerraumPerTastaturUmschalten, pruefeLeerraumStellung, diffAnfragenBeobachten, diffAntwortErsetzen,
 };
