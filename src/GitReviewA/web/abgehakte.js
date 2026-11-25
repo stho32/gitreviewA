@@ -20,8 +20,8 @@
       zeichneZaehler();
       zeichneHinweis();
     });
-    document.addEventListener('haken-stand-geladen', meldeGeaendert);
-    document.addEventListener('haken-geaendert', meldeGeaendert);
+    document.addEventListener('haken-stand-geladen', beiHakenAenderung);
+    document.addEventListener('haken-geaendert', beiHakenAenderung);
     document.addEventListener('datei-gewaehlt', ereignis => {
       zustand.gewaehlterPfad = ereignis.detail.pfad;
       zeichneHinweis();
@@ -40,7 +40,15 @@
     meldeGeaendert();
   }
 
-  /** Eine Änderung an Haken-Stand oder Schalter rechnet die Sicht neu; die Liste zeichnet `dateiliste.js` neu und meldet es. */
+  /** Eine Änderung an Haken-Stand oder Schalter rechnet die Sicht neu; die Liste zeichnet `dateiliste.js` neu und meldet es.
+      Bei ausgeschaltetem Schalter ändert eine Haken-Änderung die Sicht nicht — dann bleibt das Zeichnen aus, und der Fokus im
+      Kästchen bleibt stehen (R00011, Kriterium 4). */
+  function beiHakenAenderung() {
+    if (zustand.an) {
+      meldeGeaendert();
+    }
+  }
+
   function meldeGeaendert() {
     document.dispatchEvent(new CustomEvent('abgehakte-geaendert'));
   }
