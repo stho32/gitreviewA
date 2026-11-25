@@ -143,9 +143,11 @@ internal sealed class Webserver : IAsyncDisposable
         var interactor = new ZeileAnnotierenInteractor(anmerkungen, new CommitAuswahl(commits), sperre, protokoll);
         var anlegen = AnmerkungsEndpunkt.Fuer(interactor, protokoll);
         var aendern = AnmerkungAendernEndpunkt.Fuer(new AnmerkungAendernInteractor(anmerkungen, sperre, protokoll), protokoll);
+        var loeschen = AnmerkungLoeschenEndpunkt.Fuer(new AnmerkungLoeschenInteractor(anmerkungen, protokoll), protokoll);
         anwendung.MapGet("/api/anmerkungen", AnmerkungenListeEndpunkt.Fuer(interactor));
         anwendung.Map("/api/anmerkungen", GeschuetzterEndpunkt.Mit(anlegen, protokoll));
         anwendung.Map("/api/anmerkungen/{nummer}", GeschuetzterEndpunkt.Mit(aendern, protokoll));
+        anwendung.Map("/api/anmerkungen/{nummer}/loeschen", GeschuetzterEndpunkt.Mit(loeschen, protokoll));
         anwendung.MapGet("/api/haken", HakenEndpunkt.Stand(dateiAbhaken));
         anwendung.Map("/api/haken", GeschuetzterEndpunkt.Mit(HakenEndpunkt.Setzen(dateiAbhaken, protokoll), protokoll));
         var beenden = BeendenEndpunkt.Fuer(anmerkungen, haken, anwendung.Lifetime, protokoll);
