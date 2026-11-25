@@ -103,4 +103,40 @@ test.describe('Anschluss an Nächste ungeprüfte und Fokus (B3404)', () => {
     expect(await einklappen.diffPfad(), 'der Diff bleibt bei der gewählten Stelle stehen').toBe(pfadVorher);
     await einklappen.seitenleisteVerborgen();
   });
+
+  test('die Meldung aus R00028 ist auch eingeklappt sichtbar und angesagt (Befund S4)', async ({ einklappen }) => {
+    await einklappen.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });
+    await einklappen.knopfBetatigen();
+    await einklappen.seitenleisteVerborgen();
+
+    // Eingeklappt, alles abgehakt: die Meldung darf nicht in der verborgenen Leiste verschwinden.
+    await einklappen.alleHakenSetzen();
+    await einklappen.naechsteMeldung();
+    await einklappen.meldungSichtbar('Alles abgehakt');
+
+    // Ausgeklappt bleibt es wie bisher: die Meldung steht in der Leiste, außerhalb steht nichts.
+    await einklappen.knopfBetatigen();
+    await einklappen.seitenleisteSichtbar();
+    await einklappen.meldungInDerLeiste('Alles abgehakt');
+  });
+
+  test('auch die übrigen Meldungen der Leiste stehen eingeklappt sichtbar (Muster-Suche zum Befund S4)', async ({ einklappen }) => {
+    await einklappen.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });
+    await einklappen.knopfBetatigen();
+    await einklappen.alleHakenSetzen();
+
+    // `h` blendet alle abgehakten Dateien aus: die Leiste meldet es, der Mensch soll es auch eingeklappt sehen.
+    await einklappen.druecke('h');
+    await einklappen.meldungSichtbar('Alles abgehakt · Alle Dateien ausgeblendet');
+
+    // Unter 566 px fällt der Aufbau auf eine Spalte zurück: die Leiste steht sichtbar, die Meldung bleibt in ihr.
+    await einklappen.fensterSetzen({ width: 560, height: 800 });
+    await einklappen.seitenleisteSichtbar();
+    await einklappen.meldungInDerLeiste('Alles abgehakt');
+
+    // Wieder zweispaltig: die Leiste ist weiterhin eingeklappt, die Meldung steht wieder draußen.
+    await einklappen.fensterSetzen({ width: 1280, height: 800 });
+    await einklappen.seitenleisteVerborgen();
+    await einklappen.meldungSichtbar('Alles abgehakt · Alle Dateien ausgeblendet');
+  });
 });

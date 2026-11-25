@@ -27,6 +27,7 @@
 <script src="trenner.js" defer></script>
 <script src="einklappen-werte.js" defer></script>
 <script src="einklappen.js" defer></script>
+<script src="seitenleiste-meldung.js" defer></script>
 <script src="tasten-werte.js" defer></script>
 <script src="diff-werte.js" defer></script>
 <script src="bild-werte.js" defer></script>
@@ -81,6 +82,9 @@
 <main class="gr-inhalt">
   <p id="kopieren-status" class="gr-status" role="status"></p>
   <p id="beenden-status" class="gr-status fehler" role="alert"></p>
+  <!-- Meldungen der Seitenleiste, wenn sie eingeklappt ist (R00035): dieselbe Quelle wie die Leiste, nur sichtbar —
+       ausgeklappt steht die Meldung in der Leiste und diese Region ist leer (keine Dopplung). -->
+  <p id="seitenleiste-status" class="gr-status" role="status"></p>
   <div class="gr-ansicht">
     <div id="seitenleiste" class="gr-links">
       <section class="gr-leiste" aria-label="Commits">

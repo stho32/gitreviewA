@@ -23,6 +23,8 @@ function einklappenSprache(seit, page) {
     ersteUngepruefteOeffnen: () => einkl.ersteUngepruefteOeffnen(page),
     alleHakenSetzen: () => einkl.alleHakenSetzen(page),
     naechsteMeldung: () => einkl.pruefeNaechsteMeldung(page, 'Alles abgehakt'),
+    meldungSichtbar: text => einkl.pruefeMeldungSichtbar(page, text),
+    meldungInDerLeiste: text => einkl.pruefeMeldungInDerLeiste(page, text),
     diffPfad: () => einkl.diffPfad(page),
     /* ── Zeitwert des Einklappens und seine Positivkontrolle (ereignisgenau) ── */
     dauerEinklappen: () => einkl.messeEinklappen(page),

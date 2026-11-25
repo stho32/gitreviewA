@@ -9,6 +9,8 @@ const STREIFEN = '.gr-ansicht .gr-streifen';
 const SEITENLEISTE = '#seitenleiste';
 const RAHMEN = '.gr-ansicht';
 const TRENNER = '.gr-ansicht .gr-trenner';
+/** Die Statusregion außerhalb der Seitenleiste: sie trägt die Meldungen der Leiste, wenn sie eingeklappt ist (Befund S4). */
+const MELDUNG_DRAUSSEN = '#seitenleiste-status';
 
 function knopf(page) {
   return page.locator(KNOPF);
@@ -216,6 +218,32 @@ async function pruefeNaechsteMeldung(page, text) {
   await expect(page.locator('#naechste-meldung'), 'Meldung der nächsten ungeprüften').toHaveText(text);
 }
 
+/**
+ * Eine Meldung der Seitenleiste ist auch eingeklappt sichtbar und wird angesagt (Befund S4): sie steht in der
+ * Statusregion außerhalb der Leiste, hat eine Größe (`getClientRects`) und eine Rolle, die Vorleser ankündigen.
+ */
+async function pruefeMeldungSichtbar(page, text) {
+  const draussen = page.locator(MELDUNG_DRAUSSEN);
+  await expect(draussen, `Meldung »${text}« außerhalb der eingeklappten Seitenleiste`).toHaveText(text);
+  const angaben = await draussen.evaluate(element => ({
+    rechtecke: element.getClientRects().length,
+    rolle: element.getAttribute('role'),
+    live: element.getAttribute('aria-live'),
+  }));
+  expect(angaben.rechtecke, `die Meldung »${text}« ist sichtbar (getClientRects) — ${JSON.stringify(angaben)}`).toBeGreaterThan(0);
+  const angesagt = angaben.rolle === 'status' || angaben.rolle === 'alert'
+    || angaben.live === 'polite' || angaben.live === 'assertive';
+  expect(angesagt, `die Meldung »${text}« wird von Vorlesern angesagt (role=status/aria-live) — ${JSON.stringify(angaben)}`).toBe(true);
+}
+
+/** Ausgeklappt steht die Meldung wieder in der Leiste und die äußere Statusregion ist leer (keine Dopplung). */
+async function pruefeMeldungInDerLeiste(page, text) {
+  const inDerLeiste = page.locator('#naechste-meldung');
+  await expect(inDerLeiste, `Meldung »${text}« in der Leiste`).toHaveText(text);
+  await expect(inDerLeiste, 'die Meldung steht in der Leiste sichtbar').toBeVisible();
+  await expect(page.locator(MELDUNG_DRAUSSEN), 'keine zweite Meldung außerhalb der Leiste').toBeHidden();
+}
+
 /** Der Diff zeigt diesen Pfad (der Diff-Bereich ist der sichtbare Teil der Seite). */
 function diffPfad(page) {
   return page.locator('#diff .diff-pfad').textContent();
@@ -354,7 +382,8 @@ module.exports = {
   KNOPF, STREIFEN, SEITENLEISTE, RAHMEN, TRENNER,
   knopf, betatigen, tasteB, knopfAngaben, sichtbarerFokusring, seitenleisteAngaben, streifenAngaben, grenzlage,
   pruefeZustand, pruefeKnopf, pruefeKnopfAnDerGrenze, pruefeFokusUndRing, fokusVorgaengerDesTrenners, tabVomKopf, tabReihe, ersteUngepruefteOeffnen, alleHakenSetzen,
-  pruefeNaechsteMeldung, diffPfad, messeEinklappen, messeDateiwechsel, verzoegerteDiffAntworten, hilfeOeffnen, hilfeEintraege,
+  pruefeNaechsteMeldung, pruefeMeldungSichtbar, pruefeMeldungInDerLeiste, MELDUNG_DRAUSSEN,
+  diffPfad, messeEinklappen, messeDateiwechsel, verzoegerteDiffAntworten, hilfeOeffnen, hilfeEintraege,
   pruefeSeitenleisteVerborgen, pruefeSeitenleisteSichtbar, pruefeStreifen, pruefeVolleBreite,
   pruefeDiffBreiter, pruefeKeinTrennzug,
 };

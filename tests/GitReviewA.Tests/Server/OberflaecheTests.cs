@@ -19,6 +19,7 @@ public class OberflaecheTests
     }
 
     [TestCase("commits.js", "text/javascript")]
+    [TestCase("seitenleiste-meldung.js", "text/javascript")]
     [TestCase("kd-tokens.css", "text/css")]
     [TestCase("kd-base.css", "text/css")]
     [TestCase("gitreviewa.css", "text/css")]
