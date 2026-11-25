@@ -51,6 +51,11 @@ async function pruefeDiffEnthaelt(page, text) {
   await expect(page.locator('#diff .df-sc'), `Diff enthält »${text}«`).toContainText(text);
 }
 
+/** Der geladene Diff enthält diesen Text nicht (die späte Antwort einer früheren Wahl wurde verworfen). */
+async function pruefeDiffEnthaeltNicht(page, text) {
+  await expect(page.locator('#diff .df-sc'), `Diff enthält nicht »${text}«`).not.toContainText(text);
+}
+
 /** Der gezeigte Commit der Dateiliste (in „Einzeln“ der Commit-Wähler) als voller Hash. */
 async function gezeigterCommit(page) {
   return page.locator(GEWAEHLTER_COMMIT).getAttribute('data-hash');
@@ -124,6 +129,16 @@ async function pruefeZeileImBlick(page, pfad) {
   ).toBe(true);
 }
 
+/** Wartet, bis der Stand des Hakens gelesen ist — erst dann sind die git-Aufrufe des Ladens durch. */
+async function warteAufStand(page) {
+  await page.waitForFunction(() => Boolean(window.gitreviewaHaken && window.gitreviewaHaken.istLesbar && window.gitreviewaHaken.istLesbar()));
+}
+
+/** git-Aufrufe ohne die Hashes — zwei Wegwerf-Repos mit gleichem Inhalt vergleichen (Prozessprobe). */
+function ohneHashes(aufrufe) {
+  return aufrufe.map(aufruf => aufruf.replace(/\b[0-9a-f]{40}\b/g, '<hash>'));
+}
+
 /** Die gewählte Zeile der Dateiliste (genau eine). */
 function gewaehlteZeile(page) {
   return page.locator(`${ZEILE}[aria-current="true"]`);
@@ -151,5 +166,6 @@ module.exports = {
   knopf, meldungselement, zeileMitPfad, springen, pruefeGewaehlt, pruefeNichtGewaehlt, gewaehlteZeilen, pruefeDiffGeladen, pruefeDiffEnthaelt,
   gezeigterCommit, pruefeGezeigtenCommit, pruefeKnopfBedienbar, pruefeKnopfNichtBedienbar, pruefeMeldung, meldungLesen,
   pruefeKnopfname, springenPerTastatur, pruefeFokusAufKnopf, pruefeLeerenDiffKnopf, pruefeLeerenDiffKnopfname, leerenDiffKnopfBetaetigen,
-  pruefeZeileImBlick, diffAntwortVerzoegern, gewaehlteZeile, pruefeGewaehlteZeileLesbar, gewaehlteZeileAbhaken,
+  pruefeZeileImBlick, diffAntwortVerzoegern, gewaehlteZeile, pruefeGewaehlteZeileLesbar, gewaehlteZeileAbhaken, pruefeDiffEnthaeltNicht,
+  warteAufStand, ohneHashes,
 };

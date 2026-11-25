@@ -29,6 +29,13 @@ function naechsteSprache(gr, page) {
   let repo;
   let lauf;
   let zaehlerGit;
+  const anfragen = [];
+  page.on('request', anfrage => {
+    const pfad = new URL(anfrage.url()).pathname;
+    if (pfad.startsWith('/api/')) {
+      anfragen.push(pfad);
+    }
+  });
   const hash = name => repo.hashes[name];
 
   async function starten({ vorbereitung = 'Repo Z', commits, modus = 'zusammen', ohneSeite = false } = {}) {
@@ -74,6 +81,8 @@ function naechsteSprache(gr, page) {
 
     /** Die Stelle, auf der der Sprung gelandet sein soll: gewählte Datei, ihr Diff — und in „Einzeln“ der Commit. */
     diffEnthaelt: text => naechsteSeite.pruefeDiffEnthaelt(page, text),
+    diffEnthaeltNicht: text => naechsteSeite.pruefeDiffEnthaeltNicht(page, text),
+    ruhezeitAbwarten: ms => page.waitForTimeout(ms),
     gewaehlteZeileLesbar: () => naechsteSeite.pruefeGewaehlteZeileLesbar(page),
     gewaehlteZeileAbhaken: () => naechsteSeite.gewaehlteZeileAbhaken(page),
     stelle: async (pfad, commitName) => {
@@ -100,6 +109,12 @@ function naechsteSprache(gr, page) {
     /** Die Zahl der git-Aufrufe je Unterbefehl (`uebersicht` ist `git log --numstat`). */
     gitAufrufe: erwartet => beobachtung.pruefeGitAufrufe(zaehlerGit, erwartet),
     gitAufrufeJetzt: () => zaehlerGit.aufrufe().length,
+    standGeladen: () => naechsteSeite.warteAufStand(page),
+    /** Der Serverweg der Seite: die Anfragen seit `vorher` (nur der Pfad) — die Suche selbst darf keine erzeugen. */
+    anfragenJetzt: () => anfragen.length,
+    neueAnfragen: vorher => naechsteSeite.ohneHashes(anfragen.slice(vorher)),
+    /** Die neuen git-Aufrufe seit `vorher`; Hashes ersetzt, damit zwei Wegwerf-Repos vergleichbar sind. */
+    neueGitAufrufe: vorher => naechsteSeite.ohneHashes(zaehlerGit.aufrufe().slice(vorher)),
     stderr: () => lauf.stderr,
     ergebnis: () => lauf.stdout,
     lauf: () => lauf,

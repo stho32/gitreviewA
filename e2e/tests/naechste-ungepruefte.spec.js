@@ -130,3 +130,68 @@ test.describe('Knopf und Meldung', () => {
     await naechste.meldung('Alles Lesbare abgehakt, 3 nicht lesbar');
   });
 });
+
+test.describe('Kein neuer Weg, späte Antwort, beide Modi', () => {
+  test('soll beim verzögerten Diff die späte Antwort der früheren Wahl verwerfen (Szenario 7)', async ({ naechste }) => {
+    await naechste.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });
+    await naechste.dateienWarten(3);
+    await naechste.diffAntwortVerzoegern(1500);
+
+    await naechste.springen();
+    await naechste.springen();
+    await naechste.stelle('src/a.txt');
+    await naechste.diffEnthaelt('ZWEI');
+
+    // Die Antwort der ersten Wahl (README.md) kommt später — sie darf den Diff nicht mehr ändern.
+    await naechste.ruhezeitAbwarten(2000);
+    await naechste.stelle('src/a.txt');
+    await naechste.diffEnthaeltNicht('Lager');
+  });
+
+  test('soll in beiden Modi über denselben Haken-Stand arbeiten (Szenario 8)', async ({ naechste }) => {
+    await naechste.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });
+    await naechste.dateienWarten(3);
+    await naechste.abhaken('README.md');
+    await naechste.fortschritt('1 von 3 Dateien abgehakt');
+
+    await naechste.modusWaehlen('einzeln');
+
+    await naechste.fortschritt('1 von 6 Stellen abgehakt');
+    await naechste.knopfBedienbar();
+    await naechste.knopfname();
+    await naechste.reihe([['src/a.txt', 'z1']]);
+
+    await naechste.modusWaehlen('zusammen');
+
+    await naechste.fortschritt('1 von 3 Dateien abgehakt');
+    await naechste.reihe([['src/b.txt']]);
+  });
+
+  test('soll nicht mehr git-Aufrufe als die Wahl derselben Stelle starten (Kriterium 12, Prozessprobe)', async ({ naechste }) => {
+    // Von Hand gewählt: README.md (die erste ungeprüfte) ohne vorherige Wahl.
+    await naechste.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });
+    await naechste.dateienWarten(3);
+    await naechste.standGeladen();
+    const vorherHand = await naechste.gitAufrufeJetzt();
+    const anfragenVorherHand = naechste.anfragenJetzt();
+    await naechste.dateiWaehlen('README.md');
+    await naechste.stelle('README.md');
+    const vonHand = await naechste.neueGitAufrufe(vorherHand);
+    const anfragenVonHand = naechste.neueAnfragen(anfragenVorherHand);
+
+    // Über den Sprung: dieselbe Stelle, derselbe Ausgangszustand (nichts gewählt).
+    await naechste.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });
+    await naechste.dateienWarten(3);
+    await naechste.standGeladen();
+    const vorherSprung = await naechste.gitAufrufeJetzt();
+    const anfragenVorher = naechste.anfragenJetzt();
+    await naechste.springen();
+    await naechste.stelle('README.md');
+    const ueberDenSprung = await naechste.neueGitAufrufe(vorherSprung);
+
+    expect(vonHand, 'die Wahl liest den Diff der Stelle').not.toHaveLength(0);
+    expect(ueberDenSprung, `Sprung: ${ueberDenSprung.join(' | ')}`).toEqual(vonHand);
+    expect(naechste.neueAnfragen(anfragenVorher), 'kein neuer Serverweg: dieselben Anfragen wie die Wahl')
+      .toEqual(anfragenVonHand);
+  });
+});
