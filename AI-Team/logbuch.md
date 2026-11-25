@@ -421,3 +421,12 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Durchlauf: Detailplanung (PO 5 Fragen), Bau 66 min (8 Bubbles), Security bestanden (24 Varianten), Code-Review 1 Muss (Bereich in „Zusammen ohne Kette“ im falschen Commit) + vom Director hochgestuft S1 (8-MiB-Zitatzeile auf stdout → 200 Zeichen), Nacharbeit (Zeitgrenze, Bericht per Fortsetzung, Testfix „Speichern wartet auf Antwort“ 20/20), Nachprüfung mit Mutanten, Entwicklertest 1 Muss (Bereichsanmerkung doppelt — als Dateianmerkung gezählt), Nacharbeit (`artDerAnmerkung` als eine Stelle), Director-Nachprüfung. Karte gesamt 1,74 $.
 - Lehre: Eine neue Art (Bereich neben Zeile und Datei) braucht eine Stelle, die die Art bestimmt — `zeile === null` hieß bis dahin „Datei“. Jetzt Pflichtpunkt 5 der Detailplanung (AI-Team/planer.md).
 - Gate: NUnit 1322/1322, Playwright 774/774 (Lauf 2: 773/774, Wackler `naechste-ungepruefte:269` Prozessprobe — zweites Mal, eigene Karte).
+| 2026-11-25 | #39 | Entwicklung | dokumentar | bestanden | 28 min | Claude Sonnet: README 278 Zeilen, 5 Bilder, ERZEUGEN.md, alle Abnahmekriterien belegt; 2 Programmbefunde als eigene Karten · claude · sonnet · Lauf 39-dokumentar-1 · 4,68 $ · Karte gesamt 5,23 $ |
+| 2026-11-25 | #37 | Nacharbeit | entwickler | bestanden | 42 min | opencode: B1 Wunschbreite, eine Quelle 566, Testwackler behoben (60/60) · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 37-entwickler-2 · 0,35 $ · Karte gesamt 0,73 $ |
+| 2026-11-25 | #40 | Entwicklung | entwickler | bestanden | 32 min | opencode: Ursache Reihenfolge paralleler git-Aufrufe; Menge statt Reihenfolge, 20/20, Mutant 5/5 rot · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 40-entwickler-1 · 0,097 $ · Karte gesamt 0,10 $ |
+| 2026-11-25 | #37 | Entwicklertest | entwicklertester | bestanden | 8 min | opencode: kein Befund · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 37-entwicklertester-1 · 0,12 $ · Karte gesamt 0,85 $ |
+
+## Retrospektive #40 Wackler Prozessprobe (2026-11-25)
+- Ursache gemessen: die Probe verglich die Reihenfolge zweier paralleler git-Aufrufe (3 von 20 rot); jetzt Ruhe abwarten (alle `/api/`-Anfragen beantwortet) und Menge vergleichen. Mutant mit zusätzlichem Aufruf 5/5 rot. 0,10 $.
+- Lehre: Eine Prozessprobe sichert zu, *was* aufgerufen wird, nicht in welcher Reihenfolge parallele Wege enden.
+- Gate: NUnit 1322/1322, Playwright 774/774 zweimal — erstes Gate des Tages ohne Wackler.
