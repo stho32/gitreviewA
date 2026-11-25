@@ -172,6 +172,55 @@ function hilfeEintraege(page) {
   })));
 }
 
+/** Eine Folge von Tab-Stopps ab dem aktuellen Fokus: je Stopp Tag, Kennung und in welchem Teil der Seite er steht. */
+async function tabReihe(page, schritte) {
+  const reihe = [];
+  for (let nummer = 0; nummer < schritte; nummer += 1) {
+    await page.keyboard.press('Tab');
+    reihe.push(await page.evaluate(() => {
+      const element = document.activeElement;
+      const seitenleiste = document.getElementById('seitenleiste');
+      const diff = document.getElementById('diff');
+      const streifen = document.querySelector('.gr-streifen');
+      return {
+        tag: element ? element.tagName : null,
+        kennung: element ? (element.id || '') : '',
+        inLeiste: Boolean(element && seitenleiste.contains(element)),
+        inDiff: Boolean(element && diff.contains(element)),
+        inKopf: Boolean(element && document.querySelector('header.kz').contains(element)),
+        imStreifen: Boolean(element && streifen && streifen.contains(element)),
+        rollbereich: Boolean(element && element.matches('#diff .df-sc')),
+      };
+    }));
+  }
+  return reihe;
+}
+
+/** Betätigt „Erste ungeprüfte öffnen“ im leeren Diff-Bereich. */
+async function ersteUngepruefteOeffnen(page) {
+  await page.locator('#diff .erste-ungepruefte').click();
+}
+
+/** Setzt nacheinander alle Haken der Dateiliste (programmatisch, die Liste ist eingeklappt) und wartet auf den Stand. */
+async function alleHakenSetzen(page) {
+  const kaestchen = page.locator('#datei-zeilen .datei-zeile input.haken');
+  const anzahl = await kaestchen.count();
+  for (let nummer = 0; nummer < anzahl; nummer += 1) {
+    await kaestchen.nth(nummer).evaluate(element => element.click());
+    await expect.poll(() => kaestchen.nth(nummer).isChecked(), `Haken ${nummer + 1} gesetzt`).toBe(true);
+  }
+}
+
+/** Die Meldung „Nächste ungeprüfte“ (R00028) trägt diesen Text. */
+async function pruefeNaechsteMeldung(page, text) {
+  await expect(page.locator('#naechste-meldung'), 'Meldung der nächsten ungeprüften').toHaveText(text);
+}
+
+/** Der Diff zeigt diesen Pfad (der Diff-Bereich ist der sichtbare Teil der Seite). */
+function diffPfad(page) {
+  return page.locator('#diff .diff-pfad').textContent();
+}
+
 /* ── Prüfungen ── */
 
 /** Der Knopf ist da und nennt seinen Zustand über `aria-expanded`. */
@@ -249,7 +298,8 @@ async function pruefeKeinTrennzug(page) {
 module.exports = {
   KNOPF, STREIFEN, SEITENLEISTE, RAHMEN, TRENNER,
   knopf, betatigen, tasteB, knopfAngaben, sichtbarerFokusring, seitenleisteAngaben, streifenAngaben, grenzlage,
-  pruefeZustand, pruefeKnopf, pruefeKnopfAnDerGrenze, pruefeFokusUndRing, fokusVorgaengerDesTrenners, tabVomKopf, hilfeOeffnen, hilfeEintraege,
+  pruefeZustand, pruefeKnopf, pruefeKnopfAnDerGrenze, pruefeFokusUndRing, fokusVorgaengerDesTrenners, tabVomKopf, tabReihe, ersteUngepruefteOeffnen, alleHakenSetzen,
+  pruefeNaechsteMeldung, diffPfad, hilfeOeffnen, hilfeEintraege,
   pruefeSeitenleisteVerborgen, pruefeSeitenleisteSichtbar, pruefeStreifen, pruefeVolleBreite,
   pruefeDiffBreiter, pruefeKeinTrennzug,
 };

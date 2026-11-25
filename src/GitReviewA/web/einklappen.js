@@ -140,17 +140,33 @@
       }
     }
 
-    /** Die Betätigung (Klick oder Taste `b`, die denselben Knopf betätigt): Stellung wechseln, sonst nichts. */
+    /**
+     * Die Betätigung (Klick oder Taste `b`, die denselben Knopf betätigt): Stellung wechseln, sonst nichts. Der Fokus geht nie
+     * ins Leere: hatte er in der Leiste gestanden (die jetzt `hidden`/`inert` ist) oder war er nirgends, steht er danach auf dem
+     * Knopf; stand er anderswo (etwa im offenen Notizfeld des Diffs), bleibt er dort — das Einklappen verwirft keine Eingabe
+     * (Lehre #23). Beim Ausklappen bleibt der Fokus auf demselben Bedienelement.
+     */
     function umschalten() {
       if (!zweispaltig()) {
         return;
       }
+      // Der Fokusstand wird vor dem Anwenden gelesen: das Verbergen blurst das Element erst mit der nächsten Stilberechnung.
+      const fokusInLeiste = leiste() !== null && leiste().contains(document.activeElement);
       zustand.eingeklappt = werte().umschalten(zustand.eingeklappt);
       anwenden();
+      if (knopf && (document.activeElement === knopf || fokusInLeiste || fokusNirgends())) {
+        knopf.focus({ preventScroll: true });
+      }
       if (!zustand.eingeklappt) {
         bringeWahlInDenBlick();
       }
       document.dispatchEvent(new CustomEvent(seite.ereignis, { detail: { eingeklappt: zustand.eingeklappt } }));
+    }
+
+    /** Hat der Fokus keinen Halter mehr (das Element war in der eben verborgenen Leiste, oder es war keiner gesetzt)? */
+    function fokusNirgends() {
+      const aktiv = document.activeElement;
+      return aktiv === null || aktiv === document.body || aktiv === document.documentElement;
     }
 
     /** Das Ausklappen bringt die gewählte Zeile in den Blick (R00033): kleinste Bewegung, kein Sprung, wenn sie schon steht. */
