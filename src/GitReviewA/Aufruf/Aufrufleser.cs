@@ -10,7 +10,7 @@ internal static class Aufrufleser
     private const int HoechsterPort = 65535;
     private const string StdinArgument = "-";
     private const string Bereichstrenner = "..";
-    private const string Aufrufform = "gitreviewA <hash…> | <von>..<bis>… | - [--port <n>] [--kein-browser] [--verbose] [--quiet]";
+    private const string Aufrufform = "gitreviewA <hash…> | <von>..<bis>… | - [--port <n>] [--kein-browser] [--ignore <muster>] [--verbose] [--quiet]";
 
     public static Aufrufergebnis Lesen(string[] argumente)
     {
@@ -42,6 +42,9 @@ internal static class Aufrufleser
             case "--port":
                 position++;
                 return LesePort(argumente, position, sammlung);
+            case "--ignore":
+                position++;
+                return LeseMuster(argumente, position, sammlung);
             default:
                 sammlung.Auswahlargumente.Add(new Auswahlargument(argumente[position], position + 1));
                 return null;
@@ -66,6 +69,22 @@ internal static class Aufrufleser
         return null;
     }
 
+    private static string? LeseMuster(string[] argumente, int position, Aufrufsammlung sammlung)
+    {
+        var wertFehlt = position >= argumente.Length;
+        if (wertFehlt)
+        {
+            return "--ignore erwartet ein Muster.";
+        }
+        var ergebnis = Musterpruefer.Pruefe(argumente[position], sammlung.Muster.Count);
+        if (ergebnis.Grund is Musterablehnungsgrund ablehnungsgrund)
+        {
+            return Musterpruefer.Meldung(ablehnungsgrund);
+        }
+        sammlung.Muster.Add(argumente[position]);
+        return null;
+    }
+
     private static Aufrufergebnis Zusammenstellen(Aufrufsammlung sammlung)
     {
         var stufenSchliessenSichAus = sammlung.IstVerbose && sammlung.IstQuiet;
@@ -83,7 +102,7 @@ internal static class Aufrufleser
         {
             return Aufrufergebnis.Ungueltig(auswahl.Fehlermeldung);
         }
-        var startauftrag = new Startauftrag(auswahl.Auswahl, sammlung.Port, sammlung.BrowserOeffnen, Mindeststufe(sammlung));
+        var startauftrag = new Startauftrag(auswahl.Auswahl, sammlung.Port, sammlung.BrowserOeffnen, Mindeststufe(sammlung), new Musterliste(sammlung.Muster));
         return Aufrufergebnis.Gueltig(startauftrag);
     }
 
@@ -159,6 +178,8 @@ internal static class Aufrufleser
     private sealed class Aufrufsammlung
     {
         public List<Auswahlargument> Auswahlargumente { get; } = [];
+
+        public List<string> Muster { get; } = [];
 
         public int Port { get; set; } = FreierPort;
 

@@ -175,6 +175,80 @@ public class AufrufleserTests
         Assert.That(ergebnis.IstGueltig, Is.False);
     }
 
+    [Test]
+    public void Wenn_ignore_mehrfach_dann_Muster_in_Aufrufreihenfolge()
+    {
+        var ergebnis = Aufrufleser.Lesen([HashA, "--ignore", "*.lock", "--ignore", "build/**", "--ignore", " a "]);
+
+        var startauftrag = GueltigerStartauftrag(ergebnis);
+        Assert.That(startauftrag.Muster.AlsArray(), Is.EqualTo(new[] { "*.lock", "build/**", " a " }));
+    }
+
+    [Test]
+    public void Wenn_kein_ignore_dann_leere_Musterliste()
+    {
+        var ergebnis = Aufrufleser.Lesen([HashA]);
+
+        Assert.That(GueltigerStartauftrag(ergebnis).Muster.Anzahl, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void Wenn_ignore_ohne_Wert_dann_Fehler()
+    {
+        var ergebnis = Aufrufleser.Lesen([HashA, "--ignore"]);
+
+        Assert.That(ergebnis.IstGueltig, Is.False);
+        Assert.That(ergebnis.Fehlermeldung, Does.Contain("--ignore"));
+    }
+
+    [TestCase("")]
+    [TestCase("   ")]
+    [TestCase("\n")]
+    [TestCase("a\u202Eb")]
+    public void Wenn_ignore_Muster_ungueltig_dann_Fehler(string muster)
+    {
+        var ergebnis = Aufrufleser.Lesen([HashA, "--ignore", muster]);
+
+        Assert.That(ergebnis.IstGueltig, Is.False);
+        Assert.That(ergebnis.Fehlermeldung, Is.Not.Empty);
+    }
+
+    [Test]
+    public void Wenn_ignore_Muster_ueber_200_Zeichen_dann_Fehler()
+    {
+        var ergebnis = Aufrufleser.Lesen([HashA, "--ignore", new string('a', 201)]);
+
+        Assert.That(ergebnis.IstGueltig, Is.False);
+    }
+
+    [Test]
+    public void Wenn_21_Muster_dann_Fehler()
+    {
+        var ergebnis = Aufrufleser.Lesen(MitMustern(HashA, 21));
+
+        Assert.That(ergebnis.IstGueltig, Is.False);
+        Assert.That(ergebnis.Fehlermeldung, Does.Contain("20"));
+    }
+
+    [Test]
+    public void Wenn_20_Muster_dann_gueltig()
+    {
+        var ergebnis = Aufrufleser.Lesen(MitMustern(HashA, 20));
+
+        Assert.That(GueltigerStartauftrag(ergebnis).Muster.Anzahl, Is.EqualTo(20));
+    }
+
+    private static string[] MitMustern(string hash, int anzahl)
+    {
+        var argumente = new List<string> { hash };
+        for (var i = 0; i < anzahl; i++)
+        {
+            argumente.Add("--ignore");
+            argumente.Add("*.lock");
+        }
+        return argumente.ToArray();
+    }
+
     private static Startauftrag GueltigerStartauftrag(Aufrufergebnis ergebnis)
     {
         if (ergebnis.IstGueltig)
