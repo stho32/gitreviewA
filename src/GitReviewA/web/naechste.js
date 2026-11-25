@@ -11,17 +11,70 @@
   const zustand = { sicht: null, ausstehend: null };
 
   function init() {
-    const knopf = document.getElementById('naechste-ungepruefte');
-    if (knopf) {
-      knopf.addEventListener('click', springen);
+    for (const knopf of [document.getElementById('naechste-ungepruefte'), document.querySelector('#diff .erste-ungepruefte')]) {
+      if (knopf) {
+        knopf.addEventListener('click', springen);
+      }
     }
     document.addEventListener('dateiliste-gezeichnet', ereignis => {
       zustand.sicht = { modus: ereignis.detail.modus, commit: ereignis.detail.commit, dateien: ereignis.detail.dateien };
       springeAusstehend();
+      zeigeZustand();
     });
+    for (const ereignis of ['haken-stand-geladen', 'haken-geaendert', 'datei-gewaehlt', 'wahl-aufgehoben', 'diff-geleert', 'diff-gezeichnet']) {
+      document.addEventListener(ereignis, zeigeZustand);
+    }
     document.addEventListener('modus-gewechselt', () => {
       zustand.ausstehend = null;
+      zeigeZustand();
     });
+    document.addEventListener('diff-geleert', zeigeLeerenDiffKnopf);
+    document.addEventListener('diff-gezeichnet', zeigeLeerenDiffKnopf);
+    zeigeZustand();
+    zeigeLeerenDiffKnopf();
+  }
+
+  /* ── Knopf und Meldung (B2704) ── */
+
+  /** Ist keine ungeprüfte Stelle mehr erreichbar, ist der Knopf nicht bedienbar und die Meldung nennt den Grund (R00014, R00028). */
+  function zeigeZustand() {
+    const knopf = document.getElementById('naechste-ungepruefte');
+    const meldung = document.getElementById('naechste-meldung');
+    if (!knopf || !meldung) {
+      return;
+    }
+    const eintraege = eintraegeJetzt();
+    if (eintraege === null || eintraege.length === 0) {
+      knopf.disabled = true;
+      meldung.textContent = '';
+      return;
+    }
+    knopf.disabled = naechsteWerte().naechster(eintraege, aktuelleStelle()) === naechsteWerte().KEINE;
+    meldung.textContent = knopf.disabled ? meldungstext(eintraege) : '';
+  }
+
+  /** `k nicht lesbar` zählt die gesperrten Einträge (in „Zusammen“ Dateien, in „Einzeln“ Stellen) — dieselbe Klasse wie R00014. */
+  function meldungstext(eintraege) {
+    const werte = naechsteWerte();
+    return werte.meldung({
+      nichtLesbar: eintraege.filter(eintrag => eintrag.zustand === werte.GESPERRT).length,
+      ausgeblendet: ausgeblendeteZahl(),
+    });
+  }
+
+  /** Zahl der ausgeblendeten ungeprüften Dateien: R00025 (Ausblenden) ist noch nicht gebaut, deshalb gibt es heute keine. */
+  function ausgeblendeteZahl() {
+    return 0;
+  }
+
+  /** Derselbe Weg im leeren Diff-Bereich („Erste ungeprüfte öffnen“), solange keine Datei gewählt ist. */
+  function zeigeLeerenDiffKnopf() {
+    const knopf = document.querySelector('#diff .erste-ungepruefte');
+    if (!knopf) {
+      return;
+    }
+    const pfad = document.querySelector('#diff .diff-pfad');
+    knopf.hidden = !(pfad === null || pfad.textContent === '');
   }
 
   /* ── Der Sprung ── */

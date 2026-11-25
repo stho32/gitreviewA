@@ -72,3 +72,61 @@ test.describe('Sprung in „Einzeln“ (je Stelle, über Commits)', () => {
     await naechste.reihe([['src/a.txt', 'z1']]);
   });
 });
+
+test.describe('Knopf und Meldung', () => {
+  test('soll bei lauter abgehakten Dateien „Alles abgehakt“ melden und der Knopf ist nicht bedienbar (Kriterium 6)', async ({ naechste }) => {
+    await naechste.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });
+    await naechste.dateienWarten(3);
+    await naechste.knopfBedienbar();
+
+    for (const datei of ['README.md', 'src/a.txt', 'src/b.txt']) {
+      await naechste.abhaken(datei);
+    }
+
+    await naechste.fortschritt('3 von 3 Dateien abgehakt');
+    await naechste.knopfNichtBedienbar();
+    await naechste.meldung('Alles abgehakt');
+  });
+
+  test('soll im leeren Diff-Bereich denselben Weg anbieten („Erste ungeprüfte öffnen“, Bedienung)', async ({ naechste }) => {
+    await naechste.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });
+    await naechste.dateienWarten(3);
+
+    await naechste.leererDiffKnopfname();
+    await naechste.leererDiffKnopf(true);
+
+    await naechste.leerenDiffKnopfBetaetigen();
+
+    await naechste.stelle('README.md');
+    await naechste.leererDiffKnopf(false);
+  });
+
+  test('soll über die Tastatur springen und der Name des Knopfes beginnt mit dem sichtbaren Text (Bedienung)', async ({ naechste }) => {
+    await naechste.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });
+    await naechste.dateienWarten(3);
+    await naechste.knopfname();
+
+    await naechste.springenPerTastatur();
+    await naechste.stelle('README.md');
+    await naechste.fokusAufKnopf();
+
+    await naechste.springenPerTastatur();
+    await naechste.stelle('src/a.txt');
+  });
+
+  test('soll in Repo N mit v nur lesbare Stellen anspringen und am Ende „Alles Lesbare abgehakt, 3 nicht lesbar“ melden (Kriterium 6)', async ({ naechste }) => {
+    await naechste.starten({ vorbereitung: 'Repo N mit v', modus: 'einzeln' });
+    await naechste.dateienWarten(9);
+    await naechste.fortschritt('0 von 10 Stellen abgehakt (3 nicht lesbar)');
+
+    for (let stelle = 1; stelle <= 7; stelle += 1) {
+      await naechste.springen();
+      await naechste.gewaehlteZeileLesbar();
+      await naechste.gewaehlteZeileAbhaken();
+      await naechste.fortschritt(`${stelle} von 10 Stellen abgehakt (3 nicht lesbar)`);
+    }
+
+    await naechste.knopfNichtBedienbar();
+    await naechste.meldung('Alles Lesbare abgehakt, 3 nicht lesbar');
+  });
+});

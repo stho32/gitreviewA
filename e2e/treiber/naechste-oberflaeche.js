@@ -124,6 +124,21 @@ async function pruefeZeileImBlick(page, pfad) {
   ).toBe(true);
 }
 
+/** Die gewählte Zeile der Dateiliste (genau eine). */
+function gewaehlteZeile(page) {
+  return page.locator(`${ZEILE}[aria-current="true"]`);
+}
+
+/** Die gewählte Stelle ist lesbar (ihr Kästchen ist nicht gesperrt, R00014) — der Sprung landet nie auf einer gesperrten. */
+async function pruefeGewaehlteZeileLesbar(page) {
+  await expect(gewaehlteZeile(page).locator('input.haken'), 'die gewählte Stelle ist lesbar').not.toHaveAttribute('aria-disabled', 'true');
+}
+
+/** Betätigt das Kästchen der gewählten Zeile (in „Einzeln“ die Stelle). */
+async function gewaehlteZeileAbhaken(page) {
+  await gewaehlteZeile(page).locator('input.haken').click();
+}
+
 /** Hält die Antwort auf den Diff einer Datei um `ms` zurück (verzögerter Fake, Szenario 7). */
 async function diffAntwortVerzoegern(page, ms) {
   await page.route(adresse => /\/api\/.*\/diff$/.test(new URL(adresse).pathname), async route => {
@@ -136,5 +151,5 @@ module.exports = {
   knopf, meldungselement, zeileMitPfad, springen, pruefeGewaehlt, pruefeNichtGewaehlt, gewaehlteZeilen, pruefeDiffGeladen, pruefeDiffEnthaelt,
   gezeigterCommit, pruefeGezeigtenCommit, pruefeKnopfBedienbar, pruefeKnopfNichtBedienbar, pruefeMeldung, meldungLesen,
   pruefeKnopfname, springenPerTastatur, pruefeFokusAufKnopf, pruefeLeerenDiffKnopf, pruefeLeerenDiffKnopfname, leerenDiffKnopfBetaetigen,
-  pruefeZeileImBlick, diffAntwortVerzoegern,
+  pruefeZeileImBlick, diffAntwortVerzoegern, gewaehlteZeile, pruefeGewaehlteZeileLesbar, gewaehlteZeileAbhaken,
 };

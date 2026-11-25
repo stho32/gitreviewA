@@ -74,6 +74,8 @@ function naechsteSprache(gr, page) {
 
     /** Die Stelle, auf der der Sprung gelandet sein soll: gewählte Datei, ihr Diff — und in „Einzeln“ der Commit. */
     diffEnthaelt: text => naechsteSeite.pruefeDiffEnthaelt(page, text),
+    gewaehlteZeileLesbar: () => naechsteSeite.pruefeGewaehlteZeileLesbar(page),
+    gewaehlteZeileAbhaken: () => naechsteSeite.gewaehlteZeileAbhaken(page),
     stelle: async (pfad, commitName) => {
       await naechsteSeite.pruefeGewaehlt(page, pfad);
       await naechsteSeite.pruefeDiffGeladen(page, pfad);
