@@ -31,7 +31,7 @@ Eine KI-Änderung mischt Code, Tests und Doku; in einer flachen Liste von 40 Dat
   Liste, Gruppenzähler und Navigation lesen nur diese Regel; das Ergebnis kennt sie nicht.
 - **Liste**: Gruppenköpfe in der Reihenfolge Code, Tests, Doku; unter jedem Kopf die Einträge der Gruppe in der bisherigen Reihenfolge (flach) bzw. der Baum der Gruppe (Baum). Eine Gruppe ohne gezeigten Eintrag hat keinen Kopf.
 - **Fortschritt je Gruppe**: „a von b abgehakt“, mit Zusatz „ (k nicht lesbar)“ bei k ≥ 1 (R00014). In „Zusammen“ zählt der Kopf Dateien, die **Summe der Gruppen ist der Fortschritt im Kopf** (R00012). In „Einzeln“ zählt er die Stellen des gewählten Commits, die Summe ist dessen Zähler im Commit-Wähler. Ausgeblendete Dateien (Muster, Abgehakte) zählen in b, wie im Kopf (PO Zeile 136).
-- **Navigation**: `j`/`k` und „Nächste ungeprüfte“ (`u`) folgen der gezeigten Reihenfolge — Gruppe für Gruppe, mit Umlauf (Empfehlung, offene Frage 2).
+- **Navigation**: `j`/`k` und „Nächste ungeprüfte“ (`u`) folgen der gezeigten Reihenfolge — Gruppe für Gruppe, mit Umlauf (entschieden, PO Zeile 197). Das löst PO-Zeile 66 für `j`/`k`/`u` und „Nächste ungeprüfte“ ab; die Reihenfolge innerhalb einer Gruppe bleibt die von Zeile 66.
 - **Ergebnis unverändert**: Anmerkungen und der Abschnitt `## Dateien` bleiben in der Reihenfolge der Übersicht, ohne Gruppen (Vertrag R00002/R00011).
 - **Kein neuer Weg**: kein neuer Endpunkt, kein neuer `git`-Aufruf.
 
@@ -99,8 +99,10 @@ Grenz- und Leerfälle bedacht: eine Auswahl nur mit Code (eine Gruppe, Kriterium
 
 ## Offene Fragen
 
-1. **Die Regel**: Empfehlung wie beschrieben. Alternativen: Muster aus einer Aufrufoption (neuer Umfang an der Aufrufoberfläche) oder eine vierte Gruppe „Sonstiges“ für Konfiguration (`*.json`, `*.yml`) — der Betreiber nennt drei Gruppen.
-2. **Reihenfolge der Navigation**: Empfehlung: `j`/`k` und „Nächste ungeprüfte“ folgen der gezeigten, gruppierten Reihenfolge. Das löst PO Zeile 66 („nächste ungeprüfte“ folgt der flachen Reihenfolge der Auswahl) ab, in der Linie von PO Zeile 149 („der gezeigten Liste folgen“); das Ergebnis bleibt in der Reihenfolge der Übersicht. Alternative: Navigation bleibt flach — dann springt `u` zwischen den Gruppen hin und her.
+Keine offenen. Der product-owner hat beide Fragen am 2026-11-25 entschieden (`AI-Team/po-entscheidungen.md`, Zeile 197); die Antworten sind oben eingearbeitet:
+
+1. **Die Regel** — entschieden (PO Zeile 197): wie beschrieben (Gruppen und Gruppenregel wie in R00040). Alternativen „Muster aus einer Aufrufoption“ (neuer Umfang an der Aufrufoberfläche) und eine vierte Gruppe „Sonstiges“ für Konfiguration (`*.json`, `*.yml`) verworfen — der Betreiber nennt drei Gruppen.
+2. **Reihenfolge der Navigation** — entschieden (PO Zeile 197): `j`/`k` und „Nächste ungeprüfte“ folgen der gezeigten, gruppierten Reihenfolge. Das löst PO Zeile 66 („nächste ungeprüfte“ folgt der flachen Reihenfolge der Auswahl) für `j`/`k`/`u` und „Nächste ungeprüfte“ ab, in der Linie von PO Zeile 149 („der gezeigten Liste folgen“); die Reihenfolge innerhalb einer Gruppe bleibt die von Zeile 66, und das Ergebnis bleibt in der Reihenfolge der Übersicht. Alternative „Navigation bleibt flach“ verworfen — dann springt `u` zwischen den Gruppen hin und her.
 
 ## Manuelle Vorbereitungstätigkeiten
 
