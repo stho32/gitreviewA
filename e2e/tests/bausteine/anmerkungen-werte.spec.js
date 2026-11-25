@@ -2,7 +2,7 @@
 // Bausteintests (ohne Browser) der Anmerkungs-Rechnung: welche Diff-Zeile annotierbar ist und welche Anmerkungen eine Ansicht zeigt (R00010)
 // und wie der Stand nach einer geänderten Anmerkung aussieht (R00018).
 const { test, expect } = require('@playwright/test');
-const { zeilenziel, anmerkungsstand, hinweisAusserhalb, mitGeaendertemText, ENTFERNT_HINWEIS } = require('../../../src/GitReviewA/web/anmerkungen-werte.js');
+const { zeilenziel, anmerkungsstand, hinweisAusserhalb, mitGeaendertemText, ohneAnmerkung, ENTFERNT_HINWEIS } = require('../../../src/GitReviewA/web/anmerkungen-werte.js');
 
 const Q = 'q'.repeat(40);
 const P = 'p'.repeat(40);
@@ -144,5 +144,34 @@ test.describe('Baustein Mit geändertem Text', () => {
 
     expect(geaendert).toEqual([anmerkung(1, null, 'Abschnitt Installation fehlt', { datei: 'README.md' })]);
     expect(geaendert[0].zeile).toBeNull();
+  });
+});
+
+test.describe('Baustein Ohne Anmerkung', () => {
+  test('soll die Anmerkung mit dieser Nummer entfernen und Reihenfolge und Länge der übrigen lassen (Nummer in der Mitte)', () => {
+    const anmerkungen = [anmerkung(1, 18, 'erster'), anmerkung(2, 2, 'zweiter', { datei: 'src/b.txt' }), anmerkung(3, 4, 'dritter')];
+
+    const ohneZweite = ohneAnmerkung(anmerkungen, 2);
+
+    expect(ohneZweite).toEqual([anmerkung(1, 18, 'erster'), anmerkung(3, 4, 'dritter')]);
+    expect(ohneZweite).toHaveLength(2);
+    expect(anmerkungen).toHaveLength(3);
+  });
+
+  test('soll eine unbekannte Nummer ohne Wirkung lassen und dieselbe Reihenfolge und Länge liefern', () => {
+    const anmerkungen = [anmerkung(1, 18, 'erster'), anmerkung(2, 2, 'zweiter')];
+
+    const ohne = ohneAnmerkung(anmerkungen, 7);
+
+    expect(ohne).toEqual(anmerkungen);
+    expect(ohne).toHaveLength(2);
+  });
+
+  test('soll eine Dateianmerkung ohne Zeile entfernen', () => {
+    const anmerkungen = [anmerkung(1, null, 'Abschnitt Installation veraltet', { datei: 'README.md' })];
+
+    const ohne = ohneAnmerkung(anmerkungen, 1);
+
+    expect(ohne).toEqual([]);
   });
 });

@@ -76,5 +76,11 @@
     });
   }
 
-  Object.assign(ziel, { zeilenziel, anmerkungsstand, hinweisAusserhalb, mitGeaendertemText, ENTFERNT_HINWEIS });
+  /** Anmerkungen (Anlegereihenfolge) + Nummer → dieselbe Liste in derselben Reihenfolge ohne den Eintrag mit dieser Nummer.
+      Eine unbekannte Nummer lässt den Inhalt unverändert; die anderen behalten Stelle und Reihenfolge. */
+  function ohneAnmerkung(anmerkungen, nummer) {
+    return anmerkungen.filter(anmerkung => anmerkung.nummer !== nummer);
+  }
+
+  Object.assign(ziel, { zeilenziel, anmerkungsstand, hinweisAusserhalb, mitGeaendertemText, ohneAnmerkung, ENTFERNT_HINWEIS });
 })(typeof module !== 'undefined' ? module.exports : window);
