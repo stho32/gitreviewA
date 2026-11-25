@@ -9,6 +9,8 @@
   const LISTE = 'liste';
   const DIFF = 'diff';
   const ANMERKUNG = 'anmerkung';
+  const REVIEW = 'review';
+  const DATEIANSICHT = 'dateiansicht';
 
   /** Bereiche in Anzeige- und Gruppenreihenfolge der Hilfe (R00030, Hilfe-Overlay). */
   const BEREICHE = [
@@ -48,7 +50,8 @@
     { taste: '3', aktion: 'zeileAnmerkenIdee', bereich: DIFF, text: 'Zeile anmerken: Idee', anzeige: ['3'], ziel: '#diff .df-sc' },
     { taste: 's', aktion: 'ansichtWechseln', bereich: DIFF, text: 'nur Änderungen / ganze Datei', anzeige: ['s'], ziel: '#diff .diffansicht-wahl' },
     { taste: 'v', aktion: 'anordnungWechseln', bereich: DIFF, text: 'untereinander / nebeneinander', anzeige: ['v'], ziel: '.anordnung-wahl' },
-    { taste: 'w', aktion: 'umbruchWechseln', bereich: DIFF, text: 'Umbruch', anzeige: ['w'], ziel: '#diff .umbruch-schalter' },
+    { taste: 'w', aktion: 'umbruchWechseln', bereich: DIFF, text: 'Umbruch', anzeige: ['w'], ziel: '.umbruch-schalter' },
+    { taste: 'c', aktion: 'dateiKopieren', bereich: DIFF, text: 'Datei kopieren', anzeige: ['c'], kurz: 'Datei kopieren', laufart: DATEIANSICHT, ziel: '#datei-kopieren' },
     { taste: 'l', aktion: 'leerraumWechseln', bereich: DIFF, text: 'Leerraum', anzeige: ['l'], ziel: '#diff .leerraum-schalter' },
     { taste: 'g', aktion: 'naechsteLuecke', bereich: DIFF, text: 'nächste Lücke', anzeige: ['g'] },
     { taste: 'o', aktion: 'inVsCode', bereich: DIFF, text: 'Stelle in VS Code öffnen', anzeige: ['o'], ziel: '#diff .sprung-knopf' },
@@ -72,6 +75,17 @@
 
   const ZUSAMMEN = 'zusammen';
   const EINZELN = 'einzeln';
+
+  /** Ein Eintrag mit `laufart` gilt nur in seiner Laufart; ohne Angabe gilt er in beiden (R00030, Katalogeintrag mit Laufart). */
+  function passtZurLaufart(eintrag, lage) {
+    if (!eintrag.laufart) {
+      return true;
+    }
+    if (!lage || !lage.laufart) {
+      return true;
+    }
+    return eintrag.laufart === lage.laufart;
+  }
 
   function eintragFuerAktion(aktion) {
     return EINTRAEGE.find(eintrag => eintrag.aktion === aktion) || null;
@@ -103,6 +117,9 @@
       return false;
     }
     const anlage = lage || {};
+    if (!passtZurLaufart(eintrag, anlage)) {
+      return false;
+    }
     if (eintrag.nurEinzeln && anlage.modus !== EINZELN) {
       return false;
     }
@@ -142,7 +159,7 @@
       kennung: bereich.kennung,
       titel: bereich.titel,
       eintraege: EINTRAEGE
-        .filter(eintrag => eintrag.bereich === bereich.kennung)
+        .filter(eintrag => eintrag.bereich === bereich.kennung && passtZurLaufart(eintrag, lage))
         .map(eintrag => ({
           aktion: eintrag.aktion,
           anzeige: eintrag.anzeige.slice(),
@@ -238,6 +255,8 @@
 
   const api = {
     BEREICHE,
+    REVIEW,
+    DATEIANSICHT,
     ZUSAMMEN,
     EINZELN,
     EINTRAEGE,

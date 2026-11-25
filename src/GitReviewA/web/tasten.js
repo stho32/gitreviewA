@@ -62,6 +62,7 @@
       },
       offenerDialog: Boolean(window.gitreviewaHilfe && window.gitreviewaHilfe.istOffen()) || offenesNotizfeld(),
       modus: window.gitreviewaModus ? window.gitreviewaModus.hole() : werte().EINZELN,
+      laufart: werte().REVIEW,
       vorhanden: vorhandeneAktionen(),
     };
   }
@@ -503,6 +504,7 @@
     }
     const lage = {
       modus: window.gitreviewaModus ? window.gitreviewaModus.hole() : werte().EINZELN,
+      laufart: werte().REVIEW,
       vorhanden: vorhandeneAktionen(),
     };
     fuss.replaceChildren(...werte().statuszeile(lage).map(statuszeileElement));

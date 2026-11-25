@@ -4,8 +4,44 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>gitreviewA — Dateiansicht</title>
+<link rel="stylesheet" href="kd-tokens.css">
+<link rel="stylesheet" href="kd-base.css">
+<link rel="stylesheet" href="gitreviewa.css">
+<link rel="stylesheet" href="dateiansicht.css">
+<script src="umbruch-werte.js" defer></script>
+<script src="tasten-werte.js" defer></script>
+<script src="farbe-werte.js" defer></script>
+<script src="farbschlange.js" defer></script>
+<script src="dateiansicht-werte.js" defer></script>
+<script src="dateiansicht.js" defer></script>
 </head>
 <body>
-<p>Dateiansicht</p>
+<!-- Kopf (R00043): Angabe, echter Pfad, Größe, Zeilen, Kodierung, Zeilenende, „Datei kopieren“, „Schließen“; höchstens zwei Zeilen. -->
+<header id="da-kopf" class="da-kopf" aria-label="Datei">
+  <div class="da-kopf-zeile">
+    <h1 id="da-name" class="da-name mono"></h1>
+    <p id="da-pfad" class="da-pfad mono"></p>
+    <div class="da-knoepfe">
+      <button type="button" id="datei-kopieren" class="btn">Datei kopieren</button>
+      <button type="button" id="schliessen" class="btn">Schließen</button>
+    </div>
+  </div>
+  <div class="da-kopf-zeile da-kopf-werte">
+    <span id="da-werte" class="da-werte"></span>
+    <span id="da-hinweis" class="da-hinweis" role="status"></span>
+    <label class="ru-sch da-umbruch-schalter"><input type="checkbox" role="switch" class="umbruch-schalter" id="da-umbruch" checked>Umbruch</label>
+  </div>
+</header>
+<main class="da-haupt">
+  <p id="da-status" class="da-status" role="status"></p>
+  <p id="da-ansage" class="vh" aria-live="polite" aria-atomic="true"></p>
+  <div id="da-roll" class="da-roll" tabindex="0" role="region" aria-label="Dateiinhalt">
+    <p id="da-meldung" class="da-meldung"></p>
+    <div id="da-inhalt" class="da-inhalt umbr"></div>
+  </div>
+  <div id="da-fuss" class="da-fuss">
+    <p class="da-schliessen-hinweis muted">„Schließen“ beendet die Ansicht; das Ergebnis bleibt leer.</p>
+  </div>
+</main>
 </body>
 </html>
