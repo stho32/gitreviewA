@@ -43,5 +43,41 @@
     return { treffer, gedeckelt: false };
   }
 
-  Object.assign(ziel, { pruefe, finde, ZEICHEN_GRENZE, TREFFER_GRENZE });
+  /** Bildet die Trefferspannen einer Zeile (Zeichenstellen im gezeigten Text) auf die Teile ab, die dieser Text bildet
+      (`sichtbarTeile`). Jeder Teil bekommt — nur wenn er berührt ist — eine eigene Liste `treffer` mit lokalen Spannen;
+      eine Marke zählt dabei als ihr Text. Teile ohne Treffer bleiben unverändert. */
+  function aufTeile(teile, treffer) {
+    const versatz = [];
+    let offset = 0;
+    for (const teil of teile) {
+      versatz.push(offset);
+      offset += teil.text.length;
+    }
+    return teile.map((teil, index) => {
+      const teilVon = versatz[index];
+      const teilBis = teilVon + teil.text.length;
+      const lokale = [];
+      for (const spanne of treffer) {
+        const von = Math.max(spanne.von, teilVon);
+        const bis = Math.min(spanne.bis, teilBis);
+        if (von < bis) {
+          lokale.push({ von: von - teilVon, bis: bis - teilVon });
+        }
+      }
+      if (lokale.length === 0) {
+        return teil;
+      }
+      return Object.assign({}, teil, { treffer: lokale });
+    });
+  }
+
+  /** Der Zählertext (R00027): „keine Treffer“ bei 0, sonst „k von n“ — `n` mit `+`, wenn über der Treffergrenze gedeckelt. */
+  function zaehlertext(aktuell, gesamt, gedeckelt = false) {
+    if (gesamt === 0) {
+      return 'keine Treffer';
+    }
+    return `${aktuell} von ${gesamt}${gedeckelt ? '+' : ''}`;
+  }
+
+  Object.assign(ziel, { pruefe, finde, aufTeile, zaehlertext, ZEICHEN_GRENZE, TREFFER_GRENZE });
 })(typeof module !== 'undefined' ? module.exports : window);

@@ -1,7 +1,7 @@
 'use strict';
 // Bausteintests (ohne Browser) der reinen Suche: Suchbegriff prüfen (R00027, B2601).
 const { test, expect } = require('@playwright/test');
-const { pruefe, finde, ZEICHEN_GRENZE, TREFFER_GRENZE } = require('../../../src/GitReviewA/web/suche-werte.js');
+const { pruefe, finde, aufTeile, zaehlertext, ZEICHEN_GRENZE, TREFFER_GRENZE } = require('../../../src/GitReviewA/web/suche-werte.js');
 
 test.describe('Baustein Suche-Werte — Suchbegriff prüfen (R00027, B2601)', () => {
   test('soll einen nicht-leeren Begriff bis zur Längengrenze annehmen', () => {
@@ -76,5 +76,44 @@ test.describe('Baustein Suche-Werte — Treffer finden (R00027, B2602)', () => {
     const mehr = finde(['x'.repeat(TREFFER_GRENZE + 5)], 'x');
     expect(mehr.treffer).toHaveLength(TREFFER_GRENZE);
     expect(mehr.gedeckelt).toBe(true);
+  });
+});
+
+test.describe('Baustein Suche-Werte — Treffer auf die Textteile legen (R00027, B2603)', () => {
+  const marke = { marke: 'bidi', code: 'U+202E', text: '⟨U+202E⟩' };
+
+  test('soll einen Treffer innerhalb eines Teils als lokale Spanne legen', () => {
+    expect(aufTeile([{ text: 'abcdef' }], [{ von: 1, bis: 3 }])).toEqual([{ text: 'abcdef', treffer: [{ von: 1, bis: 3 }] }]);
+    expect(aufTeile([{ text: 'abcdef' }], [{ von: 0, bis: 6 }])).toEqual([{ text: 'abcdef', treffer: [{ von: 0, bis: 6 }] }]);
+  });
+
+  test('soll einen Treffer über eine Marke hinweg auf alle berührten Teile legen, eine Marke zählt als ihr Text', () => {
+    const teile = [{ text: 'a' }, { ...marke }, { text: 'b' }];
+    expect(aufTeile(teile, [{ von: 0, bis: 10 }])).toEqual([
+      { text: 'a', treffer: [{ von: 0, bis: 1 }] },
+      { ...marke, treffer: [{ von: 0, bis: 8 }] },
+      { text: 'b', treffer: [{ von: 0, bis: 1 }] },
+    ]);
+  });
+
+  test('soll einen Treffer am Teilrand dem richtigen Teil zuordnen', () => {
+    const teile = [{ text: 'abc' }, { text: 'def' }];
+    expect(aufTeile(teile, [{ von: 2, bis: 4 }])).toEqual([
+      { text: 'abc', treffer: [{ von: 2, bis: 3 }] },
+      { text: 'def', treffer: [{ von: 0, bis: 1 }] },
+    ]);
+  });
+
+  test('soll Teile ohne Treffer unverändert lassen', () => {
+    expect(aufTeile([{ text: 'abc' }, { text: 'def' }], [])).toEqual([{ text: 'abc' }, { text: 'def' }]);
+    expect(aufTeile([{ text: '' }], [{ von: 0, bis: 1 }])).toEqual([{ text: '' }]);
+  });
+
+  test('soll den Zählertext bilden: keine Treffer, k von n, 10000+ über der Grenze', () => {
+    expect(zaehlertext(0, 0)).toBe('keine Treffer');
+    expect(zaehlertext(1, 4)).toBe('1 von 4');
+    expect(zaehlertext(3, 7)).toBe('3 von 7');
+    expect(zaehlertext(1, TREFFER_GRENZE, true)).toBe('1 von 10000+');
+    expect(zaehlertext(2, TREFFER_GRENZE, false)).toBe('2 von 10000');
   });
 });
