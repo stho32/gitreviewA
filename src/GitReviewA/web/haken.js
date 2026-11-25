@@ -431,7 +431,9 @@
     return sperrgrundRoh(rohSchluessel(commit, pfad));
   }
 
-  /* Lesender Zugang zum bestätigten Stand für andere Bausteine (I0025 „Nächste ungeprüfte“): kein zweiter Zustand, keine Kopie. */
+  /* Lesender Zugang zum bestätigten Stand für andere Bausteine (I0025 „Nächste ungeprüfte“, R00029 „Abgehakte ausblenden“):
+     kein zweiter Zustand, keine Kopie. `istAbgehakt`/`sperrgrund` lesen in Anzeigenamen (I0025), `stelleAbgehakt`/`stelleGesperrt`
+     und `dateiAbgehakt`/`dateiGesperrt` in Roh- bzw. Dateischlüsseln (R00029) — beide dieselbe Quelle wie das Kästchen. */
   window.gitreviewaHaken = {
     zaehlerJeCommit,
     istLesbar: () => zustand.istLesbar,
@@ -440,6 +442,13 @@
     sperrgrund: (commit, pfad) => zustand.sperrgrundAnzeige.get(anzeigeSchluessel(commit, pfad)) || '',
     diffSperrgrund,
     sperrgrundFuer,
+    /** Ob die Stelle (Commit und Datei) abgehakt ist — dieselbe Quelle wie das Kästchen (R00029). */
+    stelleAbgehakt: (commit, pfad) => zustand.bestaetigtRoh.get(rohSchluessel(commit, pfad)) === true,
+    /** Ob die Stelle gesperrt ist; eine gesperrte Stelle (R00014) wird nie ausgeblendet. */
+    stelleGesperrt: (commit, pfad) => sperrgrundRoh(rohSchluessel(commit, pfad)) !== '',
+    /** Eine Datei der Netto-Liste ist abgehakt, wenn alle ihre Stellen es sind (R00012); eine gesperrte Datei trägt den Sperrgrund. */
+    dateiAbgehakt: datei => dateiZustand(datei.stellen, zustand.bestaetigtAnzeige) === 'abgehakt',
+    dateiGesperrt: datei => dateiSperrgrund(datei) !== '',
   };
 
   document.addEventListener('DOMContentLoaded', init);

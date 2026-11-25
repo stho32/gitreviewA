@@ -276,6 +276,26 @@ async function musterEntfernen(page, muster) {
   await page.getByRole('button', { name: `${muster} entfernen` }).click();
 }
 
+/* ── Schalter „Abgehakte ausblenden“ (R00029) ── */
+
+function abgehakteSchalter(page) {
+  return page.locator(`${DATEILISTE} #ausblenden`);
+}
+
+async function abgehakteSchalterBetatigen(page) {
+  await abgehakteSchalter(page).click();
+}
+
+/** Der Schalter steht an/aus; sein Name beginnt mit dem sichtbaren Text (Zugänglicher Name). */
+async function pruefeAbgehakteSchalter(page, an) {
+  await expect(abgehakteSchalter(page)).toBeChecked({ checked: an });
+  await expect(abgehakteSchalter(page)).toHaveAccessibleName(/^Abgehakte ausblenden/);
+}
+
+function abgehakteHinweis(page) {
+  return page.locator(`${DATEILISTE} .abgehakte-hinweis`);
+}
+
 async function dateiWaehlen(page, name) {
   await page.locator(DATEIZEILE).filter({ has: page.locator('.pfad', { hasText: name, exact: true }) }).click();
 }
@@ -446,6 +466,7 @@ module.exports = {
   commitZeilenLesen, commitDetailsLesen, commitZeilen, aufZeilenWarten, commitWaehlen, gewaehlteCommits, messageSchalter, messageUmschalten, rumpf,
   dateilisteLesen, dateizeilen, aufDateizeilenWarten, dateiSumme, dateilistenMeldung, darstellungWaehlen, dateiWaehlen, gewaehlteDateien,
   ausblendenZaehler, pruefeAusblendenZaehler, ausblendenEingabe, ausblendenFehler, ausblendenMuster, musterEingeben, musterEntfernen,
+  abgehakteSchalter, abgehakteSchalterBetatigen, pruefeAbgehakteSchalter, abgehakteHinweis,
   dateiwahlenSammeln, gesammelteDateiwahlen, formatierungsElementeZaehlen,
   beendenKnopf, beendenBetaetigen, beendetMeldung, beendenFehler, beendenScheitertMit, modusWaehlen, neuLaden,
   kopfZahlen, fortschrittZaehler, commitZeileZusammenfassung, commitZeileText, pruefeKopfZahlen, pruefeFortschritt, pruefeCommitZeileZusammenfassung,

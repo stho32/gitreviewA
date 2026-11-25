@@ -73,4 +73,4 @@
   }
 
   Object.assign(ziel, { sicht, zaehlertext, meldung });
-})(typeof module !== 'undefined' ? module.exports : window);
+})(typeof module !== 'undefined' ? module.exports : (window.gitreviewaAbgehakteWerte = window.gitreviewaAbgehakteWerte || {}));

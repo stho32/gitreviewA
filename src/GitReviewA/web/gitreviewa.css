@@ -67,6 +67,7 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .gr-beendet-hinweis{margin:var(--kd-s2) 0 0;font-size:12px}
 .gr-dateiliste{min-width:0}
 .dateien-kopf{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--kd-s2) var(--kd-s4);margin:0 0 var(--kd-s3)}
+.werkzeuge{display:flex;flex-wrap:wrap;align-items:center;gap:var(--kd-s2) var(--kd-s4);margin:0 0 var(--kd-s3)}
 .dateien-summe{margin:0;font-size:13px;font-weight:600}
 /* Werkzeugzeile der Dateiliste (R00028): Knopf „Nächste ungeprüfte“ mit der Meldung „Alles abgehakt“ neben der Darstellungs-Wahl */
 .dateien-werkzeuge{display:flex;flex-wrap:wrap;align-items:center;gap:var(--kd-s2) var(--kd-s3)}
@@ -154,11 +155,12 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .diffansicht-wahl>label:has(:checked){background:var(--kd-accent);color:var(--kd-surface)}
 .diffansicht-wahl>label:has(:focus-visible){outline:2px solid var(--kd-accent);outline-offset:2px}
 .diffansicht-wahl input{position:absolute;inset:0;inline-size:100%;block-size:100%;margin:0;opacity:0;cursor:pointer}
-/* Umbrechen nach kanbanD kd-app.css (.ru-sch, .umbr): Schalter mit Daumen links (aus) bzw. rechts auf gefüllter Fläche (an) */
-.ru-sch{display:inline-flex;align-items:center;gap:6px;min-block-size:var(--kd-ziel);font-size:12.5px;color:var(--kd-text);white-space:nowrap;cursor:pointer}
-.ru-sch input{appearance:none;flex:none;box-sizing:border-box;inline-size:32px;block-size:18px;margin:0;border:2px solid var(--kd-muted);border-radius:9px;background:radial-gradient(circle,var(--kd-muted) 0 5px,transparent 5.5px) 1px 50%/14px 14px no-repeat var(--kd-surface);cursor:pointer}
-.ru-sch input:checked{border-color:var(--kd-accent);background:radial-gradient(circle,var(--kd-on-accent) 0 5px,transparent 5.5px) calc(100% - 1px) 50%/14px 14px no-repeat var(--kd-accent)}
-.ru-sch input:focus-visible{outline:2px solid var(--kd-accent);outline-offset:2px}
+/* Umbrechen nach kanbanD kd-app.css (.ru-sch, .umbr): Schalter mit Daumen links (aus) bzw. rechts auf gefüllter Fläche (an).
+   `.schalter` (R00029) ist derselbe M3-Schalter in der Werkzeugzeile der Dateiliste. */
+.ru-sch,.schalter{display:inline-flex;align-items:center;gap:6px;min-block-size:var(--kd-ziel);font-size:12.5px;color:var(--kd-text);white-space:nowrap;cursor:pointer}
+.ru-sch input,.schalter input{appearance:none;flex:none;box-sizing:border-box;inline-size:32px;block-size:18px;margin:0;border:2px solid var(--kd-muted);border-radius:9px;background:radial-gradient(circle,var(--kd-muted) 0 5px,transparent 5.5px) 1px 50%/14px 14px no-repeat var(--kd-surface);cursor:pointer}
+.ru-sch input:checked,.schalter input:checked{border-color:var(--kd-accent);background:radial-gradient(circle,var(--kd-on-accent) 0 5px,transparent 5.5px) calc(100% - 1px) 50%/14px 14px no-repeat var(--kd-accent)}
+.ru-sch input:focus-visible,.schalter input:focus-visible{outline:2px solid var(--kd-accent);outline-offset:2px}
 .umbr .dz-b{contain-intrinsic-inline-size:none;inline-size:100%}
 .umbr .dz{table-layout:auto;inline-size:100%}
 .umbr .dz .c,.umbr .dz tr.hk>td{white-space:pre-wrap;overflow-wrap:anywhere}

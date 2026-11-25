@@ -50,6 +50,11 @@
         zeichneDateien(ansicht);
       }
     });
+    document.addEventListener('abgehakte-geaendert', () => {
+      if (zustand.dateien.length > 0) {
+        zeichneDateien(ansicht);
+      }
+    });
     ladeAnsicht(ansicht, false);
   }
 
