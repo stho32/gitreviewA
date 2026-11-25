@@ -1,3 +1,4 @@
+using System.Text.Json;
 using GitReviewA.Anmerkungen;
 using GitReviewA.Aufruf;
 using GitReviewA.Beenden;
@@ -59,6 +60,12 @@ internal sealed class ZeileAnnotierenTreiber
     public Anlegeantwort LegeAn(string commit, string datei, int zeile, string text)
     {
         return LegeAn(new NeueAnmerkung(commit, datei, zeile, text));
+    }
+
+    /// <summary>Eine Anmerkung mit Art (R00036): `art` steht roh im Körper, wie bei einer fremden Anfrage.</summary>
+    public Anlegeantwort LegeAn(string commit, string datei, int zeile, string text, JsonElement art)
+    {
+        return LegeAn(new NeueAnmerkung(commit, datei, zeile, text, Art: art));
     }
 
     /// <summary>Eine Bereichsanmerkung (R00031): derselbe Interactor, `von`/`bis` statt `zeile`.</summary>

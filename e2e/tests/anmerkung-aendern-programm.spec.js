@@ -105,7 +105,7 @@ test.describe('Anmerkung ändern — Programm', () => {
     expect(stdoutVorDemBeenden).toBe('');
     expect(programm.ergebnis()).toBe(`${UEBERSCHRIFT}\n\nAnmerkungen: 1\n\n## 1. lang.txt:18\n\nCommit: ${programm.hash('q')}\n\n> GEHEIMWORT neu\n`);
     expect(exitCode).toBe(0);
-    await expect.poll(() => programm.stderrBisher()).toContain('Nummer 1 geändert (Textlänge 14)');
+    await expect.poll(() => programm.stderrBisher()).toContain('Nummer 1 geändert (Textlänge 14, art=ohne)');
     expect(programm.stderrBisher()).toContain('abgelehnt: Text enthält Steuer- oder Richtungszeichen');
     expect(programm.stderrBisher()).not.toContain('GEHEIMWORT');
   });

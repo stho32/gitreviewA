@@ -106,6 +106,20 @@ internal sealed class ErgebnisKopierenTreiber : IAsyncDisposable
         return SendeAsync("POST", "api/anmerkungen", koerper, null);
     }
 
+    /// <summary>Eine Anmerkung mit `art` im Körper (R00036); `art` ist `muss`, `frage`, `idee` oder `null` („ohne“).</summary>
+    public Task<Kopierantwort> AnnotiereMitArtAsync(string commit, string datei, int? zeile, string text, string? art, int? von = null, int? bis = null)
+    {
+        var koerper = JsonSerializer.Serialize(new { commit, datei, zeile, text, von, bis, art });
+        return SendeAsync("POST", "api/anmerkungen", koerper, null);
+    }
+
+    /// <summary>Den Text und die Art einer Anmerkung ändern (R00036); `art` `null` entfernt die Art.</summary>
+    public Task<Kopierantwort> AendereMitArtAsync(int nummer, string text, string? art)
+    {
+        var koerper = JsonSerializer.Serialize(new { text, art });
+        return SendeAsync("POST", $"api/anmerkungen/{nummer}", koerper, null);
+    }
+
     public Task<Kopierantwort> HakeAsync(string commit, string datei, bool abgehakt)
     {
         var koerper = JsonSerializer.Serialize(new { commit, datei, abgehakt });

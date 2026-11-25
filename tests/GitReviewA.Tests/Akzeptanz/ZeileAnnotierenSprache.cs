@@ -1,4 +1,6 @@
 using System.Runtime.Versioning;
+using System.Text.Json;
+using GitReviewA.Anmerkungen;
 using GitReviewA.Git;
 
 namespace GitReviewA.Tests.Akzeptanz;
@@ -40,6 +42,25 @@ internal sealed class ZeileAnnotierenSprache
     public Anlegeantwort Annotiere(string commit, string datei, int nummerNeu, string text)
     {
         return treiber.LegeAn(repo.Hash(commit), datei, nummerNeu, text);
+    }
+
+    /// <summary>Eine Anmerkung mit einer der drei Arten (R00036).</summary>
+    public Anlegeantwort AnnotiereMitArt(string commit, string datei, int nummerNeu, string text, string art)
+    {
+        return treiber.LegeAn(repo.Hash(commit), datei, nummerNeu, text, JsonSerializer.SerializeToElement(art));
+    }
+
+    /// <summary>Eine rohe Art im Körper — etwa `"MUSS"`, `7` oder `""` (R00036 Kriterium 4).</summary>
+    public Anlegeantwort AnnotiereMitRohart(string commit, string datei, int nummerNeu, string text, string roh)
+    {
+        using var dokument = JsonDocument.Parse(roh);
+        return treiber.LegeAn(repo.Hash(commit), datei, nummerNeu, text, dokument.RootElement);
+    }
+
+    /// <summary>Ein Listeneintrag mit Art (R00036): `art` ist `muss`, `frage`, `idee` oder `null`.</summary>
+    public Listeneintrag AnmerkungMitArt(int nummer, string commit, string datei, int? nummerNeu, string text, string? art)
+    {
+        return new Listeneintrag(nummer, repo.Hash(commit), datei, nummerNeu, text, Art: art is null ? null : Anmerkungsart.Pruefe(art).Angabe.Wert);
     }
 
     /// <summary>Eine Bereichsanmerkung (R00031): Anker und Ziel als Nummern neu.</summary>
