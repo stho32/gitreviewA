@@ -17,6 +17,9 @@ internal static class Sprungziel
     /// <summary>Die Zeichen, die `encodeURIComponent` unkodiert lässt.</summary>
     private const string UnkodiertBleibend = "-_.!~*'()";
 
+    /// <summary>Ein Codepunkt wird in UTF-8 höchstens vier Bytes lang.</summary>
+    private const int HoechstzahlBytesJeCodepunkt = 4;
+
     public static string Fuer(string absoluterPfad)
     {
         return Schema + Kodiert(absoluterPfad);
@@ -35,7 +38,7 @@ internal static class Sprungziel
     private static string TeilKodiert(string teil)
     {
         var ergebnis = new StringBuilder(teil.Length);
-        foreach (var zeichen in teil)
+        foreach (var zeichen in teil.EnumerateRunes())
         {
             var bleibtUnkodiert = IstUnkodiert(zeichen);
             if (bleibtUnkodiert)
@@ -48,17 +51,34 @@ internal static class Sprungziel
         return ergebnis.ToString();
     }
 
-    private static bool IstUnkodiert(char zeichen)
+    private static bool IstUnkodiert(Rune zeichen)
     {
-        var istBuchstabeOderZiffer = char.IsAsciiLetterOrDigit(zeichen);
-        return istBuchstabeOderZiffer || UnkodiertBleibend.Contains(zeichen, StringComparison.Ordinal);
+        var istAsciiZeichen = zeichen.IsAscii;
+        if (!istAsciiZeichen)
+        {
+            return false;
+        }
+        var alsZeichen = (char)zeichen.Value;
+        var istBuchstabeOderZiffer = char.IsAsciiLetterOrDigit(alsZeichen);
+        if (istBuchstabeOderZiffer)
+        {
+            return true;
+        }
+        return UnkodiertBleibend.Contains(alsZeichen, StringComparison.Ordinal);
     }
 
-    private static void HaengeKodierteBytesAn(StringBuilder ergebnis, char zeichen)
+    /// <summary>
+    /// Ein Zeichen außerhalb der Grundebene besteht aus zwei UTF-16-Codeeinheiten; kodiert wird deshalb je Codepunkt — sonst ergäben
+    /// die beiden Codeeinheiten je ein Ersatzzeichen (`%EF%BF%BD`) statt der vier Bytes des UTF-8, und ein Name mit einem solchen
+    /// Zeichen trüge dasselbe Ziel wie der sichtbar andere Name aus zwei Ersatzzeichen.
+    /// </summary>
+    private static void HaengeKodierteBytesAn(StringBuilder ergebnis, Rune zeichen)
     {
-        foreach (var bytewert in Encoding.UTF8.GetBytes([zeichen]))
+        Span<byte> bytes = stackalloc byte[HoechstzahlBytesJeCodepunkt];
+        var anzahl = zeichen.EncodeToUtf8(bytes);
+        for (var stelle = 0; stelle < anzahl; stelle += 1)
         {
-            ergebnis.Append('%').Append(bytewert.ToString("X2", CultureInfo.InvariantCulture));
+            ergebnis.Append('%').Append(bytes[stelle].ToString("X2", CultureInfo.InvariantCulture));
         }
     }
 }

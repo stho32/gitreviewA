@@ -93,6 +93,19 @@ internal sealed class SprungRepo : IDisposable
         return m;
     }
 
+    /// <summary>
+    /// Repo W: ein Commit `w` legt `😀.txt` (U+1F600, ein Codepunkt außerhalb der Grundebene) und `\uFFFD\uFFFD.txt` (zwei Ersatzzeichen)
+    /// an — sichtbar verschiedene Namen, die bei der Kodierung je UTF-16-Codeeinheit dasselbe Ziel ergaben.
+    /// </summary>
+    public static SprungRepo W()
+    {
+        var w = new SprungRepo(WegwerfRepo.MitCommits());
+        w.Schreibe("\U0001F600.txt", "eins\n");
+        w.Schreibe("\uFFFD\uFFFD.txt", "zwei\n");
+        w.Committe("w", "Astrales Zeichen");
+        return w;
+    }
+
     public static readonly string[] Markerdateien = ["marker-extern", "marker-textconv", "marker-command"];
 
     /// <summary>

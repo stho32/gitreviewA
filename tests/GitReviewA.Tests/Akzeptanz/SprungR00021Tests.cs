@@ -168,6 +168,19 @@ public class SprungR00021Tests
     }
 
     [Test]
+    public void Wenn_ein_Name_ein_astrales_Zeichen_traegt_dann_ein_eigenes_Ziel_neben_dem_Ersatzzeichennamen()
+    {
+        using var repo = SprungRepo.W();
+        var sprache = SprungSprache.Aufruf(repo.Ordner, repo.Hash, "w");
+
+        var astral = sprache.Sprung("w", "\U0001F600.txt");
+        var ersatzzeichen = sprache.Sprung("w", "\uFFFD\uFFFD.txt");
+
+        Assert.That(astral.Ziel, Is.EqualTo($"vscode://file{repo.Ordner}/%F0%9F%98%80.txt"));
+        Assert.That(ersatzzeichen.Ziel, Is.EqualTo($"vscode://file{repo.Ordner}/%EF%BF%BD%EF%BF%BD.txt"));
+    }
+
+    [Test]
     public void Wenn_das_Repo_Diff_Programme_setzt_dann_dasselbe_Ziel_und_kein_Marker()
     {
         using var repo = SprungRepo.SMitDiffProgrammen();

@@ -37,4 +37,24 @@ public class SprungzielTests
 
         Assert.That(ziel, Is.EqualTo("vscode://file/home/mit%20Leerzeichen/repo/a.txt"));
     }
+
+    [TestCase("/repo/😀.txt", "vscode://file/repo/%F0%9F%98%80.txt")]
+    [TestCase("/repo/😀/datei.txt", "vscode://file/repo/%F0%9F%98%80/datei.txt")]
+    [TestCase("/wurzel😀/datei.txt", "vscode://file/wurzel%F0%9F%98%80/datei.txt")]
+    public void Wenn_ein_Name_ein_astrales_Zeichen_traegt_dann_als_ein_Codepunkt_kodiert(string pfad, string erwartet)
+    {
+        var ziel = Sprungziel.Fuer(pfad);
+
+        Assert.That(ziel, Is.EqualTo(erwartet));
+    }
+
+    [Test]
+    public void Wenn_zwei_Namen_verschieden_aussehen_dann_verschiedene_Ziele()
+    {
+        var astral = Sprungziel.Fuer("/repo/\U0001F600.txt");
+        var ersatzzeichen = Sprungziel.Fuer("/repo/\uFFFD\uFFFD.txt");
+
+        Assert.That(astral, Is.EqualTo("vscode://file/repo/%F0%9F%98%80.txt"));
+        Assert.That(ersatzzeichen, Is.EqualTo("vscode://file/repo/%EF%BF%BD%EF%BF%BD.txt"));
+    }
 }
