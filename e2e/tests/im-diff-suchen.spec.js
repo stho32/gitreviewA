@@ -3,8 +3,7 @@
 // Gesucht wird nur in der gezeigten Datei, wörtlich; die Rechnung selbst prüfen die Bausteintests (suche-werte.spec.js).
 const { test, expect } = require('../dsl/gitreviewa.js');
 const diffSeite = require('../treiber/diff-oberflaeche.js');
-
-const SUCHE_TXT = ['z01 eins zwei', 'z02 zwei drei', 'z03 drei zwei', 'z04 vier', 'z05 zwei vier', 'z06 a.c', 'z07 abc'].join('\n') + '\n';
+const { SUCHE_TXT, FREMD_TXT, FARBIG_JS, nummernZeilen, dateiUndWarten } = require('../dsl/suche.js');
 
 async function repoY(gr) {
   return gr.repoMitDateien({ 'suche.txt': SUCHE_TXT });
@@ -12,8 +11,7 @@ async function repoY(gr) {
 
 /** Wählt `suche.txt` und wartet, bis ihr Diff gezeichnet ist (7 Zeilen und ein Hunk-Kopf). */
 async function sucheTxtWaehlen(page, gr) {
-  await gr.dateiWaehlen(page, 'suche.txt');
-  await expect(page.locator('#diff .df-sc tr[data-art]')).toHaveCount(8);
+  return dateiUndWarten(page, gr, 'suche.txt', 8);
 }
 
 test.describe('Im Diff suchen (R00027) — Suchfeld und Zähler (B2604)', () => {
@@ -84,8 +82,6 @@ test.describe('Im Diff suchen (R00027) — Suchfeld und Zähler (B2604)', () => 
   });
 });
 
-const FREMD_TXT = 'var s = "<b>x</b>";\nvar t = "a\u202Eb";\n';
-
 test.describe('Im Diff suchen (R00027) — Treffer markieren und springen (B2605)', () => {
   test('soll jedes Vorkommen als eigenes Element markieren und den ersten als aktuellen zeigen', async ({ gr, page }) => {
     const repo = await repoY(gr);
@@ -150,18 +146,6 @@ test.describe('Im Diff suchen (R00027) — Treffer markieren und springen (B2605
     await dialogePruefen();
   });
 });
-
-const FARBIG_JS = 'function gruss() { return "Hallo"; }\nreturn gruss();\n';
-
-function nummernZeilen(anzahl, praefix) {
-  return Array.from({ length: anzahl }, (_, index) => `${praefix} ${String(index + 1).padStart(5, '0')}`).join('\n') + '\n';
-}
-
-/** Wählt eine Datei und wartet, bis ihr Diff `zeilen` Zeilen gezeichnet hat. */
-async function dateiUndWarten(page, gr, name, zeilen) {
-  await gr.dateiWaehlen(page, name);
-  await expect(page.locator('#diff .df-sc tr[data-art]')).toHaveCount(zeilen);
-}
 
 test.describe('Im Diff suchen (R00027) — Anschluss an Färbung, Wechsel und Grenzen (B2606)', () => {
   test('soll beim Wechsel der Datei die Treffer neu rechnen und den Begriff behalten (Szenario 4)', async ({ gr, page }) => {

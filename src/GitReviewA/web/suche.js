@@ -90,6 +90,8 @@
       rechnen(ansicht);
       zustand.aktuell = 1;
       markiere(ansicht, true);
+      // Debug-Zeile je Suche: nur Länge und Trefferzahl, nie der Wortlaut (R00027, Logging). Kein Serverweg.
+      console.debug(`Suche im Diff: Länge ${text.length}, Treffer ${zustand.treffer.length}`);
     }
     zeigeZaehler(ansicht);
   }
