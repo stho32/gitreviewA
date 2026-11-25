@@ -24,19 +24,31 @@ internal sealed record Dateieintrag(int Nummer, string Angabe, string Anzeigenam
             text);
     }
 
+    /// <summary>Zählt, ohne die Zeilen als Liste zu halten (G7): jede Zeile ist nur ein Bereich im einen Text.</summary>
     private static int AnzahlGekuerzterZeilen(string text)
     {
-        if (text.Length == 0)
+        var anzahl = 0;
+        var beginn = 0;
+        for (var stelle = 0; stelle <= text.Length; stelle++)
         {
-            return 0;
+            var istZeilenende = stelle == text.Length || text[stelle] == '\n';
+            if (!istZeilenende)
+            {
+                continue;
+            }
+            var laenge = stelle - beginn;
+            var endetMitCr = stelle < text.Length && laenge > 0 && text[stelle - 1] == '\r';
+            if (endetMitCr)
+            {
+                laenge--;
+            }
+            if (laenge > HoechstZeichenJeZeile)
+            {
+                anzahl++;
+            }
+            beginn = stelle + 1;
         }
-        return text.Split('\n').Count(IstGekuerzt);
-    }
-
-    private static bool IstGekuerzt(string zeile)
-    {
-        var laenge = zeile.EndsWith('\r') ? zeile.Length - 1 : zeile.Length;
-        return laenge > HoechstZeichenJeZeile;
+        return anzahl;
     }
 }
 

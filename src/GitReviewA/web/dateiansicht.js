@@ -13,7 +13,7 @@
   const zustand = {
     stand: null,
     text: '',
-    zeilen: [],
+    zeilen: null,
     umbruch: 'an',
     sprache: null,
     stuecke: null,
@@ -55,7 +55,6 @@
       zustand.stand = stand;
       const inhalt = await holeJson('api/dateiansicht/0');
       zustand.text = inhalt.text;
-      zustand.zeilen = werte().zeilenVon(zustand.text);
       zustand.sprache = window.spracheZuPfad(stand.echterPfad);
       zeichneKopf(stand);
       zeichneInhalt();
@@ -94,10 +93,18 @@
     kopieren.setAttribute('title', istLeer ? 'Datei ist leer' : '');
   }
 
+  /** Die Zeilen erst beim Zeichnen bilden: eine zugeklappte Datei mit 8 Mio. Zeilen wird nie als Liste gehalten (G7). */
+  function zeilenFuerAnzeige() {
+    if (zustand.zeilen === null) {
+      zustand.zeilen = werte().zeilenVon(zustand.text);
+    }
+    return zustand.zeilen;
+  }
+
   function zeichneInhalt() {
     const inhalt = document.getElementById('da-inhalt');
     inhalt.replaceChildren();
-    if (zustand.zeilen.length === 0) {
+    if (zustand.stand.zeilen === 0 && zustand.text === '') {
       const leer = document.createElement('p');
       leer.className = 'da-leer';
       leer.textContent = 'Datei ist leer';
@@ -108,7 +115,7 @@
       inhalt.append(zugeklapptElement());
       return;
     }
-    zeichneZeilen(inhalt, 0);
+    zeichneZeilen(inhalt, zeilenFuerAnzeige(), 0);
   }
 
   /** Über 20 000 Zeilen: zugeklappt mit der Zahl und „Trotzdem laden“ (R00043, R00017); kopiert wird trotzdem alles. */
@@ -130,16 +137,16 @@
   }
 
   /** Zeilen in Blöcken zeichnen (content-visibility), damit eine sehr lange Datei die Seite nicht blockiert. */
-  function zeichneZeilen(inhalt, ab) {
-    const bis = Math.min(ab + BLOCK_ZEILEN, zustand.zeilen.length);
+  function zeichneZeilen(inhalt, zeilen, ab) {
+    const bis = Math.min(ab + BLOCK_ZEILEN, zeilen.length);
     const block = document.createElement('div');
     block.className = 'da-block';
     for (let nummer = ab; nummer < bis; nummer += 1) {
-      block.append(zeileElement(nummer + 1, zustand.zeilen[nummer]));
+      block.append(zeileElement(nummer + 1, zeilen[nummer]));
     }
     inhalt.append(block);
-    if (bis < zustand.zeilen.length && zustand.aufgedeckt) {
-      requestAnimationFrame(() => zeichneZeilen(inhalt, bis));
+    if (bis < zeilen.length) {
+      requestAnimationFrame(() => zeichneZeilen(inhalt, zeilen, bis));
     }
   }
 
@@ -210,7 +217,7 @@
       return;
     }
     const schlange = window.farbschlange({ workerAnlegen: () => new Worker('faerben.js') });
-    const zeilen = zustand.zeilen.map(text => ({ art: 'kontext', text }));
+    const zeilen = zeilenFuerAnzeige().map(text => ({ art: 'kontext', text }));
     schlange.stellen({
       sprache: zustand.sprache,
       zeilen,
