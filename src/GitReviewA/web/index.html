@@ -17,6 +17,8 @@
 <script src="zusammen.js" defer></script>
 <script src="haken-werte.js" defer></script>
 <script src="haken.js" defer></script>
+<script src="naechste-werte.js" defer></script>
+<script src="naechste.js" defer></script>
 <script src="sprung-werte.js" defer></script>
 <script src="diff-werte.js" defer></script>
 <script src="luecken-werte.js" defer></script>
@@ -75,9 +77,13 @@
       <section id="dateiliste" class="gr-dateiliste" aria-label="Dateien">
         <div class="dateien-kopf">
           <p class="dateien-summe"></p>
-          <div class="darstellung" role="group" aria-label="Darstellung der Dateiliste">
-            <button type="button" data-darstellung="flach" aria-pressed="true">flach</button>
-            <button type="button" data-darstellung="baum" aria-pressed="false">Baum</button>
+          <div class="dateien-werkzeuge">
+            <button type="button" id="naechste-ungepruefte" class="btn">Nächste ungeprüfte</button>
+            <span id="naechste-meldung" class="naechste-meldung gr-status muted" role="status"></span>
+            <div class="darstellung" role="group" aria-label="Darstellung der Dateiliste">
+              <button type="button" data-darstellung="flach" aria-pressed="true">flach</button>
+              <button type="button" data-darstellung="baum" aria-pressed="false">Baum</button>
+            </div>
           </div>
         </div>
         <div class="ausblenden">

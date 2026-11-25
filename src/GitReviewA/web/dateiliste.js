@@ -324,5 +324,12 @@
     }));
   }
 
+  /* Lesender Zugang zur aktuellen Wahl für andere Bausteine (I0025 „Nächste ungeprüfte“): die Wahl bleibt hier, es gibt keine zweite. */
+  window.gitreviewaDateiliste = {
+    gewaehlt: () => (zustand.gewaehlterPfad === null
+      ? null
+      : { modus: zustand.modus, pfad: zustand.gewaehlterPfad, commit: zustand.commit }),
+  };
+
   document.addEventListener('DOMContentLoaded', init);
 }());

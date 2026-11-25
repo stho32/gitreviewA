@@ -431,7 +431,16 @@
     return sperrgrundRoh(rohSchluessel(commit, pfad));
   }
 
-  window.gitreviewaHaken = { zaehlerJeCommit, diffSperrgrund, sperrgrundFuer };
+  /* Lesender Zugang zum bestätigten Stand für andere Bausteine (I0025 „Nächste ungeprüfte“): kein zweiter Zustand, keine Kopie. */
+  window.gitreviewaHaken = {
+    zaehlerJeCommit,
+    istLesbar: () => zustand.istLesbar,
+    stellen: () => (zustand.stand ? zustand.stand.stellen : []),
+    istAbgehakt: (commit, pfad) => zustand.bestaetigtAnzeige.get(anzeigeSchluessel(commit, pfad)) === true,
+    sperrgrund: (commit, pfad) => zustand.sperrgrundAnzeige.get(anzeigeSchluessel(commit, pfad)) || '',
+    diffSperrgrund,
+    sperrgrundFuer,
+  };
 
   document.addEventListener('DOMContentLoaded', init);
 }());
