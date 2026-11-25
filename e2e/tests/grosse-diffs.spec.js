@@ -55,6 +55,19 @@ test.describe('Zuklappen und Trotzdem laden', () => {
   });
 });
 
+test.describe('Abschnitte ohne Kette (R00012)', () => {
+  test('soll einen Abschnitt über der Zuklappgrenze zuklappen und erst auf „Trotzdem laden“ zeichnen', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Große Diffs ohne Kette', commits: ['x1', 'x3'], modus: 'zusammen' });
+
+    await diff.dateiAnsehen('riesig.txt');
+    await diff.abschnittZugeklappt('x1', RIESIG_ZUGEKLAPPT);
+    await diff.abschnittZeileZeigt('x3', 30000, 'zuletzt geändert');
+
+    await diff.abschnittTrotzdemLaden('x1');
+    await diff.abschnittZeileZeigt('x1', 30000, 'zeile 30000');
+  });
+});
+
 test.describe('Ausgabegrenze in der Oberfläche', () => {
   test('soll „zu groß“ melden und Dateiliste und Commit-Leiste bedienbar lassen', async ({ diff }) => {
     await diff.starten({ vorbereitung: 'Große Diffs', commits: ['w'] });

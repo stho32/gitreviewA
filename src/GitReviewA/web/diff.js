@@ -319,7 +319,8 @@
     return '';
   }
 
-  /** Ohne Kette: ein Abschnitt je Commit, mit Kurz-Hash und Betreff beschriftet; jede Abschnittsfläche meldet sich für Anmerkungen. */
+  /** Ohne Kette: ein Abschnitt je Commit, mit Kurz-Hash und Betreff beschriftet; jede Abschnittsfläche meldet sich für Anmerkungen.
+      Ein Abschnitt über der Zuklappgrenze bleibt zugeklappt, bis der Mensch „Trotzdem laden“ wählt — dieselbe Regel wie netto (R00017). */
   function zeichneAbschnitte(ansicht, antwort, abschnitte, alsText, diffansicht) {
     zeigeMeldung(ansicht, '', false);
     ansicht.herkunftElement.textContent = 'je Commit, nicht netto — Es fehlen Commits der Auswahl';
@@ -335,21 +336,13 @@
       kopfElement.textContent = `Commit ${kurzVon(abschnitt.commit)}${betreff ? ` · ${betreff}` : ''}`;
       bereichElement.append(kopfElement);
       if (abschnitt.art === 'binaer' && !alsText) {
-        const hinweis = document.createElement('p');
-        hinweis.className = 'diff-abschnitt-hinweis';
-        hinweis.textContent = 'Binärdatei';
-        bereichElement.append(hinweis);
+        bereichElement.append(abschnittHinweis('Binärdatei'));
       } else {
         const zeilen = zeilenDerDiffansicht(abschnitt.patch, diffansicht);
         if (zeilen.length === 0) {
-          const hinweis = document.createElement('p');
-          hinweis.className = 'diff-abschnitt-hinweis';
-          hinweis.textContent = KEINE_ZEILENAENDERUNGEN;
-          bereichElement.append(hinweis);
+          bereichElement.append(abschnittHinweis(KEINE_ZEILENAENDERUNGEN));
         } else {
-          for (const block of bloecke(zeilen)) {
-            bereichElement.append(blockElement(block, `Änderungen in ${antwort.pfad}`));
-          }
+          zeichneAbschnitt(ansicht, antwort, abschnitt, zeilen, bereichElement);
         }
       }
       sammel.append(bereichElement);
@@ -362,30 +355,71 @@
     meldeGezeichnet(ansicht, antwort.pfad, bereiche);
   }
 
+  function abschnittHinweis(text) {
+    const hinweis = document.createElement('p');
+    hinweis.className = 'diff-abschnitt-hinweis';
+    hinweis.textContent = text;
+    return hinweis;
+  }
+
+  /** Über der Grenze: Hinweis mit der Zahl und der Knopf, der die bereits empfangenen Zeilen dieses Abschnitts zeichnet. */
+  function zeichneAbschnitt(ansicht, antwort, abschnitt, zeilen, bereichElement) {
+    const zuLangGrund = zuLang(zeilen);
+    if (!zuLangGrund) {
+      zeichneAbschnittszeilen(antwort, zeilen, bereichElement);
+      return;
+    }
+    const hinweis = abschnittHinweis(`Sehr lang: ${zuLangGrund.anzahl.toLocaleString('de-DE')} ${zuLangGrund.einheit} — zugeklappt`);
+    const knopf = document.createElement('button');
+    knopf.type = 'button';
+    knopf.className = 'btn trotzdem-laden';
+    knopf.textContent = 'Trotzdem laden';
+    knopf.addEventListener('click', () => {
+      hinweis.remove();
+      knopf.remove();
+      zeichneAbschnittszeilen(antwort, zeilen, bereichElement);
+      faerbeAbschnitt(ansicht, antwort.pfad, abschnitt, bereichElement);
+    });
+    bereichElement.append(hinweis, knopf);
+  }
+
+  function zeichneAbschnittszeilen(antwort, zeilen, bereichElement) {
+    for (const block of bloecke(zeilen)) {
+      bereichElement.append(blockElement(block, `Änderungen in ${antwort.pfad}`));
+    }
+  }
+
   /** Färbt je Abschnitt die Zeilen der eigenen Tabelle; eine Auflage für die ganze Anzeige. */
   function faerbeAbschnitte(ansicht, antwort, abschnitte) {
-    const anzeige = zustand.anzeige;
-    const aktuell = () => anzeige === zustand.anzeige;
-    const sprache = spracheZuPfad(antwort.pfad);
     const bereiche = [...ansicht.rollElement.querySelectorAll('.diff-abschnitt')];
     for (let stelle = 0; stelle < bereiche.length; stelle += 1) {
       const abschnitt = abschnitte[stelle];
-      const zeilen = abschnitt ? zeilenDerDiffansicht(abschnitt.patch, zustand.diffansicht) : [];
-      if (zeilen.length === 0) {
-        continue;
-      }
-      const bereich = bereiche[stelle];
-      const zeilenElemente = bereich.querySelectorAll('tr[data-art]');
-      const anzeigeElement = { ...ansicht, rollElement: bereich, zeilenElemente };
-      if (sprache) {
-        ansicht.farbschlange.stellen({
-          sprache,
-          zeilen: zeilen.map(zeile => ({ art: zeile.art, text: zeile.text })),
-          aktuell,
-          fertig: farbantwort => legeFarbeAuf(anzeigeElement, zeilen, farbantwort, aktuell),
-        });
+      if (abschnitt) {
+        faerbeAbschnitt(ansicht, antwort.pfad, abschnitt, bereiche[stelle]);
       }
     }
+  }
+
+  /** `bereichElement` trägt die gezeichneten Zeilen des Abschnitts — nach dem Aufklappen nur dieser eine. */
+  function faerbeAbschnitt(ansicht, pfad, abschnitt, bereichElement) {
+    const sprache = spracheZuPfad(pfad);
+    if (!sprache) {
+      return;
+    }
+    const zeilen = zeilenDerDiffansicht(abschnitt.patch, zustand.diffansicht);
+    if (zeilen.length === 0) {
+      return;
+    }
+    const anzeige = zustand.anzeige;
+    const aktuell = () => anzeige === zustand.anzeige;
+    const zeilenElemente = bereichElement.querySelectorAll('tr[data-art]');
+    const anzeigeElement = { ...ansicht, rollElement: bereichElement, zeilenElemente };
+    ansicht.farbschlange.stellen({
+      sprache,
+      zeilen: zeilen.map(zeile => ({ art: zeile.art, text: zeile.text })),
+      aktuell,
+      fertig: farbantwort => legeFarbeAuf(anzeigeElement, zeilen, farbantwort, aktuell),
+    });
   }
 
   function zeilenDerDiffansicht(patch, diffansicht) {

@@ -230,6 +230,23 @@ function repoGross(ordner) {
   return { ordner, hashes: { w: commitAnlegen(ordner, { betreff: 'Große Diffs' }) } };
 }
 
+/**
+ * Repo (R00012, Befund B2): `x1` fügt `riesig.txt` (30 000 Zeilen, über der Zuklappgrenze) und `winzig.txt` hinzu, `x2` ändert
+ * `winzig.txt`, `x3` ändert in `riesig.txt` die letzte Zeile. `x1 x3` ist keine lückenlose Kette → die Änderungen stehen als
+ * Abschnitte je Commit; der Abschnitt von `x1` trägt dieselbe 30 000-Zeilen-Datei wie im Netto-Fall.
+ */
+function repoGrossOhneKette(ordner) {
+  repoAnlegen(ordner);
+  dateiSchreiben(ordner, 'riesig.txt', zeilen(30000, nummer => `zeile ${String(nummer).padStart(5, '0')}`));
+  dateiSchreiben(ordner, 'winzig.txt', 'eins\nzwei\ndrei\n');
+  const x1 = commitAnlegen(ordner, { betreff: 'Riesig und winzig' });
+  dateiSchreiben(ordner, 'winzig.txt', 'eins\nZWEI\ndrei\n');
+  const x2 = commitAnlegen(ordner, { betreff: 'Winzig ändern' });
+  dateiSchreiben(ordner, 'riesig.txt', zeilen(30000, nummer => (nummer === 30000 ? 'zuletzt geändert' : `zeile ${String(nummer).padStart(5, '0')}`)));
+  const x3 = commitAnlegen(ordner, { betreff: 'Letzte Zeile riesig' });
+  return { ordner, hashes: { x1, x2, x3 } };
+}
+
 /** Repo Z (R00012): `z1` „Start“ legt `README.md` (`Lager`, `Beispiel`) und `src/a.txt` (`eins`, `zwei`, `drei`) an; `z2` „a ändern, b neu“
     ändert in `src/a.txt` `zwei` zu `ZWEI` und legt `src/b.txt` (`x`, `y`) an; `z3` „a und b ändern“ hängt in `src/a.txt` `vier` an und
     ändert in `src/b.txt` `y` zu `Y`. `z1 z2 z3` ist eine lückenlose Kette, `z1 z3` nicht. Netto über alle drei: `README.md` +2 −0,
@@ -276,4 +293,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoX, repoK, repoZ, repoMitBidiPfad, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoX, repoK, repoZ, repoMitBidiPfad, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };

@@ -27,6 +27,7 @@ const VORBEREITUNGEN = {
   '20 000 Zeilen': { anlegen: repos.repoU, commits: ['u'] },
   '20 000 Zeilen, eine geändert': { anlegen: repos.repoUMitV, commits: ['v'] },
   'Große Diffs': { anlegen: repos.repoGross, commits: ['w'] },
+  'Große Diffs ohne Kette': { anlegen: repos.repoGrossOhneKette, commits: ['x1', 'x3'] },
   'Repo N': { anlegen: fremdeNamen.repoN, commits: ['n', 'b'] },
   // R00026: `w2` ändert Leerraum und entfernte Stellen, `w1` legt an — die Auswahl ist `w2` zuerst.
   'Repo W': { anlegen: repos.repoW, commits: ['w2', 'w1'] },
@@ -44,7 +45,8 @@ function diffSprache(gr, page) {
   const kurz = name => hash(name).slice(0, 7);
 
   /** Startet gitreviewA im Repo der Vorbereitung und öffnet die Seite (Fenster 1280 × 800). */
-  async function starten({ vorbereitung = 'Repo A', commits, verbose = false, seiteOeffnen = true } = {}) {
+  /** Startet gitreviewA im Repo der Vorbereitung und öffnet die Seite (Fenster 1280 × 800); `modus` wählt den Startmodus der Seite. */
+  async function starten({ vorbereitung = 'Repo A', commits, verbose = false, seiteOeffnen = true, modus = 'einzeln' } = {}) {
     const art = VORBEREITUNGEN[vorbereitung];
     repo = art.anlegen(path.join(gr.eigenerOrdner(), 'repo'));
     zaehler = beobachtung.gitZaehlerAnlegen(gr.eigenerOrdner());
@@ -60,7 +62,7 @@ function diffSprache(gr, page) {
     if (seiteOeffnen) {
       await page.setViewportSize(FENSTER);
       dialogePruefen = seite.dialogeZaehlen(page);
-      await gr.oberflaecheOeffnen(page, lauf);
+      await gr.oberflaecheOeffnen(page, lauf, modus);
     }
   }
 
@@ -97,6 +99,10 @@ function diffSprache(gr, page) {
     alsTextZeigen: () => diffSeite.alsTextZeigen(page),
     zugeklappt: (pfad, meldung) => diffSeite.pruefeZugeklappt(page, pfad, meldung),
     trotzdemLaden: () => diffSeite.trotzdemLaden(page),
+    /** Ohne Kette: der Abschnitt des Commits `name` ist zugeklappt (R00012, Kriterium 4, R00017). */
+    abschnittZugeklappt: (name, meldung) => diffSeite.pruefeAbschnittZugeklappt(page, hash(name), meldung),
+    abschnittTrotzdemLaden: name => diffSeite.abschnittTrotzdemLaden(page, hash(name)),
+    abschnittZeileZeigt: (name, neu, text) => diffSeite.pruefeAbschnittZeile(page, hash(name), neu, text),
     /** Wählt `datei` und misst vom Klick bis zum Zuklapphinweis `meldung`; liefert den Messwert. */
     zugeklapptNachKlick: (datei, pfad, meldung, fristMs = 1000) => diffSeite.zugeklapptRechtzeitigNachKlick(page, () => seite.dateiWaehlen(page, datei), pfad, meldung, fristMs),
     /** Schaltet auf `ansicht` und misst bis zum Zuklapphinweis `meldung`; liefert den Messwert. */

@@ -107,6 +107,30 @@ async function trotzdemLaden(page) {
   await page.locator(BEREICH).getByRole('button', { name: TROTZDEM_LADEN }).click();
 }
 
+/** Die Fläche des Abschnitts eines Commits (ohne Kette, R00012); `commit` ist der volle Hash. */
+function abschnitt(page, commit) {
+  return page.locator(`${BEREICH} .diff-abschnitt[data-commit="${commit}"]`);
+}
+
+/** Der Abschnitt ist zugeklappt: sein Hinweis nennt die Grenze, keine Diff-Zeile steht, „Trotzdem laden“ ist da. */
+async function pruefeAbschnittZugeklappt(page, commit, meldung) {
+  const bereich = abschnitt(page, commit);
+  await expect(bereich.locator('.diff-abschnitt-hinweis')).toHaveText(meldung);
+  await expect(bereich.locator('tr[data-art]')).toHaveCount(0);
+  await expect(bereich.getByRole('button', { name: TROTZDEM_LADEN })).toBeVisible();
+}
+
+async function abschnittTrotzdemLaden(page, commit) {
+  await abschnitt(page, commit).getByRole('button', { name: TROTZDEM_LADEN }).click();
+}
+
+/** Im Abschnitt steht die Zeile mit Nummer neu `neu`; daneben ist der Zuklapphinweis verschwunden. */
+async function pruefeAbschnittZeile(page, commit, neu, text) {
+  const bereich = abschnitt(page, commit);
+  await expect(bereich.locator(`tr[data-neu="${neu}"] .c`)).toHaveText(`hinzugefügt: ${text}`);
+  await expect(bereich.locator('.diff-abschnitt-hinweis')).toHaveCount(0);
+}
+
 async function pruefeZeile(page, neu, text) {
   await expect(page.locator(`${ZEILE}[data-neu="${neu}"] .c`)).toHaveText(`hinzugefügt: ${text}`);
   await expect(page.locator(MELDUNG)).toHaveText('');
@@ -558,6 +582,7 @@ module.exports = {
   pruefeBedienbarNachAlsText, ansichtWaehlen, ansichtPerTastaturWechseln, pruefeAnsicht, zeilenfarbenLesen, pruefeZeilenfarben, pruefeKontextzeileBinnen,
   pruefeDiff, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, pruefeHerkunft, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, diffAntwortVerzoegern,
   pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
+  pruefeAbschnittZugeklappt, abschnittTrotzdemLaden, pruefeAbschnittZeile,
   diffAntwortZuGross, ganzDateiErstScheitern, blockKnoten, warteAufFarbe, langeAufgabenBeimScrollen, zugeklapptRechtzeitigNachKlick, zugeklapptRechtzeitigNachAktion,
   pruefeSprungzeile, pruefeSprungzeileName, sprungzeileLiegtImVerborgenen, pruefeSprungkopfName, sprungHunkLink, zeileWaehlen,
   pruefeSprungVerweis, pruefeSprungGrund, pruefeSprungHinweis, sprungAntwortVerzoegern, sprungAntwortScheitern,
