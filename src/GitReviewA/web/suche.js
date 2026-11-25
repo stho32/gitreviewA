@@ -83,7 +83,7 @@
     }
     ansicht.fehlerElement.textContent = '';
     if (text === zustand.begriff) {
-      springe(ansicht, ereignis.shiftKey ? -1 : 1);
+      springe(ereignis.shiftKey ? -1 : 1);
       setzeAktuellen(ansicht, true);
     } else {
       zustand.begriff = text;
@@ -104,7 +104,7 @@
     zustand.gedeckelt = gefunden.gedeckelt;
   }
 
-  function springe(ansicht, richtung) {
+  function springe(richtung) {
     const anzahl = zustand.treffer.length;
     if (anzahl === 0) {
       return;
