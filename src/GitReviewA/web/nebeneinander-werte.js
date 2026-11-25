@@ -41,8 +41,13 @@
         stelle += 1;
         continue;
       }
-      if (art === 'kopf' || art === 'hinweis') {
-        tabelle.push({ art, links: stelle, rechts: stelle });
+      if (art === 'kopf') {
+        tabelle.push({ art: 'kopf', links: stelle, rechts: stelle });
+        stelle += 1;
+        continue;
+      }
+      if (art === 'hinweis') {
+        tabelle.push(hinweisZeile(zeilen, stelle));
         stelle += 1;
         continue;
       }
@@ -64,6 +69,19 @@
       });
     }
     return plusEnde;
+  }
+
+  /** Die Hinweiszeile `\ No newline at end of file` steht in der Spalte ihrer Seite: folgt sie einer entfernten Zeile, links, einer
+      hinzugefügten, rechts; sonst in beiden. Sie trägt keine Nummern (R00004). */
+  function hinweisZeile(zeilen, stelle) {
+    const vorher = stelle > 0 ? zeilen[stelle - 1].art : null;
+    if (vorher === 'minus') {
+      return { art: 'hinweis', links: stelle, rechts: null };
+    }
+    if (vorher === 'plus') {
+      return { art: 'hinweis', links: null, rechts: stelle };
+    }
+    return { art: 'hinweis', links: stelle, rechts: stelle };
   }
 
   Object.assign(ziel, { gegenueberstellen });

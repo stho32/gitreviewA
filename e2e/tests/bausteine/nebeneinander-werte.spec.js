@@ -12,7 +12,8 @@ const hinweis = text => ({ art: 'hinweis', alt: null, neu: null, text });
 
 const tabKopf = index => ({ art: 'kopf', links: index, rechts: index });
 const tabZeile = (links, rechts) => ({ art: 'zeile', links, rechts });
-const tabHinweis = index => ({ art: 'hinweis', links: index, rechts: index });
+const tabHinweisLinks = index => ({ art: 'hinweis', links: index, rechts: null });
+const tabHinweisRechts = index => ({ art: 'hinweis', links: null, rechts: index });
 
 test.describe('Baustein Gegenüberstellung', () => {
   test('soll einen Lauf entfernter gegen den folgenden Lauf hinzugefügter Zeilen paaren und den Überhang rechts leer lassen (Kriterium 1)', () => {
@@ -84,12 +85,22 @@ test.describe('Baustein Gegenüberstellung', () => {
       tabZeile(3, null),
       tabZeile(4, null),
     ]);
-    // Die Hinweiszeile trennt die Läufe: `−a` steht links allein, `+a` rechts allein (R00023, Kriterium 3).
+    // Die Hinweiszeile steht in der Spalte ihrer Seite: `−a` links, der Hinweis links, `+a` rechts (R00023, Kriterium 3).
     expect(gegenueberstellen(ende)).toEqual([
       tabKopf(0),
       tabZeile(1, null),
-      tabHinweis(2),
+      tabHinweisLinks(2),
       tabZeile(null, 3),
+    ]);
+  });
+
+  test('soll eine Hinweiszeile nach einer hinzugefügten Zeile in die rechte Spalte stellen', () => {
+    const zeilen = [kopf('@@ -1 +1 @@'), minus('a', 1), plus('a', 1), hinweis('\\ No newline at end of file')];
+
+    expect(gegenueberstellen(zeilen)).toEqual([
+      tabKopf(0),
+      tabZeile(1, 2),
+      tabHinweisRechts(3),
     ]);
   });
 
