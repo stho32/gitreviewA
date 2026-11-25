@@ -10,16 +10,18 @@
   const LOESCHEN_GESCHEITERT = 'Anmerkung konnte nicht gelöscht werden';
   const DIFFZEILE = 'tr[data-art]';
 
-  /** `anmerkungen`: Stand des Servers in Anlegereihenfolge; `ladung`: nur die jüngste Liste zählt; `gezeichnet`: Detail des letzten
-      `diff-gezeichnet`; `fokusZeileElement`: die Diff-Zeile mit dem wandernden tabindex; `aenderungen`: offene Änderungsfelder;
-      `loeschungen`: Nummern, deren Löschung gerade läuft (ihr Knopf bleibt auch nach einem Neuzeichnen gesperrt); `dateiFeld`: das
-      offene „Datei anmerken“-Feld (ohne Zeile) oder null. */
-  const zustand = { anmerkungen: [], ladung: 0, gezeichnet: null, fokusZeileElement: null, aenderungen: [], loeschungen: [], dateiFeld: null };
+  /** `anmerkungen`: Stand des Servers in Anlegereihenfolge; `ladung`: nur die jüngste Liste zählt; `stelle`: die gewählte Stelle
+      (Commit, Pfad), die auch ohne gezeichnete Zeilen steht; `gezeichnet`: Detail des letzten `diff-gezeichnet`;
+      `fokusZeileElement`: die Diff-Zeile mit dem wandernden tabindex; `aenderungen`: offene Änderungsfelder; `loeschungen`:
+      Nummern, deren Löschung gerade läuft (ihr Knopf bleibt auch nach einem Neuzeichnen gesperrt); `dateiFeld`: das offene
+      „Datei anmerken“-Feld (ohne Zeile) oder null. */
+  const zustand = { anmerkungen: [], ladung: 0, stelle: null, gezeichnet: null, fokusZeileElement: null, aenderungen: [], loeschungen: [], dateiFeld: null };
 
   function init() {
     const wurzelElement = document.getElementById('diff');
     const ansicht = {
       rollElement: wurzelElement.querySelector('.df-sc'),
+      dateiBereichElement: wurzelElement.querySelector('.anm-datei-bereich'),
       hinweisElement: wurzelElement.querySelector('.anmerkung-hinweis'),
       dateiKnopfElement: wurzelElement.querySelector('.datei-anmerken'),
       hinweisKnopfElement: wurzelElement.querySelector('.datei-anmerken-hinweis'),
@@ -32,7 +34,7 @@
     ansicht.dateiKnopfElement.addEventListener('click', () => oeffneOderFokussiereDateiFeld(ansicht));
     ansicht.hinweisKnopfElement.addEventListener('click', () => oeffneOderFokussiereDateiFeld(ansicht));
     document.addEventListener('diff-gezeichnet', ereignis => merkeUndZeigeAn(ansicht, ereignis.detail));
-    document.addEventListener('diff-geleert', () => zeigeDateiKnopf(ansicht, false));
+    document.addEventListener('diff-geleert', ereignis => leereDiff(ansicht, ereignis.detail));
     document.addEventListener('haken-stand-geladen', () => aktualisiereDateiSperre(ansicht));
     document.addEventListener('modus-gewechselt', () => aktualisiereDateiSperre(ansicht));
     document.addEventListener('datei-gewaehlt', () => zeigeHinweis(ansicht, ''));
@@ -73,43 +75,86 @@
 
   function merkeUndZeigeAn(ansicht, gezeichnet) {
     zustand.gezeichnet = gezeichnet;
+    zustand.stelle = { commit: gezeichnet.commit, pfad: gezeichnet.pfad };
     zustand.fokusZeileElement = null;
     zeigeDateiKnopf(ansicht, true);
     zeigeAnmerkungen(ansicht);
   }
 
+  /** `zeigeMeldung` des Diff-Bereichs (kein gezeichneter Diff): die Wahl bleibt, das Ereignis trägt die Stelle. Der Datei-Kopf
+      über den Diff-Zeilen und der Knopf „Datei anmerken“ bleiben stehen und bedienbar — auch im Meldungszustand (Befund B1). */
+  function leereDiff(ansicht, detail) {
+    const stelle = detail && detail.stelle ? detail.stelle : null;
+    zustand.stelle = stelle;
+    zustand.gezeichnet = null;
+    if (!stelle) {
+      zustand.dateiFeld = null;
+    }
+    zeigeDateiKnopf(ansicht, stelle !== null);
+    zeichneDateikopf(ansicht);
+  }
+
   /** Zeichnet die Anmerkungen des gezeigten Diffs neu: die Dateianmerkungen der Stelle (Commit, Datei) über den Zeilen; je Sicht
       (Netto-Diff oder Abschnitt einer Ansicht ohne Kette) die Zeilenanmerkungen unter ihren Zeilen; Anmerkungen an einer Zeile, die keine
       Sicht zeigt — auch die eines anderen Commits derselben Datei — stehen im Hinweis über dem Diff. Offene Notiz- wie Änderungsfelder
-      bleiben stehen und behalten ihre Eingabe. */
+      bleiben stehen und behalten ihre Eingabe. Der Datei-Kopf steht auch ohne gezeichnete Zeilen (R00022). */
   function zeigeAnmerkungen(ansicht) {
     const gezeichnet = zustand.gezeichnet;
-    const diffIstVerworfen = !gezeichnet || !gezeichnet.ersterBlockElement.isConnected;
-    if (diffIstVerworfen) {
-      return;
-    }
-    const bereichElement = gezeichnet.bereichElement;
-    for (const altesElement of bereichElement.querySelectorAll('tr.anm, .anmerkungen-ausserhalb, .anm-datei')) {
-      altesElement.remove();
-    }
-    const sichten = sichtenDerAnsicht(gezeichnet);
-    for (const sicht of sichten) {
-      zeichneDateianmerkungen(ansicht, sicht, gezeichnet.pfad);
-    }
-    const stand = anmerkungsstandJeSicht(zustand.anmerkungen, gezeichnet.pfad, sichten.map(sicht => ({ commit: sicht.commit, gezeigteNummern: new Set(sicht.zeileNachNummerNeu.keys()) })));
-    sichten.forEach((sicht, stelle) => {
-      for (const [nummerNeu, anmerkungen] of stand.jeSicht[stelle]) {
-        sicht.zeileNachNummerNeu.get(nummerNeu).after(...anmerkungen.map(anmerkung => anmerkungszeileElement(ansicht, anmerkung)));
+    const diffIstVerworfen = !gezeichnet || !gezeichnet.ersterBlockElement || !gezeichnet.ersterBlockElement.isConnected;
+    if (!diffIstVerworfen) {
+      const bereichElement = gezeichnet.bereichElement;
+      for (const altesElement of bereichElement.querySelectorAll('tr.anm, .anmerkungen-ausserhalb, .anm-datei')) {
+        altesElement.remove();
       }
-    });
-    const hinweis = hinweisFuerAusserhalb(stand.ausserhalb, sichten);
-    if (hinweis) {
-      bereichElement.prepend(ausserhalbElement(hinweis));
+      const sichten = sichtenDerAnsicht(gezeichnet);
+      if (hatAbschnitte(gezeichnet)) {
+        for (const sicht of sichten) {
+          zeichneDateianmerkungen(ansicht, sicht, gezeichnet.pfad);
+        }
+      }
+      const stand = anmerkungsstandJeSicht(zustand.anmerkungen, gezeichnet.pfad, sichten.map(sicht => ({ commit: sicht.commit, gezeigteNummern: new Set(sicht.zeileNachNummerNeu.keys()) })));
+      sichten.forEach((sicht, stelle) => {
+        for (const [nummerNeu, anmerkungen] of stand.jeSicht[stelle]) {
+          sicht.zeileNachNummerNeu.get(nummerNeu).after(...anmerkungen.map(anmerkung => anmerkungszeileElement(ansicht, anmerkung)));
+        }
+      });
+      const hinweis = hinweisFuerAusserhalb(stand.ausserhalb, sichten);
+      if (hinweis) {
+        bereichElement.prepend(ausserhalbElement(hinweis));
+      }
+      haengeAenderungsfelderAn(ansicht);
     }
-    haengeAenderungsfelderAn(ansicht);
+    zeichneDateikopf(ansicht);
   }
 
-  /** Die Dateianmerkungen der Stelle (Commit, Datei) über den Diff-Zeilen der Sicht; ein Abschnitt trägt sie unter seinem Kopf. */
+  /** Ob die gezeichnete Ansicht Abschnitte je Commit kennt (keine lückenlose Kette); dann trägt jeder Abschnitt seine
+      Dateianmerkungen selbst und der Datei-Kopf führt nur das offene Feld. */
+  function hatAbschnitte(gezeichnet) {
+    return Boolean(gezeichnet && gezeichnet.abschnitte && gezeichnet.abschnitte.length > 0);
+  }
+
+  /** Der Datei-Kopf über den Diff-Zeilen: die Dateianmerkungen der gewählten Stelle (Commit, Datei). Er steht in seinem eigenen
+      Bereich, den `zeigeMeldung` nicht leert (Befund B1). */
+  function zeichneDateikopf(ansicht) {
+    const bereichElement = ansicht.dateiBereichElement;
+    bereichElement.replaceChildren();
+    const stelle = zustand.stelle;
+    if (!stelle) {
+      zustand.dateiFeld = null;
+      return;
+    }
+    if (zustand.dateiFeld && (zustand.dateiFeld.ziel.commit !== stelle.commit || zustand.dateiFeld.ziel.datei !== stelle.pfad)) {
+      zustand.dateiFeld = null;
+    }
+    const anmerkungen = hatAbschnitte(zustand.gezeichnet) ? [] : dateianmerkungen(zustand.anmerkungen, stelle.commit, stelle.pfad);
+    if (anmerkungen.length === 0) {
+      return;
+    }
+    bereichElement.append(dateianmerkungsblockElement(ansicht, anmerkungen));
+  }
+
+  /** Die Dateianmerkungen der Stelle (Commit, Datei) über den Diff-Zeilen eines Abschnitts; die lückenlose Kette und die
+      Einzelansicht tragen sie im Datei-Kopf. */
   function zeichneDateianmerkungen(ansicht, sicht, pfad) {
     const anmerkungen = dateianmerkungen(zustand.anmerkungen, sicht.commit, pfad);
     if (anmerkungen.length === 0) {
@@ -523,22 +568,21 @@
 
   /* ── „Datei anmerken“: Feld ohne Zeile über den Diff-Zeilen ── */
 
-  /** „Datei anmerken“: höchstens ein Feld — ein offenes Datei-Feld bekommt den Fokus, sonst öffnet eins über den Diff-Zeilen. */
+  /** „Datei anmerken“: höchstens ein Feld — ein offenes Datei-Feld bekommt den Fokus, sonst öffnet eins über den Diff-Zeilen.
+      Es gehört zur gewählten Stelle, die auch im Meldungszustand steht (Befund B1). */
   function oeffneOderFokussiereDateiFeld(ansicht) {
-    const gezeichnet = zustand.gezeichnet;
-    const diffIstVerworfen = !gezeichnet || !gezeichnet.ersterBlockElement.isConnected;
-    if (diffIstVerworfen) {
+    const stelle = zustand.stelle;
+    if (!stelle) {
       return;
     }
     if (zustand.dateiFeld && zustand.dateiFeld.feldzeileElement.isConnected) {
       zustand.dateiFeld.eingabeElement.focus();
       return;
     }
-    zustand.dateiFeld = null;
     const feld = {
       ansicht,
-      ziel: { commit: gezeichnet.commit, datei: gezeichnet.pfad, zeile: null },
-      feldname: feldnameDerDatei(gezeichnet.pfad),
+      ziel: { commit: stelle.commit, datei: stelle.pfad, zeile: null },
+      feldname: feldnameDerDatei(stelle.pfad),
       zeilenklasse: 'anm-feld',
       vorbelegung: '',
       speichertGerade: false,
@@ -547,35 +591,26 @@
     feld.abbrechen = () => schliesseFeld(feld);
     feld.nachSchliessen = () => {
       zustand.dateiFeld = null;
-      raeumeLeerenDateiblockAuf(ansicht);
+      zeichneDateikopf(ansicht);
       ansicht.dateiKnopfElement.focus();
     };
     feld.feldzeileElement = notizfeldzeileElement(feld);
-    dateirumpf(ansicht).append(feld.feldzeileElement);
     zustand.dateiFeld = feld;
+    dateiblockrumpf(ansicht).append(feld.feldzeileElement);
     feld.eingabeElement.focus();
   }
 
-  /** Der Rumpf des Datei-Blocks über den Diff-Zeilen; legt den Block an, wenn es noch keinen gibt. */
-  function dateirumpf(ansicht) {
-    const vorhandener = ansicht.rollElement.querySelector('.anm-datei tbody');
-    if (vorhandener) {
-      return vorhandener;
+  /** Der Rumpf des Datei-Blocks im Datei-Kopf; legt den Block an, wenn die Stelle noch keine Anmerkung zeigt. */
+  function dateiblockrumpf(ansicht) {
+    let blockElement = ansicht.dateiBereichElement.querySelector('.anm-datei');
+    if (!blockElement) {
+      blockElement = dateianmerkungsblockElement(ansicht, []);
+      ansicht.dateiBereichElement.append(blockElement);
     }
-    const blockElement = dateianmerkungsblockElement(ansicht, []);
-    ansicht.rollElement.prepend(blockElement);
     return blockElement.querySelector('tbody');
   }
 
-  /** Einen Datei-Block ohne Anmerkung und ohne Feld wieder entfernen. */
-  function raeumeLeerenDateiblockAuf(ansicht) {
-    const blockElement = ansicht.rollElement.querySelector('.anm-datei');
-    if (blockElement && blockElement.querySelectorAll('tr.anm, tr.anm-feld').length === 0) {
-      blockElement.remove();
-    }
-  }
-
-  /** „Datei anmerken“-Knopf im Diff-Kopf nur zeigen, wenn ein Diff gezeichnet ist; an einer gesperrten Stelle (R00014) ist er
+  /** „Datei anmerken“-Knopf im Diff-Kopf nur zeigen, wenn eine Stelle gewählt ist; an einer gesperrten Stelle (R00014) ist er
       nicht bedienbar und nennt den Grund als Text daneben — dieselbe Form wie das Kästchen (PO-Entscheidung zu R00022 Frage 3). */
   function zeigeDateiKnopf(ansicht, sichtbar) {
     ansicht.dateiKnopfZiel.hidden = !sichtbar;
@@ -584,10 +619,14 @@
     }
   }
 
-  /** Sperrgrund der gezeigten Stelle aus dem Haken-Stand: leer, solange kein Stand gelesen ist. */
+  /** Sperrgrund der gewählten Stelle aus dem Haken-Stand: leer, solange keine Stelle gewählt oder kein Stand gelesen ist. */
   function sperrgrundDerStelle() {
-    if (window.gitreviewaHaken && window.gitreviewaHaken.diffSperrgrund) {
-      return window.gitreviewaHaken.diffSperrgrund();
+    const stelle = zustand.stelle;
+    if (!stelle) {
+      return '';
+    }
+    if (window.gitreviewaHaken && window.gitreviewaHaken.sperrgrundFuer) {
+      return window.gitreviewaHaken.sperrgrundFuer(stelle.commit, stelle.pfad);
     }
     return '';
   }

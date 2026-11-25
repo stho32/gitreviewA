@@ -243,6 +243,12 @@ function annotierSprache(gr, page) {
     messageZeigt: (name, text) => seite.pruefeMessage(page, hash(name).slice(0, 7), text),
     diffAufforderung: () => diffSeite.pruefeAufforderungZurWahl(page),
     diffHerkunft: text => diffSeite.pruefeHerkunft(page, text),
+    /** Meldung statt Diff-Zeilen (etwa „Keine Zeilenänderungen“), ohne Fehlerklasse. */
+    diffMeldet: (datei, text) => diffSeite.pruefeMeldung(page, datei, text, false),
+    /** Meldung „Binärdatei — <Grund>“ mit dem Schalter „Als Text zeigen“. */
+    diffBinaer: (datei, grund) => diffSeite.pruefeBinaer(page, datei, grund),
+    /** Beantwortet den Diff von `datei` mit `status` (etwa 500) statt des Patches. */
+    diffAntwortScheitert: (datei, status) => diffSeite.diffAntwortErsetzen(page, { pfad: datei, status }),
     anmerkungenRechtzeitigNachKlick: (datei, erwartet) => anmerkungSeite.pruefeAnmerkungenBinnen(page, () => seite.dateiWaehlen(page, datei), erwartet, LADEFRIST_MS),
 
     fremderTextBleibtText: async () => {

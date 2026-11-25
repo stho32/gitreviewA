@@ -411,17 +411,24 @@
   /** Der Sperrgrund der gezeigten Stelle im Diff-Kopf — dieselbe Regel wie das Kästchen (R00014): in „Zusammen“ je Datei, in
       „Einzeln“ je Stelle; leer, wenn keine Stelle gesperrt ist oder nichts gezeigt wird. */
   function diffSperrgrund() {
-    if (!zustand.diffPfad) {
+    return sperrgrundFuer(zustand.diffCommit, zustand.diffPfad);
+  }
+
+  /** Der Sperrgrund einer Stelle (Commit, Pfad) aus dem gelesenen Stand — dieselbe Regel wie das Kästchen (R00014): in
+      „Zusammen“ je Datei (der Anzeigename), in „Einzeln“ je Stelle (Rohname). Leer, wenn die Stelle lesbar ist, der Stand
+      fehlt oder die Stelle unbekannt ist. Für den „Datei anmerken“-Knopf, der auch im Meldungszustand steht (Befund B1). */
+  function sperrgrundFuer(commit, pfad) {
+    if (!pfad) {
       return '';
     }
     if (zustand.modus === 'zusammen') {
-      const datei = dateiDerZeile(zustand.diffPfad);
+      const datei = dateiDerZeile(pfad);
       return datei ? dateiSperrgrund(datei) : '';
     }
-    return sperrgrundRoh(rohSchluessel(zustand.diffCommit, zustand.diffPfad));
+    return sperrgrundRoh(rohSchluessel(commit, pfad));
   }
 
-  window.gitreviewaHaken = { zaehlerJeCommit, diffSperrgrund };
+  window.gitreviewaHaken = { zaehlerJeCommit, diffSperrgrund, sperrgrundFuer };
 
   document.addEventListener('DOMContentLoaded', init);
 }());

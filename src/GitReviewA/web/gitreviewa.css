@@ -123,6 +123,10 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .df-sc{overflow-x:auto;min-width:0;border:1px solid var(--kd-line);background:var(--kd-surface)}
 .df-sc[hidden]{display:none}
 .df-sc:focus-visible{outline:2px solid var(--kd-accent);outline-offset:-2px}
+/* Datei-Kopf über den Diff-Zeilen (R00022): die Dateianmerkungen und das offene „Datei anmerken“-Feld in eigenem Platz,
+   den `zeigeMeldung` nicht leert — der Knopf bleibt so auch im Meldungszustand bedienbar (Befund B1) */
+.anm-datei-bereich{background:var(--kd-surface);border:1px solid var(--kd-line);border-bottom:0}
+.anm-datei-bereich:empty{display:none}
 .dz-b{content-visibility:auto;min-inline-size:100%;inline-size:max-content;contain-intrinsic-inline-size:var(--bb);contain-intrinsic-block-size:auto calc(var(--zeilen) * 18px)}
 .dz{border-collapse:collapse;font:12px/1.5 var(--kd-mono);min-inline-size:100%;tab-size:4}
 .dz td{padding:0;vertical-align:top}

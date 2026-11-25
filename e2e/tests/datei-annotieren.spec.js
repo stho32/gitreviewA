@@ -246,6 +246,51 @@ test.describe('Datei annotieren — Bedienweg und Browser-Eigenes', () => {
     await anm.dateiKnopfSichtbar();
   });
 
+  test('Befund B1: im Zustand „Keine Zeilenänderungen“ ist „Datei anmerken“ sichtbar, bedienbar und trägt (R00022)', async ({ anm }) => {
+    await anm.starten({ modus: 'einzeln' });
+
+    await anm.dateiAnsehen('LIESMICH.md');
+    await anm.diffMeldet('LIESMICH.md', 'Keine Zeilenänderungen');
+    await anm.dateiKnopfSichtbar();
+    await anm.dateiKnopfBedienbar();
+
+    await anm.dateiAnmerken();
+    await anm.dateiFeldOffenMitFokus('LIESMICH.md');
+    await anm.dateiFeldTextSchreiben('LIESMICH.md', 'Datei als Ganzes');
+    await anm.dateiFeldSpeichern('LIESMICH.md');
+    await anm.dateiFeldZu('LIESMICH.md');
+    await anm.dateianmerkungenOben([{ text: 'Datei als Ganzes', stelle: 'LIESMICH.md (ganze Datei)' }]);
+
+    const { exitCode, ergebnis } = await anm.beendenUndErgebnisLesen();
+    expect(exitCode).toBe(0);
+    expect(ergebnis).toContain('## 1. LIESMICH.md (ganze Datei)\n');
+  });
+
+  test('Befund B1: „Datei anmerken“ steht auch bei Binärdatei und nach einem Diff-Lesefehler (R00022)', async ({ anm }) => {
+    await anm.starten({ modus: 'einzeln' });
+
+    await anm.dateiAnsehen('logo.bin');
+    await anm.diffBinaer('logo.bin', 'enthält Null-Bytes');
+    await anm.dateiKnopfSichtbar();
+    await anm.dateiKnopfBedienbar();
+    await anm.dateiAnmerken();
+    await anm.dateiFeldOffenMitFokus('logo.bin');
+    await anm.dateiAbbrechen('logo.bin');
+
+    await anm.diffAntwortScheitert('src/b.txt', 500);
+    await anm.dateiAnsehen('src/b.txt');
+    await anm.diffMeldet('src/b.txt', 'Diff konnte nicht gelesen werden');
+    await anm.dateiKnopfSichtbar();
+    await anm.dateiKnopfBedienbar();
+    await anm.dateiAnmerken();
+    await anm.dateiFeldTextSchreiben('src/b.txt', 'trotz Lesefehler');
+    await anm.dateiFeldSpeichern('src/b.txt');
+    await anm.dateiFeldZu('src/b.txt');
+
+    const { ergebnis } = await anm.beendenUndErgebnisLesen();
+    expect(ergebnis).toContain('## 1. src/b.txt (ganze Datei)\n');
+  });
+
   test('an einer gesperrten Stelle ist „Datei anmerken“ nicht bedienbar und nennt den Grund (PO zu R00022 Frage 3)', async ({ anm }) => {
     await anm.starten({ modus: 'einzeln', seiteOeffnen: false });
     await anm.hakenAntwortetMit({

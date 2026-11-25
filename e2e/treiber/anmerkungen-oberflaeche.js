@@ -3,6 +3,9 @@
 const { expect } = require('@playwright/test');
 
 const ROLLBEREICH = '#diff .df-sc';
+/** Der ganze Diff-Bereich: er trägt die Notiz- und Änderungsfelder der Zeilen (im Rollbereich) wie das „Datei anmerken“-Feld
+    (im Datei-Kopf über dem Rollbereich, R00022). */
+const ANMERKUNGSBEREICH = '#diff';
 const DIFFZEILE = '#diff .dz tr[data-art]';
 const ANMERKUNGSZEILE = '#diff .dz tr.anm';
 const FELDZEILE = '#diff .dz tr.anm-feld, #diff .dz tr.anm-aendern';
@@ -69,7 +72,7 @@ async function zeileDoppeltAnklicken(page, ziel, zelle) {
 }
 
 function feld(page, name) {
-  return page.locator(ROLLBEREICH).getByRole('textbox', { name, exact: true });
+  return page.locator(ANMERKUNGSBEREICH).getByRole('textbox', { name, exact: true });
 }
 
 function feldzeile(page, name) {
