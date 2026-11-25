@@ -67,7 +67,8 @@ internal static class DateiansichtEndpunkt
             return null;
         }
         var istZahl = int.TryParse(nummerntext, NumberStyles.None, CultureInfo.InvariantCulture, out var nummer);
-        if (!istZahl)
+        var istKanonisch = istZahl && nummerntext == nummer.ToString(CultureInfo.InvariantCulture);
+        if (!istKanonisch)
         {
             return null;
         }
