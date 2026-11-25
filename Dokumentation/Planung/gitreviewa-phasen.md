@@ -1,7 +1,7 @@
 ---
 application: gitreviewA
 wbs: Dokumentation/Planung/gitreviewa.md
-zuletzt: 2026-11-25
+zuletzt: 2026-11-26
 ---
 
 # Phasen — gitreviewA
@@ -53,3 +53,4 @@ zuletzt: 2026-11-25
 | I0033 | Entwicklertest | 2026-11-25 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | Szenarien R00032, Karte #36 |
 | I0032 | Entwicklertest | 2026-11-25 | bestanden | Claude (autonom, entwicklertester + Director, Auftrag Stefan Hoffmann) | Szenarien R00031, Muss (doppelte Anzeige) nach Nacharbeit vom Director nachgeprüft, Karte #35 |
 | I0035 | Entwicklertest | 2026-11-25 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | Szenarien R00034, Karte #37 |
+| I0037 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | US-1 bis US-6 (R00036), stdout ohne Art byte-identisch, Karte #41 |

@@ -464,3 +464,9 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Befund aus der Angriffsmatrix zu #42 (security-reviewer Sonnet): GET mit fremdem Origin lieferte 200, Pfadvarianten umgingen die exakte Schreibweise. Bau 18 min (Schutz-Middleware auf dem normalisierten Pfad, rohe Socket-Proben, 23/31 rot → 39/39 grün, 3 Mutanten rot), Security-Review Sonnet ohne Muss (39 Pfade, 28 Kombinationen, alle Methoden, Browser-Durchgang). Karte gesamt 1,06 $.
 - Lehre: Sicherheitsproben für Pfade über den Socket senden — HTTP-Clients normalisieren die Varianten weg.
 - Gate: NUnit 1361/1361, Playwright 804/805 je Lauf (zwei Wackler, Karte angelegt).
+| 2026-11-25 | #41 | Entwicklertest | entwicklertester | bestanden | 9 min | opencode: alle US, stdout ohne Art per cmp identisch · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 41-entwicklertester-1 · 0,24 $ · Karte gesamt 8,54 $ |
+
+## Retrospektive #41 Richtung A / I0037 Art der Anmerkung (2026-11-26)
+- Durchlauf: Betreiber wählt Variante A aus dem Artboard; Detailplanung Opus (Vision fortgeschrieben, Richtung A in I0037–I0043, 7,35 $), PO Sonnet (9 Fragen, eine Abweichung bei der Dateiquelle), Folgearbeit Flash; Bau I0037 48 min (7 Bubbles), beide Reviews ohne Muss (fremde `art`-Werte → 400, nie auf stdout), Entwicklertest ohne Befund (stdout ohne Art per `cmp` identisch). Karte gesamt 8,54 $ (davon 7,86 $ Planung).
+- Lehre: Eine Vertragsänderung an stdout wird mit einem unveränderten Byte-Test als Gegenprobe gebaut — dann kann sie nichts Bestehendes brechen.
+- Gate: NUnit 1434/1434, Playwright 820/820 zweimal.
