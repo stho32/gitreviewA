@@ -322,23 +322,13 @@ async function pruefeBedienbarNachAlsText(page, dateiWaehlen, datei, andereDatei
 
 /* ── Sprung in VS Code (R00021): Links an Zeilen und Abschnittsköpfen, Verweis und Hinweis im Kopf ── */
 
-const SPRUNG_ZEILE = '#diff .dz tr[data-art] td.neu a';
 const SPRUNG_KOPF = '#diff .dz tr.hk td.c a';
 const SPRUNG_VERWEIS = '#diff .diff-kopf .sprung-knopf';
 const SPRUNG_GRUND = '#diff .diff-kopf .sprung-grund';
 const SPRUNG_HINWEIS = '#diff .diff-kopf .sprung-hinweis';
 
-/** Die Zeilen-Links in Dokumentreihenfolge als `{neu, href}` — nur gezeichnete Zeilen mit Nummer neu tragen einen. */
-async function sprungZeilenLinksLesen(page) {
-  return page.locator(SPRUNG_ZEILE).evaluateAll(anker => anker.map(a => ({ neu: a.closest('tr').dataset.neu, href: a.getAttribute('href') })));
-}
-
 async function pruefeSprungzeile(page, neu, href) {
   await expect(page.locator(`${ZEILE}[data-neu="${neu}"] a`)).toHaveAttribute('href', href);
-}
-
-async function pruefeSprungzeileOhneLink(page, neu) {
-  await expect(page.locator(`${ZEILE}[data-neu="${neu}"] a`)).toHaveCount(0);
 }
 
 /** Der Link des ersten Abschnittskopf-Links. */
@@ -386,6 +376,6 @@ module.exports = {
   pruefeDiff, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, diffAntwortVerzoegern,
   pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
   diffAntwortZuGross, blockKnoten, warteAufFarbe, langeAufgabenBeimScrollen, zugeklapptRechtzeitigNachKlick, zugeklapptRechtzeitigNachAktion,
-  sprungZeilenLinksLesen, pruefeSprungzeile, pruefeSprungzeileOhneLink, sprungHunkLink, zeileWaehlen, pruefeSprungVerweis, pruefeSprungGrund,
+  pruefeSprungzeile, sprungHunkLink, zeileWaehlen, pruefeSprungVerweis, pruefeSprungGrund,
   pruefeSprungHinweis, sprungAntwortVerzoegern,
 };

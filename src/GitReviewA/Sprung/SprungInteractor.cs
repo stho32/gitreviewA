@@ -57,19 +57,6 @@ internal sealed class SprungInteractor(Commitzeilen commits, GemerkteDateiquelle
         return BeantworteMitZiel(hash, datei, pfad.AbsoluterPfad!);
     }
 
-    private Dateiaenderungen DateienDesCommits(string hash)
-    {
-        try
-        {
-            return dateien.GemerktOderGelesen(hash);
-        }
-        catch (GitFehler fehler)
-        {
-            protokoll.Melde(Protokollstufe.Fehler, Fehlerkontext, $"Dateiliste von Commit {hash} für den Sprung nicht lesbar: {fehler.Message}");
-            return new Dateiaenderungen([]);
-        }
-    }
-
     /// <summary>Ein Name, der keine Datei meint, endet als 404; Doppeldeutigkeit und fehlende Übergabefähigkeit als Grund ohne git.</summary>
     private Sprungergebnis AbgewiesenOhneGit(string hash, Sprunganfrage anfrage, Namensfall fall)
     {
