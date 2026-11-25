@@ -7,7 +7,7 @@
   const HOECHSTZEICHENJEZEILE = 10000;
 
   /** Steuerzeichen außer Tab, alle Formatzeichen, Zeilen- und Absatztrenner und einzelne Surrogate — die Klasse aus `UnsichtbareZeichen`. */
-  const UNSICHTBAR = /^[\u0000-\u0008\u000A-\u001F\u007F-\u009F\u00AD\u200B-\u200F\u2028\u2029\u202A-\u202E\u2060-\u2069\uFEFF]$/u;
+  const UNSICHTBAR = /^(?:(?!\t)\p{Cc}|\p{Cf}|\p{Zl}|\p{Zp})$/u;
 
   function istEinzelnesSurrogat(zeichen) {
     if (zeichen.length !== 1) {
@@ -84,6 +84,12 @@
     return anzahl === 1 ? '1 Zeile' : `${zahl(anzahl)} Zeilen`;
   }
 
+  /** Die Bestätigung des Kopierens (R00043, Kriterium 8 und L5): nennt die Zahl und die nur gekürzt gezeigten Zeilen. */
+  function kopierbestaetigung(zeilen, gekuerzteZeilen) {
+    const zusatz = gekuerzteZeilen > 0 ? `, davon ${gekuerzteZeilen} nur gekürzt gezeigt` : '';
+    return `Datei kopiert (${zeilenWort(zeilen)}${zusatz})`;
+  }
+
   /** Einen langen Pfad in der Mitte kürzen; der ganze Pfad gehört in den zugänglichen Namen, nie nur ins `title`. */
   function pfadKuerzen(pfad, hoechstlaenge) {
     const grenze = hoechstlaenge || 100;
@@ -103,6 +109,7 @@
     kuerzeZeile,
     zahl,
     zeilenWort,
+    kopierbestaetigung,
     pfadKuerzen,
   };
   if (typeof module !== 'undefined' && module.exports) {

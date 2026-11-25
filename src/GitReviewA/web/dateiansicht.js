@@ -7,7 +7,6 @@
   const ZUGEKLAPPT_AB_ZEILEN = 20001;
   const BLOCK_ZEILEN = 500;
   const NAME_NICHT_GELESEN = 'Datei konnte nicht geladen werden';
-  const KOPIERT = 'Datei kopiert';
   const ZWISCHENABLAGE_VERWEIGERT = 'Zwischenablage verweigert — Strg+C kopiert die Datei';
   const DATEIANSICHT = 'dateiansicht';
 
@@ -295,11 +294,7 @@
   }
 
   function bestaetigungstext() {
-    const zeilen = zustand.stand.zeilen;
-    const gekuerzt = zustand.stand.gekuerzteZeilen;
-    const grund = `${werte().zeilenWort(zeilen)}`;
-    const zusatz = gekuerzt > 0 ? `, davon ${gekuerzt} nur gekürzt gezeigt` : '';
-    return `${KOPIERT} (${grund}${zusatz})`;
+    return werte().kopierbestaetigung(zustand.stand.zeilen, zustand.stand.gekuerzteZeilen);
   }
 
   async function schliesse() {
