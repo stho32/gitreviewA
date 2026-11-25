@@ -88,7 +88,7 @@ Vorbereitung: **Ordner D** außerhalb jedes Repositories, angelegt mit dem Skrip
 ### Nur über die Nummer
 - [ ] 10. Gegeben ein laufender Lauf mit `a.sql`, wenn man `GET /api/dateiansicht/1`, `/-1`, `/01`, `/0x0`, `/..%2f..%2fetc%2fpasswd`, `/0?pfad=/etc/passwd` und die Review-Endpunkte abfragt, dann liefert nur `/0` den Inhalt von `a.sql` (`/0?pfad=…` liefert ihn ebenfalls oder 400, nie einen anderen Inhalt), alle anderen 400 oder 404 ohne Dateiinhalt; eine Anfrage mit fremdem Host oder Origin, und `POST /api/schliessen` ohne Anfrageschutz, werden abgelehnt wie in R00002 (der Lauf läuft weiter). *Ebene: Integration (Endpunkte gegen echten Server).*
 
-Grenz- und Leerfälle bedacht: 8 MiB genau und + 1 (Kriterium 3), leere Datei (9), 20 000/20 001 Zeilen (Grenze aus R00017, Test im Bau), Zeile 10 000/10 001 Zeichen (5, Unit), Datei ohne Schluss-LF (8). Verworfen: Datei nach dem Start ändern und neu laden (Stand beim Start ist Regel, ein Test genügt beim Bauen); Latin-1/UTF-16 anzeigen (offene Frage 6).
+Grenz- und Leerfälle bedacht: 8 MiB genau und + 1 (Kriterium 3), leere Datei (9), 20 000/20 001 Zeilen (Grenze aus R00017, Test im Bau), Zeile 10 000/10 001 Zeichen (5, Unit), Datei ohne Schluss-LF (8). Verworfen: Datei nach dem Start ändern und neu laden (Stand beim Start ist Regel, ein Test genügt beim Bauen); Latin-1/UTF-16 anzeigen (entschieden, PO Zeile 209: spätere Ausbaustufe, bis dahin Exit 2 — Notiz unten).
 
 **Pflichtpunkte der Detailplanung**: 1 Grenzen — Kriterien 3, 5 (eine Angabe, 8 MiB, 20 000 Zeilen, 10 000 Zeichen je Zeile, stdout 0 Bytes); 2 Anzeigeverfahren — die Dateiansicht kennt ganze Datei mit Umbruch an (Standard, Kriterium 4), Umbruch aus (4), zugeklappt (5); „Zusammen/Einzeln“, Anordnung, Leerraum, Lücken gibt es hier nicht und das Menü „Ansicht ▾“ (R00039) erscheint nicht; 3 festes Layout — Kriterium 7 (Kopf höchstens zwei Zeilen, Inhalt im Rollbereich), Meldungen einzeilig; 4 Ausführungsort — Startgründe auf stderr, Kopieren nur Browser (Kriterien 3, 9); 5 eine Stelle — die Laufart aus dem Aufrufleser (Kriterium 2: Server, Seite, Ende, Abbruch lesen sie) und `Quellengrund` für alle Startgründe (Kriterium 3).
 
@@ -141,14 +141,14 @@ Grenz- und Leerfälle bedacht: 8 MiB genau und + 1 (Kriterium 3), leere Datei (9
 
 ## Offene Fragen
 
-An den product-owner; bis zur Antwort gilt die Empfehlung.
+Keine offenen. Der product-owner hat die Fragen am 2026-11-25 entschieden (`AI-Team/po-entscheidungen.md`, Zeilen 202–206, 209); die Antworten sind oben eingearbeitet:
 
-1. **Aufrufform**: `--dateien` (Empfehlung: dieselben Optionen wie im Review, kein Schlüsselwort, das mit einem Datei- oder Zweignamen zusammenfällt, der Ausschluss gegen Hashes ist eine Regel im Aufrufleser) oder Unterbefehl `gitreviewA zeigen …` (liest sich gut, aber `zeigen` wäre ein reserviertes erstes Argument).
-2. **Fehlerhafte Angabe**: ganzer Start abgelehnt mit Exit 2 (Empfehlung, wie R00016: die aufrufende KI erfährt sofort, dass eine Datei fehlt) oder die übrigen zeigen und die fehlerhafte mit Grund in der Liste (erst mit R00045 relevant).
-3. **Zeichen je gezeigter Zeile**: 10 000 (Empfehlung, Hypothese: zehnmal die Färbegrenze aus R00007, eine Zeile bleibt im DOM ein Textknoten; kopiert wird immer ganz).
-4. **UTF-8-BOM**: nicht mitkopieren, Kopf nennt sie (Empfehlung: eine BOM im kopierten Text bricht viele SQL-Konsolen am ersten Wort) oder mitkopieren (wörtlich byte-genau).
-5. **Kürzel**: `c` für „Datei kopieren“ (Empfehlung, frei im Katalog, merkbar).
-6. **Weitere Kodierungen** (UTF-16 aus älteren SQL-Werkzeugen, Latin-1): später als Ausbaustufe, wenn der Betreiber sie braucht (Empfehlung); bis dahin klarer Grund und Exit 2.
+1. **Aufrufform** — entschieden (PO Zeile 202): `--dateien <angabe…>`, dieselben Optionen wie im Review (`--port`, `--kein-browser`, `--verbose`/`--quiet`), kein reserviertes erstes Argument; der Ausschluss gegen Hashes, Bereich, `-` und `--ignore` steht einmal im Aufrufleser. Unterbefehl `zeigen` verworfen (fiele mit einem Datei- oder Zweignamen zusammen).
+2. **Fehlerhafte Angabe** — entschieden (PO Zeile 203): ganzer Start abgelehnt, Exit 2 wie R00016, stdout leer, vorher alle fehlerhaften Angaben je Zeile auf stderr; keine teilweise gezeigte Liste. Die übrigen zu zeigen, verworfen.
+3. **Zeichen je gezeigter Zeile** — entschieden (PO Zeile 204): 10 000 Zeichen je gezeigter Zeile (Hypothese, zehnmal die Färbegrenze aus R00007; eine Zeile bleibt im DOM ein Textknoten), kopiert wird immer ganz.
+4. **UTF-8-BOM** — entschieden (PO Zeile 205): nicht mitkopieren, der Kopf nennt „UTF-8 mit BOM“; die Datei auf dem Datenträger bleibt unberührt. Mitkopieren verworfen (macht in Terminal und Editor das erste Wort zu einem anderen).
+5. **Kürzel** — entschieden (PO Zeile 206): `c` bleibt „Datei kopieren“; `y` wird „Bereich kopieren“ (R00044), weil R00035 `b` schon für die Seitenleiste vergibt. Der Katalogeintrag trägt die Laufart Dateiansicht.
+6. **Weitere Kodierungen** (UTF-16 aus älteren SQL-Werkzeugen, Latin-1) — entschieden (PO Zeile 209): spätere Ausbaustufe, bis dahin Exit 2 mit klarem Grund („UTF-16 wird nicht unterstützt“); Auslöser ist, dass der Betreiber eine solche Datei nennt (Notiz unten). Latin-1 wird nie geraten.
 
 ## Manuelle Vorbereitungstätigkeiten
 
@@ -176,8 +176,12 @@ Auslöser ist der Satz des Betreibers, dass er SQL-Dateien ausführen soll und d
 
 ### Verworfene Alternativen
 
-- Unterbefehl statt `--dateien`: siehe offene Frage 1.
+- Unterbefehl statt `--dateien`: verworfen (entschieden, PO Zeile 202).
 - Datei bei jeder Anfrage neu vom Datenträger lesen: verworfen — zwischen Prüfung und Lesen ließe sich die Datei gegen einen Link oder eine FIFO tauschen, und die Anzeige wäre nicht der geprüfte Stand.
 - Ungültiges UTF-8 mit Marken `⟨0xE9⟩` zeigen (wie Diffs): verworfen für diese Laufart — das Kopierte wäre nicht mehr die Datei.
 - Ersatzweg über ein Textfeld mit dem Inhalt: verworfen — ein Textfeld vereinheitlicht Zeilenenden zu LF und brächte das byte-genaue Kopieren.
 - Jeden symbolischen Link im Pfad ablehnen: verworfen — Systempfade wie `/tmp` unter macOS sind Links; der echte Pfad im Kopf macht Umwege sichtbar.
+
+### Spätere Ausbaustufe — UTF-16 (nicht Umfang)
+
+Kein Umfang dieser Karte (Umfang: keine Ausbaustufen). Auslöser (PO Zeile 209): **der Betreiber nennt eine solche Datei**. Dann zuerst UTF-16 mit BOM (eindeutig erkennbar), Latin-1 nie raten. Bis dahin bleibt der Wortlaut „UTF-16 wird nicht unterstützt“ mit Exit 2 (Prüfung beim Start, Kriterium 3); die Datei auf dem Datenträger bleibt unberührt.
