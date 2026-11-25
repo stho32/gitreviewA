@@ -178,4 +178,116 @@ public class AnmerkungsspeicherTests
 
         Assert.That((erster, zweiter), Is.EqualTo((true, false)));
     }
+
+    [Test]
+    public void Wenn_Nummer_2_von_drei_geloescht_dann_Geloescht_und_die_uebrigen_behalten_ihre_Reihenfolge()
+    {
+        var speicher = new Anmerkungsspeicher();
+        speicher.VersucheAnzuhaengen(new GepruefteAnmerkung(HashA, "lang.txt", 18, "erster"), out _);
+        speicher.VersucheAnzuhaengen(new GepruefteAnmerkung(HashB, "src/b.txt", 2, "zweiter"), out _);
+        speicher.VersucheAnzuhaengen(new GepruefteAnmerkung(HashA, "README.md", null, "dritter"), out _);
+
+        var ausgang = speicher.VersucheZuLoeschen(2, out var geloescht);
+
+        Assert.That((ausgang, geloescht), Is.EqualTo((Loeschungsausgang.Geloescht, new Anmerkung(2, HashB, "src/b.txt", 2, "zweiter"))));
+        Assert.That(speicher.Schnappschuss().AlsArray(), Is.EqualTo(new[]
+        {
+            new Anmerkung(1, HashA, "lang.txt", 18, "erster"),
+            new Anmerkung(3, HashA, "README.md", null, "dritter"),
+        }));
+        Assert.That(speicher.Schnappschuss().Anzahl, Is.EqualTo(2));
+    }
+
+    [Test]
+    public void Wenn_Nummer_unbekannt_dann_Loeschen_NichtGefunden_und_Schnappschuss_unveraendert()
+    {
+        var speicher = new Anmerkungsspeicher();
+        speicher.VersucheAnzuhaengen(new GepruefteAnmerkung(HashA, "lang.txt", 18, "erster"), out _);
+        var vorher = speicher.Schnappschuss().AlsArray();
+
+        var ausgang = speicher.VersucheZuLoeschen(7, out var geloescht);
+
+        Assert.That((ausgang, geloescht), Is.EqualTo((Loeschungsausgang.NichtGefunden, (Anmerkung?)null)));
+        Assert.That(speicher.Schnappschuss().AlsArray(), Is.EqualTo(vorher));
+    }
+
+    [Test]
+    public void Wenn_zweimal_dieselbe_Nummer_geloescht_dann_NichtGefunden_und_nur_eine_weg()
+    {
+        var speicher = new Anmerkungsspeicher();
+        speicher.VersucheAnzuhaengen(new GepruefteAnmerkung(HashA, "lang.txt", 18, "erster"), out _);
+        speicher.VersucheAnzuhaengen(new GepruefteAnmerkung(HashB, "src/b.txt", 2, "zweiter"), out _);
+
+        var erster = speicher.VersucheZuLoeschen(1, out _);
+        var zweiter = speicher.VersucheZuLoeschen(1, out var geloescht);
+
+        Assert.That((erster, zweiter, geloescht), Is.EqualTo((Loeschungsausgang.Geloescht, Loeschungsausgang.NichtGefunden, (Anmerkung?)null)));
+        Assert.That(speicher.Schnappschuss().AlsArray(), Is.EqualTo(new[] { new Anmerkung(2, HashB, "src/b.txt", 2, "zweiter") }));
+    }
+
+    [Test]
+    public void Wenn_die_geloeschte_Nummer_frei_waere_dann_bekommt_die_naechste_Anhaengung_die_folgende_Nummer()
+    {
+        var speicher = new Anmerkungsspeicher();
+        speicher.VersucheAnzuhaengen(new GepruefteAnmerkung(HashA, "lang.txt", 1, "eins"), out _);
+        speicher.VersucheAnzuhaengen(new GepruefteAnmerkung(HashA, "lang.txt", 2, "zwei"), out _);
+        speicher.VersucheAnzuhaengen(new GepruefteAnmerkung(HashA, "lang.txt", 3, "drei"), out _);
+
+        speicher.VersucheZuLoeschen(2, out _);
+        speicher.VersucheAnzuhaengen(new GepruefteAnmerkung(HashA, "lang.txt", 4, "vier"), out var vierte);
+
+        Assert.That(vierte?.Nummer, Is.EqualTo(4), "die gelöschte Nummer wird nicht wiederverwendet");
+        Assert.That(speicher.Schnappschuss().AlsArray().Select(anmerkung => anmerkung.Nummer), Is.EqualTo(new[] { 1, 3, 4 }));
+    }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public void Wenn_eine_Anmerkung_geloescht_wird_dann_traegt_die_Rueckgabe_ihre_Stelle(bool mitZeile)
+    {
+        var speicher = new Anmerkungsspeicher();
+        var zeile = mitZeile ? 18 : (int?)null;
+        speicher.VersucheAnzuhaengen(new GepruefteAnmerkung(HashA, "README.md", zeile, "veraltet"), out _);
+
+        var ausgang = speicher.VersucheZuLoeschen(1, out var geloescht);
+
+        Assert.That((ausgang, geloescht), Is.EqualTo((Loeschungsausgang.Geloescht, new Anmerkung(1, HashA, "README.md", zeile, "veraltet"))));
+        Assert.That(speicher.Schnappschuss().Anzahl, Is.Zero);
+    }
+
+    [Test]
+    public void Wenn_abgeschlossen_dann_Loeschen_abgelehnt_mit_Beendet_und_Schnappschuss_unveraendert()
+    {
+        var speicher = new Anmerkungsspeicher();
+        speicher.VersucheAnzuhaengen(new GepruefteAnmerkung(HashA, "lang.txt", 18, "vorher"), out _);
+        speicher.VersucheAbzuschliessen();
+
+        var ausgang = speicher.VersucheZuLoeschen(1, out var geloescht);
+
+        Assert.That((ausgang, geloescht), Is.EqualTo((Loeschungsausgang.Beendet, (Anmerkung?)null)));
+        Assert.That(speicher.Schnappschuss().AlsArray().Select(anmerkung => anmerkung.Text), Is.EqualTo(new[] { "vorher" }));
+    }
+
+    [Test]
+    public async Task Wenn_200_parallel_geloescht_dann_bleibt_kein_Eintrag_und_kein_Fehler()
+    {
+        var speicher = new Anmerkungsspeicher();
+        for (var nummer = 1; nummer <= 200; nummer++)
+        {
+            speicher.VersucheAnzuhaengen(new GepruefteAnmerkung(HashA, "datei.txt", nummer, $"Anmerkung {nummer}"), out _);
+        }
+        using var start = new Barrier(8);
+
+        var aufgaben = Enumerable.Range(0, 8).Select(aufgabe => Task.Run(() =>
+        {
+            start.SignalAndWait();
+            for (var schritt = 0; schritt < 25; schritt++)
+            {
+                var nummer = aufgabe * 25 + schritt + 1;
+                Assert.That(speicher.VersucheZuLoeschen(nummer, out _), Is.EqualTo(Loeschungsausgang.Geloescht));
+            }
+        }));
+        await Task.WhenAll(aufgaben);
+
+        Assert.That(speicher.Schnappschuss().Anzahl, Is.Zero);
+    }
 }
