@@ -1,0 +1,66 @@
+# Release: veröffentlicht gitreviewA je Plattform als eine Datei (R00009) und hängt sie an ein GitHub-Release.
+# Auslöser: Push eines Tags `v*` (z. B. v0.1.0) oder manuell mit Angabe eines bestehenden Tags.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Bestehender Tag, z. B. v0.1.0"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Veröffentlichen je Plattform
+        run: |
+          export Version="${TAG#v}"
+          AUSGABE="$RUNNER_TEMP/veroeffentlicht" bash skripte/veroeffentlichen.sh \
+            linux-x64 linux-arm64 win-x64 osx-arm64 osx-x64
+
+      - name: Dateien benennen
+        run: |
+          mkdir -p "$RUNNER_TEMP/assets"
+          for ordner in "$RUNNER_TEMP"/veroeffentlicht/*/; do
+            plattform="$(basename "$ordner")"
+            if [[ "$plattform" == win-* ]]; then
+              cp "$ordner/gitreviewA.exe" "$RUNNER_TEMP/assets/gitreviewA-$TAG-$plattform.exe"
+            else
+              cp "$ordner/gitreviewA" "$RUNNER_TEMP/assets/gitreviewA-$TAG-$plattform"
+            fi
+          done
+          ( cd "$RUNNER_TEMP/assets" && sha256sum gitreviewA-* > SHA256SUMS.txt )
+          ls -l "$RUNNER_TEMP/assets"
+
+      - name: Release anlegen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > "$RUNNER_TEMP/notes.md" <<'EOF'
+          Je Plattform genau eine Datei, frameworkabhängig: auf dem Rechner muss die **.NET-10-Runtime** (ASP.NET Core) installiert sein.
+
+          - Linux/macOS: nach dem Herunterladen `chmod +x gitreviewA-*` ausführen.
+          - macOS: die Datei ist weder signiert noch notarisiert; Gatekeeper warnt beim ersten Start.
+          - Prüfsummen stehen in `SHA256SUMS.txt`.
+          EOF
+          gh release create "$TAG" "$RUNNER_TEMP"/assets/* \
+            --title "gitreviewA $TAG" --notes-file "$RUNNER_TEMP/notes.md" --verify-tag
