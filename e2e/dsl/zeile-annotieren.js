@@ -139,6 +139,23 @@ function annotierSprache(gr, page) {
       expect(antwort.status, `Ändern von Anmerkung ${nummer}`).toBe(200);
       return antwort;
     },
+    /** „Löschen“ am Anmerkungskopf der Anmerkung mit dieser stabilen Nummer. */
+    loeschen: nummer => anmerkungSeite.loeschungOeffnen(page, nummer),
+    loeschenPerTastatur: nummer => anmerkungSeite.loeschenPerTastatur(page, nummer),
+    zweimalLoeschen: nummer => anmerkungSeite.zweimalLoeschen(page, nummer),
+    keineAnmerkungszeile: nummer => anmerkungSeite.pruefeKeineAnmerkungszeile(page, nummer),
+    loeschenIstGesperrt: nummer => anmerkungSeite.pruefeLoeschenGesperrt(page, nummer),
+    kopfMeldet: (nummer, meldung) => anmerkungSeite.pruefeKopfmeldung(page, nummer, meldung),
+    serverAntwortetBeimLoeschen: antwort => anmerkungSeite.loeschungAntwortetEinmal(page, antwort),
+    loeschenVerzoegern: () => anmerkungSeite.loeschungVerzoegern(page),
+
+    /** Anmerkung über die Schnittstelle löschen; liefert Status und Nummer der Antwort. */
+    ueberDieSchnittstelleLoeschen: async nummer => {
+      const antwort = await gr.anmerkungLoeschen(lauf, nummer);
+      expect(antwort.status, `Löschen von Anmerkung ${nummer}`).toBe(200);
+      return antwort;
+    },
+
     seiteOeffnen: oeffneSeite,
     anmerkungenRechtzeitigNachKlick: (datei, erwartet) => anmerkungSeite.pruefeAnmerkungenBinnen(page, () => seite.dateiWaehlen(page, datei), erwartet, LADEFRIST_MS),
 

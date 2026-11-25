@@ -1,12 +1,13 @@
-/* gitreviewA — Anmerkungen (R00010, R00018): Klick oder Enter auf eine Diff-Zeile öffnet unter ihr ein Notizfeld, „Speichern“ legt die Anmerkung
+/* gitreviewA — Anmerkungen (R00010, R00018, R00019): Klick oder Enter auf eine Diff-Zeile öffnet unter ihr ein Notizfeld, „Speichern“ legt die Anmerkung
    über `POST /api/anmerkungen` an; „Ändern“ im Anmerkungskopf öffnet ein Feld mit dem vorhandenen Text und schickt den neuen an
-   `POST /api/anmerkungen/<nummer>`. Nach jedem Zeichnen eines Diffs (`diff-gezeichnet`) stehen die Anmerkungen unter ihren Zeilen.
-   Quelle der Wahrheit ist der Server (`GET /api/anmerkungen`). Anmerkungstext und Pfade sind fremder Text: nur textContent und Attributwerte. */
+   `POST /api/anmerkungen/<nummer>`; „Löschen“ entfernt sie über `POST /api/anmerkungen/<nummer>/loeschen`. Nach jedem Zeichnen eines Diffs (`diff-gezeichnet`)
+   stehen die Anmerkungen unter ihren Zeilen. Quelle der Wahrheit ist der Server (`GET /api/anmerkungen`). Anmerkungstext und Pfade sind fremder Text: nur textContent und Attributwerte. */
 (function () {
   'use strict';
 
   const SPEICHERN_GESCHEITERT = 'Anmerkung konnte nicht gespeichert werden';
   const AENDERN_GESCHEITERT = 'Anmerkung konnte nicht geändert werden';
+  const LOESCHEN_GESCHEITERT = 'Anmerkung konnte nicht gelöscht werden';
   const DIFFZEILE = 'tr[data-art]';
 
   /** `anmerkungen`: Stand des Servers in Anlegereihenfolge; `ladung`: nur die jüngste Liste zählt; `gezeichnet`: Detail des letzten
@@ -88,10 +89,14 @@
     haengeAenderungsfelderAn(ansicht);
   }
 
-  /** Offene Änderungsfelder unter ihre neu gezeichnete Anmerkungszeile hängen; ein Feld, dessen Anmerkung nicht mehr existiert, fällt weg. Eine
+  /** Offene Änderungsfelder unter ihre neu gezeichnete Anmerkungszeile hängen; ein Feld, dessen Anmerkung nicht mehr existiert, fällt samt Zeile weg. Eine
       Anmerkung außerhalb der Ansicht lässt ihr Feld losgelöst (die Eingabe bleibt erhalten), bis die Ansicht sie wieder zeigt. */
   function haengeAenderungsfelderAn(ansicht) {
-    zustand.aenderungen = zustand.aenderungen.filter(feld => zustand.anmerkungen.some(anmerkung => anmerkung.nummer === feld.anmerkung.nummer));
+    const bleibt = feld => zustand.anmerkungen.some(anmerkung => anmerkung.nummer === feld.anmerkung.nummer);
+    for (const feld of zustand.aenderungen.filter(feld => !bleibt(feld))) {
+      feld.feldzeileElement.remove();
+    }
+    zustand.aenderungen = zustand.aenderungen.filter(bleibt);
     for (const feld of zustand.aenderungen) {
       const zeileElement = anmerkungszeile(ansicht, feld.anmerkung.nummer);
       if (zeileElement && zeileElement.nextElementSibling !== feld.feldzeileElement) {
@@ -129,8 +134,8 @@
     return zeileElement;
   }
 
-  /** Der Kopf nennt die stabile Nummer der Anmerkung (nicht ihre Position im Ergebnis) und trägt „Ändern“; er nimmt nach Speichern und
-      Abbrechen den Fokus wieder auf. */
+  /** Der Kopf nennt die stabile Nummer der Anmerkung (nicht ihre Position im Ergebnis) und trägt „Ändern“ und „Löschen“; er nimmt nach Speichern und
+      Abbrechen den Fokus wieder auf. Ein Fehler beim Löschen steht als Meldung im Kopf. */
   function anmerkungskopfElement(ansicht, anmerkung) {
     const kopfElement = document.createElement('div');
     kopfElement.className = 'anm-kopf';
@@ -139,10 +144,16 @@
     const nummerElement = document.createElement('span');
     nummerElement.className = 'anm-nummer';
     nummerElement.textContent = `Anmerkung ${anmerkung.nummer}`;
+    const meldungElement = document.createElement('span');
+    meldungElement.className = 'anm-kopf-fehler';
+    meldungElement.setAttribute('role', 'alert');
     const rechtsElement = document.createElement('span');
     rechtsElement.className = 'anm-rechts';
-    rechtsElement.append(knopfElement('btn', 'Ändern', () => oeffneOderFokussiereAenderung(ansicht, anmerkung)));
-    kopfElement.append(nummerElement, rechtsElement);
+    rechtsElement.append(
+      knopfElement('btn', 'Ändern', () => oeffneOderFokussiereAenderung(ansicht, anmerkung)),
+      knopfElement('btn', 'Löschen', () => loescheAnmerkung(ansicht, anmerkung)),
+    );
+    kopfElement.append(nummerElement, meldungElement, rechtsElement);
     return kopfElement;
   }
 
@@ -514,6 +525,68 @@
       return;
     }
     zeileElement.querySelector('.anm-kopf').focus();
+  }
+
+  /* ── Löschen: Knopf am Anmerkungskopf, eine Anfrage je Anmerkung ── */
+
+  /** Genau eine Anfrage je Anmerkung zur Zeit: „Löschen“ ist gesperrt, bis die Antwort da ist. Nach Erfolg verschwindet die Anmerkung an
+      ihrer stabilen Nummer; bei einem Fehler steht die Meldung am Anmerkungskopf und die Anmerkung bleibt sichtbar. */
+  async function loescheAnmerkung(ansicht, anmerkung) {
+    const loeschenElement = kopfknopf(ansicht, anmerkung.nummer, 'Löschen');
+    if (!loeschenElement || loeschenElement.disabled) {
+      return;
+    }
+    loeschenElement.disabled = true;
+    setzeKopfmeldung(ansicht, anmerkung.nummer, '');
+    const ausgang = await anmerkungLoeschen(anmerkung.nummer);
+    if (ausgang.meldung) {
+      loeschenElement.disabled = false;
+      setzeKopfmeldung(ansicht, anmerkung.nummer, ausgang.meldung);
+      return;
+    }
+    zustand.anmerkungen = ohneAnmerkung(zustand.anmerkungen, ausgang.nummer);
+    zeigeAnmerkungen(ansicht);
+    ladeAnmerkungen(ansicht);
+  }
+
+  /** `{nummer}` bei Erfolg; sonst `{meldung}`: der Satz des Servers bei 4xx, bei 5xx und ohne Antwort der allgemeine Satz. */
+  async function anmerkungLoeschen(nummer) {
+    let antwort;
+    try {
+      antwort = await fetch(`api/anmerkungen/${nummer}/loeschen`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: '{}',
+      });
+    } catch {
+      return { meldung: LOESCHEN_GESCHEITERT };
+    }
+    const inhalt = await antwort.json().catch(() => ({}));
+    if (antwort.ok && Number.isInteger(inhalt.nummer)) {
+      return { nummer: inhalt.nummer };
+    }
+    const istSatzDesServers = antwort.status >= 400 && antwort.status < 500 && typeof inhalt.meldung === 'string' && inhalt.meldung !== '';
+    if (istSatzDesServers) {
+      return { meldung: inhalt.meldung };
+    }
+    return { meldung: LOESCHEN_GESCHEITERT };
+  }
+
+  function kopfknopf(ansicht, nummer, name) {
+    const zeileElement = anmerkungszeile(ansicht, nummer);
+    if (!zeileElement) {
+      return null;
+    }
+    const knoepfe = [...zeileElement.querySelectorAll('.anm-kopf button')];
+    return knoepfe.find(knopf => knopf.textContent === name) || null;
+  }
+
+  function setzeKopfmeldung(ansicht, nummer, text) {
+    const zeileElement = anmerkungszeile(ansicht, nummer);
+    if (!zeileElement) {
+      return;
+    }
+    zeileElement.querySelector('.anm-kopf-fehler').textContent = text;
   }
 
   document.addEventListener('DOMContentLoaded', init);

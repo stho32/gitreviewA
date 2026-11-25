@@ -262,6 +262,14 @@ function welt() {
     return { status: antwort.status, ...jsonOderLeer(antwort.koerper) };
   }
 
+  /** Löscht die Anmerkung mit dieser Nummer über die Schnittstelle (wie `curl`); Körper ist leer bzw. `{}`. */
+  async function anmerkungLoeschen(lauf, nummer, { origin, host, inhaltstyp = JSON_INHALT, methode = 'POST', koerper = '{}' } = {}) {
+    const antwort = await senden(lauf.adresse, `/api/anmerkungen/${nummer}/loeschen`, {
+      methode, host, kopf: { Origin: origin, 'Content-Type': inhaltstypKopf(inhaltstyp) }, koerper,
+    });
+    return { status: antwort.status, ...jsonOderLeer(antwort.koerper) };
+  }
+
   /** Fordert das Beenden an; Standard ist die Befehlszeile: POST, JSON `{}`, ohne Origin. */
   async function beendenAnfordern(lauf, { methode = 'POST', origin, host, inhaltstyp = JSON_INHALT } = {}) {
     let koerper;
@@ -326,7 +334,7 @@ function welt() {
     repoMitCommits, repoK, gitreviewAStarten, gitreviewAImHintergrundStarten, gitreviewAAufrufen, aufrufBeendet, aufEndeWarten, laeuftNoch, bisSekundenNachStart, laufAbbrechen,
     zustandAbfragen, commitsAbfragen, dateienAbfragen, commitsStatusOderNull, freierPort, startseiteAbfragen, stderrZeilen, portVon, hostDesLaufs,
     lauschendeAdressen, aufzeichnenderBrowser, gitAttrappe, aufraeumen,
-    anmerkungAnlegen, anmerkungAendern, beendenAnfordern, anfrageHalbGesendet, beendenUndDauerMessen, fremdeSeite, ergebnis,
+    anmerkungAnlegen, anmerkungAendern, anmerkungLoeschen, beendenAnfordern, anfrageHalbGesendet, beendenUndDauerMessen, fremdeSeite, ergebnis,
     hakenAnlegen, ergebnisAbfragen,
     beendenBetaetigen: oberflaeche.beendenBetaetigen,
     beendenKnopf: oberflaeche.beendenKnopf,

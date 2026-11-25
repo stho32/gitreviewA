@@ -10,6 +10,7 @@ const HINWEIS_ENTFERNT = '#diff .anmerkung-hinweis';
 const HINWEIS_AUSSERHALB = '#diff .anmerkungen-ausserhalb';
 const ANLEGEN = '**/api/anmerkungen';
 const AENDERUNG = /\/api\/anmerkungen\/\d+$/;
+const LOESCHUNG = /\/api\/anmerkungen\/\d+\/loeschen$/;
 const VERZOEGERUNG_MS = 1500;
 
 /** `ziel`: `{ neu }`, `{ alt }` (entfernte Zeile), `'kopf'` oder `'hinweis'` (`\ No newline at end of file`). */
@@ -321,6 +322,69 @@ async function sichtbarerAnmerkungstext(page) {
   return page.locator(`${ANMERKUNGSZEILE} .anm-text`).first().innerText();
 }
 
+/** Klick auf „Löschen“ im Anmerkungskopf (R00019). */
+async function loeschungOeffnen(page, nummer) {
+  await anmerkungszeile(page, nummer).getByRole('button', { name: 'Löschen', exact: true }).click();
+}
+
+/** Zweiter Klick auf „Löschen“ kurz hintereinander, ohne auf Bedienbarkeit zu warten — darf keine zweite Anfrage senden. */
+async function zweimalLoeschen(page, nummer) {
+  const knopf = anmerkungszeile(page, nummer).getByRole('button', { name: 'Löschen', exact: true });
+  await knopf.click();
+  await knopf.click({ force: true });
+}
+
+/** „Löschen“ per Tastatur: Fokus auf den Knopf, Enter. */
+async function loeschenPerTastatur(page, nummer) {
+  await anmerkungszeile(page, nummer).getByRole('button', { name: 'Löschen', exact: true }).focus();
+  await page.keyboard.press('Enter');
+}
+
+async function pruefeKeineAnmerkungszeile(page, nummer) {
+  await expect(page.locator(`${ANMERKUNGSZEILE}[data-anmerkung="${nummer}"]`)).toHaveCount(0);
+}
+
+async function pruefeLoeschenGesperrt(page, nummer) {
+  await expect(anmerkungszeile(page, nummer).getByRole('button', { name: 'Löschen', exact: true })).toBeDisabled();
+}
+
+async function pruefeKopfmeldung(page, nummer, meldung) {
+  await expect(anmerkungszeile(page, nummer).locator('.anm-kopf .anm-kopf-fehler')).toHaveText(meldung);
+}
+
+/** Je Antwort auf das Löschen: `{ status, meldung }` erfüllt sie ohne Server, `'netz'` bricht ab; danach wieder der echte Server. */
+async function loeschungAntwortetEinmal(page, antwort) {
+  let istBeantwortet = false;
+  await page.route(LOESCHUNG, async route => {
+    const istErsteLoeschung = route.request().method() === 'POST' && !istBeantwortet;
+    if (!istErsteLoeschung) {
+      await route.fallback();
+      return;
+    }
+    istBeantwortet = true;
+    if (antwort === 'netz') {
+      await route.abort('failed');
+      return;
+    }
+    await route.fulfill({ status: antwort.status, contentType: 'application/json', body: JSON.stringify({ meldung: antwort.meldung }) });
+  });
+}
+
+/** Hält jede Löschung 1,5 s zurück; `eingetroffen` wartet auf die erste Antwort, `anzahl` zählt die Anfragen des Browsers. */
+async function loeschungVerzoegern(page) {
+  let anzahl = 0;
+  await page.route(LOESCHUNG, async route => {
+    const istLoeschung = route.request().method() === 'POST';
+    if (istLoeschung) {
+      anzahl += 1;
+      await new Promise(weiter => setTimeout(weiter, VERZOEGERUNG_MS));
+    }
+    await route.fallback();
+  });
+  const antwort = page.waitForResponse(response => LOESCHUNG.test(response.url()) && response.request().method() === 'POST');
+  return { eingetroffen: () => antwort, anzahl: () => anzahl };
+}
+
 module.exports = {
   zeileAnklicken, zeileDoppeltAnklicken, pruefeAnzahlFelder, pruefeFeldtext, pruefeFeldOffenMitFokus, textSchreiben, speichern, zweimalSpeichern, pruefeFeldZu, pruefeKeinFeld, pruefeFeldmeldung,
   pruefeAnmerkungenUnter, pruefeAnzahlAnmerkungszeilen, pruefeAnmerkungszeilenSindKeineDiffzeilen,
@@ -330,4 +394,6 @@ module.exports = {
   aenderungOeffnen, pruefeKopfNenntNummer, pruefeFokusAufKopf, pruefeAnzahlAenderungsfelder, pruefeAnmerkungszeileEnthaelt, abbrechen, pruefeSpeichernGesperrt,
   aenderungAntwortetEinmal, aenderungVerzoegern,
   aenderungsfeldTextSchreiben, pruefeAenderungsfeldText, aenderungsfeldSpeichern, caretPosition, fokusAufKnopf, pruefeKnopfHatFokus,
+  loeschungOeffnen, zweimalLoeschen, loeschenPerTastatur, pruefeKeineAnmerkungszeile, pruefeLoeschenGesperrt, pruefeKopfmeldung,
+  loeschungAntwortetEinmal, loeschungVerzoegern,
 };

@@ -92,6 +92,8 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .anm-nummer{font-weight:600;color:var(--kd-text)}
 .anm-rechts{margin-inline-start:auto;display:flex;gap:var(--kd-s1)}
 .anm-kopf .btn{height:24px;padding:0 var(--kd-s2);font-size:12px}
+.anm-kopf-fehler{margin-inline-start:var(--kd-s2);font-size:12px;color:var(--kd-status-error-ink)}
+.anm-kopf-fehler:empty{display:none}
 .anm-stelle{margin-block-start:var(--kd-s1);font:11px/1.4 var(--kd-mono);color:var(--kd-muted);overflow-wrap:anywhere}
 .dz tr.anm-feld .anm-zelle,.dz tr.anm-aendern .anm-zelle{background:var(--kd-surface)}
 .anm-eingabe{display:block;inline-size:min(72ch,calc(100vw - 220px));height:auto;min-block-size:72px;padding:var(--kd-s2) var(--kd-s3);resize:vertical;font:13px/1.45 var(--kd-font)}
