@@ -66,6 +66,9 @@ test.describe('Baustein Nebeneinander-Tabelle', () => {
     // `eins` steht links (alt 1) und rechts (neu 1), beides derselbe Text; die rechte Zelle ist verborgen (einmal gelesen).
     expect(gelesen[2].zellen.map(z => z.text)).toEqual(['1', 'eins', '1', 'eins']);
     expect(gelesen[2].zellen[3].verborgen).toBe('true');
+    // Die Nummernspalte alt ist verborgen (einmal gelesen), die Nummernspalte neu nicht: sie trägt den VS-Code-Sprunglink (R00021).
+    expect(gelesen[2].zellen[0].verborgen, 'Nummernspalte alt').toBe('true');
+    expect(gelesen[2].zellen[2].verborgen, 'Nummernspalte neu').toBeNull();
     // `−zwei` (alt 2) gegen `+X` (neu 2).
     expect(gelesen[3].zellen.map(z => z.text)).toEqual(['2', 'entfernt: zwei', '2', 'hinzugefügt: X']);
   });

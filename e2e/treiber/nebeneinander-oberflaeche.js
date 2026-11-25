@@ -187,6 +187,23 @@ async function spaltenbreitenLesen(page, neu) {
   }, [ZEILE, neu]);
 }
 
+/** Der Sprunglink der Nummer-neu-Zelle (R00023, Kriterium 12): genau einer mit dem Namen für Vorlesewerkzeuge. */
+async function pruefeSprungzeile(page, neu, name) {
+  const anker = page.locator(`${ZEILE}[data-neu="${neu}"] td.n.neu > a`);
+  await expect(anker, `Sprunglink der Zeile neu ${neu}`).toHaveCount(1);
+  await expect(anker).toHaveAttribute('aria-label', name);
+}
+
+/** Ob der Sprunglink in einem `aria-hidden`-Teilbaum liegt — dort hat er für Vorlesewerkzeuge keinen Namen. */
+function sprungzeileLiegtImVerborgenen(page, neu) {
+  return page.locator(`${ZEILE}[data-neu="${neu}"] td.n.neu > a`).evaluate(anker => anker.closest('[aria-hidden="true"]') !== null);
+}
+
+/** Die Zahl der Sprunglinks im Bereich. */
+function sprunglinksZaehlen(page) {
+  return page.locator(`${ZEILE} a`).count();
+}
+
 /** Klickt die linke Textzelle der entfernten Zeile mit Nummer alt `alt` (R00023, Kriterium 10). */async function linksTextzelleAnklicken(page, alt) {
   await page.locator(`${ZEILE}[data-art="minus"][data-alt="${alt}"] td.c-alt`).click();
 }
@@ -256,7 +273,7 @@ async function hatZeilenpaar(page, linksText, rechtsText) {
 
 module.exports = {
   anordnungWaehlen, pruefeAnordnung, pruefeGruppe, anordnungPerTastatur, warteAufZeichnung, zeilenPaareLesen, pruefeZeilenPaare, pruefeSpaltenkoepfe, pruefeKontextEinmalGelesen, pruefeBreiteUndUmbruch,
-  spaltenbreitenLesen,
+  spaltenbreitenLesen, pruefeSprungzeile, sprungzeileLiegtImVerborgenen, sprunglinksZaehlen,
   linksTextzelleAnklicken, rechtsTextzelleAnklicken, farbeRollenLesen, entferntHinweis, hatZeilenpaar, anordnungKlicken, pruefePaarBinnen, ROLLBEREICH, ZEILE,
 };
 

@@ -75,6 +75,9 @@ function nebenSprache(gr, page) {
     hatPaar: (links, rechts) => nebenSeite.hatZeilenpaar(page, links, rechts),
     breiteUndUmbruch: neu => nebenSeite.pruefeBreiteUndUmbruch(page, neu),
     spaltenbreiten: neu => nebenSeite.spaltenbreitenLesen(page, neu),
+    sprungzeile: (neu, name) => nebenSeite.pruefeSprungzeile(page, neu, name),
+    sprungzeileImVerborgenen: neu => nebenSeite.sprungzeileLiegtImVerborgenen(page, neu),
+    sprunglinks: () => nebenSeite.sprunglinksZaehlen(page),
     anordnungKlicken: wert => nebenSeite.anordnungKlicken(page, wert),
     paarBinnen: (links, rechts, fristMs) => nebenSeite.pruefePaarBinnen(page, () => nebenSeite.anordnungKlicken(page, 'nebeneinander'), links, rechts, fristMs),
   };

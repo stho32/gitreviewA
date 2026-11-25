@@ -151,6 +151,26 @@ test.describe('Nebeneinander-Ansicht — Färbung, große Dateien, Anmerken', ()
     await neben.anordnungIst('untereinander');
   });
 
+  test('Kriterium 12: der VS-Code-Link steht an der Nummer-neu-Zelle und führt nicht durch einen verborgenen Teilbaum', async ({ neben }) => {
+    await neben.starten({ vorbereitung: 'Repo A', commits: ['q', 'p'], modus: 'einzeln' });
+    await neben.anordnungWaehlen('nebeneinander');
+    await neben.dateiAnsehen('lang.txt');
+
+    await neben.sprungzeile(18, 'lang.txt Zeile 18, in VS Code öffnen');
+    expect(await neben.sprungzeileImVerborgenen(18), 'fokussierbarer Link in einer verborgenen Zelle').toBe(false);
+    expect(await neben.sprunglinks(), 'Links im Bereich').toBeGreaterThan(0);
+
+    // Variante derselben Klasse: die hinzugefügte Zeile `+Z03` (neu 3) trägt denselben Link, nicht verborgen.
+    await neben.sprungzeile(3, 'lang.txt Zeile 3, in VS Code öffnen');
+    expect(await neben.sprungzeileImVerborgenen(3), 'fokussierbarer Link einer hinzugefügten Zeile').toBe(false);
+
+    // Zyklus: zurückschalten und wieder hin — der Link bleibt erreichbar.
+    await neben.anordnungWaehlen('untereinander');
+    await neben.anordnungWaehlen('nebeneinander');
+    await neben.sprungzeile(18, 'lang.txt Zeile 18, in VS Code öffnen');
+    expect(await neben.sprungzeileImVerborgenen(18), 'fokussierbarer Link in einer verborgenen Zelle nach dem Zyklus').toBe(false);
+  });
+
   test('Kriterium 14: 20 000 Zeilen zweispaltig stehen spätestens 1 s nach dem Umschalten', async ({ neben }) => {
     await neben.starten({ vorbereitung: 'Eine Zeile in 20 000', commits: ['v'] });
     await neben.dateiAnsehen('gross.txt');

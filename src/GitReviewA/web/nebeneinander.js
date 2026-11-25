@@ -166,7 +166,10 @@
     return { art: 'hinweis', alt: null, neu: null, text: zeile.text };
   }
 
-  /** Die beiden Zellen einer Seite: Nummernspalte (immer verborgen) und Textspalte; ohne Zeile beide leer und verborgen. */
+  /** Die beiden Zellen einer Seite: Nummernspalte und Textspalte; ohne Zeile beide leer und verborgen. Die Nummernspalte alt ist
+      verborgen (die Nummer wird einmal gelesen), die Nummernspalte neu nicht: sie trägt den VS-Code-Sprunglink (R00021), und ein
+      fokussierbares Element in einem verborgenen Teilbaum hat für Vorlesewerkzeuge keinen Namen — wie einspaltig
+      (`nummernzelleNeu` in diff.js). */
   function seitenZellen(seite, zeile, textzellen, textVerborgen) {
     const nummerZelle = document.createElement('td');
     const textZelle = document.createElement('td');
@@ -180,7 +183,9 @@
     const klasse = SEITENKLASSE[zeile.art];
     const suffix = klasse ? ` ${klasse}` : '';
     nummerZelle.className = `n ${seite}${suffix}`;
-    nummerZelle.setAttribute('aria-hidden', 'true');
+    if (seite !== 'neu') {
+      nummerZelle.setAttribute('aria-hidden', 'true');
+    }
     textZelle.className = `c c-${seite}${suffix}`;
     nummerZelle.textContent = nummerText(seite === 'alt' ? zeile.alt : zeile.neu);
     textZelle.dataset.art = zeile.art;
