@@ -81,19 +81,26 @@
   }
 
   /**
-   * Einträge in der Reihenfolge der gezeigten Liste, je mit Zustand. In „Zusammen“ ist die Datei der Eintrag, in „Einzeln“ die Stelle
-   * (Commit und Datei); `commit` ist dort der gezeigte Commit. `dateien` ist die gezeigte Liste — ausgeblendete Dateien stehen nicht
-   * darin und sind deshalb keine Einträge. `stand` fragt je Stelle (Commit und Datei) `istAbgehakt` und `istGesperrt`.
+   * Einträge in der Reihenfolge der Suche, je mit Zustand.
+   *
+   * In „Zusammen“ ist die Datei der Eintrag: `liste` ist die gezeigte Netto-Liste (ausgeblendete Dateien stehen nicht darin und sind
+   * deshalb keine Einträge), je Datei mit ihren Stellen.
+   *
+   * In „Einzeln“ ist die Stelle (voller Commit-Hash und Datei) der Eintrag: `liste` sind die Stellen des Stands — alle Stellen der
+   * Auswahl, Commits in der Reihenfolge der Auswahl, je Commit die Dateien in der Reihenfolge von `git`. Dieser Stand trägt jede
+   * Stelle auch außerhalb der gerade gezeigten Dateiliste; die Suche läuft deshalb über Commits hinweg.
+   *
+   * `stand` fragt den bestätigten Zustand je Stelle (`istAbgehakt`, `istGesperrt`) — ein Haken, zwei Sichten.
    */
-  function eintraege(modus, dateien, commit, stand) {
+  function eintraege(modus, liste, stand) {
     if (modus === ZUSAMMEN) {
-      return dateien.map(datei => ({ art: 'datei', pfad: datei.pfad, zustand: dateiZustand(datei, stand) }));
+      return liste.map(datei => ({ art: 'datei', pfad: datei.pfad, zustand: dateiZustand(datei, stand) }));
     }
-    return dateien.map(datei => ({
+    return liste.map(stelle => ({
       art: 'stelle',
-      commit,
-      pfad: datei.pfad,
-      zustand: stelleZustand(stand.istAbgehakt(commit, datei.pfad), stand.istGesperrt(commit, datei.pfad)),
+      commit: stelle.commit,
+      pfad: stelle.datei,
+      zustand: stelleZustand(stand.istAbgehakt(stelle.commit, stelle.datei), stand.istGesperrt(stelle.commit, stelle.datei)),
     }));
   }
 

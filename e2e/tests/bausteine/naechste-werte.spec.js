@@ -88,7 +88,7 @@ test.describe('Baustein Nächste-Werte — Einträge der gezeigten Sicht mit Zus
   test('soll in „Zusammen“ je Datei einen Eintrag in der Reihenfolge der Liste bilden', () => {
     const liste = [datei('README.md', [['z1', 'README.md']]), datei('src/a.txt', [['z1', 'src/a.txt'], ['z2', 'src/a.txt']])];
 
-    const gebildet = eintraege('zusammen', liste, null, standAus());
+    const gebildet = eintraege('zusammen', liste, standAus());
 
     expect(gebildet).toEqual([
       { art: 'datei', pfad: 'README.md', zustand: 'ungeprueft' },
@@ -99,61 +99,70 @@ test.describe('Baustein Nächste-Werte — Einträge der gezeigten Sicht mit Zus
   test('soll in „Zusammen“ eine Datei erst abgehakt nennen, wenn alle ihre Stellen abgehakt sind', () => {
     const liste = [datei('a.txt', [['z1', 'a.txt'], ['z2', 'a.txt']]), datei('b.txt', [['z2', 'b.txt']])];
 
-    expect(zustaende(eintraege('zusammen', liste, null, standAus(['z1 a.txt'])))).toEqual(['ungeprueft', 'ungeprueft']);
-    expect(zustaende(eintraege('zusammen', liste, null, standAus(['z1 a.txt', 'z2 a.txt', 'z2 b.txt'])))).toEqual(['abgehakt', 'abgehakt']);
+    expect(zustaende(eintraege('zusammen', liste, standAus(['z1 a.txt'])))).toEqual(['ungeprueft', 'ungeprueft']);
+    expect(zustaende(eintraege('zusammen', liste, standAus(['z1 a.txt', 'z2 a.txt', 'z2 b.txt'])))).toEqual(['abgehakt', 'abgehakt']);
   });
 
   test('soll in „Zusammen“ eine Datei als gesperrt führen, deren offene Stellen alle gesperrt sind', () => {
     const liste = [datei('f.txt', [['n', 'f.txt'], ['n', 'f.txt']]), datei('g.txt', [['n', 'g.txt']])];
 
-    expect(zustaende(eintraege('zusammen', liste, null, standAus([], ['n f.txt'])))).toEqual(['gesperrt', 'ungeprueft']);
+    expect(zustaende(eintraege('zusammen', liste, standAus([], ['n f.txt'])))).toEqual(['gesperrt', 'ungeprueft']);
   });
 
   test('soll in „Zusammen“ eine Datei mit gemischten Stellen erreichen, solange eine lesbare offen ist (Kriterium 7)', () => {
     const liste = [datei('paar.txt', [['n', 'paar.txt'], ['v', 'paar.txt']])];
 
-    expect(zustaende(eintraege('zusammen', liste, null, standAus([], ['n paar.txt'])))).toEqual(['ungeprueft']);
+    expect(zustaende(eintraege('zusammen', liste, standAus([], ['n paar.txt'])))).toEqual(['ungeprueft']);
   });
 
   test('soll in „Zusammen“ eine Datei als gesperrt führen, wenn neben der abgehakten Stelle nur noch eine gesperrte offen ist', () => {
     const liste = [datei('paar.txt', [['n', 'paar.txt'], ['v', 'paar.txt']])];
 
-    expect(zustaende(eintraege('zusammen', liste, null, standAus(['v paar.txt'], ['n paar.txt'])))).toEqual(['gesperrt']);
+    expect(zustaende(eintraege('zusammen', liste, standAus(['v paar.txt'], ['n paar.txt'])))).toEqual(['gesperrt']);
   });
 
   test('soll in „Zusammen“ eine Datei mit Sperrgrund als gesperrt führen, auch wenn keine ihrer Stellen einzeln gesperrt ist', () => {
     const liste = [{ pfad: 'f.txt', sperrgrund: 'Diff nicht lesbar: Name nicht eindeutig', stellen: [{ commit: 'n', pfad: 'f.txt' }] }];
 
-    expect(zustaende(eintraege('zusammen', liste, null, standAus()))).toEqual(['gesperrt']);
+    expect(zustaende(eintraege('zusammen', liste, standAus()))).toEqual(['gesperrt']);
   });
 
   test('soll in „Einzeln“ je Stelle (Commit und Datei) einen Eintrag bilden', () => {
-    const liste = [{ pfad: 'README.md' }, { pfad: 'src/a.txt' }];
+    const stellen = [{ commit: 'z1', datei: 'README.md' }, { commit: 'z1', datei: 'src/a.txt' }];
 
-    expect(eintraege('einzeln', liste, 'z1', standAus([], ['z1 src/a.txt']))).toEqual([
+    expect(eintraege('einzeln', stellen, standAus([], ['z1 src/a.txt']))).toEqual([
       { art: 'stelle', commit: 'z1', pfad: 'README.md', zustand: 'ungeprueft' },
       { art: 'stelle', commit: 'z1', pfad: 'src/a.txt', zustand: 'gesperrt' },
     ]);
   });
 
-  test('soll in „Einzeln“ die Stelle des gezeigten Commits abhaken und gleich benannte Stellen anderer Commits unberührt lassen', () => {
-    const liste = [{ pfad: 'src/a.txt' }];
+  test('soll in „Einzeln“ die eigenen Stellen führen (alle Commits der Auswahl, je Stelle ihr Commit)', () => {
+    const stellen = [{ commit: 'z1', datei: 'src/a.txt' }, { commit: 'z2', datei: 'src/a.txt' }];
     const stand = standAus(['z2 src/a.txt']);
 
-    expect(zustaende(eintraege('einzeln', liste, 'z1', stand))).toEqual(['ungeprueft']);
-    expect(zustaende(eintraege('einzeln', liste, 'z2', stand))).toEqual(['abgehakt']);
+    expect(zustaende(eintraege('einzeln', stellen, stand))).toEqual(['ungeprueft', 'abgehakt']);
+  });
+
+  test('soll in „Einzeln“ über Commits hinweg suchen — nicht nur in der gezeigten Dateiliste (Kriterium 4)', () => {
+    const stellen = [
+      { commit: 'z1', datei: 'README.md' }, { commit: 'z1', datei: 'src/a.txt' },
+      { commit: 'z2', datei: 'src/a.txt' }, { commit: 'z2', datei: 'src/b.txt' },
+    ];
+    const gebildet = eintraege('einzeln', stellen, standAus());
+
+    expect(naechster(gebildet, { commit: 'z1', pfad: 'src/a.txt' })).toBe(2);
   });
 
   test('soll nur die Einträge der gezeigten Liste führen — ausgeblendete Dateien sind keine Einträge', () => {
     const gezeigt = [datei('bleibt.txt', [['z1', 'bleibt.txt']])];
 
-    expect(eintraege('zusammen', gezeigt, null, standAus())).toHaveLength(1);
+    expect(eintraege('zusammen', gezeigt, standAus())).toHaveLength(1);
   });
 
   test('soll in „Zusammen“ und „Einzeln“ denselben Stand auswerten — ein Haken, zwei Sichten (Kriterium 8)', () => {
     const stand = standAus(['z1 src/a.txt']);
-    const zusammen = eintraege('zusammen', [datei('src/a.txt', [['z1', 'src/a.txt']])], null, stand);
-    const einzeln = eintraege('einzeln', [{ pfad: 'src/a.txt' }], 'z1', stand);
+    const zusammen = eintraege('zusammen', [datei('src/a.txt', [['z1', 'src/a.txt']])], stand);
+    const einzeln = eintraege('einzeln', [{ commit: 'z1', datei: 'src/a.txt' }], stand);
 
     expect(zustaende(zusammen)).toEqual(['abgehakt']);
     expect(zustaende(einzeln)).toEqual(['abgehakt']);
@@ -161,7 +170,7 @@ test.describe('Baustein Nächste-Werte — Einträge der gezeigten Sicht mit Zus
 
   test('soll die nächste ungeprüfte aus den Einträgen der Sicht finden', () => {
     const liste = [datei('a.txt', [['z1', 'a.txt']]), datei('b.txt', [['z1', 'b.txt']]), datei('c.txt', [['z1', 'c.txt']])];
-    const gebildet = eintraege('zusammen', liste, null, standAus(['z1 a.txt'], ['z1 c.txt']));
+    const gebildet = eintraege('zusammen', liste, standAus(['z1 a.txt'], ['z1 c.txt']));
 
     expect(pfade(gebildet)).toEqual(['a.txt', 'b.txt', 'c.txt']);
     expect(naechster(gebildet, null)).toBe(1);
