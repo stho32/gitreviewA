@@ -69,12 +69,12 @@ async function doppelklick(page) {
   await page.locator(TRENNER).dblclick();
 }
 
-/** Der Abstand der Seitenleiste zum Diff-Bereich (der Trenner sitzt dazwischen). */
+/** Der Abstand der Seitenleiste zum Diff-Bereich (der Trenner sitzt dazwischen) und die Breite des Diff-Bereichs. */
 function lageSeitenleiste(page) {
   return page.evaluate(([links, diff]) => {
     const l = document.querySelector(links).getBoundingClientRect();
     const d = document.querySelector(diff).getBoundingClientRect();
-    return { rechts: Math.round(l.right), diffLinks: Math.round(d.left), breite: Math.round(l.width) };
+    return { rechts: Math.round(l.right), diffLinks: Math.round(d.left), breite: Math.round(l.width), diffBreite: Math.round(d.width) };
   }, [SEITENLEISTE, DIFF]);
 }
 

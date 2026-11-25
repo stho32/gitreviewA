@@ -1,7 +1,7 @@
 /* gitreviewA — Trenner der Seitenleiste (R00034, I0035): der Zustand der Breite (nur RAM, Start 360 px), das Trenner-Element im
-   zweispaltigen Aufbau und die Breite über eine CSS-Variable am Rahmen (`--gr-leiste-breite`). Die reine Rechnung liegt in
-   `trenner-werte.js`; die Breite wirkt allein über das Layout, ohne den Diff neu zu zeichnen (Lehre #23). Ziehen, Tastatur und
-   Doppelklick folgen in eigenen Bubbles (B3303/B3304/B3305). Nach dem Neuladen gilt wieder die Startbreite — nichts wird gespeichert. */
+   zweispaltigen Aufbau, die Breite über eine CSS-Variable am Rahmen (`--gr-leiste-breite`) und das Ziehen mit dem Zeiger. Die reine
+   Rechnung liegt in `trenner-werte.js`; die Breite wirkt allein über das Layout, ohne den Diff neu zu zeichnen (Lehre #23). Tastatur
+   und Doppelklick folgen in eigenen Bubbles (B3304/B3305). Nach dem Neuladen gilt wieder die Startbreite — nichts wird gespeichert. */
 (function () {
   'use strict';
 
@@ -9,7 +9,7 @@
   const DIFF = '#diff';
   const MEDIEN = '(min-width:566px)';
   const werte = window.gitreviewaTrennerWerte;
-  const zustand = { breite: werte.START };
+  const zustand = { breite: werte.START, ziehen: null };
 
   function rahmen() {
     return document.querySelector(RAHMEN);
@@ -78,7 +78,43 @@
   function erzeugeTrenner() {
     const element = document.createElement('div');
     element.className = 'gr-trenner';
+    element.addEventListener('pointerdown', ereignis => beginneZug(element, ereignis));
+    element.addEventListener('pointermove', ereignis => ziehe(element, ereignis));
+    element.addEventListener('pointerup', ereignis => beendeZug(element, ereignis));
+    element.addEventListener('pointercancel', ereignis => beendeZug(element, ereignis));
     rahmen().insertBefore(element, rahmen().querySelector(DIFF));
+  }
+
+  /** Der Beginn eines Zugs: den Zeiger am Trenner festhalten (Pointer-Capture), damit auch ein schneller Sprung ankommt. */
+  function beginneZug(element, ereignis) {
+    zustand.ziehen = {
+      id: ereignis.pointerId,
+      links: rahmen().getBoundingClientRect().left,
+      griff: ereignis.clientX - element.getBoundingClientRect().left,
+    };
+    element.setPointerCapture(ereignis.pointerId);
+    element.classList.add('aktiv');
+    ereignis.preventDefault();
+  }
+
+  /** Der Zeiger bewegt sich: die Breite folgt der Zeigerposition (die linke Kante des Trennzugs steht unter dem Griff). */
+  function ziehe(element, ereignis) {
+    if (!zustand.ziehen || ereignis.pointerId !== zustand.ziehen.id) {
+      return;
+    }
+    setzen(werte.breiteNachZug(ereignis.clientX - zustand.ziehen.griff, zustand.ziehen.links, hoechste(), zustand.breite));
+  }
+
+  /** Der Zug ist zu Ende: den Zeiger freigeben. */
+  function beendeZug(element, ereignis) {
+    if (!zustand.ziehen || ereignis.pointerId !== zustand.ziehen.id) {
+      return;
+    }
+    zustand.ziehen = null;
+    element.classList.remove('aktiv');
+    if (element.hasPointerCapture && element.hasPointerCapture(ereignis.pointerId)) {
+      element.releasePointerCapture(ereignis.pointerId);
+    }
   }
 
   window.gitreviewaBreite = {

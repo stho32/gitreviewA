@@ -11,6 +11,7 @@ function breiteSprache(seit, page) {
     /* ── Breite lesen und setzen ── */
     breite: () => trenner.breiteDerSeitenleiste(page),
     breiteIst: erwartet => trenner.pruefeBreite(page, erwartet),
+    lage: () => trenner.lageSeitenleiste(page),
     setzeBreite: wert => page.evaluate(breite => window.gitreviewaBreite.setzen(breite), wert),
 
     /* ── Trenner ── */
