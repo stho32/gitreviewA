@@ -259,6 +259,11 @@
       zeichneZusammenAntwort(ansicht, antwort, alsText, diffansicht);
       return;
     }
+    const bildMoeglich = !alsText && (antwort.art === 'binaer' || antwort.art === 'leer');
+    if (bildMoeglich) {
+      zeigeBildOder(ansicht, antwort);
+      return;
+    }
     const binaerOhneWahl = antwort.art === 'binaer' && !alsText;
     if (binaerOhneWahl) {
       zeigeBinaerdatei(ansicht, antwort.grund);
@@ -275,6 +280,43 @@
       return;
     }
     zeichneAnsicht(ansicht, antwort, zeilen, diffansicht);
+  }
+
+  /** Die Bildanzeige (R00024) übernimmt die Fläche, wenn die gewählte Datei ein Bild ist; sonst bleibt es beim bisherigen
+      Zustand (Binärdatei mit Grund bzw. „Keine Zeilenänderungen“). `herkunft` setzt der Aufrufer danach wieder, weil
+      `zeigeMeldung` den Kopf leert. */
+  async function zeigeBildOder(ansicht, antwort, herkunft = '') {
+    const ladung = zustand.letzteLadung;
+    const istAktuell = () => ladung === zustand.letzteLadung;
+    const uebernommen = await window.gitreviewaBild.zeige({
+      datei: bilddatei(antwort),
+      bereichselement: ansicht.rollElement,
+      istAktuell,
+      zeigeMeldung: (text, istFehler) => zeigeMeldung(ansicht, text, istFehler),
+    });
+    if (!istAktuell()) {
+      return;
+    }
+    if (uebernommen) {
+      if (herkunft) {
+        ansicht.herkunftElement.textContent = herkunft;
+      }
+      return;
+    }
+    if (antwort.art === 'binaer') {
+      zeigeBinaerdatei(ansicht, antwort.grund);
+    } else {
+      zeigeMeldung(ansicht, KEINE_ZEILENAENDERUNGEN, false);
+    }
+    if (herkunft) {
+      ansicht.herkunftElement.textContent = herkunft;
+    }
+  }
+
+  /** Die Stelle des Bildes: Commit und Pfad der Wahl; in „Zusammen“ ist der Commit der zuständige (I0012 gilt je Commit). */
+  function bilddatei(antwort) {
+    const datei = zustand.datei || {};
+    return { commit: datei.commit, pfad: antwort.pfad, status: antwort.status, alterPfad: antwort.alterPfad };
   }
 
   /** „nur Änderungen“ zeigt die Lücken vor dem ersten, zwischen zwei und nach dem letzten Abschnitt (R00026);
@@ -295,9 +337,8 @@
   function zeichneZusammenAntwort(ansicht, antwort, alsText, diffansicht) {
     if (antwort.netto) {
       const herkunft = `netto aus ${kurzListe(antwort.commits)}`;
-      if (antwort.art === 'binaer' && !alsText) {
-        zeigeBinaerdatei(ansicht, antwort.grund);
-        ansicht.herkunftElement.textContent = herkunft;
+      if (!alsText && (antwort.art === 'binaer' || antwort.art === 'leer')) {
+        zeigeBildOder(ansicht, antwort, herkunft);
         return;
       }
       const zeilen = zeilenDerDiffansicht(antwort.patch, diffansicht);

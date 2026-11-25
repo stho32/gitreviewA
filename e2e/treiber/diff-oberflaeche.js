@@ -323,9 +323,88 @@ async function diffAnfragenBeobachten(page) {
   return anfragen;
 }
 
+/* ── Bild vorher/nachher (R00024): die Selektoren des Bereichs, die Anfragen und ihre Fakes ── */
+
+const BILD_PAAR = '#diff .bild-paar';
+const BILD_SEITE = '#diff .bild-paar .bild-seite';
+
+function istBildAnfrage(url, pfad = null, seite = null) {
+  const adresse = url.toString();
+  if (!adresse.includes('/bild?')) {
+    return false;
+  }
+  const abfrage = new URL(adresse).searchParams;
+  if (pfad !== null && abfrage.get('pfad') !== pfad) {
+    return false;
+  }
+  return seite === null || abfrage.get('seite') === seite;
+}
+
+/** Merkt jede Bildanfrage (`pfad`, `seite`) über `request` (unabhängig von gefälschten Antworten). */
+async function bildAnfragenBeobachten(page) {
+  const anfragen = [];
+  page.on('request', request => {
+    const adresse = request.url();
+    if (istBildAnfrage(adresse)) {
+      const abfrage = new URL(adresse).searchParams;
+      anfragen.push({ pfad: abfrage.get('pfad'), seite: abfrage.get('seite') });
+    }
+  });
+  return anfragen;
+}
+
+/** Die gezeichneten Bilder des Bereichs: Quelle, natürliche Breite und Beschriftung; wartet, bis alle geladen sind. */
+async function bilderLesen(page) {
+  await page.waitForFunction(() => {
+    const bilder = [...document.querySelectorAll('#diff .bild-paar img')];
+    return bilder.length > 0 && bilder.every(bild => bild.complete && bild.naturalWidth > 0);
+  }, undefined, { polling: 'raf', timeout: 10000 });
+  return page.locator(BILD_SEITE).evaluateAll(figuren => figuren.map(figur => {
+    const bild = figur.querySelector('img');
+    return { src: bild.getAttribute('src'), naturbreite: bild.naturalWidth, beschriftung: figur.querySelector('figcaption').textContent };
+  }));
+}
+
+/** Der Titel des Bildpaares (neuer Pfad, bei einer Umbenennung beide Namen). */
+async function bildTitel(page) {
+  return page.locator(`${BILD_PAAR} .bild-titel`).textContent();
+}
+
+/** Im Bildbereich steht nichts als `img` und Text — kein `object`, `iframe`, `svg`, `a` und kein Attribut wie `onerror`. */
+async function pruefeNurImgImBildbereich(page) {
+  const fremde = await page.locator(`${BILD_PAAR} object, ${BILD_PAAR} iframe, ${BILD_PAAR} svg, ${BILD_PAAR} a, ${BILD_PAAR} [onerror], ${BILD_PAAR} [onload]`).count();
+  expect(fremde, 'Fremdelemente im Bildbereich').toBe(0);
+  const bilder = await page.locator(`${BILD_PAAR} img`).count();
+  expect(bilder, 'nur `img`-Elemente').toBeGreaterThan(0);
+}
+
+/** Beantwortet die Bildanfrage `seite` für `pfad` mit festen Bytes (`medientyp`) oder einem Status; optional verzögert.
+    `eingetroffen` wartet, bis die Antwort da ist und gezeichnet sein könnte. */
+async function bildAntwortErsetzen(page, { pfad, seite, base64 = null, medientyp = 'image/png', status = 200, koerper = null, verzoegerungMs = 0 }) {
+  const istAnfrage = url => istBildAnfrage(url, pfad, seite);
+  const eingetroffen = page.waitForResponse(response => istAnfrage(response.url())).catch(() => null);
+  await page.route(istAnfrage, async route => {
+    if (verzoegerungMs > 0) {
+      await new Promise(weiter => setTimeout(weiter, verzoegerungMs));
+    }
+    if (status !== 200) {
+      await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(koerper || {}) });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: medientyp, body: Buffer.from(base64, 'base64') });
+  });
+  return {
+    eingetroffen: async () => {
+      await eingetroffen;
+      await page.evaluate(() => new Promise(fertig => requestAnimationFrame(() => requestAnimationFrame(fertig))));
+    },
+  };
+}
+
+
 /** Beantwortet die Diff-Anfrage von `pfad` im Umfang `umfang` (`null` = „nur Änderungen“) und der Leerraum-Stellung `leerraum`
     (`null` = „beachten“) mit einem eigenen Rumpf — nach `verzoegerungMs` oder als Fehler `status`. */
-async function diffAntwortErsetzen(page, { pfad, umfang = null, leerraum = null, patch = null, status = 200, verzoegerungMs = 0 }) {
+async function diffAntwortErsetzen(page, { pfad, umfang = null, leerraum = null, patch = null, status = 200, verzoegerungMs = 0, art = 'text', dateiStatus = 'M', grund = null, alterPfad = null }) {
   const istAnfrage = url => {
     const adresse = url.toString();
     const abfrage = new URL(adresse).searchParams;
@@ -343,7 +422,7 @@ async function diffAntwortErsetzen(page, { pfad, umfang = null, leerraum = null,
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ pfad, status: 'M', alterPfad: null, art: 'text', grund: null, patch }),
+      body: JSON.stringify({ pfad, status: dateiStatus, alterPfad, art, grund, patch }),
     });
   });
   return {
@@ -607,4 +686,5 @@ module.exports = {
   pruefeSprungVerweis, pruefeSprungGrund, pruefeSprungHinweis, sprungAntwortVerzoegern, sprungAntwortScheitern,
   leerraumUmschalten, leerraumPerTastaturUmschalten, pruefeLeerraumStellung, diffAnfragenBeobachten, diffAntwortErsetzen,
   lueckenLesen, lueckeAufklappen, lueckeMeldet, pruefeZeilenMitEigenemLink, zeilenZaehlen, zeileVorhanden, zeilentextLesen,
+  bildAnfragenBeobachten, bildAntwortErsetzen, bilderLesen, bildTitel, pruefeNurImgImBildbereich,
 };
