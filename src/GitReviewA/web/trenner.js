@@ -1,7 +1,7 @@
 /* gitreviewA — Trenner der Seitenleiste (R00034, I0035): der Zustand der Breite (nur RAM, Start 360 px), das Trenner-Element im
-   zweispaltigen Aufbau, die Breite über eine CSS-Variable am Rahmen (`--gr-leiste-breite`), das Ziehen mit dem Zeiger und die Tasten am Element. Die reine
-   Rechnung liegt in `trenner-werte.js`; die Breite wirkt allein über das Layout, ohne den Diff neu zu zeichnen (Lehre #23). Der
-   Doppelklick folgt in einer eigenen Bubble (B3305). Nach dem Neuladen gilt wieder die Startbreite — nichts wird gespeichert. */
+   zweispaltigen Aufbau, die Breite über eine CSS-Variable am Rahmen (`--gr-leiste-breite`), das Ziehen mit dem Zeiger, die Tasten am
+   Element und der Doppelklick auf die Startbreite. Die reine Rechnung liegt in `trenner-werte.js`; die Breite wirkt allein über das
+   Layout, ohne den Diff neu zu zeichnen (Lehre #23). Nach dem Neuladen gilt wieder die Startbreite — nichts wird gespeichert. */
 (function () {
   'use strict';
 
@@ -101,6 +101,7 @@
     element.addEventListener('pointerup', ereignis => beendeZug(element, ereignis));
     element.addEventListener('pointercancel', ereignis => beendeZug(element, ereignis));
     element.addEventListener('keydown', ereignis => beiTaste(ereignis));
+    element.addEventListener('dblclick', () => setzen(werte.START));
     rahmen().insertBefore(element, rahmen().querySelector(DIFF));
     aktualisiereAria();
   }
