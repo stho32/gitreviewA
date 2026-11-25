@@ -5,6 +5,7 @@
 const { test: basis, expect } = require('./seitenleiste.js');
 const trenner = require('../treiber/trenner-oberflaeche.js');
 const oberflaeche = require('../treiber/oberflaeche.js');
+const anmerkungSeite = require('../treiber/anmerkungen-oberflaeche.js');
 
 function breiteSprache(seit, page) {
   return Object.assign({}, seit, {
@@ -41,6 +42,17 @@ function breiteSprache(seit, page) {
 
     /* ── Wechselnde Dinge und Suche (aus der Basis) sind vererbt; Suche hier nur als Fachwort benannt ── */
     sucheImDiff: begriff => oberflaeche.sucheSuchen(page, begriff),
+
+    /* ── Offenes Notizfeld, Zählung und Markierungen (Lehre #23) ── */
+    feldname: (datei, neu) => `Anmerkung zu ${datei}, Zeile ${neu}`,
+    zeileAnklicken: ziel => anmerkungSeite.zeileAnklicken(page, ziel),
+    notizSchreiben: (name, text) => anmerkungSeite.textSchreiben(page, name, text),
+    feldFokussieren: name => page.getByRole('textbox', { name, exact: true }).focus(),
+    feldIstOffenMitFokus: name => anmerkungSeite.pruefeFeldOffenMitFokus(page, name),
+    feldText: name => page.getByRole('textbox', { name, exact: true }).inputValue(),
+    anzahlNotizfelder: () => page.locator('#diff tr.anm-feld').count(),
+    zaehleDiffAnfragen: () => trenner.zaehleDiffAnfragen(page),
+    marken: () => page.locator('#diff .suche-treffer').count(),
   });
 }
 

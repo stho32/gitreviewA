@@ -89,6 +89,17 @@ function fokusring(page) {
   }, TRENNER);
 }
 
+/** Zählt die Diff-Anfragen der Seite (`…/diff?…`); liefert eine Funktion, die den aktuellen Stand liest (Lehre #23: kein neuer Aufruf). */
+function zaehleDiffAnfragen(page) {
+  const zaehler = { anzahl: 0 };
+  page.on('request', anfrage => {
+    if (anfrage.url().includes('/diff?')) {
+      zaehler.anzahl += 1;
+    }
+  });
+  return () => zaehler.anzahl;
+}
+
 /** Der Abstand der Seitenleiste zum Diff-Bereich (der Trenner sitzt dazwischen) und die Breite des Diff-Bereichs. */
 function lageSeitenleiste(page) {
   return page.evaluate(([links, diff]) => {
@@ -128,6 +139,6 @@ async function pruefeTrennerAria(page, erwarteteBreite) {
 module.exports = {
   SEITENLEISTE, TRENNER, DIFF,
   breiteDerSeitenleiste, pruefeBreite, trennerAngaben, trennerVorhanden, fokusAufTrenner,
-  ziehen, doppelklick, fokussiereTrenner, fokusring, lageSeitenleiste,
+  ziehen, doppelklick, fokussiereTrenner, fokusring, zaehleDiffAnfragen, lageSeitenleiste,
   pruefeTrennerVorhanden, pruefeTrennerAnDerGrenze, pruefeTrennerAria,
 };
