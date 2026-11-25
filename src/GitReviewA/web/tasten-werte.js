@@ -37,6 +37,7 @@
     { taste: '[', aktion: 'commitZurueck', bereich: LISTE, text: 'voriger Commit (nur Einzeln)', anzeige: ['['], nurEinzeln: true, ziel: '#commit-waehler' },
     { taste: ']', aktion: 'commitWeiter', bereich: LISTE, text: 'nächster Commit (nur Einzeln)', anzeige: [']'], nurEinzeln: true, kurz: 'Commit', ziel: '#commit-waehler' },
     { taste: 'h', aktion: 'abgehakteAusblenden', bereich: LISTE, text: 'Abgehakte ausblenden', anzeige: ['h'], ziel: '#ausblenden' },
+    { taste: 'b', aktion: 'seitenleisteEinklappen', bereich: LISTE, text: 'Seitenleiste ein-/ausklappen', anzeige: ['b'], ziel: '#einklappen' },
     { taste: 'n', aktion: 'abschnittWeiter', bereich: DIFF, text: 'nächster Abschnitt', anzeige: ['n'], kurz: 'Abschnitt' },
     { taste: 'p', aktion: 'abschnittZurueck', bereich: DIFF, text: 'voriger Abschnitt', anzeige: ['p'] },
     { taste: 'ArrowDown', aktion: 'zeileWeiter', bereich: DIFF, text: 'Zeile im Diff wählen', anzeige: ['↓'], kurz: 'Zeile' },

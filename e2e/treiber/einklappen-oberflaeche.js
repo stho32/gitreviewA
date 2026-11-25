@@ -119,6 +119,59 @@ function grenzlage(page) {
   }, [SEITENLEISTE, '#diff', STREIFEN]);
 }
 
+/** Der Knopf bedeckt keinen Inhalt: er steht in den Rändern an der Grenze (links neben dem Ende der Dateiliste, rechts vor
+    dem Anfang des Diff-Kopfes). */
+async function pruefeKnopfAnDerGrenze(page) {
+  const lage = await page.evaluate(() => {
+    const knopf = document.querySelector('#einklappen').getBoundingClientRect();
+    const liste = document.querySelector('#datei-zeilen').getBoundingClientRect();
+    const diffKopf = document.querySelector('#diff .diff-kopf').getBoundingClientRect();
+    return { knopfLinks: knopf.left, knopfRechts: knopf.right, listeRechts: liste.right, diffKopfLinks: diffKopf.left };
+  });
+  expect(lage.knopfLinks, `Knopf (links ${lage.knopfLinks}) rechts neben der Dateiliste (rechts ${lage.listeRechts})`).toBeGreaterThanOrEqual(lage.listeRechts);
+  expect(lage.knopfRechts, `Knopf (rechts ${lage.knopfRechts}) links vor dem Diff-Kopf (links ${lage.diffKopfLinks})`).toBeLessThanOrEqual(lage.diffKopfLinks);
+}
+
+/** Der Fokus steht auf dem Knopf, und er trägt einen sichtbaren Fokusring (mindestens 2 px). */
+async function pruefeFokusUndRing(page) {
+  const angaben = await knopfAngaben(page);
+  expect(angaben, 'Ausklapp-Knopf vorhanden').not.toBeNull();
+  expect(angaben.fokussiert, `der Fokus steht auf dem Ausklapp-Knopf — ${JSON.stringify(angaben.fokusring)}`).toBe(true);
+  expect(angaben.fokusring.sichtbar, 'eine Tastaturbewegung hat stattgefunden (:focus-visible)').toBe(true);
+  expect(angaben.fokusring.stil, 'Fokusring gezeichnet').not.toBe('none');
+  expect(parseFloat(angaben.fokusring.breite), `Fokusring breit genug (${angaben.fokusring.breite})`).toBeGreaterThanOrEqual(2);
+}
+
+/** Der Ausklapp-Knopf ist der Tab-Stopp vor dem Trennzug (er steht im DOM direkt davor): Shift+Tab vom Trenner erreicht ihn. */
+async function fokusVorgaengerDesTrenners(page) {
+  await page.locator(TRENNER).focus();
+  await page.keyboard.press('Shift+Tab');
+}
+
+/** Der nächste Tab-Stopp nach dem letzten Knopf des Kopfes ist der Ausklapp-Knopf (die eingeklappte Liste wird übersprungen). */
+async function tabVomKopf(page) {
+  await page.locator('#beenden').focus();
+  await page.keyboard.press('Tab');
+}
+
+/** Öffnet die Hilfe (Knopf im Kopf) und liest ihre Einträge aus dem Katalog. */
+async function hilfeOeffnen(page) {
+  await page.locator('#hilfe-knopf').click();
+  await expect(page.locator('#hilfe')).toBeVisible();
+}
+
+/** Die Hilfe nach Gruppen: Titel und je Eintrag die Tasten, der Text und die Verfügbarkeit — so, wie der Katalog sie liefert. */
+function hilfeEintraege(page) {
+  return page.evaluate(() => [...document.querySelectorAll('#hilfe .hilfe-gruppe')].map(gruppe => ({
+    titel: gruppe.querySelector('h3').textContent,
+    eintraege: [...gruppe.querySelectorAll('ul > li')].map(zeile => ({
+      tasten: [...zeile.querySelectorAll('.hilfe-tasten kbd')].map(kbd => kbd.textContent),
+      text: [...zeile.childNodes].filter(knoten => knoten.nodeType === 3).map(knoten => knoten.textContent).join('').trim(),
+      verfuegbar: zeile.dataset.verfuegbar === 'true',
+    })),
+  })));
+}
+
 /* ── Prüfungen ── */
 
 /** Der Knopf ist da und nennt seinen Zustand über `aria-expanded`. */
@@ -196,6 +249,7 @@ async function pruefeKeinTrennzug(page) {
 module.exports = {
   KNOPF, STREIFEN, SEITENLEISTE, RAHMEN, TRENNER,
   knopf, betatigen, tasteB, knopfAngaben, sichtbarerFokusring, seitenleisteAngaben, streifenAngaben, grenzlage,
-  pruefeZustand, pruefeKnopf, pruefeSeitenleisteVerborgen, pruefeSeitenleisteSichtbar, pruefeStreifen, pruefeVolleBreite,
+  pruefeZustand, pruefeKnopf, pruefeKnopfAnDerGrenze, pruefeFokusUndRing, fokusVorgaengerDesTrenners, tabVomKopf, hilfeOeffnen, hilfeEintraege,
+  pruefeSeitenleisteVerborgen, pruefeSeitenleisteSichtbar, pruefeStreifen, pruefeVolleBreite,
   pruefeDiffBreiter, pruefeKeinTrennzug,
 };

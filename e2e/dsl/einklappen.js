@@ -14,6 +14,14 @@ function einklappenSprache(seit, page) {
     knopf: () => einkl.knopf(page),
     knopfAngaben: () => einkl.knopfAngaben(page),
     knopfPruefen: erwartet => einkl.pruefeKnopf(page, erwartet),
+    knopfAnDerGrenze: () => einkl.pruefeKnopfAnDerGrenze(page),
+    fokusringPruefen: () => einkl.pruefeFokusUndRing(page),
+    fokusVorgaengerDesTrenners: () => einkl.fokusVorgaengerDesTrenners(page),
+    tabVomKopf: () => einkl.tabVomKopf(page),
+    hilfeOeffnen: () => einkl.hilfeOeffnen(page),
+    hilfeEintraege: () => einkl.hilfeEintraege(page),
+    sucheFokussieren: () => page.locator('#diff-suche').focus(),
+    suchfeldWert: () => page.locator('#diff-suche').inputValue(),
     fokusAufKnopf: async () => {
       const angaben = await einkl.knopfAngaben(page);
       if (!angaben || !angaben.fokussiert) {

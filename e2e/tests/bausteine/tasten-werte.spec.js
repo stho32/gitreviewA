@@ -49,7 +49,7 @@ test.describe('Baustein Tasten-Werte — Tastenbelegung und Kontext (B2901)', ()
   });
 
   test('soll in einem Eingabefeld keine einzige Taste abfangen', () => {
-    for (const taste of ['j', 'k', 'n', 'p', 'x', 'm', 's', 'v', 'w', 'h', 'u', '[', ']', 'Enter', 'a', 'e', '1', '2', '3', '?']) {
+    for (const taste of ['j', 'k', 'n', 'p', 'x', 'm', 's', 'v', 'w', 'h', 'b', 'u', '[', ']', 'Enter', 'a', 'e', '1', '2', '3', '?']) {
       expect(werte.aktionFuer(taste, lage({ feldImFokus: true, modus: werte.EINZELN })), `Taste ${taste}`).toBeNull();
     }
   });
@@ -221,5 +221,38 @@ test.describe('Baustein Tasten-Werte — Tasten 1–3 (R00036)', () => {
     for (const eintrag of ziffern) {
       expect(eintrag.verfuegbar).toBe(true);
     }
+  });
+});
+
+test.describe('Baustein Tasten-Werte — Katalog `b` der Seitenleiste (R00035, B3402)', () => {
+  test('soll `b` genau einmal führen, mit der Aktion und dem Ziel des Ausklapp-Knopfes', () => {
+    const eintraege = werte.EINTRAEGE.filter(eintrag => eintrag.taste === 'b');
+
+    expect(eintraege).toHaveLength(1);
+    expect(eintraege[0].aktion).toBe('seitenleisteEinklappen');
+    expect(eintraege[0].text).toBe('Seitenleiste ein-/ausklappen');
+    expect(eintraege[0].ziel).toBe('#einklappen');
+    expect(eintraege[0].anzeige).toEqual(['b']);
+    expect(eintraege[0].bereich).toBe('liste');
+  });
+
+  test('soll `b` betätigen lassen, sobald der Knopf gebaut ist, sonst nicht (enger Aufbau ohne Knopf)', () => {
+    expect(werte.aktionFuer('b', lage({ vorhanden: GEBAUT }))).toBe('seitenleisteEinklappen');
+    expect(werte.aktionFuer('b', lage({ vorhanden: [] }))).toBeNull();
+  });
+
+  test('soll den Hinweis an den Ausklapp-Knopf liefern (Hinweis und aria-keyshortcuts aus derselben Quelle)', () => {
+    const hinweis = werte.hinweise().find(eintrag => eintrag.selektor === '#einklappen');
+
+    expect(hinweis).toEqual({ selektor: '#einklappen', anzeige: ['b'], aria: 'b' });
+  });
+
+  test('soll die Aktion in der Hilfe nennen und beim gebauten Knopf als verfügbar zeigen', () => {
+    const gruppen = werte.belegung(lage({ vorhanden: GEBAUT }));
+    const eintraege = gruppen.flatMap(gruppe => gruppe.eintraege).filter(eintrag => eintrag.aktion === 'seitenleisteEinklappen');
+
+    expect(eintraege).toHaveLength(1);
+    expect(eintraege[0].text).toBe('Seitenleiste ein-/ausklappen');
+    expect(eintraege[0].verfuegbar).toBe(true);
   });
 });

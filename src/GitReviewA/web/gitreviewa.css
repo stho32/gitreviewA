@@ -340,5 +340,10 @@ kbd{font:11px/1.2 var(--kd-mono);padding:1px 4px;border:1px solid var(--kd-line-
      ragt in die Ränder beider Nachbarn hinein (er deckt keinen Inhalt) und liegt über dem Trennzug, der darunter weiter greift
      (nur der Knopf selbst fängt den Zeiger). Eingeklappt wird aus ihm der sichtbare Streifen mit dem Weg zurück. */
   .gr-streifen{grid-column:2;grid-row:1;display:flex;align-self:start;justify-self:center;inline-size:var(--gr-streifen-breite,24px);margin-block-start:var(--kd-s5);pointer-events:none;z-index:2}
-  .gr-einklappen{pointer-events:auto;inline-size:var(--gr-streifen-breite,24px);margin:0;padding:var(--kd-s1) 0;border:1px solid transparent;background:none;color:var(--kd-muted);font:inherit;cursor:pointer}
+  /* Der Knopf am Trenner (B3402): ein schmaler Streifen-Knopf, oben das sichtbare Bild der Wirkung (der Pfeil), darunter der
+     Name senkrecht — beide aus `einklappen-werte.js`; der Fokusring kommt aus der einen Regel für alle Bedienelemente (B2907). */
+  .gr-einklappen{pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:var(--kd-s1);box-sizing:border-box;inline-size:var(--gr-streifen-breite,24px);margin:0;padding:var(--kd-s2) 0;border:1px solid var(--kd-line);border-radius:var(--kd-s2);background:var(--kd-surface);color:var(--kd-muted);font:inherit;cursor:pointer}
+  .gr-einklappen:hover{color:var(--kd-text);border-color:var(--kd-line-strong);background:var(--kd-sunken)}
+  .gr-einklappen-pfeil{font-size:14px;line-height:1}
+  .gr-einklappen-text{writing-mode:vertical-rl;text-orientation:mixed;font-size:11px;line-height:1.15;letter-spacing:.02em;max-block-size:min(40vh,12rem);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 }

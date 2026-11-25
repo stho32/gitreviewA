@@ -97,6 +97,7 @@
       case 'commitWeiter': return schrittCommit(1);
       case 'commitZurueck': return schrittCommit(-1);
       case 'abgehakteAusblenden': return schalteAbgehakteAusblenden();
+      case 'seitenleisteEinklappen': return schalteSeitenleiste();
       case 'abschnittWeiter': return springeAbschnitt(1);
       case 'abschnittZurueck': return springeAbschnitt(-1);
       case 'zeileAnmerken': return merkeZeileAn();
@@ -360,6 +361,17 @@
     return true;
   }
 
+  /** `b` betätigt den Ausklapp-Knopf an der Grenze (R00035): derselbe Weg wie die Maus, und die Zustandsänderung wird angesagt. */
+  function schalteSeitenleiste() {
+    const knopf = document.getElementById('einklappen');
+    if (!knopf) {
+      return false;
+    }
+    knopf.click();
+    ansagen(knopf.getAttribute('aria-expanded') === 'false' ? 'Seitenleiste eingeklappt' : 'Seitenleiste ausgeklappt');
+    return true;
+  }
+
   /** `g` springt zur nächsten Lücke: der Fokus steht auf ihrem Aufklapp-Knopf; ohne weitere Lücke bleibt er stehen. */
   function springeZurLuecke() {
     const rollElement = rollbereich();
@@ -530,7 +542,7 @@
   }
 
   /* Lesender Zugang für andere Bausteine (Hilfe-Overlay): welche Aktionen dieser Stand gebaut hat — keine zweite Liste. */
-  window.gitreviewaTasten = { vorhandeneAktionen };
+  window.gitreviewaTasten = { vorhandeneAktionen, zeichneHinweise };
 
   function sichtbarerName(pfad) {
     return window.sichtbarerName ? window.sichtbarerName(pfad) : pfad;
