@@ -219,6 +219,25 @@ test.describe('Datei annotieren — Bedienweg und Browser-Eigenes', () => {
     expect(ergebnis).not.toContain('\u202E');
   });
 
+  test('zweiter Einstieg: „Datei anmerken“ am Hinweis der entfernten Zeile öffnet dasselbe Feld (B2103)', async ({ anm }) => {
+    await anm.starten({ modus: 'einzeln' });
+    await anm.dateiAnsehen('src/b.txt');
+    await anm.hinweisAnmerkenVerborgen();
+
+    await anm.zeileAnklicken({ alt: 2 });
+    await anm.hinweisEntfernt('Entfernte Zeile — Anmerkung an eine Zeile im neuen Stand oder an die Datei');
+    await anm.hinweisAnmerkenSichtbar();
+    await anm.dateiAnmerkenAmHinweis();
+    await anm.dateiFeldOffenMitFokus('src/b.txt');
+    await anm.dateiFeldTextSchreiben('src/b.txt', 'ganze Datei prüfen');
+    await anm.dateiFeldSpeichern('src/b.txt');
+    await anm.dateiFeldZu('src/b.txt');
+
+    await anm.dateianmerkungenOben([{ text: 'ganze Datei prüfen', stelle: 'src/b.txt (ganze Datei)' }]);
+    const { ergebnis } = await anm.beendenUndErgebnisLesen();
+    expect(ergebnis).toContain('## 1. src/b.txt (ganze Datei)\n');
+  });
+
   test('der Knopf „Datei anmerken“ erscheint erst mit dem gezeichneten Diff', async ({ anm }) => {
     await anm.starten({ modus: 'zusammen' });
 

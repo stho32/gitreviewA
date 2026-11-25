@@ -187,6 +187,19 @@ async function pruefeDateiKnopfVerborgen(page) {
   await expect(page.locator(DATEI_KNOPF)).toBeHidden();
 }
 
+/** Der Knopf „Datei anmerken“ am Hinweis einer entfernten Zeile (R00022). */
+async function dateiAnmerkenAmHinweis(page) {
+  await page.locator('#diff .datei-anmerken-hinweis').click();
+}
+
+async function pruefeHinweisAnmerkenSichtbar(page) {
+  await expect(page.locator('#diff .anmerkung-hinweis-anmerken')).toBeVisible();
+}
+
+async function pruefeHinweisAnmerkenVerborgen(page) {
+  await expect(page.locator('#diff .anmerkung-hinweis-anmerken')).toBeHidden();
+}
+
 /** Beantwortet `GET /api/haken` mit diesem Stand — für die Sperre am „Datei anmerken“-Knopf (R00014). */
 async function hakenAntwortetMit(page, stand) {
   await page.route('**/api/haken', async route => {
@@ -516,6 +529,7 @@ module.exports = {
   zeileAnklicken, zeileDoppeltAnklicken, zeileImAbschnittAnklicken, pruefeAnmerkungenUnterImAbschnitt, pruefeAnzahlFelder, pruefeFeldtext, pruefeFeldOffenMitFokus, textSchreiben, speichern, zweimalSpeichern, pruefeFeldZu, pruefeKeinFeld, pruefeFeldmeldung,
   pruefeAnmerkungenUnter, pruefeAnzahlAnmerkungszeilen, pruefeAnmerkungszeilenSindKeineDiffzeilen,
   dateianmerkungenOben, pruefeDateianmerkungenOben, pruefeKeineDateianmerkung, anzahlDateianmerkungen, pruefeDateianmerkungUeberDenZeilen, dateiAnmerken, pruefeDateiKnopfSichtbar, pruefeDateiKnopfVerborgen, hakenAntwortetMit, pruefeDateiKnopfGesperrt, pruefeDateiKnopfBedienbar,
+  dateiAnmerkenAmHinweis, pruefeHinweisAnmerkenSichtbar, pruefeHinweisAnmerkenVerborgen,
   pruefeHinweisEntfernt, pruefeKeinHinweisEntfernt, pruefeHinweisAusserhalb, pruefeKeinHinweisAusserhalb,
   inDenDiffTabben, pfeilAbBis, taste, pruefeFokusAufZeile, anlegenAntwortetEinmal, anlegenVerzoegern, pruefeAnmerkungenBinnen,
   pruefeAnmerkungOhneHtml, sichtbarerAnmerkungstext,

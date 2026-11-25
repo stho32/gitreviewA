@@ -22,12 +22,15 @@
       rollElement: wurzelElement.querySelector('.df-sc'),
       hinweisElement: wurzelElement.querySelector('.anmerkung-hinweis'),
       dateiKnopfElement: wurzelElement.querySelector('.datei-anmerken'),
+      hinweisKnopfElement: wurzelElement.querySelector('.datei-anmerken-hinweis'),
+      hinweisKnopfZiel: wurzelElement.querySelector('.anmerkung-hinweis-anmerken'),
       dateiGrundElement: wurzelElement.querySelector('.diff-datei-grund'),
       dateiKnopfZiel: wurzelElement.querySelector('.diff-datei-anmerken'),
     };
     ansicht.rollElement.addEventListener('click', ereignis => waehleZeilePerKlick(ansicht, ereignis));
     ansicht.rollElement.addEventListener('keydown', ereignis => bedieneZeilenPerTastatur(ansicht, ereignis));
     ansicht.dateiKnopfElement.addEventListener('click', () => oeffneOderFokussiereDateiFeld(ansicht));
+    ansicht.hinweisKnopfElement.addEventListener('click', () => oeffneOderFokussiereDateiFeld(ansicht));
     document.addEventListener('diff-gezeichnet', ereignis => merkeUndZeigeAn(ansicht, ereignis.detail));
     document.addEventListener('diff-geleert', () => zeigeDateiKnopf(ansicht, false));
     document.addEventListener('haken-stand-geladen', () => aktualisiereDateiSperre(ansicht));
@@ -259,8 +262,11 @@
     return window.sichtbarerName ? window.sichtbarerName(pfad) : pfad;
   }
 
+  /** Der Hinweis über dem Diff; der Knopf „Datei anmerken“ am Hinweis erscheint nur beim Hinweis auf eine entfernte Zeile
+      (R00022: der zweite Einstieg zum Anmerken der Datei). */
   function zeigeHinweis(ansicht, text) {
     ansicht.hinweisElement.textContent = text;
+    ansicht.hinweisKnopfZiel.hidden = text !== ENTFERNT_HINWEIS;
   }
 
   /* ── Zeile wählen: Klick und Tastatur ── */
