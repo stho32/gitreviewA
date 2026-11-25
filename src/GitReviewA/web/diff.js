@@ -29,7 +29,7 @@
       `sprung`: das Ziel der gewählten Datei aus `sprung-geladen` (null, solange keine Antwort da ist); `gezeichnet`: Commit, Pfad und
       Zeilen der zuletzt gezeichneten Ansicht (samt aufgedeckten Lücken; null ohne Wahl) — daran hängt, ob ein Ziel noch gilt;
       `gewaehlteZeile`: die angeklickte Zeile neu, sonst null. */
-  const zustand = { letzteLadung: 0, datei: null, alsText: false, diffansicht: 'aenderungen', leerraum: 'beachten', zugeklappt: null, anzeige: 0, sprung: null, gezeichnet: null, gewaehlteZeile: null, anzeigeDaten: null, ganz: null, gesamt: null, aufgedeckt: {}, lueckenfehler: {}, ganzLaeuft: null };
+  const zustand = { letzteLadung: 0, datei: null, alsText: false, diffansicht: 'aenderungen', leerraum: 'beachten', zugeklappt: null, anzeige: 0, sprung: null, gezeichnet: null, gewaehlteZeile: null, anzeigeDaten: null, ganz: null, gesamt: null, aufgedeckt: {}, lueckenfehler: {}, ganzLaeuft: null, neuerInhalt: false };
 
   function init() {
     const ansicht = ansichtElemente();
@@ -152,6 +152,9 @@
     zustand.letzteLadung = ladung;
     zustand.datei = datei;
     zustand.alsText = alsText;
+    // Neuer Inhalt (Datei-, Commit-, Modus- oder Ansichtswechsel): der Diff beginnt danach oben (R00033). Das Zeichnen
+    // setzt den Bildlauf zurück — ein Neuzeichnen derselben Stelle (Lücke aufklappen) lässt ihn stehen.
+    zustand.neuerInhalt = true;
     // Neue Wahl, neue Lücken: der Zustand je Lücke lebt nur für die gezeigte Stelle (R00026).
     zustand.ganz = null;
     zustand.gesamt = null;
@@ -297,6 +300,7 @@
     if (!istAktuell()) {
       return;
     }
+    setzeBildlaufAnDenAnfang(ansicht);
     if (uebernommen) {
       if (herkunft) {
         ansicht.herkunftElement.textContent = herkunft;
@@ -977,8 +981,20 @@
     return `${zustand.datei.commit}|${zustand.datei.pfad}|${zustand.leerraum}`;
   }
 
+  /** Neuer Inhalt beginnt oben (R00033): der Diff springt bei Datei-, Commit-, Modus- und Ansichtswechsel an den Anfang.
+      `neuerInhalt` setzt `ladeDiff`; ein Neuzeichnen derselben Stelle (Lücke aufklappen) lässt den Bildlauf stehen. Der
+      Aufruf steht **nach** dem Zeichnen: der Browser stellt den Bildlauf eines ausgeblendeten Rollbereichs sonst wieder her. */
+  function setzeBildlaufAnDenAnfang(ansicht) {
+    if (!zustand.neuerInhalt) {
+      return;
+    }
+    zustand.neuerInhalt = false;
+    ansicht.rollElement.scrollTop = 0;
+  }
+
   /** `ersterBlockElement` erkennt der Empfänger wieder: ist er nicht mehr im Dokument, ist dieser Diff verworfen. */
   function meldeGezeichnet(ansicht, pfad, bereiche) {
+    setzeBildlaufAnDenAnfang(ansicht);
     const detail = {
       modus: zustand.datei ? zustand.datei.modus : null,
       commit: zustand.datei.commit,

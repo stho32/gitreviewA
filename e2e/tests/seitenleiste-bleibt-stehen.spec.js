@@ -76,3 +76,80 @@ test.describe('Schmales Fenster', () => {
     await seit.diffIstRollbereich();
   });
 });
+
+test.describe('Wahl in den Blick', () => {
+  test('j holt die gewählte Zeile gerade so weit in den Blick, der Diff beginnt oben, der Fokus steht auf der Zeile', async ({ seit }) => {
+    await seit.starten({ vorbereitung: 'Repo S' });
+    await seit.listeGanzOben();
+
+    for (let schritt = 0; schritt < 45; schritt += 1) {
+      await seit.druecke('j');
+    }
+
+    const wahl = await seit.lageDerWahl();
+    expect(wahl.pfad, 'die Wahl ist 45 Zeilen weiter').toBe('d45.txt');
+    expect(wahl.ganzImBlick, `gewählte Zeile ${wahl.pfad} im Blick`).toBe(true);
+    expect(wahl.listenVersatz, 'die Liste ist gescrollt (die erste Zeile ist nicht mehr sichtbar)').toBeGreaterThan(0);
+    expect((await seit.lage(ERSTE_ZEILE)).unten, 'erste Zeile aus dem Blick').toBeLessThan(0);
+    // Kleinste Bewegung: die Zeile sitzt genau am unteren Rand ihres Rollbereichs, nicht in der Mitte.
+    const abstand = await seit.abstandDerWahl();
+    expect(abstand.unten, `Abstand der gewählten Zeile zum unteren Rand (${abstand.unten} px)`).toBeLessThanOrEqual(1);
+    expect(wahl.diffVersatz, 'der Diff beginnt oben').toBe(0);
+    expect(wahl.seitenVersatz, 'die Seite selbst scrollt nicht').toBe(0);
+
+    await seit.fokusAufDateizeile(wahl.pfad);
+    await seit.diffZeigt(wahl.pfad);
+  });
+
+  test('„Nächste ungeprüfte“ holt die Zeile in den Blick, der Diff beginnt oben, der Fokus bleibt auf dem Knopf', async ({ seit }) => {
+    await seit.starten({ vorbereitung: 'Repo S' });
+    await seit.dateiAnsehen('lang.txt');
+    await seit.setzeDiffVersatz(1500);
+    await seit.kaestchen('d01.txt').click();
+    await seit.abgehakt('d01.txt', true);
+    await seit.listeGanzUnten();
+
+    await seit.naechsteUngepruefte();
+
+    await seit.gewaehlt('d02.txt');
+    await seit.diffZeigt('d02.txt');
+    await seit.diffOben();
+    await seit.fokusAufKnopf();
+    expect(await seit.wahlImRollbereich(), 'die gewählte Zeile ist im Blick').toBe(true);
+    await seit.keinSeitenbildlauf();
+  });
+
+  test('eine schon sichtbare Wahl scrollt die Liste nicht', async ({ seit }) => {
+    await seit.starten({ vorbereitung: 'Repo S' });
+    await seit.listeGanzOben();
+
+    await seit.druecke('j');
+    const nachErstem = (await seit.listeStand()).scrollTop;
+    await seit.druecke('j');
+
+    await seit.versatzGleich(0, nachErstem, 'Dateiliste nach dem ersten Schritt');
+    await seit.versatzGleich(nachErstem, (await seit.listeStand()).scrollTop, 'Dateiliste nach dem zweiten Schritt');
+    expect(await seit.wahlImRollbereich(), 'die gewählte Zeile ist im Blick').toBe(true);
+  });
+
+  test('der Diff springt bei Modus-, Ansichts- und Anordnungswechsel an den Anfang', async ({ seit }) => {
+    await seit.starten({ vorbereitung: 'Repo S zwei Commits' });
+    await seit.dateiAnsehen('lang.txt');
+
+    for (const wechsel of [
+      ['Modus', () => seit.modus('einzeln')],
+      ['Ansicht', () => seit.ansicht('ganz')],
+      ['Anordnung', () => seit.anordnung('nebeneinander')],
+    ]) {
+      const [name, umschalten] = wechsel;
+      await seit.dateiAnsehen('lang.txt');
+      await seit.setzeDiffVersatz(1500);
+      expect((await seit.diffStand()).scrollTop, `${name}: Vorbedingung gescrollter Diff`).toBe(1500);
+
+      await umschalten();
+
+      await seit.diffZeigt('lang.txt');
+      await seit.diffOben();
+    }
+  });
+});
