@@ -4,6 +4,11 @@
 (function (ziel) {
   'use strict';
 
+  /* Die Modus-Namen kommen aus `modus-werte.js` — eine Domänensprache (J01), keine zweite Kopie: im Browser über das Fenster,
+     unter Node per `require`. */
+  const modusWerte = typeof require === 'function' ? require('./modus-werte.js') : window.gitreviewaModusWerte;
+  const { ZUSAMMEN } = modusWerte;
+
   const ABGEHAKT = 'abgehakt';
   const UNGEPRUEFT = 'ungeprueft';
   const GESPERRT = 'gesperrt';
@@ -40,5 +45,75 @@
     return KEINE;
   }
 
-  Object.assign(ziel, { ABGEHAKT, UNGEPRUEFT, GESPERRT, KEINE, naechster });
-})(typeof module !== 'undefined' ? module.exports : window);
+  /** Zustand einer Stelle: gesperrt vor abgehakt, weil eine gesperrte Stelle nie abgehakt wird (R00014). */
+  function stelleZustand(istAbgehakt, istGesperrt) {
+    if (istGesperrt) {
+      return GESPERRT;
+    }
+    return istAbgehakt ? ABGEHAKT : UNGEPRUEFT;
+  }
+
+  /**
+   * Zustand einer Datei in „Zusammen“: sie ist abgehakt, wenn alle ihre Stellen abgehakt sind; gesperrt, wenn keine lesbare Stelle
+   * mehr offen ist (ihre offenen Stellen sind alle gesperrt, R00028); sonst ungeprüft — auch dann, wenn nur ein Teil abgehakt oder
+   * eine Stelle gesperrt ist.
+   */
+  function dateiZustand(stellen, stand) {
+    let offen = 0;
+    let gesperrt = 0;
+    for (const stelle of stellen) {
+      if (stand.istAbgehakt(stelle.commit, stelle.pfad)) {
+        continue;
+      }
+      if (stand.istGesperrt(stelle.commit, stelle.pfad)) {
+        gesperrt += 1;
+      } else {
+        offen += 1;
+      }
+    }
+    if (offen > 0) {
+      return UNGEPRUEFT;
+    }
+    return gesperrt > 0 ? GESPERRT : ABGEHAKT;
+  }
+
+  /**
+   * Einträge in der Reihenfolge der gezeigten Liste, je mit Zustand. In „Zusammen“ ist die Datei der Eintrag, in „Einzeln“ die Stelle
+   * (Commit und Datei); `commit` ist dort der gezeigte Commit. `dateien` ist die gezeigte Liste — ausgeblendete Dateien stehen nicht
+   * darin und sind deshalb keine Einträge. `stand` fragt je Stelle (Commit und Datei) `istAbgehakt` und `istGesperrt`.
+   */
+  function eintraege(modus, dateien, commit, stand) {
+    if (modus === ZUSAMMEN) {
+      return dateien.map(datei => ({ art: 'datei', pfad: datei.pfad, zustand: dateiZustand(datei.stellen, stand) }));
+    }
+    return dateien.map(datei => ({
+      art: 'stelle',
+      commit,
+      pfad: datei.pfad,
+      zustand: stelleZustand(stand.istAbgehakt(commit, datei.pfad), stand.istGesperrt(commit, datei.pfad)),
+    }));
+  }
+
+  /** Der Text neben dem Knopf, wenn keine ungeprüfte Stelle mehr erreichbar ist. */
+  function meldung({ nichtLesbar, ausgeblendet }) {
+    const zusatz = [];
+    if (nichtLesbar > 0) {
+      zusatz.push(`${nichtLesbar} nicht lesbar`);
+    }
+    if (ausgeblendet > 0) {
+      zusatz.push(`${ausgeblendet} ausgeblendet`);
+    }
+    if (zusatz.length === 0) {
+      return 'Alles abgehakt';
+    }
+    const kopf = nichtLesbar === 0 ? 'Alles Sichtbare abgehakt' : 'Alles Lesbare abgehakt';
+    return `${kopf}, ${zusatz.join(', ')}`;
+  }
+
+  const api = { ABGEHAKT, UNGEPRUEFT, GESPERRT, KEINE, naechster, eintraege, meldung };
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = api;
+  } else {
+    ziel.gitreviewaNaechsteWerte = api;
+  }
+})(typeof window !== 'undefined' ? window : globalThis);
