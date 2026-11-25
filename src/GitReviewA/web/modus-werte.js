@@ -25,6 +25,23 @@
     return `${anzahl} · ${hashes} · ${beschriftung}`;
   }
 
+  const KETTE_UNBEKANNT = 'Kette wird geprüft …';
+  const KETTE_NICHT_LESBAR = 'Kette nicht lesbar';
+
+  /**
+   * Beschriftung der zugeklappten Commit-Zeile: die Antwort von `GET /api/zusammen` allein sagt, ob die Auswahl eine lückenlose
+   * Kette bildet. Vor der Antwort und nach einem Fehler steht dort nie die Behauptung „lückenlos · netto“ (R00012, Kriterien 2/4).
+   */
+  function kettenbeschriftung(stand, istGescheitert) {
+    if (stand) {
+      return stand.beschriftung;
+    }
+    if (istGescheitert) {
+      return KETTE_NICHT_LESBAR;
+    }
+    return KETTE_UNBEKANNT;
+  }
+
   /**
    * Wahl beim Moduswechsel: kommt die bisherige Wahl in der neuen Sicht vor, bleibt sie; sonst die erste Wahl der neuen Sicht.
    * `wahl` ist `{ pfad }`, `sicht` eine Liste von Einträgen mit `pfad`; `null`, wenn die neue Sicht leer ist.
@@ -39,7 +56,7 @@
     return sicht[0];
   }
 
-  const api = { ZUSAMMEN, EINZELN, anzahlText, kopfZahlen, commitZeileText, wahlUebernehmen };
+  const api = { ZUSAMMEN, EINZELN, anzahlText, kopfZahlen, commitZeileText, kettenbeschriftung, wahlUebernehmen };
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   } else {

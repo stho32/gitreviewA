@@ -72,6 +72,36 @@ async function pruefeCommitZeileZusammenfassung(page, text) {
   await expect(commitZeileZusammenfassung(page)).toHaveText(text);
 }
 
+/** Die zugeklappte Commit-Zeile enthält `text` (wartet, bis es so weit ist). */
+async function pruefeCommitZeileEnthaelt(page, text) {
+  await expect(commitZeileZusammenfassung(page)).toContainText(text);
+}
+
+/** Die zugeklappte Commit-Zeile enthält `text` nicht — erst nach einer Positivprüfung aufrufen, sonst gilt es vor dem Laden. */
+async function pruefeCommitZeileEnthaeltNicht(page, text) {
+  await expect(commitZeileZusammenfassung(page)).not.toContainText(text);
+}
+
+/** Wartet, bis die Commit-Zeile die Kürzel der Commits nennt (die Commit-Leiste ist geladen), und liefert ihren Text. */
+async function commitZeileText(page) {
+  return commitZeileZusammenfassung(page).textContent();
+}
+
+/** Hält die Antwort auf die Zusammen-Ansicht `ms` zurück; die Commit-Zeile steht dann, bevor die Kette bekannt ist. */
+async function zusammenAntwortVerzoegern(page, ms) {
+  await page.route('**/api/zusammen', async route => {
+    await new Promise(weiter => setTimeout(weiter, ms));
+    await route.continue();
+  });
+}
+
+/** Beantwortet die Zusammen-Ansicht mit `status` und leerem Rumpf — die Kette bleibt unbekannt. */
+async function zusammenAntwortScheitert(page, status) {
+  await page.route('**/api/zusammen', async route => {
+    await route.fulfill({ status, contentType: 'application/json', body: '{"meldung":"Zusammen-Ansicht konnte nicht gelesen werden"}' });
+  });
+}
+
 /** Lädt die Seite neu; das Neuladen beginnt im Standard der Seite, ein Startmodus (Init-Skript) gilt weiter. */
 async function neuLaden(page, modus = null) {
   await page.reload();
@@ -350,6 +380,7 @@ module.exports = {
   dateilisteLesen, dateizeilen, aufDateizeilenWarten, dateiSumme, dateilistenMeldung, darstellungWaehlen, dateiWaehlen, gewaehlteDateien,
   dateiwahlenSammeln, gesammelteDateiwahlen, formatierungsElementeZaehlen,
   beendenKnopf, beendenBetaetigen, beendetMeldung, beendenFehler, beendenScheitertMit, modusWaehlen, neuLaden,
-  kopfZahlen, fortschrittZaehler, commitZeileZusammenfassung, pruefeKopfZahlen, pruefeFortschritt, pruefeCommitZeileZusammenfassung,
+  kopfZahlen, fortschrittZaehler, commitZeileZusammenfassung, commitZeileText, pruefeKopfZahlen, pruefeFortschritt, pruefeCommitZeileZusammenfassung,
+  pruefeCommitZeileEnthaelt, pruefeCommitZeileEnthaeltNicht, zusammenAntwortVerzoegern, zusammenAntwortScheitert,
   ergebnisKopierenKnopf, ergebnisKopierenBetaetigen, kopierenStatus, ergebnisAntwortZurueckhalten,
 };

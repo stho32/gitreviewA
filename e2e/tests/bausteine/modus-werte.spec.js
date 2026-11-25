@@ -2,7 +2,7 @@
 // Bausteintests (ohne Browser) der reinen Modus-Rechnung (R00012): Zählzeile, Zusammenfassung der Commit-Zeile, Wahl beim Moduswechsel.
 const { test, expect } = require('@playwright/test');
 const {
-  ZUSAMMEN, EINZELN, anzahlText, kopfZahlen, commitZeileText, wahlUebernehmen,
+  ZUSAMMEN, EINZELN, anzahlText, kopfZahlen, commitZeileText, kettenbeschriftung, wahlUebernehmen,
 } = require('../../../src/GitReviewA/web/modus-werte.js');
 
 test.describe('Baustein Modus-Werte', () => {
@@ -27,6 +27,16 @@ test.describe('Baustein Modus-Werte', () => {
     expect(commitZeileText(3, 'abc1234', 'def5678', 'lückenlos · netto')).toBe('3 Commits · abc1234..def5678 · lückenlos · netto');
     expect(commitZeileText(1, 'abc1234', 'abc1234', 'lückenlos · netto')).toBe('1 Commit · abc1234 · lückenlos · netto');
     expect(commitZeileText(2, 'abc1234', 'def5678', 'keine lückenlose Kette · je Commit')).toBe('2 Commits · abc1234..def5678 · keine lückenlose Kette · je Commit');
+  });
+
+  test('soll die Kette nur nennen, wenn die Antwort auf /api/zusammen da ist (B1, Kriterien 2 und 4)', () => {
+    const stand = { beschriftung: 'keine lückenlose Kette · je Commit' };
+
+    expect(kettenbeschriftung(stand, false)).toBe('keine lückenlose Kette · je Commit');
+    expect(kettenbeschriftung(null, false)).not.toContain('lückenlos');
+    expect(kettenbeschriftung(null, false)).toContain('geprüft');
+    expect(kettenbeschriftung(null, true)).not.toContain('lückenlos');
+    expect(kettenbeschriftung(null, true)).toBe('Kette nicht lesbar');
   });
 
   test('soll die Wahl beim Moduswechsel übernehmen, wenn sie in der neuen Sicht vorkommt (R00012, Kriterium 5)', () => {

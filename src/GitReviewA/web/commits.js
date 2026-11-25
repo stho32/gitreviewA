@@ -5,11 +5,34 @@
 (function () {
   'use strict';
 
-  const zustand = { commits: [], gewaehlt: null, zusammen: null, haken: null };
+  const zustand = { commits: [], gewaehlt: null, zusammen: null, zusammenFehler: false, haken: null };
 
   async function init() {
     const statusElement = document.getElementById('commit-status');
     const listeElement = document.getElementById('commit-liste');
+    // Vor dem Warten auf die Commits angemeldet: die Zusammen-Ansicht und der Hakenstand können antworten, während die Leiste lädt.
+    document.addEventListener('modus-gewechselt', () => {
+      zeigeModus();
+      zeichneWaehler();
+    });
+    document.addEventListener('zusammen-geladen', ereignis => {
+      zustand.zusammen = ereignis.detail;
+      zustand.zusammenFehler = false;
+      zeichneZusammenfassung();
+      zeichneKopfZahlen();
+    });
+    document.addEventListener('zusammen-fehler', () => {
+      zustand.zusammenFehler = true;
+      zeichneZusammenfassung();
+    });
+    document.addEventListener('haken-stand-geladen', ereignis => {
+      zustand.haken = ereignis.detail;
+      zeichneWaehler();
+    });
+    document.addEventListener('dateiliste-gezeichnet', ereignis => {
+      zustand.dateienAnzahl = ereignis.detail.anzahl;
+      zeichneKopfZahlen();
+    });
     let commits;
     try {
       commits = await commitsLaden();
@@ -26,23 +49,6 @@
     zeichneKopfZahlen();
     zeichneZusammenfassung();
     baueWaehler();
-    document.addEventListener('modus-gewechselt', () => {
-      zeigeModus();
-      zeichneWaehler();
-    });
-    document.addEventListener('zusammen-geladen', ereignis => {
-      zustand.zusammen = ereignis.detail;
-      zeichneZusammenfassung();
-      zeichneKopfZahlen();
-    });
-    document.addEventListener('haken-stand-geladen', ereignis => {
-      zustand.haken = ereignis.detail;
-      zeichneWaehler();
-    });
-    document.addEventListener('dateiliste-gezeichnet', ereignis => {
-      zustand.dateienAnzahl = ereignis.detail.anzahl;
-      zeichneKopfZahlen();
-    });
     zeigeModus();
   }
 
@@ -180,7 +186,7 @@
       element.textContent = 'Keine Commits';
       return;
     }
-    const beschriftung = zustand.zusammen ? zustand.zusammen.beschriftung : 'lückenlos · netto';
+    const beschriftung = window.gitreviewaModusWerte.kettenbeschriftung(zustand.zusammen, zustand.zusammenFehler);
     const erster = zustand.commits[0].kurzHash;
     const letzter = zustand.commits[zustand.commits.length - 1].kurzHash;
     element.textContent = window.gitreviewaModusWerte.commitZeileText(zustand.commits.length, erster, letzter, beschriftung);
