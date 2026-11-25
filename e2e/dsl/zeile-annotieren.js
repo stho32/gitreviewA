@@ -23,6 +23,7 @@ const VORBEREITUNGEN = {
   'Repo B': { anlegen: repos.repoMitBidiPfad, commits: ['b'] },
   'Repo I': { anlegen: repos.repoMitUnsichtbarenNamen, commits: ['i'] },
   'Repo Z': { anlegen: repos.repoZ, commits: ['z1', 'z2', 'z3'] },
+  'Repo R (Bereich)': { anlegen: repos.repoZeilenbereich, commits: ['r2', 'r1'] },
   'Repo mit Rumpf': { anlegen: repos.repoMitRumpf, commits: ['p', 'q', 'r'] },
 };
 
@@ -61,6 +62,9 @@ function annotierSprache(gr, page) {
 
   /** Name des „Datei anmerken“-Felds (R00022): dieselbe Stelle wie im Ergebnis, `<Datei> (ganze Datei)`. */
   const dateiFeldname = datei => `Anmerkung zu ${datei} (ganze Datei)`;
+
+  /** Name des Bereichsfelds (R00031): „Anmerkung zu <Datei>, Zeile <von>–<bis>“. */
+  const bereichFeldname = (datei, von, bis) => `Anmerkung zu ${datei}, Zeile ${von}–${bis}`;
 
   /** Klick auf die Zeile, Text ins Feld, „Speichern“; danach ist das Feld zu. */
   async function annotieren(datei, neu, text) {
@@ -103,6 +107,48 @@ function annotierSprache(gr, page) {
 
     annotieren,
     annotierenImAbschnitt,
+
+    /* ── Bereich (R00031) ── */
+    bereichFeldname,
+    bereichWaehlen: (von, bis) => anmerkungSeite.bereichWaehlen(page, von, bis),
+    bereichZiehen: (von, bis) => anmerkungSeite.bereichZiehen(page, von, bis),
+    markiert: nummern => anmerkungSeite.pruefeMarkiert(page, nummern),
+    nichtMarkiert: () => anmerkungSeite.pruefeKeineMarkierung(page),
+    markierungNichtNurFarbe: neu => anmerkungSeite.pruefeMarkierungNichtNurFarbe(page, neu),
+    hinweis: text => anmerkungSeite.pruefeHinweis(page, text),
+    keinHinweis: () => anmerkungSeite.pruefeKeinHinweis(page),
+    /** Bereich markieren, Text ins Feld, „Speichern“; danach ist das Feld zu. */
+    bereichAnnotieren: async (datei, von, bis, text) => {
+      await anmerkungSeite.bereichWaehlen(page, von, bis);
+      await anmerkungSeite.textSchreiben(page, bereichFeldname(datei, von, bis), text);
+      await anmerkungSeite.speichern(page, bereichFeldname(datei, von, bis));
+      await anmerkungSeite.pruefeFeldZu(page, bereichFeldname(datei, von, bis));
+    },
+    /** Ein Neuzeichnen desselben Diffs anstoßen, ohne den Fokus zu verschieben: der Leerraum-Vergleich liefert dieselben Zeilen,
+        der Schalter wird programmatisch betätigt (ein Klick mit der Maus nähme dem offenen Feld den Fokus). */
+    neuzeichnen: async () => {
+      await page.evaluate(() => {
+        window.__zeichnungen = 0;
+        document.addEventListener('diff-gezeichnet', () => { window.__zeichnungen += 1; });
+      });
+      await page.evaluate(() => {
+        const schalter = document.querySelector('#diff .leerraum-schalter');
+        schalter.checked = !schalter.checked;
+        schalter.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      await page.waitForFunction(() => window.__zeichnungen > 0);
+    },
+    /** Das offene Bereichsfeld hat Fokus und ist leer (R00031). */
+    bereichFeldOffenMitFokus: (datei, von, bis) => anmerkungSeite.pruefeFeldOffenMitFokus(page, bereichFeldname(datei, von, bis)),
+    /** `erwartet`: Texte der Bereichsanmerkungen unter der Zeile `zielNeu`, je mit der Stelle `<datei>:<von>-<bis>`. */
+    bereichAnmerkungenUnter: (datei, zielNeu, von, bis, texte) =>
+      anmerkungSeite.pruefeAnmerkungenUnter(page, { neu: zielNeu }, texte.map(text => ({ text, stelle: `${datei}:${von}-${bis}` }))),
+    /** Einen Bereich über die Schnittstelle anlegen (wie `curl`), am Commit `commit` mit vollem Hash. */
+    bereichUeberDieSchnittstelleAnlegen: async (commit, datei, von, bis, text) => {
+      const antwort = await gr.anmerkungAnlegen(lauf, { commit: hash(commit), datei, von, bis, text });
+      expect(antwort.status, `Anlegen ${datei}:${von}-${bis}`).toBe(201);
+      return antwort;
+    },
     zeileAnklicken: ziel => anmerkungSeite.zeileAnklicken(page, ziel),
     zeileDoppeltAnklicken: (ziel, zelle) => anmerkungSeite.zeileDoppeltAnklicken(page, ziel, zelle),
     anzahlFelder: (datei, neu, anzahl) => anmerkungSeite.pruefeAnzahlFelder(page, feldname(datei, neu), anzahl),

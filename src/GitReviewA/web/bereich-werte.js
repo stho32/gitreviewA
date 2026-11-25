@@ -12,12 +12,13 @@
 
   /** Die gezeichneten Zeilen `{art, alt, neu, abschnitt}` in Reihenfolge, der Index des Ankers (oder `null`) und der des Ziels,
       dazu ob beim Klick Text ausgewählt war → `{art:'bereich', von, bis}` | `{art:'zeile', neu}` | `{art:'entfernt', hinweis}` |
-      `{art:'keines', grund}`. `abschnitt` vergibt die Oberfläche (Hunk und Commit); hier wird nur verglichen. */
-  function bereichsziel(zeilen, ankerStelle, zielStelle, textAusgewaehlt) {
+      `{art:'keines', grund}`. `abschnitt` vergibt die Oberfläche (Hunk und Commit); hier wird nur verglichen.
+      `zielZeile` überschreibt die Zeile am Ziel: zweispaltig entscheidet die angeklickte Zelle über ihre Art (R00023). */
+  function bereichsziel(zeilen, ankerStelle, zielStelle, textAusgewaehlt, zielZeile) {
     if (textAusgewaehlt) {
       return keines();
     }
-    const ziel = zeilen[zielStelle];
+    const ziel = zielZeile || zeilen[zielStelle];
     if (!ziel || !istGrenze(ziel)) {
       return istEntfernt(ziel) ? entfernt() : keines();
     }

@@ -182,6 +182,10 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .anordnung-wahl>button+button{border-left:1px solid var(--kd-line-strong)}
 .anordnung-wahl>button[aria-pressed="true"]{background:var(--kd-accent);color:var(--kd-on-accent)}
 .anordnung-wahl>button:focus-visible{outline:2px solid var(--kd-accent);outline-offset:2px}
+/* Bereichsmarkierung (R00031): die Zeilen eines Bereichs sind hervorgehoben — nicht allein durch Farbe: die Nummernspalten
+   tragen eine Fläche und die erste Zelle einen senkrechten Balken, damit die Markierung auch ohne Farbwahrnehmung sichtbar ist. */
+.dz tr.bereich>td.n{background:var(--kd-accent-weak)}
+.dz tr.bereich>td:first-child{box-shadow:inset 3px 0 0 var(--kd-accent)}
 /* Zeilenanmerkungen (R00010): Anmerkungs- und Feldzeilen unter ihrer Diff-Zeile, ohne Zeilenklassen der Färbung; Formen nach kd-base.css (.inp, .btn) */
 .dz tr[data-art]:focus{outline:2px solid var(--kd-accent);outline-offset:-2px}
 .dz .anm-zelle{padding:var(--kd-s2) var(--kd-s3) var(--kd-s2) calc(var(--kd-s3) + 110px);font:13px/1.45 var(--kd-font);background:var(--kd-sunken);border-top:1px solid var(--kd-line);border-bottom:1px solid var(--kd-line)}

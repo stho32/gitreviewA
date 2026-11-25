@@ -1,7 +1,9 @@
-/* gitreviewA — Anmerkungen (R00010, R00018, R00019): Klick oder Enter auf eine Diff-Zeile öffnet unter ihr ein Notizfeld, „Speichern“ legt die Anmerkung
-   über `POST /api/anmerkungen` an; „Ändern“ im Anmerkungskopf öffnet ein Feld mit dem vorhandenen Text und schickt den neuen an
+/* gitreviewA — Anmerkungen (R00010, R00018, R00019, R00031): Klick oder Enter auf eine Diff-Zeile öffnet unter ihr ein Notizfeld, „Speichern“ legt die Anmerkung
+   über `POST /api/anmerkungen` an; ein Umschalt-Klick oder ein Ziehen über die Zeilennummern markiert einen Bereich `von..bis` (R00031) und öffnet das Feld unter
+   `bis` — die Rechnung dazu steht in `bereich-werte.js`. „Ändern“ im Anmerkungskopf öffnet ein Feld mit dem vorhandenen Text und schickt den neuen an
    `POST /api/anmerkungen/<nummer>`; „Löschen“ entfernt sie über `POST /api/anmerkungen/<nummer>/loeschen`. Nach jedem Zeichnen eines Diffs (`diff-gezeichnet`)
-   stehen die Anmerkungen unter ihren Zeilen. Quelle der Wahrheit ist der Server (`GET /api/anmerkungen`). Anmerkungstext und Pfade sind fremder Text: nur textContent und Attributwerte. */
+   stehen die Anmerkungen unter ihren Zeilen und die Zeilen der Bereiche sind markiert. Quelle der Wahrheit ist der Server (`GET /api/anmerkungen`).
+   Anmerkungstext und Pfade sind fremder Text: nur textContent und Attributwerte. */
 (function () {
   'use strict';
 
@@ -15,7 +17,7 @@
       `fokusZeileElement`: die Diff-Zeile mit dem wandernden tabindex; `aenderungen`: offene Änderungsfelder; `loeschungen`:
       Nummern, deren Löschung gerade läuft (ihr Knopf bleibt auch nach einem Neuzeichnen gesperrt); `dateiFeld`: das offene
       „Datei anmerken“-Feld (ohne Zeile) oder null. */
-  const zustand = { anmerkungen: [], ladung: 0, stelle: null, gezeichnet: null, fokusZeileElement: null, aenderungen: [], loeschungen: [], dateiFeld: null };
+  const zustand = { anmerkungen: [], ladung: 0, stelle: null, gezeichnet: null, fokusZeileElement: null, aenderungen: [], loeschungen: [], dateiFeld: null, zeilen: [], ankerStelle: null, auswahl: null, neuesFeld: null, ziehen: null, ziehenBehandelt: false, fokussiert: null };
 
   function init() {
     const wurzelElement = document.getElementById('diff');
@@ -31,6 +33,12 @@
     };
     ansicht.rollElement.addEventListener('click', ereignis => waehleZeilePerKlick(ansicht, ereignis));
     ansicht.rollElement.addEventListener('keydown', ereignis => bedieneZeilenPerTastatur(ansicht, ereignis));
+    ansicht.rollElement.addEventListener('mousedown', ereignis => beginneZiehen(ansicht, ereignis));
+    ansicht.rollElement.addEventListener('mousemove', ereignis => zieheWeiter(ansicht, ereignis));
+    document.addEventListener('mouseup', () => beendeZiehen(ansicht));
+    // Das zuletzt fokussierte Element: ein offenes Feld, das beim Neuzeichnen aus dem Dokument genommen wird, bekommt den
+    // Fokus danach zurück (Lehre #23); hat der Mensch inzwischen woanders hineingeklickt, bleibt der Fokus dort.
+    document.addEventListener('focusin', ereignis => { zustand.fokussiert = ereignis.target; });
     ansicht.dateiKnopfElement.addEventListener('click', () => oeffneOderFokussiereDateiFeld(ansicht));
     ansicht.hinweisKnopfElement.addEventListener('click', () => oeffneOderFokussiereDateiFeld(ansicht));
     document.addEventListener('diff-gezeichnet', ereignis => merkeUndZeigeAn(ansicht, ereignis.detail));
@@ -74,9 +82,18 @@
   }
 
   function merkeUndZeigeAn(ansicht, gezeichnet) {
+    // Die Stelle, nicht der gezeichnete Inhalt: ein Neuzeichnen desselben Diffs (Leerraum, Färbung, Blockgrenze) leert
+    // `gezeichnet` über `diff-geleert` und darf Anker und Auswahl nicht wegnehmen (R00031, Lehre #23).
+    const vorher = zustand.stelle;
+    const istNeueStelle = !vorher || vorher.commit !== gezeichnet.commit || vorher.pfad !== gezeichnet.pfad;
     zustand.gezeichnet = gezeichnet;
     zustand.stelle = { commit: gezeichnet.commit, pfad: gezeichnet.pfad };
     zustand.fokusZeileElement = null;
+    zustand.zeilen = zeilenDerAnsicht(gezeichnet);
+    if (istNeueStelle) {
+      zustand.ankerStelle = null;
+      zustand.auswahl = null;
+    }
     zeigeDateiKnopf(ansicht, true);
     zeigeAnmerkungen(ansicht);
   }
@@ -127,6 +144,8 @@
       }
       haengeAenderungsfelderAn(ansicht);
     }
+    haengeNeuesFeldAn(ansicht);
+    markiereBereiche(ansicht);
     zeichneDateikopf(ansicht);
   }
 
@@ -304,13 +323,33 @@
     return kopfElement;
   }
 
-  /** Stelle der Anmerkung wie im Ergebnis: `<Datei>:<Zeile>` oder `<Datei> (ganze Datei)`. */
+  /** Stelle der Anmerkung wie im Ergebnis: `<Datei>:<von>-<bis>` (R00031), `<Datei>:<Zeile>` oder `<Datei> (ganze Datei)`. */
   function stelleDer(anmerkung) {
-    const pfad = sichtbarerPfad(anmerkung.datei);
-    if (anmerkung.zeile === null) {
+    return stelleDesZiels(anmerkung);
+  }
+
+  /** Die Stelle eines Ziels wie im Ergebnis und im Feldnamen: Bereich, Zeile oder ganze Datei. */
+  function stelleDesZiels(ziel) {
+    const pfad = sichtbarerPfad(ziel.datei);
+    if (Number.isInteger(ziel.von) && Number.isInteger(ziel.bis)) {
+      return `${pfad}:${ziel.von}-${ziel.bis}`;
+    }
+    if (ziel.zeile === null || ziel.zeile === undefined) {
       return `${pfad} (ganze Datei)`;
     }
-    return `${pfad}:${anmerkung.zeile}`;
+    return `${pfad}:${ziel.zeile}`;
+  }
+
+  /** Der Name des Notizfelds: „Anmerkung zu <Datei>, Zeile <n>“ bzw. „… Zeile <von>–<bis>“ (R00031), ohne Zeile die ganze Datei. */
+  function feldnameDesZiels(ziel) {
+    const pfad = sichtbarerPfad(ziel.datei);
+    if (Number.isInteger(ziel.von) && Number.isInteger(ziel.bis)) {
+      return `Anmerkung zu ${pfad}, Zeile ${ziel.von}–${ziel.bis}`;
+    }
+    if (ziel.zeile === null || ziel.zeile === undefined) {
+      return feldnameDerDatei(ziel.datei);
+    }
+    return `Anmerkung zu ${pfad}, Zeile ${ziel.zeile}`;
   }
 
   function ausserhalbElement(hinweis) {
@@ -334,28 +373,181 @@
     ansicht.hinweisKnopfZiel.hidden = text !== ENTFERNT_HINWEIS;
   }
 
+  /* ── Bereich (R00031): gezeichnete Zeilen, Auswahl, Markierung ── */
+
+  /** Die gezeichneten Diff-Zeilen in Reihenfolge: `{art, alt, neu, commit, abschnitt, element}`. Der Abschnittsschlüssel steigt
+      an jedem Commit-Abschnitt und an jedem Abschnittskopf (`@@`) — die Bereichsregel vergleicht ihn nur (B3001). Der Commit
+      kommt aus dem umgebenden `.diff-abschnitt` („Zusammen“ ohne Kette), sonst aus der Ansicht. */
+  function zeilenDerAnsicht(gezeichnet) {
+    const zeilen = [];
+    let abschnitt = 0;
+    let letzterAbschnitt = null;
+    for (const element of gezeichnet.bereichElement.querySelectorAll(DIFFZEILE)) {
+      const abschnittselement = element.closest('.diff-abschnitt');
+      if (abschnittselement !== letzterAbschnitt) {
+        abschnitt += 1;
+        letzterAbschnitt = abschnittselement;
+      }
+      const art = element.dataset.art;
+      if (art === 'kopf') {
+        abschnitt += 1;
+      }
+      const commit = abschnittselement && abschnittselement.dataset.commit ? abschnittselement.dataset.commit : gezeichnet.commit;
+      zeilen.push({ art, alt: nummerOderNull(element.dataset.alt), neu: nummerOderNull(element.dataset.neu), commit, abschnitt, element });
+    }
+    return zeilen;
+  }
+
+  /** Der Index der Zeile in der gezeichneten Folge; -1, wenn sie nicht dazu gehört. */
+  function stelleVonElement(zeileElement) {
+    return zustand.zeilen.findIndex(zeile => zeile.element === zeileElement);
+  }
+
+  /** Die laufende Auswahl (`{art:'bereich', von, bis}`) oder null; sie ist die Aussage über die markierten Zeilen. */
+  function setzeAuswahl(ansicht, gewaehlt) {
+    const istBereich = gewaehlt !== null && gewaehlt.art === 'bereich';
+    zustand.auswahl = istBereich ? gewaehlt : null;
+    markiereBereiche(ansicht);
+  }
+
+  /** Markiert die Zeilen der laufenden Auswahl und der gespeicherten Bereichsanmerkungen, je Commit getrennt: eine Anmerkung
+      erscheint nie in einem anderen Commit, auch nicht bei denselben Nummern (R00031). Die Markierung ist nicht allein Farbe
+      (eigene Klasse mit Balken, `gitreviewa.css`). */
+  function markiereBereiche(ansicht) {
+    for (const zeile of zustand.zeilen) {
+      zeile.element.classList.remove('bereich');
+    }
+    const gezeichnet = zustand.gezeichnet;
+    if (!gezeichnet || zustand.zeilen.length === 0) {
+      return;
+    }
+    const bereiche = [];
+    if (zustand.auswahl) {
+      const ende = zustand.zeilen.find(zeile => zeile.neu === zustand.auswahl.bis);
+      bereiche.push({ commit: ende ? ende.commit : gezeichnet.commit, von: zustand.auswahl.von, bis: zustand.auswahl.bis });
+    }
+    for (const anmerkung of zustand.anmerkungen) {
+      if (anmerkung.datei === gezeichnet.pfad && Number.isInteger(anmerkung.von) && Number.isInteger(anmerkung.bis)) {
+        bereiche.push({ commit: anmerkung.commit, von: anmerkung.von, bis: anmerkung.bis });
+      }
+    }
+    if (bereiche.length === 0) {
+      return;
+    }
+    const commits = new Set(bereiche.map(bereich => bereich.commit));
+    for (const commit of commits) {
+      const zeilenDesCommits = zustand.zeilen.filter(zeile => zeile.commit === commit);
+      const stand = bereichsstand(zeilenDesCommits, bereiche.filter(bereich => bereich.commit === commit));
+      for (const zeile of zeilenDesCommits) {
+        if (stand.has(zeile.neu)) {
+          zeile.element.classList.add('bereich');
+        }
+      }
+    }
+  }
+
+  /* ── Ziehen über die Zeilennummern (R00031) ── */
+
+  /** Ein Druck auf eine Nummernzelle beginnt ein Ziehen; erst eine Bewegung erweitert (sonst bleibt es der Klick). */
+  function beginneZiehen(ansicht, ereignis) {
+    if (ereignis.button !== 0) {
+      return;
+    }
+    const zelle = ereignis.target.closest('td');
+    const zeileElement = ereignis.target.closest(DIFFZEILE);
+    const istNummernzelle = zelle !== null && zelle.classList.contains('n');
+    if (!zeileElement || !istNummernzelle) {
+      return;
+    }
+    const stelle = stelleVonElement(zeileElement);
+    if (stelle < 0) {
+      return;
+    }
+    ereignis.preventDefault();
+    zustand.ziehen = { ankerStelle: stelle, bewegt: false };
+  }
+
+  /** Über einer anderen Zeile desselben Abschnitts wächst der Bereich; die Markierung folgt dem Zug. */
+  function zieheWeiter(ansicht, ereignis) {
+    if (!zustand.ziehen) {
+      return;
+    }
+    const zeileElement = ereignis.target.closest(DIFFZEILE);
+    if (!zeileElement) {
+      return;
+    }
+    const zielStelle = stelleVonElement(zeileElement);
+    if (zielStelle < 0) {
+      return;
+    }
+    const ziel = zielDerZeile(zeileElement, ereignis.target);
+    const gewaehlt = bereichsziel(zustand.zeilen, zustand.ziehen.ankerStelle, zielStelle, false, { art: ziel.art, neu: ziel.neu, abschnitt: zustand.zeilen[zielStelle].abschnitt });
+    zustand.ziehen.bewegt = true;
+    zeigeHinweis(ansicht, gewaehlt.art === 'keines' ? gewaehlt.grund : '');
+    setzeAuswahl(ansicht, gewaehlt);
+  }
+
+  /** Am Ende des Zugs öffnet das Feld unter `bis`; der Klick danach wird nicht mehr als Zeilenklick gewertet. */
+  function beendeZiehen(ansicht) {
+    const ziehen = zustand.ziehen;
+    if (!ziehen) {
+      return;
+    }
+    zustand.ziehen = null;
+    if (!ziehen.bewegt) {
+      return;
+    }
+    zustand.ziehenBehandelt = true;
+    if (zustand.auswahl) {
+      oeffneBereichsfeld(ansicht, zustand.auswahl);
+    }
+  }
+
   /* ── Zeile wählen: Klick und Tastatur ── */
 
   function waehleZeilePerKlick(ansicht, ereignis) {
+    if (zustand.ziehenBehandelt) {
+      zustand.ziehenBehandelt = false;
+      return;
+    }
     const zeileElement = ereignis.target.closest(DIFFZEILE);
     if (!zeileElement) {
       return;
     }
     const textIstAusgewaehlt = window.getSelection().toString() !== '';
-    waehleZeile(ansicht, zeileElement, textIstAusgewaehlt, ereignis.target);
+    waehleZeile(ansicht, zeileElement, textIstAusgewaehlt, ereignis.target, ereignis.shiftKey);
   }
 
-  function waehleZeile(ansicht, zeileElement, textIstAusgewaehlt, geklickt) {
+  /** Ein Klick setzt den Anker und öffnet das Feld für eine Zeile; Umschalt-Klick oder Ziehen erweitert auf den Bereich
+      `von..bis` und öffnet das Feld unter `bis` (R00031). Über eine Abschnitts- oder Commit-Grenze entsteht kein Bereich,
+      die Oberfläche sagt es; eine entfernte Zeile ist keine Grenze und öffnet nichts. */
+  function waehleZeile(ansicht, zeileElement, textIstAusgewaehlt, geklickt, erweitern) {
     zeigeHinweis(ansicht, '');
-    const ziel = zeilenziel(zielDerZeile(zeileElement, geklickt), textIstAusgewaehlt);
-    if (ziel.art === 'entfernt') {
-      zeigeHinweis(ansicht, ziel.hinweis);
+    const zielStelle = stelleVonElement(zeileElement);
+    if (zielStelle < 0) {
       return;
     }
-    if (ziel.art === 'annotierbar') {
-      setzeZeilenfokus(zeileElement, false);
-      oeffneOderFokussiereFeld(ansicht, zeileElement, ziel.neu);
+    const ziel = zielDerZeile(zeileElement, geklickt);
+    const ankerStelle = erweitern ? zustand.ankerStelle : null;
+    const zielZeile = { art: ziel.art, neu: ziel.neu, abschnitt: zustand.zeilen[zielStelle].abschnitt };
+    const gewaehlt = bereichsziel(zustand.zeilen, ankerStelle, zielStelle, textIstAusgewaehlt, zielZeile);
+    if (gewaehlt.art === 'keines') {
+      zeigeHinweis(ansicht, gewaehlt.grund);
+      return;
     }
+    if (gewaehlt.art === 'entfernt') {
+      zeigeHinweis(ansicht, gewaehlt.hinweis);
+      return;
+    }
+    zustand.ankerStelle = zielStelle;
+    if (gewaehlt.art === 'bereich') {
+      setzeAuswahl(ansicht, gewaehlt);
+      oeffneBereichsfeld(ansicht, gewaehlt);
+      return;
+    }
+    setzeAuswahl(ansicht, null);
+    setzeZeilenfokus(zeileElement, false);
+    oeffneOderFokussiereFeld(ansicht, zeileElement, gewaehlt);
   }
 
   /** Die Zeile, an der eine Anmerkung haftet (R00023): nur in der zweispaltigen Tabelle entscheidet die angeklickte Zelle — die neue
@@ -399,7 +591,7 @@
     }
     if (ereignis.key === 'Enter' && zeileElement) {
       ereignis.preventDefault();
-      waehleZeile(ansicht, zeileElement, false);
+      waehleZeile(ansicht, zeileElement, false, zeileElement, false);
     }
   }
 
@@ -433,13 +625,31 @@
   /* ── Notizfeld: öffnen, speichern, abbrechen ── */
 
   /** Je Zeile höchstens ein offenes Feld: ein weiterer Klick oder Doppelklick gibt dem offenen Feld den Fokus. */
-  function oeffneOderFokussiereFeld(ansicht, zeileElement, nummerNeu) {
+  function oeffneOderFokussiereFeld(ansicht, zeileElement, gewaehlt) {
     const offenesEingabeElement = offeneEingabeDerZeile(zeileElement);
     if (offenesEingabeElement) {
       offenesEingabeElement.focus();
       return;
     }
-    oeffneFeld(ansicht, zeileElement, nummerNeu);
+    oeffneFeld(ansicht, zeileElement, gewaehlt);
+  }
+
+  /** Das Feld eines Bereichs steht unter `bis` (R00031). Ein offenes Zeilenfeld **innerhalb** des Bereichs fällt weg — der Bereich
+      tritt an seine Stelle (es entsteht aus dem Ankerklick derselben Geste); ein Feld an einer anderen Zeile bleibt (R00010). */
+  function oeffneBereichsfeld(ansicht, gewaehlt) {
+    const vorigesFeld = zustand.neuesFeld;
+    const liegtImBereich = vorigesFeld !== null && Number.isInteger(vorigesFeld.ziel.zeile)
+      && vorigesFeld.ziel.zeile >= gewaehlt.von && vorigesFeld.ziel.zeile <= gewaehlt.bis;
+    if (liegtImBereich) {
+      vorigesFeld.feldzeileElement.remove();
+      zustand.neuesFeld = null;
+    }
+    const ende = zustand.zeilen.find(zeile => zeile.neu === gewaehlt.bis);
+    if (!ende) {
+      return;
+    }
+    setzeZeilenfokus(ende.element, false);
+    oeffneOderFokussiereFeld(ansicht, ende.element, gewaehlt);
   }
 
   /** Die Zeilen unter einer Diff-Zeile bis zur nächsten Diff-Zeile gehören zu ihr: Anmerkungen und höchstens ein Notizfeld. */
@@ -454,14 +664,18 @@
     return null;
   }
 
-  function oeffneFeld(ansicht, zeileElement, nummerNeu) {
+  function oeffneFeld(ansicht, zeileElement, gewaehlt) {
     const gezeichnet = zustand.gezeichnet;
-    const ziel = { commit: commitDerZeile(gezeichnet, zeileElement), datei: gezeichnet.pfad, zeile: nummerNeu };
+    const stelle = { commit: commitDerZeile(gezeichnet, zeileElement), datei: gezeichnet.pfad };
+    const ziel = gewaehlt.art === 'bereich'
+      ? { ...stelle, von: gewaehlt.von, bis: gewaehlt.bis }
+      : { ...stelle, zeile: gewaehlt.neu };
     const feld = {
       ansicht,
       zeileElement,
       ziel,
-      feldname: `Anmerkung zu ${sichtbarerPfad(ziel.datei)}, Zeile ${ziel.zeile}`,
+      zielZeile: gewaehlt.art === 'bereich' ? gewaehlt.bis : gewaehlt.neu,
+      feldname: feldnameDesZiels(ziel),
       zeilenklasse: 'anm-feld',
       vorbelegung: '',
       speichertGerade: false,
@@ -469,8 +683,32 @@
     feld.speichern = () => speichere(feld);
     feld.abbrechen = () => schliesseFeld(feld);
     feld.feldzeileElement = notizfeldzeileElement(feld);
+    zustand.neuesFeld = feld;
     letzteAnmerkungszeile(zeileElement).after(feld.feldzeileElement);
     feld.eingabeElement.focus();
+  }
+
+  /** Das offene Notizfeld übersteht ein Neuzeichnen: es wird aus dem Zustand wieder unter seine Zeile gehängt, Text und Fokus
+      bleiben (Lehre #23). Gehört es zu einer anderen Stelle, fällt es weg. */
+  function haengeNeuesFeldAn(ansicht) {
+    const feld = zustand.neuesFeld;
+    const gezeichnet = zustand.gezeichnet;
+    if (!feld || !gezeichnet) {
+      return;
+    }
+    const passtZurStelle = feld.ziel.commit === gezeichnet.commit && feld.ziel.datei === gezeichnet.pfad;
+    if (!passtZurStelle) {
+      zustand.neuesFeld = null;
+      return;
+    }
+    const zeileElement = zustand.zeilen.find(zeile => zeile.neu === feld.zielZeile && zeile.commit === feld.ziel.commit);
+    if (!zeileElement) {
+      return;
+    }
+    letzteAnmerkungszeile(zeileElement.element).after(feld.feldzeileElement);
+    if (zustand.fokussiert === feld.eingabeElement) {
+      feld.eingabeElement.focus();
+    }
   }
 
   /** Das neue Feld steht unter den Anmerkungen, die die Zeile schon trägt. */
@@ -495,6 +733,7 @@
     feld.eingabeElement.setAttribute('aria-label', feld.feldname);
     feld.eingabeElement.value = feld.vorbelegung;
     feld.eingabeElement.addEventListener('keydown', ereignis => bedieneFeldPerTastatur(feld, ereignis));
+
     feld.fehlerElement = document.createElement('p');
     feld.fehlerElement.className = 'anm-fehler';
     feld.fehlerElement.setAttribute('role', 'alert');
@@ -549,6 +788,7 @@
     }
     zustand.anmerkungen = [...zustand.anmerkungen, { nummer: ausgang.nummer, ...feld.ziel, text }];
     schliesseFeld(feld);
+    setzeAuswahl(feld.ansicht, null);
     zeigeAnmerkungen(feld.ansicht);
     ladeAnmerkungen(feld.ansicht);
   }
@@ -593,6 +833,9 @@
       (das Datei-Feld gibt den Fokus an seinen Knopf zurück). */
   function schliesseFeld(feld) {
     feld.feldzeileElement.remove();
+    if (zustand.neuesFeld === feld) {
+      zustand.neuesFeld = null;
+    }
     if (feld.nachSchliessen) {
       feld.nachSchliessen();
       return;
@@ -706,10 +949,7 @@
 
   /** Name des Änderungsfelds wie beim Anlegen: „Anmerkung zu <Datei>, Zeile <n>“; ohne Zeile „Anmerkung zu <Datei> (ganze Datei)“ (R00022). */
   function feldnameDerAnmerkung(anmerkung) {
-    if (anmerkung.zeile === null) {
-      return feldnameDerDatei(anmerkung.datei);
-    }
-    return `Anmerkung zu ${sichtbarerPfad(anmerkung.datei)}, Zeile ${anmerkung.zeile}`;
+    return feldnameDesZiels(anmerkung);
   }
 
   /** Name des „Datei anmerken“-Felds: dieselbe Stelle wie im Ergebnis (`<Datei> (ganze Datei)`), für Screenreader unterscheidbar. */

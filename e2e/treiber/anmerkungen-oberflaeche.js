@@ -134,6 +134,52 @@ async function anmerkungenUnter(page, ziel) {
   });
 }
 
+/* ── Bereich (R00031) ── */
+
+/** Ein Bereich über Umschalt-Klick: Klick auf die Zeile `von`, dann Umschalt-Klick auf `bis`. */
+async function bereichWaehlen(page, von, bis) {
+  await diffzeile(page, { neu: von }).locator('td.c').click();
+  await diffzeile(page, { neu: bis }).locator('td.c').click({ modifiers: ['Shift'] });
+}
+
+/** Ein Bereich über Ziehen: Druck auf die Nummer-neu-Zelle von `von`, Zug bis `bis`, loslassen. */
+async function bereichZiehen(page, von, bis) {
+  const start = await diffzeile(page, { neu: von }).locator('td.n.neu').boundingBox();
+  const ende = await diffzeile(page, { neu: bis }).locator('td.n.neu').boundingBox();
+  await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(ende.x + ende.width / 2, ende.y + ende.height / 2, { steps: 5 });
+  await page.mouse.up();
+}
+
+/** Die markierten Zeilen (Klasse `bereich`) als Nummern neu in Reihenfolge. */
+async function markierteZeilen(page) {
+  return page.locator(`${DIFFZEILE}.bereich`).evaluateAll(zeilen => zeilen.map(zeile => Number(zeile.dataset.neu)));
+}
+
+async function pruefeMarkiert(page, nummern) {
+  expect(await markierteZeilen(page), 'markierte Zeilen').toEqual(nummern);
+}
+
+/** Die Markierung ist nicht allein Farbe: die erste Zelle trägt einen Balken (`box-shadow`). */
+async function pruefeMarkierungNichtNurFarbe(page, neu) {
+  const schatten = await diffzeile(page, { neu }).locator('td').first().evaluate(zelle => getComputedStyle(zelle).boxShadow);
+  expect(schatten, 'Markierung ohne Balken').not.toBe('none');
+}
+
+async function pruefeKeineMarkierung(page) {
+  expect(await markierteZeilen(page), 'keine markierte Zeile').toEqual([]);
+}
+
+/** Der Text des Hinweises über dem Diff (entfernte Zeile, Abschnittsgrenze). */
+async function pruefeHinweis(page, text) {
+  await expect(page.locator(HINWEIS_ENTFERNT)).toHaveText(text);
+}
+
+async function pruefeKeinHinweis(page) {
+  await expect(page.locator(HINWEIS_ENTFERNT)).toHaveText('');
+}
+
 async function pruefeAnmerkungenUnter(page, ziel, erwartet) {
   await expect.poll(() => anmerkungenUnter(page, ziel), `Anmerkungen unter ${JSON.stringify(ziel)}`).toEqual(erwartet);
 }
@@ -551,6 +597,13 @@ async function pruefeLoeschenFrei(page, nummer) {
 }
 
 module.exports = {
+  bereichWaehlen,
+  bereichZiehen,
+  pruefeMarkiert,
+  pruefeMarkierungNichtNurFarbe,
+  pruefeKeineMarkierung,
+  pruefeHinweis,
+  pruefeKeinHinweis,
   zeileAnklicken, zeileDoppeltAnklicken, zeileImAbschnittAnklicken, pruefeAnmerkungenUnterImAbschnitt, pruefeAnzahlFelder, pruefeFeldtext, pruefeFeldOffenMitFokus, textSchreiben, speichern, zweimalSpeichern, pruefeFeldZu, pruefeKeinFeld, pruefeFeldmeldung,
   pruefeAnmerkungenUnter, pruefeAnzahlAnmerkungszeilen, pruefeAnmerkungszeilenSindKeineDiffzeilen,
   dateianmerkungenOben, pruefeDateianmerkungenOben, pruefeKeineDateianmerkung, anzahlDateianmerkungen, pruefeDateianmerkungUeberDenZeilen, dateiAnmerken, pruefeDateiKnopfSichtbar, dateiAnmerkungenAnlegen, pruefeDateiKnopfVerborgen, hakenAntwortetMit, pruefeDateiKnopfGesperrt, pruefeDateiKnopfBedienbar,

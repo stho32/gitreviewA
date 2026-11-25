@@ -40,6 +40,19 @@ function repoA(ordner) {
   return { ordner, hashes: { p, q, s } };
 }
 
+/** Repo R der Karte #35 (R00031): `r1` „Anlegen“ legt `lang.txt` mit 30 Zeilen `z01` … `z30` und `fremd.txt` an;
+    `r2` „Ändern“ stellt `z05` auf `Z05` und `z25` auf `Z25` um — zwei Abschnitte, dazwischen die Lücke 9–21.
+    Gleicher Inhalt wie `DiffRepo.Zeilenbereich()` in tests/GitReviewA.Tests/Akzeptanz/DiffRepo.cs. */
+function repoZeilenbereich(ordner) {
+  repoAnlegen(ordner);
+  dateiSchreiben(ordner, 'lang.txt', zeilen(30, nummer => `z${String(nummer).padStart(2, '0')}`));
+  dateiSchreiben(ordner, 'fremd.txt', '<b>z20</b>\na\u202eb\n');
+  const r1 = commitAnlegen(ordner, { betreff: 'Anlegen' });
+  dateiSchreiben(ordner, 'lang.txt', zeilen(30, nummer => `z${String(nummer).padStart(2, '0')}`).replace('z05\n', 'Z05\n').replace('z25\n', 'Z25\n'));
+  const r2 = commitAnlegen(ordner, { betreff: 'Ändern' });
+  return { ordner, hashes: { r1, r2 } };
+}
+
 function zeilen(anzahl, text) {
   return Array.from({ length: anzahl }, (_, index) => `${text(index + 1)}\n`).join('');
 }
@@ -413,4 +426,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoV, repoG, repoX, repoK, repoZ, repoQ, repoS, repoL, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoV, repoG, repoX, repoK, repoZ, repoZeilenbereich, repoQ, repoS, repoL, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };
