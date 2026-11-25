@@ -374,3 +374,9 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Durchlauf: Bau, Reviews 2 Muss (Code: Markierung in „Zusammen“-Abschnitten verschwand nach der Färbung; Security: viele Treffer in einer Zeile quadratisch, 20 000 `x` → 45,6 s, längste Aufgabe 3,7 s), Nacharbeit (Markierung je Zelle in einem Durchgang, Häppchen ≤ 150 ms; 20 000 `x` → 0,1 s, Mutant „alter Algorithmus“ rot), beide Nachprüfungen mit eigener Messung bestanden, Entwicklertest ohne Befund. Rebase: CSS-Konflikt mit #12 (zwei unabhängige Regelblöcke) mechanisch, beide Seiten behalten. Karte gesamt 1,36 $.
 - Lehre: Grenzen für Browser-Suche brauchen zwei Achsen — Trefferzahl **und** Treffer je Textknoten/Zeile; der security-reviewer fand die Lücke, weil er eine einzelne lange Zeile probte statt vieler kurzer.
 - Gate: NUnit 1264/1264, Playwright 654/654 zweimal.
+| 2026-11-25 | #15 | Entwicklertest | entwicklertester | bestanden | 0 min | Director: US-18 nach Nacharbeit nachgeprüft, übrige Szenarien aus 15-entwicklertester-1 bestanden · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 15-entwicklertester-2 |
+
+## Retrospektive #15 I0015 Tastaturbedienung (2026-11-25)
+- Durchlauf: Bau, Code-Review 2 Muss (`v` schaltete nicht den echten Umschalter der Anordnung; `[`/`]` wirkten nur einmal, Fokus im `<select>`), Nacharbeit rot→grün, Nachprüfung 41/41 mit Mutant 22 rot, Entwicklertest 1 Muss (US-18: Anordnung ohne Kürzel-Hinweis), Nacharbeit (Zeitgrenze erreicht, Bericht per Fortsetzung nachgeholt), Director-Nachprüfung des Diffs. Karte gesamt 2,24 $.
+- Lehre: Zwei Listen für dasselbe (Katalog + `HINWEISE`) driften, sobald eine spätere Karte ein Bedienelement baut — eine Quelle (`ziel`) für Verfügbarkeit **und** Hinweis, Klassen-Test über den ganzen Katalog statt Einzelfall.
+- Gate: NUnit 1264/1264, Playwright 699/699 zweimal.
