@@ -10,6 +10,8 @@
 <script src="modus-werte.js" defer></script>
 <script src="modus.js" defer></script>
 <script src="commit-werte.js" defer></script>
+<script src="ausblenden-werte.js" defer></script>
+<script src="ausblenden.js" defer></script>
 <script src="dateiliste-werte.js" defer></script>
 <script src="dateiliste.js" defer></script>
 <script src="zusammen.js" defer></script>
@@ -40,6 +42,7 @@
   </div>
   <div id="kopf-fortschritt" class="haken-fortschritt">
     <span class="haken-zaehler" aria-hidden="true"></span>
+    <span class="ausblenden-zaehler" role="status"></span>
     <span class="haken-balken" aria-hidden="true" hidden><span class="haken-anteil"></span></span>
     <span class="haken-ansage vh" aria-live="polite" aria-atomic="true"></span>
     <span class="haken-meldung" role="status"></span>
@@ -76,6 +79,14 @@
             <button type="button" data-darstellung="flach" aria-pressed="true">flach</button>
             <button type="button" data-darstellung="baum" aria-pressed="false">Baum</button>
           </div>
+        </div>
+        <div class="ausblenden">
+          <div class="ausblenden-feld">
+            <label class="ausblenden-label" for="ausblenden-eingabe">Muster ausblenden</label>
+            <input type="text" id="ausblenden-eingabe" class="ausblenden-eingabe" autocomplete="off" spellcheck="false" aria-describedby="ausblenden-fehler">
+          </div>
+          <ul id="ausblenden-muster" class="ausblenden-muster" aria-label="Aktive Muster"></ul>
+          <p id="ausblenden-fehler" class="ausblenden-fehler gr-status fehler" role="alert"></p>
         </div>
         <p class="dateien-meldung gr-status muted" role="status"></p>
         <ul id="datei-zeilen" class="gr-dateien" aria-label="Dateien"></ul>

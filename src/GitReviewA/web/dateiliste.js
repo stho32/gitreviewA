@@ -45,6 +45,11 @@
     });
     ansicht.darstellungElement.addEventListener('click', ereignis => waehleDarstellung(ansicht, ereignis));
     ansicht.zeilenElement.addEventListener('click', ereignis => waehleDatei(ansicht, ereignis));
+    document.addEventListener('ausblenden-geaendert', () => {
+      if (zustand.dateien.length > 0) {
+        zeichneDateien(ansicht);
+      }
+    });
     ladeAnsicht(ansicht, false);
   }
 
@@ -169,12 +174,20 @@
       meldeGezeichnet();
       return;
     }
+    const sichtbar = sichtbareListe(zustand.dateien);
     ansicht.meldungElement.textContent = '';
+    ansicht.meldungElement.classList.remove('fehler');
     ansicht.summeElement.textContent = summeText(zustand.dateien);
+    if (sichtbar.length === 0) {
+      ansicht.meldungElement.textContent = 'Alle Dateien ausgeblendet';
+      ansicht.zeilenElement.replaceChildren();
+      meldeGezeichnet();
+      return;
+    }
     const groesste = groessteAenderung(zustand.dateien);
-    let zeilen = flacheZeilen(zustand.dateien);
+    let zeilen = flacheZeilen(sichtbar);
     if (zustand.darstellung === 'baum') {
-      zeilen = baumZeilen(zustand.dateien);
+      zeilen = baumZeilen(sichtbar);
     }
     const sammelElement = document.createDocumentFragment();
     for (const zeile of zeilen) {
@@ -182,6 +195,14 @@
     }
     ansicht.zeilenElement.replaceChildren(sammelElement);
     meldeGezeichnet();
+  }
+
+  /** Ausblenden ist eine Sicht (R00025): nur die Anzeige filtert, die Auswahl bleibt vollständig. */
+  function sichtbareListe(dateien) {
+    if (!window.gitreviewaAusblenden) {
+      return dateien;
+    }
+    return window.gitreviewaAusblenden.sichtbare(dateien);
   }
 
   function meldeGezeichnet() {

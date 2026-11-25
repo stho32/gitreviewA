@@ -242,6 +242,35 @@ async function darstellungWaehlen(page, darstellung) {
   await page.locator(`${DATEILISTE} button[data-darstellung="${darstellung}"]`).click();
 }
 
+/* ── Musterfeld zum Ausblenden (R00025) ── */
+
+function ausblendenZaehler(page) {
+  return page.locator('#kopf-fortschritt .ausblenden-zaehler');
+}
+
+function ausblendenEingabe(page) {
+  return page.locator(`${DATEILISTE} #ausblenden-eingabe`);
+}
+
+function ausblendenFehler(page) {
+  return page.locator(`${DATEILISTE} #ausblenden-fehler`);
+}
+
+function ausblendenMuster(page) {
+  return page.locator(`${DATEILISTE} #ausblenden-muster .muster-text`);
+}
+
+/** Trägt ein Muster ein und bestätigt mit Enter (der Fokus bleibt im Feld). */
+async function musterEingeben(page, muster) {
+  await ausblendenEingabe(page).fill(muster);
+  await ausblendenEingabe(page).press('Enter');
+}
+
+/** Entfernt das Muster über seinen Knopf, dessen Name mit dem sichtbaren Muster beginnt. */
+async function musterEntfernen(page, muster) {
+  await page.getByRole('button', { name: `${muster} entfernen` }).click();
+}
+
 async function dateiWaehlen(page, name) {
   await page.locator(DATEIZEILE).filter({ has: page.locator('.pfad', { hasText: name, exact: true }) }).click();
 }
@@ -411,6 +440,7 @@ module.exports = {
   dateienAntwortZurueckhalten, dialogeZaehlen,
   commitZeilenLesen, commitDetailsLesen, commitZeilen, aufZeilenWarten, commitWaehlen, gewaehlteCommits, messageSchalter, messageUmschalten, rumpf,
   dateilisteLesen, dateizeilen, aufDateizeilenWarten, dateiSumme, dateilistenMeldung, darstellungWaehlen, dateiWaehlen, gewaehlteDateien,
+  ausblendenZaehler, ausblendenEingabe, ausblendenFehler, ausblendenMuster, musterEingeben, musterEntfernen,
   dateiwahlenSammeln, gesammelteDateiwahlen, formatierungsElementeZaehlen,
   beendenKnopf, beendenBetaetigen, beendetMeldung, beendenFehler, beendenScheitertMit, modusWaehlen, neuLaden,
   kopfZahlen, fortschrittZaehler, commitZeileZusammenfassung, commitZeileText, pruefeKopfZahlen, pruefeFortschritt, pruefeCommitZeileZusammenfassung,
