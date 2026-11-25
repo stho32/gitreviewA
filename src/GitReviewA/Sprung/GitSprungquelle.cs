@@ -25,7 +25,7 @@ internal sealed class GitSprungquelle : ISprungquelle
     {
         Repositorywurzel = repositorywurzel;
         this.grenze = grenze;
-        aufgeloesteWurzel = Path.TrimEndingDirectorySeparator(AufgeloesterPfad(repositorywurzel) ?? Path.GetFullPath(repositorywurzel));
+        aufgeloesteWurzel = AufgeloesteWurzel(repositorywurzel);
     }
 
     public string Repositorywurzel { get; }
@@ -61,6 +61,20 @@ internal sealed class GitSprungquelle : ISprungquelle
     }
 
     /// <summary>
+    /// Die Repositorywurzel ebenso aufgelöst wie jeder geprüfte Pfad: liegt die Wurzel selbst hinter Verweisen, sähe sonst jeder
+    /// aufgelöste Pfad darin wie „außerhalb“ aus.
+    /// </summary>
+    private static string AufgeloesteWurzel(string repositorywurzel)
+    {
+        var aufgeloest = AufgeloesterPfad(repositorywurzel);
+        if (aufgeloest is null)
+        {
+            aufgeloest = Path.GetFullPath(repositorywurzel);
+        }
+        return Path.TrimEndingDirectorySeparator(aufgeloest);
+    }
+
+    /// <summary>
     /// Der Pfad mit jedem Bestandteil aufgelöst: `Path.GetFullPath` rechnet `.` und `..`, jeder Bestandteil, der ein Verweis ist, wird
     /// durch sein (ebenso aufgelöstes) Ziel ersetzt — erst dieser Pfad ist der, auf den der Dateizugriff wirklich geht. `null` heißt
     /// „nicht auflösbar“ (unsyntaktischer Pfad oder Verkettung ohne Ende); ein solcher Pfad liegt nicht außerhalb der Wurzel.
@@ -79,7 +93,7 @@ internal sealed class GitSprungquelle : ISprungquelle
 
     private static string Aufloesen(string pfad)
     {
-        var loesung = Path.GetPathRoot(pfad) ?? string.Empty;
+        var loesung = WurzelVon(pfad);
         var offen = new Queue<string>(BestandteileNachDerWurzel(pfad, loesung));
         var verweise = 0;
         while (offen.Count > 0)
@@ -98,10 +112,21 @@ internal sealed class GitSprungquelle : ISprungquelle
                 throw new IOException($"Verweise ohne Ende ab {pfad}");
             }
             var zielpfad = Zielpfad(ziel, loesung);
-            loesung = Path.GetPathRoot(zielpfad) ?? string.Empty;
+            loesung = WurzelVon(zielpfad);
             offen = new Queue<string>(BestandteileNachDerWurzel(zielpfad, loesung).Concat(offen));
         }
         return loesung;
+    }
+
+    /// <summary>Die Wurzel eines absoluten Pfades; ohne Wurzel leer (dann ist der Pfad nicht absolut).</summary>
+    private static string WurzelVon(string pfad)
+    {
+        var wurzel = Path.GetPathRoot(pfad);
+        if (wurzel is null)
+        {
+            return string.Empty;
+        }
+        return wurzel;
     }
 
     /// <summary>Das rohe Ziel eines Verweises oder `null`, wenn der Pfad kein Verweis ist — auch für einen ins Leere zeigenden.</summary>

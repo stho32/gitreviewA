@@ -94,8 +94,8 @@ internal sealed class SprungRepo : IDisposable
     }
 
     /// <summary>
-    /// Repo W: ein Commit `w` legt `😀.txt` (U+1F600, ein Codepunkt außerhalb der Grundebene) und `\uFFFD\uFFFD.txt` (zwei Ersatzzeichen)
-    /// an — sichtbar verschiedene Namen, die bei der Kodierung je UTF-16-Codeeinheit dasselbe Ziel ergaben.
+    /// Repo W: ein Commit `w` legt `\U0001F600.txt` (U+1F600, ein Codepunkt außerhalb der Grundebene) und `\uFFFD\uFFFD.txt` (zwei
+    /// Ersatzzeichen) an — sichtbar verschiedene Namen, die bei der Kodierung je UTF-16-Codeeinheit dasselbe Ziel ergaben.
     /// </summary>
     public static SprungRepo W()
     {
