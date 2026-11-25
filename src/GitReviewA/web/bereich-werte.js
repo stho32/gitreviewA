@@ -10,9 +10,11 @@
   /** Derselbe Satz wie in `anmerkungen-werte.js` (R00010): eine entfernte Zeile ist keine Grenze und kein Ziel. */
   const ENTFERNT_HINWEIS = 'Entfernte Zeile — Anmerkung an eine Zeile im neuen Stand oder an die Datei';
 
-  /** Die gezeichneten Zeilen `{art, alt, neu, abschnitt}` in Reihenfolge, der Index des Ankers (oder `null`) und der des Ziels,
-      dazu ob beim Klick Text ausgewählt war → `{art:'bereich', von, bis}` | `{art:'zeile', neu}` | `{art:'entfernt', hinweis}` |
-      `{art:'keines', grund}`. `abschnitt` vergibt die Oberfläche (Hunk und Commit); hier wird nur verglichen.
+  /** Die gezeichneten Zeilen `{art, alt, neu, commit, abschnitt}` in Reihenfolge, der Index des Ankers (oder `null`) und der des Ziels,
+      dazu ob beim Klick Text ausgewählt war → `{art:'bereich', von, bis, commit}` | `{art:'zeile', neu, commit}` |
+      `{art:'entfernt', hinweis}` | `{art:'keines', grund}`. `abschnitt` vergibt die Oberfläche (Hunk und Commit); hier wird nur
+      verglichen. Der Commit gehört von der Geste an zum Ergebnis: in „Zusammen“ ohne Kette steht dieselbe Nummer neu in mehreren
+      Commit-Abschnitten (Befund B1), ein späteres Suchen nach der Nummer allein träfe den falschen Commit.
       `zielZeile` überschreibt die Zeile am Ziel: zweispaltig entscheidet die angeklickte Zelle über ihre Art (R00023). */
   function bereichsziel(zeilen, ankerStelle, zielStelle, textAusgewaehlt, zielZeile) {
     if (textAusgewaehlt) {
@@ -24,7 +26,7 @@
     }
     const anker = ankerOderNull(zeilen, ankerStelle);
     if (anker === null) {
-      return { art: 'zeile', neu: ziel.neu };
+      return { art: 'zeile', neu: ziel.neu, commit: ziel.commit };
     }
     const liegtImSelbenAbschnitt = anker.abschnitt === ziel.abschnitt;
     if (!liegtImSelbenAbschnitt) {
@@ -33,9 +35,9 @@
     const von = Math.min(anker.neu, ziel.neu);
     const bis = Math.max(anker.neu, ziel.neu);
     if (von === bis) {
-      return { art: 'zeile', neu: von };
+      return { art: 'zeile', neu: von, commit: anker.commit };
     }
-    return { art: 'bereich', von, bis };
+    return { art: 'bereich', von, bis, commit: anker.commit };
   }
 
   /** Nur eine Zeile mit Nummer neu ist eine Grenze: `+` und Kontext; `−`, Kopf und Hinweiszeile sind es nicht. */

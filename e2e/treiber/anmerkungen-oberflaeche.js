@@ -151,12 +151,55 @@ async function bereichWaehlen(page, von, bis) {
 
 /** Ein Bereich über Ziehen: Druck auf die Nummer-neu-Zelle von `von`, Zug bis `bis`, loslassen. */
 async function bereichZiehen(page, von, bis) {
-  const start = await diffzeile(page, { neu: von }).locator('td.n.neu').boundingBox();
-  const ende = await diffzeile(page, { neu: bis }).locator('td.n.neu').boundingBox();
+  await zieheZwischen(await diffzeile(page, { neu: von }).locator('td.n.neu'), await diffzeile(page, { neu: bis }).locator('td.n.neu'), page);
+}
+
+/** Druck auf die Nummernzelle `start`, Zug bis `ende`, loslassen. */
+async function zieheZwischen(startElement, endeElement, page) {
+  const start = await startElement.boundingBox();
+  const ende = await endeElement.boundingBox();
   await page.mouse.move(start.x + start.width / 2, start.y + start.height / 2);
   await page.mouse.down();
   await page.mouse.move(ende.x + ende.width / 2, ende.y + ende.height / 2, { steps: 5 });
   await page.mouse.up();
+}
+
+/** Ein Bereich über Umschalt-Klick im Abschnitt `commit` — dieselbe Datei zeigt je Commit einen Abschnitt (Ansicht ohne Kette). */
+async function bereichImAbschnittWaehlen(page, commit, von, bis) {
+  const abschnittElement = abschnitt(page, commit);
+  await abschnittElement.locator(`tr[data-art][data-neu="${von}"] td`).last().click();
+  await abschnittElement.locator(`tr[data-art][data-neu="${bis}"] td`).last().click({ modifiers: ['Shift'] });
+}
+
+/** Ein Bereich über Ziehen über die Nummernzellen im Abschnitt `commit`. */
+async function bereichImAbschnittZiehen(page, commit, von, bis) {
+  const abschnittElement = abschnitt(page, commit);
+  await zieheZwischen(
+    abschnittElement.locator(`tr[data-art][data-neu="${von}"] td.n.neu`),
+    abschnittElement.locator(`tr[data-art][data-neu="${bis}"] td.n.neu`),
+    page);
+}
+
+/** Die markierten Zeilen eines Abschnitts als Nummern neu (eine Markierung im falschen Commit fällt hier auf). */
+async function markierteImAbschnitt(page, commit) {
+  return abschnitt(page, commit).locator('tr[data-art].bereich').evaluateAll(zeilen => zeilen.map(zeile => Number(zeile.dataset.neu)));
+}
+
+async function pruefeMarkiertImAbschnitt(page, commit, nummern) {
+  expect(await markierteImAbschnitt(page, commit), `markierte Zeilen im Abschnitt ${commit.slice(0, 7)}`).toEqual(nummern);
+}
+
+/** Das offene Bereichsfeld mit Fokus steht im Abschnitt `commit`. */
+async function pruefeBereichsfeldImAbschnitt(page, commit, name) {
+  await expect(abschnitt(page, commit).getByRole('textbox', { name, exact: true }), 'Bereichsfeld im Abschnitt').toBeFocused();
+}
+
+/** Text ins Bereichsfeld des Abschnitts, „Speichern“, danach ist das Feld zu. */
+async function bereichImAbschnittSpeichern(page, commit, name, text) {
+  const feldElement = abschnitt(page, commit).getByRole('textbox', { name, exact: true });
+  await feldElement.fill(text);
+  await abschnitt(page, commit).locator('tr.anm-feld').getByRole('button', { name: 'Speichern', exact: true }).click();
+  await expect(feldElement).toHaveCount(0);
 }
 
 /** Die Anordnung umstellen (untereinander | nebeneinander, R00023). */
@@ -612,6 +655,11 @@ module.exports = {
   anordnungWaehlen,
   bereichWaehlen,
   bereichZiehen,
+  bereichImAbschnittWaehlen,
+  bereichImAbschnittZiehen,
+  pruefeMarkiertImAbschnitt,
+  pruefeBereichsfeldImAbschnitt,
+  bereichImAbschnittSpeichern,
   pruefeMarkiert,
   pruefeMarkierungNichtNurFarbe,
   pruefeKeineMarkierung,

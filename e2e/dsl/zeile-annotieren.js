@@ -113,6 +113,21 @@ function annotierSprache(gr, page) {
     anordnungWaehlen: wert => anmerkungSeite.anordnungWaehlen(page, wert),
     bereichWaehlen: (von, bis) => anmerkungSeite.bereichWaehlen(page, von, bis),
     bereichZiehen: (von, bis) => anmerkungSeite.bereichZiehen(page, von, bis),
+    /** Bereich im Abschnitt des Commits `name` (Ansicht ohne Kette, `z1 z3`): dieselbe Nummer neu steht dort je Commit. */
+    bereichImAbschnittWaehlen: (name, von, bis) => anmerkungSeite.bereichImAbschnittWaehlen(page, hash(name), von, bis),
+    bereichImAbschnittZiehen: (name, von, bis) => anmerkungSeite.bereichImAbschnittZiehen(page, hash(name), von, bis),
+    markiertImAbschnitt: (name, nummern) => anmerkungSeite.pruefeMarkiertImAbschnitt(page, hash(name), nummern),
+    /** `texte`: Texte der Bereichsanmerkungen unter der Zeile `zielNeu` im Abschnitt `name`, je mit der Stelle `<datei>:<von>-<bis>`. */
+    bereichAnmerkungenUnterImAbschnitt: (name, datei, zielNeu, von, bis, texte) =>
+      anmerkungSeite.pruefeAnmerkungenUnterImAbschnitt(page, hash(name), { neu: zielNeu }, texte.map(text => ({ text, stelle: `${datei}:${von}-${bis}` }))),
+    bereichFeldOffenImAbschnitt: (name, datei, von, bis) => anmerkungSeite.pruefeBereichsfeldImAbschnitt(page, hash(name), bereichFeldname(datei, von, bis)),
+    bereichImAbschnittSpeichern: (name, datei, von, bis, text) =>
+      anmerkungSeite.bereichImAbschnittSpeichern(page, hash(name), bereichFeldname(datei, von, bis), text),
+    /** Bereich im Abschnitt `name` markieren, Text ins Feld, „Speichern“; danach ist das Feld zu. */
+    bereichImAbschnittAnnotieren: async (name, datei, von, bis, text) => {
+      await anmerkungSeite.bereichImAbschnittWaehlen(page, hash(name), von, bis);
+      await anmerkungSeite.bereichImAbschnittSpeichern(page, hash(name), bereichFeldname(datei, von, bis), text);
+    },
     markiert: nummern => anmerkungSeite.pruefeMarkiert(page, nummern),
     nichtMarkiert: () => anmerkungSeite.pruefeKeineMarkierung(page),
     markierungNichtNurFarbe: neu => anmerkungSeite.pruefeMarkierungNichtNurFarbe(page, neu),

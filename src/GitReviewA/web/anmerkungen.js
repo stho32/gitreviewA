@@ -231,15 +231,6 @@
     return abschnitte.map(abschnitt => ({ commit: abschnitt.commit, bereichElement: abschnitt.bereichElement, zeileNachNummerNeu: zeilenMitNummerNeu(abschnitt.bereichElement) }));
   }
 
-  /** Der Commit der Anmerkung: in einem Abschnitt dessen Commit, sonst der der Ansicht (Netto-Diff oder „Einzeln“). */
-  function commitDerZeile(gezeichnet, zeileElement) {
-    const abschnitt = zeileElement.closest('.diff-abschnitt');
-    if (abschnitt && abschnitt.dataset.commit) {
-      return abschnitt.dataset.commit;
-    }
-    return gezeichnet.commit;
-  }
-
   /** Hinweis über dem Diff für Anmerkungen an einer Zeile, die keine Sicht zeigt; ein fremder Commit des Diffs nennt seinen Kurz-Hash. */
   function hinweisFuerAusserhalb(ausserhalb, sichten) {
     const gezeigteCommits = new Set(sichten.map(sicht => sicht.commit));
@@ -403,7 +394,13 @@
     return zustand.zeilen.findIndex(zeile => zeile.element === zeileElement);
   }
 
-  /** Die laufende Auswahl (`{art:'bereich', von, bis}`) oder null; sie ist die Aussage über die markierten Zeilen. */
+  /** Die gezeichnete Zeile mit Nummer `neu` in Commit `commit` oder null — der eine Weg von (Nummer, Commit) zur Zeile. Dieselbe
+      Nummer neu steht in „Zusammen“ ohne Kette in mehreren Commit-Abschnitten (Befund B1); jede Suche trägt deshalb den Commit. */
+  function zeileMitNummer(neu, commit) {
+    return zustand.zeilen.find(zeile => zeile.neu === neu && zeile.commit === commit) || null;
+  }
+
+  /** Die laufende Auswahl (`{art:'bereich', von, bis, commit}`) oder null; sie ist die Aussage über die markierten Zeilen. */
   function setzeAuswahl(ansicht, gewaehlt) {
     const istBereich = gewaehlt !== null && gewaehlt.art === 'bereich';
     zustand.auswahl = istBereich ? gewaehlt : null;
@@ -423,8 +420,7 @@
     }
     const bereiche = [];
     if (zustand.auswahl) {
-      const ende = zustand.zeilen.find(zeile => zeile.neu === zustand.auswahl.bis);
-      bereiche.push({ commit: ende ? ende.commit : gezeichnet.commit, von: zustand.auswahl.von, bis: zustand.auswahl.bis });
+      bereiche.push({ commit: zustand.auswahl.commit, von: zustand.auswahl.von, bis: zustand.auswahl.bis });
     }
     for (const anmerkung of zustand.anmerkungen) {
       if (anmerkung.datei === gezeichnet.pfad && Number.isInteger(anmerkung.von) && Number.isInteger(anmerkung.bis)) {
@@ -481,7 +477,7 @@
       return;
     }
     const ziel = zielDerZeile(zeileElement, ereignis.target);
-    const gewaehlt = bereichsziel(zustand.zeilen, zustand.ziehen.ankerStelle, zielStelle, false, { art: ziel.art, neu: ziel.neu, abschnitt: zustand.zeilen[zielStelle].abschnitt });
+    const gewaehlt = bereichsziel(zustand.zeilen, zustand.ziehen.ankerStelle, zielStelle, false, { ...zustand.zeilen[zielStelle], art: ziel.art, neu: ziel.neu });
     zustand.ziehen.bewegt = true;
     zeigeHinweis(ansicht, gewaehlt.art === 'keines' ? gewaehlt.grund : '');
     setzeAuswahl(ansicht, gewaehlt);
@@ -529,7 +525,7 @@
     }
     const ziel = zielDerZeile(zeileElement, geklickt);
     const ankerStelle = erweitern ? zustand.ankerStelle : null;
-    const zielZeile = { art: ziel.art, neu: ziel.neu, abschnitt: zustand.zeilen[zielStelle].abschnitt };
+    const zielZeile = { ...zustand.zeilen[zielStelle], art: ziel.art, neu: ziel.neu };
     const gewaehlt = bereichsziel(zustand.zeilen, ankerStelle, zielStelle, textIstAusgewaehlt, zielZeile);
     if (gewaehlt.art === 'keines') {
       zeigeHinweis(ansicht, gewaehlt.grund);
@@ -644,7 +640,7 @@
       vorigesFeld.feldzeileElement.remove();
       zustand.neuesFeld = null;
     }
-    const ende = zustand.zeilen.find(zeile => zeile.neu === gewaehlt.bis);
+    const ende = zeileMitNummer(gewaehlt.bis, gewaehlt.commit);
     if (!ende) {
       return;
     }
@@ -666,7 +662,7 @@
 
   function oeffneFeld(ansicht, zeileElement, gewaehlt) {
     const gezeichnet = zustand.gezeichnet;
-    const stelle = { commit: commitDerZeile(gezeichnet, zeileElement), datei: gezeichnet.pfad };
+    const stelle = { commit: gewaehlt.commit, datei: gezeichnet.pfad };
     const ziel = gewaehlt.art === 'bereich'
       ? { ...stelle, von: gewaehlt.von, bis: gewaehlt.bis }
       : { ...stelle, zeile: gewaehlt.neu };
@@ -701,11 +697,11 @@
       zustand.neuesFeld = null;
       return;
     }
-    const zeileElement = zustand.zeilen.find(zeile => zeile.neu === feld.zielZeile && zeile.commit === feld.ziel.commit);
-    if (!zeileElement) {
+    const zeile = zeileMitNummer(feld.zielZeile, feld.ziel.commit);
+    if (!zeile) {
       return;
     }
-    letzteAnmerkungszeile(zeileElement.element).after(feld.feldzeileElement);
+    letzteAnmerkungszeile(zeile.element).after(feld.feldzeileElement);
     if (zustand.fokussiert === feld.eingabeElement) {
       feld.eingabeElement.focus();
     }

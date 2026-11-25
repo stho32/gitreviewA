@@ -81,6 +81,63 @@ test.describe('Der Bereich wirkt in jedem Anzeigeverfahren', () => {
   });
 });
 
+test.describe('Der Bereich gehört seinem Commit (Befund B1: „Zusammen“ ohne Kette)', () => {
+  // Dieselbe Datei zeigt in `z1` und `z3` dieselben Nummern neu (1–3); das Feld und die gespeicherte Anmerkung gehören dem Commit,
+  // in dessen Abschnitt der Mensch markiert hat (R00031) — nicht dem ersten Abschnitt, der die Nummer nennt.
+  test('soll einen Umschalt-Klick-Bereich im z3-Abschnitt in z3 markieren, anmerken und mit Commit z3 ausgeben', async ({ anm }) => {
+    await anm.starten({ vorbereitung: 'Repo Z', commits: ['z1', 'z3'], modus: 'zusammen' });
+    await anm.dateiAnsehen('src/a.txt');
+
+    await anm.bereichImAbschnittWaehlen('z3', 2, 3);
+
+    await anm.markiertImAbschnitt('z3', [2, 3]);
+    await anm.markiertImAbschnitt('z1', []);
+    await anm.bereichFeldOffenImAbschnitt('z3', 'src/a.txt', 2, 3);
+    await anm.bereichImAbschnittSpeichern('z3', 'src/a.txt', 2, 3, 'im z3');
+    await anm.bereichAnmerkungenUnterImAbschnitt('z3', 'src/a.txt', 3, 2, 3, ['im z3']);
+    await anm.anmerkungenUnterImAbschnitt('z1', 'src/a.txt', { neu: 3 }, []);
+
+    const { exitCode, ergebnis } = await anm.beendenUndErgebnisLesen();
+
+    expect(exitCode).toBe(0);
+    expect(ergebnis).toContain(`## 1. src/a.txt:2-3\n\nCommit: ${anm.hash('z3')}\n`);
+    expect(ergebnis).not.toContain('Commit: ' + anm.hash('z1'));
+  });
+
+  test('soll ein Ziehen über die Nummern im z3-Abschnitt als Bereich von z3 nehmen', async ({ anm }) => {
+    await anm.starten({ vorbereitung: 'Repo Z', commits: ['z1', 'z3'], modus: 'zusammen' });
+    await anm.dateiAnsehen('src/a.txt');
+
+    await anm.bereichImAbschnittZiehen('z3', 2, 3);
+
+    await anm.markiertImAbschnitt('z3', [2, 3]);
+    await anm.markiertImAbschnitt('z1', []);
+    await anm.bereichFeldOffenImAbschnitt('z3', 'src/a.txt', 2, 3);
+
+    const { ergebnis } = await anm.beendenUndErgebnisLesen();
+
+    expect(ergebnis).toContain('Keine Anmerkungen.');
+    expect(ergebnis).not.toContain('Commit: ');
+  });
+
+  test('soll die Gegenprobe im z1-Abschnitt als Bereich von z1 nehmen', async ({ anm }) => {
+    await anm.starten({ vorbereitung: 'Repo Z', commits: ['z1', 'z3'], modus: 'zusammen' });
+    await anm.dateiAnsehen('src/a.txt');
+
+    await anm.bereichImAbschnittWaehlen('z1', 2, 3);
+
+    await anm.markiertImAbschnitt('z1', [2, 3]);
+    await anm.markiertImAbschnitt('z3', []);
+    await anm.bereichFeldOffenImAbschnitt('z1', 'src/a.txt', 2, 3);
+    await anm.bereichImAbschnittAnnotieren('z1', 'src/a.txt', 2, 3, 'im z1');
+
+    const { ergebnis } = await anm.beendenUndErgebnisLesen();
+
+    expect(ergebnis).toContain(`## 1. src/a.txt:2-3\n\nCommit: ${anm.hash('z1')}\n`);
+    expect(ergebnis).not.toContain('Commit: ' + anm.hash('z3'));
+  });
+});
+
 test.describe('Grenzen der Auswahl (Szenario 2)', () => {
   test('soll über einen Abschnitt hinweg keinen Bereich bilden und es sagen (z05 bis z25)', async ({ anm }) => {
     await anm.starten({ vorbereitung: 'Repo R (Bereich)' });

@@ -6,10 +6,11 @@ const { test, expect } = require('@playwright/test');
 const { bereichsziel, bereichsstand, bereicheDerAnmerkungen, ABSCHNITTSGRUND, ENTFERNT_HINWEIS } = require('../../../src/GitReviewA/web/bereich-werte.js');
 const { ENTFERNT_HINWEIS: HINWEIS_AUS_ANMERKUNGEN } = require('../../../src/GitReviewA/web/anmerkungen-werte.js');
 
-/** Eine Zeile ohne Nummer neu (`−`), ein Abschnittskopf und die Hinweiszeile tragen kein `neu`. */
-const zeile = (art, neu, abschnitt = 1) => ({ art, alt: null, neu, abschnitt });
-const kontext = (neu, abschnitt = 1) => zeile('kontext', neu, abschnitt);
-const plus = (neu, abschnitt = 1) => zeile('plus', neu, abschnitt);
+/** Eine Zeile ohne Nummer neu (`−`), ein Abschnittskopf und die Hinweiszeile tragen kein `neu`. Der Commit gehört zur Zeile
+    („Zusammen“ ohne Kette zeigt dieselbe Datei in mehreren Abschnitten). */
+const zeile = (art, neu, abschnitt = 1, commit = 'c1') => ({ art, alt: null, neu, commit, abschnitt });
+const kontext = (neu, abschnitt = 1, commit = 'c1') => zeile('kontext', neu, abschnitt, commit);
+const plus = (neu, abschnitt = 1, commit = 'c1') => zeile('plus', neu, abschnitt, commit);
 const minus = (abschnitt = 1) => zeile('minus', null, abschnitt);
 const kopf = (abschnitt = 1) => ({ art: 'kopf', alt: null, neu: null, abschnitt });
 const hinweiszeile = (abschnitt = 1) => ({ art: 'hinweis', alt: null, neu: null, abschnitt });
@@ -22,19 +23,19 @@ const ZWEI_ABSCHNITTE = [
 
 test.describe('Baustein Bereichsziel', () => {
   test('soll einen Klick ohne Anker als einzeilige Stelle nehmen', () => {
-    expect(bereichsziel(ZWEI_ABSCHNITTE, null, 2, false)).toEqual({ art: 'zeile', neu: 3 });
+    expect(bereichsziel(ZWEI_ABSCHNITTE, null, 2, false)).toEqual({ art: 'zeile', neu: 3, commit: 'c1' });
   });
 
   test('soll zwei Enden desselben Abschnitts als Bereich von kleinster bis größter Nummer neu nehmen (3 und 7)', () => {
-    expect(bereichsziel(ZWEI_ABSCHNITTE, 2, 7, false)).toEqual({ art: 'bereich', von: 3, bis: 7 });
+    expect(bereichsziel(ZWEI_ABSCHNITTE, 2, 7, false)).toEqual({ art: 'bereich', von: 3, bis: 7, commit: 'c1' });
   });
 
   test('soll beim Ziehen rückwärts dieselben Enden nehmen (Ziel 3, Anker 7)', () => {
-    expect(bereichsziel(ZWEI_ABSCHNITTE, 7, 2, false)).toEqual({ art: 'bereich', von: 3, bis: 7 });
+    expect(bereichsziel(ZWEI_ABSCHNITTE, 7, 2, false)).toEqual({ art: 'bereich', von: 3, bis: 7, commit: 'c1' });
   });
 
   test('soll Anker und Ziel auf derselben Zeile als einzeilige Stelle nehmen (kein Bereich)', () => {
-    expect(bereichsziel(ZWEI_ABSCHNITTE, 2, 2, false)).toEqual({ art: 'zeile', neu: 3 });
+    expect(bereichsziel(ZWEI_ABSCHNITTE, 2, 2, false)).toEqual({ art: 'zeile', neu: 3, commit: 'c1' });
   });
 
   test('soll eine entfernte Zeile als Anker nicht öffnen, sondern den Hinweis nennen', () => {
@@ -67,7 +68,19 @@ test.describe('Baustein Bereichsziel', () => {
       kontext(17), kontext(18), kontext(19), kontext(20),
       kopf(2), kontext(22),
     ];
-    expect(bereichsziel(mitAufgeklappterLuecke, 7, 20, false)).toEqual({ art: 'bereich', von: 7, bis: 20 });
+    expect(bereichsziel(mitAufgeklappterLuecke, 7, 20, false)).toEqual({ art: 'bereich', von: 7, bis: 20, commit: 'c1' });
+  });
+
+  test('soll den Commit des Ankers mitgeben, auch wenn dieselben Nummern im Abschnitt eines anderen Commits stehen (z1 z3)', () => {
+    const gleicheNummern = [
+      kopf(1), kontext(2, 1, 'z1'), kontext(3, 1, 'z1'),
+      kopf(2), kontext(2, 2, 'z3'), kontext(3, 2, 'z3'),
+    ];
+
+    expect(bereichsziel(gleicheNummern, 4, 5, false), 'Bereich im Abschnitt von z3').toEqual({ art: 'bereich', von: 2, bis: 3, commit: 'z3' });
+    expect(bereichsziel(gleicheNummern, 5, 4, false), 'rückwärts im Abschnitt von z3').toEqual({ art: 'bereich', von: 2, bis: 3, commit: 'z3' });
+    expect(bereichsziel(gleicheNummern, null, 4, false), 'eine Zeile im Abschnitt von z3').toEqual({ art: 'zeile', neu: 2, commit: 'z3' });
+    expect(bereichsziel(gleicheNummern, 1, 2, false), 'Gegenprobe im Abschnitt von z1').toEqual({ art: 'bereich', von: 2, bis: 3, commit: 'z1' });
   });
 
   test('soll zwei Enden in Abschnitten verschiedener Commits keinen Bereich bilden lassen', () => {
