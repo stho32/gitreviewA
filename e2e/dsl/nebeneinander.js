@@ -6,6 +6,7 @@ const { test: basis, expect } = require('./gitreviewa.js');
 const seite = require('../treiber/oberflaeche.js');
 const diffSeite = require('../treiber/diff-oberflaeche.js');
 const nebenSeite = require('../treiber/nebeneinander-oberflaeche.js');
+const anmerkungSeite = require('../treiber/anmerkungen-oberflaeche.js');
 const repos = require('../treiber/diff-repos.js');
 
 const FENSTER = { width: 1280, height: 800 };
@@ -13,6 +14,10 @@ const FENSTER = { width: 1280, height: 800 };
 const VORBEREITUNGEN = {
   'Repo G': { anlegen: repos.repoG, commits: ['g2'] },
   'Repo A': { anlegen: repos.repoA, commits: ['q', 'p'] },
+  'Repo C': { anlegen: repos.repoC, commits: ['c2', 'c1'] },
+  'Repo U': { anlegen: repos.repoU, commits: ['u'] },
+  'Große Diffs': { anlegen: repos.repoGross, commits: ['w'] },
+  'Eine Zeile in 20 000': { anlegen: repos.repoUMitV, commits: ['v'] },
 };
 
 function nebenSprache(gr, page) {
@@ -37,8 +42,13 @@ function nebenSprache(gr, page) {
     starten,
     hash: name => hash(name),
     commitAnsehen: name => seite.commitWaehlen(page, hash(name).slice(0, 7)),
-    dateiAnsehen: name => seite.dateiWaehlen(page, name),
+    dateiAnsehen: async name => {
+      await seite.dateiWaehlen(page, name);
+      await nebenSeite.warteAufZeichnung(page);
+    },
     anordnungWaehlen: wert => nebenSeite.anordnungWaehlen(page, wert),
+    anordnungPerTastatur: wert => nebenSeite.anordnungPerTastatur(page, wert),
+    gruppe: () => nebenSeite.pruefeGruppe(page),
     anordnungIst: wert => nebenSeite.pruefeAnordnung(page, wert),
     zeilenPaareSind: erwartet => nebenSeite.pruefeZeilenPaare(page, erwartet),
     spaltenkoepfeSind: () => nebenSeite.pruefeSpaltenkoepfe(page),
@@ -47,6 +57,25 @@ function nebenSprache(gr, page) {
     umfangIst: name => diffSeite.pruefeAnsicht(page, name),
     fordertZurWahlAuf: () => diffSeite.pruefeAufforderungZurWahl(page),
     neuLaden: () => page.reload(),
+    farbeFertig: () => diffSeite.warteAufFarbe(page),
+    farbRollen: () => nebenSeite.farbeRollenLesen(page),
+    blockKnoten: () => diffSeite.blockKnoten(page),
+    zugeklappt: (pfad, meldung) => diffSeite.pruefeZugeklappt(page, pfad, meldung),
+    trotzdemLaden: () => diffSeite.trotzdemLaden(page),
+    zustand: (pfad, text, fehler = false) => diffSeite.pruefeMeldung(page, pfad, text, fehler),
+    hinweisZurWahl: () => diffSeite.pruefeAufforderungZurWahl(page),
+    linksSeiteAnklicken: alt => nebenSeite.linksTextzelleAnklicken(page, alt),
+    rechtsSeiteAnklicken: neu => nebenSeite.rechtsTextzelleAnklicken(page, neu),
+    feldOffenMitFokus: name => anmerkungSeite.pruefeFeldOffenMitFokus(page, name),
+    textSchreiben: (name, text) => anmerkungSeite.textSchreiben(page, name, text),
+    speichern: name => anmerkungSeite.speichern(page, name),
+    anmerkungenUnter: (ziel, erwartet) => anmerkungSeite.pruefeAnmerkungenUnter(page, ziel, erwartet),
+    entferntHinweis: () => nebenSeite.entferntHinweis(page),
+    fremderTextBleibtText: () => seite.pruefeKeineFormatierung(page),
+    hatPaar: (links, rechts) => nebenSeite.hatZeilenpaar(page, links, rechts),
+    breiteUndUmbruch: neu => nebenSeite.pruefeBreiteUndUmbruch(page, neu),
+    anordnungKlicken: wert => nebenSeite.anordnungKlicken(page, wert),
+    paarBinnen: (links, rechts, fristMs) => nebenSeite.pruefePaarBinnen(page, () => nebenSeite.anordnungKlicken(page, 'nebeneinander'), links, rechts, fristMs),
   };
 }
 

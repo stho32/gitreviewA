@@ -519,24 +519,117 @@
   }
 
   /** Nebeneinander (R00023): dieselben Zeilen der Ansicht, in zwei Spalten gepaart (alt links, neu rechts). Die Zeichenrechnung
-      bleibt die der Zeilen (keine zweite); die Textinhalte baut `textzellenInhalt` — Lesetexte, Marken und später Farbstücke.
-      Färbung (B2205), Zuklappen und Blockgrenze (B2206) und die Zeilenziele (B2207) folgen; hier steht die Paarung und die Tabelle. */
+      bleibt die der Zeilen (keine zweite); die Textinhalte baut `textzellenInhalt` — Lesetexte, Marken und Farbstücke. Die Blöcke
+      folgen derselben Knotengrenze wie einspaltig (`bereichBauen`, B2206), die Links sitzen an der Nummer-neu-Seite (B2207). */
   function zeichneNebeneinander(ansicht, antwort, zeilen) {
     const tabelle = gegenueberstellen(zeilen);
     if (zustand.gezeichnet) {
-      zustand.gezeichnet.zeilen = [];
+      zustand.gezeichnet.zeilen = zeilen;
     }
     const name = bereichsname(antwort);
     const textzellen = zeile => textzellenInhalt(zeile, sichtbarTeile(zeile.text));
     ansicht.rollElement.setAttribute('aria-label', name);
-    ansicht.rollElement.replaceChildren(window.gitreviewaNebeneinander.tabelleBauen(tabelle, zeilen, name, textzellen));
+    ansicht.rollElement.replaceChildren(window.gitreviewaNebeneinander.bereichBauen(tabelle, zeilen, name, textzellen));
     ansicht.rollElement.hidden = false;
-    ansicht.rollElement.dataset.farbe = 'nein';
+    setzeSprunglinksNeben(ansicht, tabelle, zeilen);
     aktualisiereSprungkopf(ansicht);
+    faerbeNeben(ansicht, antwort, tabelle, zeilen);
     const bereiche = zustand.datei && zustand.datei.modus === 'zusammen'
       ? [{ commit: zustand.datei.commit, betreff: betreffVon(zustand.datei.commit), bereichElement: ansicht.rollElement }]
       : null;
     meldeGezeichnet(ansicht, antwort.pfad, bereiche);
+  }
+
+  /** Links nach VS Code (R00021) auch zweispaltig: an der Nummer-neu-Seite der Tabellenzeile; der Hunk-Kopf wie einspaltig; eine
+      Tabellenzeile ohne rechte Seite (entfernte Zeile) trägt keinen Link. */
+  function setzeSprunglinksNeben(ansicht, tabelle, zeilen) {
+    const gezeichnet = zustand.gezeichnet;
+    if (!gezeichnet || gezeichnet.zeilen.length === 0) {
+      return;
+    }
+    const ziel = sprungPasst() ? zustand.sprung.ziel : '';
+    const zeilenElemente = ansicht.rollElement.querySelectorAll('tr[data-art]');
+    for (let index = 0; index < tabelle.length; index += 1) {
+      const zeile = tabelle[index];
+      const zeilenElement = zeilenElemente[index];
+      if (!zeilenElement) {
+        continue;
+      }
+      if (zeile.art === 'kopf') {
+        verlinkeZelle(zeilenElement.querySelector('td.c'), sprungLink(ziel, sprungZeile(zeilen[zeile.links])), null);
+        continue;
+      }
+      if (zeile.rechts === null) {
+        continue;
+      }
+      const nummer = sprungZeile(zeilen[zeile.rechts]);
+      verlinkeZelle(zeilenElement.querySelector('td.neu'), sprungLink(ziel, nummer), sprungName(gezeichnet.pfad, nummer));
+    }
+  }
+
+  /** Färbung zweispaltig über dieselbe Auflage (B2205): jeder Zelle ihre eigene Seite. Ohne Sprache oder über den Grenzen bleibt
+      die Ansicht ungefärbt. Eine späte Antwort einer früheren Anzeige wird verworfen (`aktuell`). */
+  function faerbeNeben(ansicht, antwort, tabelle, zeilen) {
+    const sprache = spracheZuPfad(antwort.pfad);
+    if (!sprache || !faerbbar(antwort.patch)) {
+      ansicht.rollElement.dataset.farbe = 'nein';
+      return;
+    }
+    ansicht.rollElement.dataset.farbe = 'laeuft';
+    const anzeige = zustand.anzeige;
+    const aktuell = () => anzeige === zustand.anzeige;
+    ansicht.farbschlange.stellen({
+      sprache,
+      zeilen: zeilen.map(zeile => ({ art: zeile.art, text: zeile.text })),
+      aktuell,
+      fertig: farbantwort => legeFarbeAufNeben(ansicht, tabelle, zeilen, farbantwort, aktuell),
+    });
+  }
+
+  function legeFarbeAufNeben(ansicht, tabelle, zeilen, farbantwort, aktuell) {
+    if (!farbantwort) {
+      ansicht.rollElement.dataset.farbe = 'nein';
+      return;
+    }
+    const auflage = {
+      ansicht,
+      tabelle,
+      zeilen,
+      aktuell,
+      stueckeNachZeile: stueckeJeZeile(farbantwort),
+      zeilenElemente: ansicht.rollElement.querySelectorAll('tr[data-art]'),
+    };
+    auflegenNebenAb(auflage, 0);
+  }
+
+  /** Ersetzt je Tabellenzeile den Inhalt beider Textzellen mit den Farbstücken ihrer Seite, in Häppchen von 500 Zeilen. */
+  function auflegenNebenAb(auflage, anfang) {
+    if (!auflage.aktuell()) {
+      return;
+    }
+    const ende = Math.min(anfang + BLOCK_ZEILEN, auflage.tabelle.length);
+    for (let index = anfang; index < ende; index += 1) {
+      const zeile = auflage.tabelle[index];
+      const zeilenElement = auflage.zeilenElemente[index];
+      if (!zeilenElement || zeile.art === 'kopf' || zeile.art === 'hinweis') {
+        continue;
+      }
+      faerbeZelle(zeilenElement.querySelector('td.c-alt'), zeile.links, auflage);
+      faerbeZelle(zeilenElement.querySelector('td.c-neu'), zeile.rechts, auflage);
+    }
+    if (ende < auflage.tabelle.length) {
+      setTimeout(() => auflegenNebenAb(auflage, ende), 0);
+      return;
+    }
+    auflage.ansicht.rollElement.dataset.farbe = 'ja';
+  }
+
+  function faerbeZelle(zelle, stelle, auflage) {
+    if (!zelle || stelle === null) {
+      return;
+    }
+    const zeile = auflage.zeilen[stelle];
+    zelle.replaceChildren(...textzellenInhalt(zeile, farbteile(sichtbarTeile(zeile.text), auflage.stueckeNachZeile.get(stelle))));
   }
 
   /** Die Blöcke der Ansicht in Reihenfolge: je Folge zusammenhängender Diff-Zeilen ein Block (höchstens 500 Zeilen), dazwischen

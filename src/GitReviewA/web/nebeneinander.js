@@ -193,7 +193,69 @@
     return '';
   }
 
-  const api = { tabelleBauen, blockBreite, zeichenBreite };
+  /** Höchstens so viele DOM-Knoten hat ein Block (B2206): wie `BLOCK_KNOTEN` in diff-werte.js, je Zeile aber beide Seiten. */
+  const BLOCK_ZEILEN = 500;
+  const BLOCK_KNOTEN = 5000;
+  /** Die Knoten um die Tabellenzeilen herum: Block, Tabelle, colgroup und Kopfzeile (großzügig). */
+  const BLOCK_GERUEST = 10;
+  /** Grundgerüst einer Zeile ohne das Textfeld, je Zeilenart — wie `GERUEST_NACH_ART` in diff-werte.js. */
+  const GERUEST_NACH_ART = { kopf: 2, plus: 9, minus: 9, kontext: 7, hinweis: 5 };
+
+  function knotenZeile(zeile) {
+    const geruest = GERUEST_NACH_ART[zeile.art];
+    if (geruest === undefined) {
+      throw new Error(`Unbekannte Zeilenart ${zeile.art}`);
+    }
+    return geruest + 2 * zeile.text.length;
+  }
+
+  /** Obere Schranke der DOM-Knoten einer Tabellenzeile: die Zellen plus die Knoten beider Seiten (B2206). */
+  function knotenPaar(zeile, zeilen) {
+    if (zeile.art === 'kopf') {
+      return 3 + 2 * zeilen[zeile.links].text.length;
+    }
+    let knoten = 4;
+    for (const stelle of [zeile.links, zeile.rechts]) {
+      if (stelle !== null) {
+        knoten += knotenZeile(zeilen[stelle]);
+      }
+    }
+    return knoten;
+  }
+
+  /** Tabellenzeilen in Blöcke zu höchstens 500 Zeilen und höchstens `BLOCK_KNOTEN` DOM-Knoten. Die Paarung steht schon fest, also
+      liegt jede Tabellenzeile ganz in einem Block (B2206). */
+  function bloeckeNeben(tabelle, zeilen) {
+    const aus = [];
+    let block = [];
+    let knoten = BLOCK_GERUEST;
+    for (const zeile of tabelle) {
+      const eigene = knotenPaar(zeile, zeilen);
+      const voll = block.length >= BLOCK_ZEILEN || (block.length > 0 && knoten + eigene > BLOCK_KNOTEN);
+      if (voll) {
+        aus.push(block);
+        block = [];
+        knoten = BLOCK_GERUEST;
+      }
+      block.push(zeile);
+      knoten += eigene;
+    }
+    if (block.length > 0) {
+      aus.push(block);
+    }
+    return aus;
+  }
+
+  /** Der Bereich als Folge von Blöcken (`.dz-b`) mit derselben Blockgrenze wie einspaltig. */
+  function bereichBauen(tabelle, zeilen, name, textzellen) {
+    const sammel = document.createDocumentFragment();
+    for (const block of bloeckeNeben(tabelle, zeilen)) {
+      sammel.append(tabelleBauen(block, zeilen, name, textzellen));
+    }
+    return sammel;
+  }
+
+  const api = { tabelleBauen, bereichBauen, bloeckeNeben, blockBreite, zeichenBreite, BLOCK_KNOTEN };
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   } else {

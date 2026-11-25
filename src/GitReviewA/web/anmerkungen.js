@@ -337,12 +337,12 @@
       return;
     }
     const textIstAusgewaehlt = window.getSelection().toString() !== '';
-    waehleZeile(ansicht, zeileElement, textIstAusgewaehlt);
+    waehleZeile(ansicht, zeileElement, textIstAusgewaehlt, ereignis.target);
   }
 
-  function waehleZeile(ansicht, zeileElement, textIstAusgewaehlt) {
+  function waehleZeile(ansicht, zeileElement, textIstAusgewaehlt, geklickt) {
     zeigeHinweis(ansicht, '');
-    const ziel = zeilenziel({ art: zeileElement.dataset.art, neu: nummerOderNull(zeileElement.dataset.neu) }, textIstAusgewaehlt);
+    const ziel = zeilenziel(zielDerZeile(zeileElement, geklickt), textIstAusgewaehlt);
     if (ziel.art === 'entfernt') {
       zeigeHinweis(ansicht, ziel.hinweis);
       return;
@@ -351,6 +351,22 @@
       setzeZeilenfokus(zeileElement, false);
       oeffneOderFokussiereFeld(ansicht, zeileElement, ziel.neu);
     }
+  }
+
+  /** Die Zeile, an der eine Anmerkung haftet (R00023): nur in der zweispaltigen Tabelle entscheidet die angeklickte Zelle — die neue
+      Seite (Nummer neu) ist annotierbar, die linke Seite einer entfernten Zeile nicht (Hinweis). Einspaltig gilt die Zeile allein,
+      denn dort tragen auch die Nummernzellen die Klassen `alt`/`neu`, ohne eine zweite Seite zu meinen. */
+  function zielDerZeile(zeileElement, geklickt) {
+    const neu = nummerOderNull(zeileElement.dataset.neu);
+    const zweispaltig = zeileElement.querySelector('td.c-alt') !== null || zeileElement.querySelector('td.c-neu') !== null;
+    if (!zweispaltig) {
+      return { art: zeileElement.dataset.art, neu };
+    }
+    const zelle = geklickt ? geklickt.closest('td') : null;
+    if (zelle && (zelle.classList.contains('c-alt') || zelle.classList.contains('alt'))) {
+      return { art: zeileElement.dataset.art === 'kontext' ? 'kontext' : 'minus', neu };
+    }
+    return neu === null ? { art: zeileElement.dataset.art, neu } : { art: 'plus', neu };
   }
 
   function nummerOderNull(text) {

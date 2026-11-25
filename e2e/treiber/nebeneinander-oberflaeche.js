@@ -22,6 +22,33 @@ async function pruefeAnordnung(page, anordnung) {
   await expect(page.locator(`${ANORDNUNG} [data-anordnung]`)).toHaveCount(2);
 }
 
+/** Die Gruppe „Anordnung“ trägt ihren Namen und die beiden Knöpfe (R00023, Kriterium 12). */
+async function pruefeGruppe(page) {
+  const gruppe = page.getByRole('group', { name: 'Anordnung' });
+  await expect(gruppe).toHaveCount(1);
+  await expect(gruppe.getByRole('button', { name: 'untereinander', exact: true })).toBeVisible();
+  await expect(gruppe.getByRole('button', { name: 'nebeneinander', exact: true })).toBeVisible();
+}
+
+/** Schaltet die Anordnung nur mit der Tastatur: Fokus auf den Knopf, dann Leertaste. */
+async function anordnungPerTastatur(page, anordnung) {
+  await page.locator(`${ANORDNUNG} [data-anordnung="${anordnung}"]`).focus();
+  await page.keyboard.press('Space');
+  await expect(page.locator('body')).toHaveAttribute('data-anordnung', anordnung);
+}
+
+/** Wartet, bis der Diff-Bereich gezeichnet ist: Diff-Zeilen stehen oder eine endgültige Meldung (nicht mehr „Diff wird geladen“). */
+async function warteAufZeichnung(page) {
+  await page.waitForFunction(laden => {
+    const roll = document.querySelector('#diff .df-sc');
+    if (roll && !roll.hidden && roll.querySelector('tbody tr[data-art]')) {
+      return true;
+    }
+    const meldung = document.querySelector('#diff .diff-meldung');
+    return Boolean(meldung) && meldung.textContent !== '' && meldung.textContent !== laden;
+  }, 'Diff wird geladen …', { polling: 'raf', timeout: 15000 });
+}
+
 /** Die Tabellenzeilen der Nebeneinander-Ansicht: Hunk-Kopf, Hinweiszeile oder ein Paar (links alt, rechts neu). */
 async function zeilenPaareLesen(page) {
   return page.locator(ZEILE).evaluateAll(zeilen => {
@@ -100,6 +127,102 @@ async function pruefeKontextEinmalGelesen(page) {
   }
 }
 
+/** Kriterium 7: ohne Umbruch steht die lange Zeile einzeilig und der Bereich scrollt waagerecht, mit Umbruch ist sie mehrere
+    Bildschirmzeilen hoch und der Bereich scrollt nicht waagerecht; beide Code-Spalten sind gleich breit. Liefert die Messwerte. */
+async function pruefeBreiteUndUmbruch(page, neu) {
+  const messen = () => page.evaluate(([selektor, nummer]) => {
+    const zeile = document.querySelector(`${selektor}[data-neu="${nummer}"]`);
+    const zeile1 = zeile.parentElement.querySelector('tr[data-neu="1"]');
+    const roll = document.querySelector('#diff .df-sc');
+    const breite = zelle => (zelle ? zelle.getBoundingClientRect().width : 0);
+    return {
+      verhaeltnis: zeile.getBoundingClientRect().height / (zeile1 ? zeile1.getBoundingClientRect().height : 1),
+      scrolltWaagerecht: roll.scrollWidth > roll.clientWidth,
+      breiteAlt: breite(zeile.children[1]),
+      breiteNeu: breite(zeile.children[3]),
+    };
+  }, [ZEILE, neu]);
+  await expect(page.locator(`${ZEILE}[data-neu="${neu}"]`)).toBeVisible();
+  const ohneUmbruch = await messen();
+  await page.locator('#diff .diff-kopf').getByLabel('Umbruch').click();
+  await page.waitForFunction(([selektor, nummer]) => {
+    const zeile = document.querySelector(`${selektor}[data-neu="${nummer}"]`);
+    const roll = document.querySelector('#diff .df-sc');
+    return zeile && roll.scrollWidth <= roll.clientWidth;
+  }, [ZEILE, neu], { polling: 'raf', timeout: 10000 });
+  const mitUmbruch = await messen();
+  return { ohneUmbruch, mitUmbruch };
+}
+
+/** Klickt die linke Textzelle der entfernten Zeile mit Nummer alt `alt` (R00023, Kriterium 10). */async function linksTextzelleAnklicken(page, alt) {
+  await page.locator(`${ZEILE}[data-art="minus"][data-alt="${alt}"] td.c-alt`).click();
+}
+
+/** Klickt die rechte Textzelle der Zeile mit Nummer neu `neu`. */
+async function rechtsTextzelleAnklicken(page, neu) {
+  await page.locator(`${ZEILE}[data-neu="${neu}"] td.c-neu`).click();
+}
+
+/** Die Farbstück-Klassen (`tk-…`) je Textzelle der Tabellenzeilen: links (alte Seite) und rechts (neue Seite). */
+async function farbeRollenLesen(page) {
+  return page.locator(ZEILE).evaluateAll(zeilen => zeilen.map(tr => {
+    const rollen = zelle => (zelle ? Array.from(zelle.querySelectorAll('span[class*="tk-"]')).map(span => span.className) : []);
+    return { links: rollen(tr.querySelector('td.c-alt')), rechts: rollen(tr.querySelector('td.c-neu')) };
+  }));
+}
+
+async function entferntHinweis(page) {
+  return page.locator('#diff .anmerkung-hinweis').textContent();
+}
+
+/** Klickt den Anordnungs-Knopf, ohne zu warten (für die Zeitmessung, Kriterium 14). */
+async function anordnungKlicken(page, anordnung) {
+  await page.locator(`${ANORDNUNG} [data-anordnung="${anordnung}"]`).click();
+}
+
+/** Führt `aktion` aus und misst, bis die Tabellenzeile links `linksText` und rechts `rechtsText` steht (Kriterium 14). */
+async function pruefePaarBinnen(page, aktion, linksText, rechtsText, fristMs) {
+  const startUmMs = Date.now();
+  await aktion();
+  await page.waitForFunction(([selector, links, rechts]) => {
+    const text = zelle => {
+      if (!zelle) {
+        return null;
+      }
+      const lesetext = zelle.querySelector('.vh');
+      let inhalt = zelle.textContent;
+      if (lesetext) {
+        inhalt = inhalt.slice(lesetext.textContent.length);
+      }
+      return inhalt;
+    };
+    return Array.from(document.querySelectorAll(selector)).some(tr => text(tr.querySelector('td.c-alt')) === links && text(tr.querySelector('td.c-neu')) === rechts);
+  }, [ZEILE, linksText, rechtsText], { polling: 'raf', timeout: 15000 });
+  const dauerMs = Date.now() - startUmMs;
+  expect(dauerMs, `${linksText}/${rechtsText} nach ${dauerMs} ms`).toBeLessThanOrEqual(fristMs);
+  return dauerMs;
+}
+
+/** Ob eine Tabellenzeile links `linksText` und rechts `rechtsText` trägt (jeweils ohne den Lesetext für Screenreader). */
+async function hatZeilenpaar(page, linksText, rechtsText) {
+  return page.locator(ZEILE).evaluateAll((zeilen, [links, rechts]) => {
+    const text = zelle => {
+      if (!zelle) {
+        return null;
+      }
+      const lesetext = zelle.querySelector('.vh');
+      let inhalt = zelle.textContent;
+      if (lesetext) {
+        inhalt = inhalt.slice(lesetext.textContent.length);
+      }
+      return inhalt;
+    };
+    return zeilen.some(tr => text(tr.querySelector('td.c-alt')) === links && text(tr.querySelector('td.c-neu')) === rechts);
+  }, [linksText, rechtsText]);
+}
+
 module.exports = {
-  anordnungWaehlen, pruefeAnordnung, zeilenPaareLesen, pruefeZeilenPaare, pruefeSpaltenkoepfe, pruefeKontextEinmalGelesen, ROLLBEREICH, ZEILE,
+  anordnungWaehlen, pruefeAnordnung, pruefeGruppe, anordnungPerTastatur, warteAufZeichnung, zeilenPaareLesen, pruefeZeilenPaare, pruefeSpaltenkoepfe, pruefeKontextEinmalGelesen, pruefeBreiteUndUmbruch,
+  linksTextzelleAnklicken, rechtsTextzelleAnklicken, farbeRollenLesen, entferntHinweis, hatZeilenpaar, anordnungKlicken, pruefePaarBinnen, ROLLBEREICH, ZEILE,
 };
+
