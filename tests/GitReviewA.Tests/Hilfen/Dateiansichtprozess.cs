@@ -13,6 +13,7 @@ namespace GitReviewA.Tests.Hilfen;
 internal sealed class Dateiansichtprozess : IDisposable
 {
     private static readonly Regex Startzeile = new(@"http://127\.0\.0\.1:(\d+)/", RegexOptions.CultureInvariant);
+    private static readonly string Dotnet = FindeDotnet();
 
     private readonly Process prozess;
     private readonly StringBuilder ausgabe = new();
@@ -56,19 +57,33 @@ internal sealed class Dateiansichtprozess : IDisposable
 
     public int Port => Adresse is null ? 0 : new Uri(Adresse).Port;
 
-    public static async Task<Dateiansichtprozess> StarteAsync(string ordner, params string[] argumente)
+    public static Task<Dateiansichtprozess> StarteAsync(string ordner, params string[] argumente)
     {
-        var start = new ProcessStartInfo("dotnet")
+        return StarteMitUmgebungAsync(ordner, argumente, null, stdinOffen: false);
+    }
+
+    /// <summary>Startet mit eigener Umgebung (etwa `GITREVIEWA_BROWSER` oder einem Marker-`git` im Suchpfad) und optional offener stdin-Röhre.</summary>
+    public static async Task<Dateiansichtprozess> StarteMitUmgebungAsync(string ordner, string[] argumente, IReadOnlyDictionary<string, string>? umgebung, bool stdinOffen)
+    {
+        var start = new ProcessStartInfo(Dotnet)
         {
             WorkingDirectory = ordner,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
+            RedirectStandardInput = stdinOffen,
             UseShellExecute = false,
         };
         start.ArgumentList.Add(typeof(Aufrufleser).Assembly.Location);
         foreach (var argument in argumente)
         {
             start.ArgumentList.Add(argument);
+        }
+        if (umgebung is not null)
+        {
+            foreach (var eintrag in umgebung)
+            {
+                start.Environment[eintrag.Key] = eintrag.Value;
+            }
         }
         var prozess = Process.Start(start) ?? throw new InvalidOperationException("Prozess startet nicht");
         var lauf = new Dateiansichtprozess(prozess);
@@ -151,6 +166,14 @@ internal sealed class Dateiansichtprozess : IDisposable
             prozess.WaitForExit(5000);
         }
         prozess.Dispose();
+    }
+
+    private static string FindeDotnet()
+    {
+        using var which = Process.Start(new ProcessStartInfo("which", "dotnet") { RedirectStandardOutput = true });
+        var pfad = which?.StandardOutput.ReadToEnd().Trim();
+        which?.WaitForExit();
+        return string.IsNullOrEmpty(pfad) ? "dotnet" : pfad;
     }
 
     private static async Task BeendeLeser(Task leser)

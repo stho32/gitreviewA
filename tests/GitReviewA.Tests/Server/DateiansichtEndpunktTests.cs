@@ -215,6 +215,23 @@ public class DateiansichtEndpunktTests
         Assert.That(seite.Content.Headers.ContentType?.MediaType, Is.EqualTo("text/html"));
     }
 
+    [Test]
+    public async Task Wenn_der_Inhalt_nur_Steuerzeichen_traegt_dann_bleibt_die_Antwort_unter_sechsmal_der_Dateigroesse_plus_1_KiB()
+    {
+        using var d = OrdnerD.Anlegen();
+        var inhalt = new byte[1024 * 1024];
+        Array.Fill(inhalt, (byte)0x01);
+        File.WriteAllBytes(d.Pfad("steuer.sql"), inhalt);
+        await using var server = await StarteServer(Stand(d.Pfad("steuer.sql")), new StringWriter());
+        using var client = new HttpClient();
+
+        var antwort = await client.GetByteArrayAsync(new Uri(new Uri(server.Adresse), "api/dateiansicht/0"));
+
+        Assert.That(antwort.LongLength, Is.LessThanOrEqualTo(6L * inhalt.Length + 1024));
+        using var dokument = JsonDocument.Parse(antwort);
+        Assert.That(dokument.RootElement.GetProperty("text").GetString()?.Length, Is.EqualTo(inhalt.Length));
+    }
+
     private static Dateiansichtsstand Stand(string pfad)
     {
         var ausgang = new DateiansichtStartInteractor(new DateiLeser(new Quellenbuchung()))

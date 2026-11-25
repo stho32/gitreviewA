@@ -72,6 +72,13 @@ internal sealed class OrdnerD : IDisposable
                 // schon weg
             }
         }
-        Directory.Delete(Ordner, recursive: true);
+        try
+        {
+            Directory.Delete(Ordner, recursive: true);
+        }
+        catch (IOException)
+        {
+            // Fremde Werkzeuge legen Dateien mit Rohbytes an, die .NET nicht aufzählen kann; der Ordner bleibt dann liegen.
+        }
     }
 }
