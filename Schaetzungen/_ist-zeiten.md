@@ -63,3 +63,4 @@ Nie vom User erfragen.
 | 2026-11-25 | R00024 Umbenennung, Bild, Binärdatei | Nacharbeit Code-Review: B1 kurzer RIFF-Kopf, B2 Bildart vor der Größe, S3 Bild in „Zusammen“ | Bug-Fix | – | 0,3h | – | autonom |
 
 | 2026-11-25 | R00030 Tastaturbedienung der Review-Oberfläche | Nacharbeit Code-Review: B1 Kürzel `v` trifft den echten Anordnungs-Umschalter, B2 `[`/`]` wirken mehrfach (Fokus nicht im `select`) | Bug-Fix | – | 0,25h | – | autonom |
+| 2026-11-25 | R00030 Tastaturbedienung der Review-Oberfläche | Nacharbeit Entwicklertest US-18: Hinweis am Ziel aus dem Katalog abgeleitet (Test zuerst) | Bug-Fix | – | 0,25h | – | autonom |
