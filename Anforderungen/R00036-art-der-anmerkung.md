@@ -57,7 +57,7 @@ Vorbereitung: **Repo Z** aus `user-stories/R00012.md` (Commits `z1`, `z2`, `z3`,
 - [ ] 7. Gegeben ein offenes Notizfeld an einer Zeile, an einem Bereich und an der Datei, in „Zusammen“ und in „Einzeln“, wenn man in der Gruppe „Art“ mit Tab und Pfeiltasten oder `1`–`3` wählt und speichert, dann trägt die Anmerkung die gewählte Art; der Kopf zeigt sie als Wort in beiden Modi, in „nur Änderungen“ und „ganze Datei“, „untereinander“ und „nebeneinander“. *Ebene: Integration (Oberfläche gegen Fake), ein Fall Playwright (Gruppe per Tastatur).*
 - [ ] 8. Gegeben die Hilfe (`?`), wenn man sie öffnet, dann stehen `1`, `2`, `3` je genau einmal im Katalog mit „Zeile anmerken: Muss / Frage / Idee“; es gibt keinen zweiten Katalog. *Ebene: Unit (Katalog, R00030).*
 
-Grenz- und Leerfälle bedacht: keine Anmerkung (Kriterium 3 über R00002); leere erste Textzeile (2); unbekannter Wert und Grenzwerte (4); gesperrte Stelle — das Anlegen bleibt 400 wie R00014, die Art ändert daran nichts (kein eigenes Kriterium, derselbe Weg). Verworfen als Kriterium: Zählung je Art in der Zeile `Anmerkungen: n` (Format bliebe nicht gleich; offene Frage 3).
+Grenz- und Leerfälle bedacht: keine Anmerkung (Kriterium 3 über R00002); leere erste Textzeile (2); unbekannter Wert und Grenzwerte (4); gesperrte Stelle — das Anlegen bleibt 400 wie R00014, die Art ändert daran nichts (kein eigenes Kriterium, derselbe Weg). Verworfen als Kriterium: Zählung je Art in der Zeile `Anmerkungen: n` (Format bliebe nicht gleich; entschieden, PO Zeile 192).
 
 **Pflichtpunkte der Detailplanung**: 1 Grenzen — Kriterium 4 und NFA „Grenzen“; 2 Anzeigeverfahren — Kriterium 7 (Standard „Zusammen“ zuerst); 3 festes Layout — nicht betroffen (das Notizfeld liegt im Diff-Rollbereich, die Gruppe „Art“ ist eine Zeile); 4 Ausführungsort — Logging nur aus dem Server-Prozess; 5 eine Unterscheidung, ein Ort — `Anmerkungsart` (Funktionale Anforderungen, erster Punkt), Wege Anzeige, Ändern, Ergebnis, Kopieren, Ergebnis-Spalte.
 
@@ -102,11 +102,11 @@ Grenz- und Leerfälle bedacht: keine Anmerkung (Kriterium 3 über R00002); leere
 
 ## Offene Fragen
 
-Empfehlungen gelten bis zur Antwort des product-owner:
+Keine offenen. Der product-owner hat die drei Fragen am 2026-11-25 entschieden (`AI-Team/po-entscheidungen.md`, Zeilen 192–193); die Antworten sind oben eingearbeitet:
 
-1. **Art ohne Wahl**: Empfehlung „ohne“ — das Ergebnis bleibt ohne Zutun Byte für Byte wie heute, und eine Anmerkung ohne Art ist ehrlich keine Einordnung. Alternative: „Muss“ als Vorgabe (dann trägt fast jede Anmerkung ein Präfix, auch ungewollt).
-2. **Tasten 1–3**: Empfehlung wie beschrieben (außerhalb von Feldern öffnen sie das Feld mit vorgewählter Art; im Textfeld Text). Alternative: nur in der Gruppe — dann bliebe der schnelle Weg aus dem Artboard aus. `Strg`/`Alt`+Ziffer sind im Browser belegt (Reiterwechsel) und schließt der Katalog aus (PO Zeile 158).
-3. **Zählung je Art**: Empfehlung nein — `Anmerkungen: n` bleibt; eine Zeile `Muss: 2 · Frage: 1` wäre eine weitere Formatänderung, die die KI aus den Präfixen selbst zählen kann.
+1. **Art ohne Wahl** — entschieden (PO Zeile 192): „ohne“; das Ergebnis bleibt ohne Zutun Byte für Byte wie heute, und eine Anmerkung ohne Art ist ehrlich keine Einordnung. Alternative „Muss“ als Vorgabe (dann trägt fast jede Anmerkung ein Präfix, auch ungewollt) verworfen.
+2. **Tasten 1–3** — entschieden (PO Zeile 193): wie beschrieben (außerhalb von Feldern öffnen sie das Feld mit vorgewählter Art; im Textfeld Text). Alternative „nur in der Gruppe“ verworfen — dann bliebe der schnelle Weg aus dem Artboard aus. `Strg`/`Alt`+Ziffer sind im Browser belegt (Reiterwechsel) und schließt der Katalog aus (PO Zeile 158).
+3. **Zählung je Art** — entschieden (PO Zeile 192): nein — `Anmerkungen: n` bleibt; eine Zeile `Muss: 2 · Frage: 1` wäre eine weitere Formatänderung, die die KI aus den Präfixen selbst zählen kann.
 
 ## Manuelle Vorbereitungstätigkeiten
 
