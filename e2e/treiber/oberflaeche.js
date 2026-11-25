@@ -4,6 +4,7 @@ const { expect } = require('@playwright/test');
 const ZEILE = '#commit-liste .commit-zeile';
 const DATEILISTE = '#dateiliste';
 const WAEHLER_MENUE = '#waehler-auswahl';
+const KOPFAKTIONEN = '.gr-kopfaktionen';
 const LISTENEINTRAG = '#datei-zeilen > li';
 const DATEIZEILE = '#datei-zeilen .datei-zeile';
 
@@ -38,8 +39,11 @@ async function aufZeilenWarten(page, anzahl) {
   await page.waitForFunction(erwartet => document.querySelectorAll('#commit-liste .commit-zeile').length === erwartet, anzahl, { polling: 'raf' });
 }
 
+/** Der Knopf „Beenden“ über Rolle und sichtbaren Namen, gesucht im Kopfbereich seiner Aktionen.
+    Eine Rollen-Abfrage über das ganze Dokument löst den Namen jedes Knopfes auf und liest je Knopf dessen `labels` über das
+    ganze Dokument: bei 20 000 Diff-Zeilen mit 500 Anmerkungen (1 020 Knöpfe) kostet eine solche Abfrage über fünf Sekunden. */
 function beendenKnopf(page) {
-  return page.getByRole('button', { name: 'Beenden' });
+  return page.locator(KOPFAKTIONEN).getByRole('button', { name: 'Beenden' });
 }
 
 /** Wählt den Modus über den Umschalter im Kopf und wartet, bis er steht (`body[data-modus]`). */
@@ -137,8 +141,9 @@ async function neuLaden(page, modus = null) {
   }
 }
 
+/** Der Knopf „Ergebnis kopieren“ ebenso über Rolle und sichtbaren Namen, im Kopfbereich gesucht (siehe `beendenKnopf`). */
 function ergebnisKopierenKnopf(page) {
-  return page.getByRole('button', { name: 'Ergebnis kopieren' });
+  return page.locator(KOPFAKTIONEN).getByRole('button', { name: 'Ergebnis kopieren' });
 }
 
 async function ergebnisKopierenBetaetigen(page) {
