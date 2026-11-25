@@ -423,7 +423,10 @@
     }
     if (zustand.modus === 'zusammen') {
       const datei = dateiDerZeile(pfad);
-      return datei ? dateiSperrgrund(datei) : '';
+      if (!datei) {
+        return '';
+      }
+      return dateiSperrgrund(datei);
     }
     return sperrgrundRoh(rohSchluessel(commit, pfad));
   }

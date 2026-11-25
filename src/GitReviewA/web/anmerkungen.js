@@ -84,7 +84,10 @@
   /** `zeigeMeldung` des Diff-Bereichs (kein gezeichneter Diff): die Wahl bleibt, das Ereignis trägt die Stelle. Der Datei-Kopf
       über den Diff-Zeilen und der Knopf „Datei anmerken“ bleiben stehen und bedienbar — auch im Meldungszustand (Befund B1). */
   function leereDiff(ansicht, detail) {
-    const stelle = detail && detail.stelle ? detail.stelle : null;
+    let stelle = null;
+    if (detail && detail.stelle) {
+      stelle = detail.stelle;
+    }
     zustand.stelle = stelle;
     zustand.gezeichnet = null;
     if (!stelle) {
@@ -144,13 +147,17 @@
       zustand.dateiFeld = null;
       return;
     }
-    const feld = zustand.dateiFeld && zustand.dateiFeld.ziel.commit === stelle.commit && zustand.dateiFeld.ziel.datei === stelle.pfad
-      ? zustand.dateiFeld
-      : null;
+    let feld = null;
+    if (zustand.dateiFeld && zustand.dateiFeld.ziel.commit === stelle.commit && zustand.dateiFeld.ziel.datei === stelle.pfad) {
+      feld = zustand.dateiFeld;
+    }
     if (zustand.dateiFeld && !feld) {
       zustand.dateiFeld = null;
     }
-    const anmerkungen = hatAbschnitte(zustand.gezeichnet) ? [] : dateianmerkungen(zustand.anmerkungen, stelle.commit, stelle.pfad);
+    let anmerkungen = [];
+    if (!hatAbschnitte(zustand.gezeichnet)) {
+      anmerkungen = dateianmerkungen(zustand.anmerkungen, stelle.commit, stelle.pfad);
+    }
     if (anmerkungen.length === 0 && !feld) {
       return;
     }

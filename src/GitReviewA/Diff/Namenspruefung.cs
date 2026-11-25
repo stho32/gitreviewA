@@ -87,7 +87,13 @@ internal static class Namenspruefung
                 continue;
             }
             var datei = dateienDesCommits[stelle];
-            faelle[stelle] = GehtUeberStdin(datei) && TraegtZeilenende(datei) ? Namensfall.NichtUebergebbar : Namensfall.Lesbar;
+            var gehtNichtAnGit = GehtUeberStdin(datei) && TraegtZeilenende(datei);
+            if (gehtNichtAnGit)
+            {
+                faelle[stelle] = Namensfall.NichtUebergebbar;
+                continue;
+            }
+            faelle[stelle] = Namensfall.Lesbar;
         }
         return faelle;
     }

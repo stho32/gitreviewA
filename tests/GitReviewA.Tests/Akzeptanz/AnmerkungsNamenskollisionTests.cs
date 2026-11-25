@@ -100,7 +100,11 @@ public class AnmerkungsNamenskollisionTests
         anfrage.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
         using var antwort = await client.SendAsync(anfrage);
         using var inhalt = JsonDocument.Parse(await antwort.Content.ReadAsStringAsync());
-        var hatMeldung = inhalt.RootElement.TryGetProperty("meldung", out var meldung);
-        return (antwort.StatusCode, hatMeldung ? meldung.GetString() ?? string.Empty : string.Empty);
+        var meldungstext = string.Empty;
+        if (inhalt.RootElement.TryGetProperty("meldung", out var meldung) && meldung.GetString() is { } text)
+        {
+            meldungstext = text;
+        }
+        return (antwort.StatusCode, meldungstext);
     }
 }

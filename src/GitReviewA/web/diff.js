@@ -223,7 +223,11 @@
       zustand.gezeichnet.zeilen = [];
     }
     aktualisiereSprungkopf(ansicht);
-    document.dispatchEvent(new CustomEvent('diff-geleert', { detail: { stelle: zustand.datei ? { commit: zustand.datei.commit, pfad: zustand.datei.pfad } : null } }));
+    let stelle = null;
+    if (zustand.datei) {
+      stelle = { commit: zustand.datei.commit, pfad: zustand.datei.pfad };
+    }
+    document.dispatchEvent(new CustomEvent('diff-geleert', { detail: { stelle } }));
   }
 
   function zeichneAntwort(ansicht, antwort, alsText, diffansicht) {
