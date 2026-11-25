@@ -223,6 +223,16 @@ async function pruefeUmbrochen(page, neu, text) {
   expect(mass.scrolltWaagerecht, 'waagerecht scrollbar').toBe(false);
 }
 
+/** Die Stellung des Umschalters „Umbruch“: „an“ (der Start seit R00032) oder „aus“. */
+async function pruefeUmbruchStellung(page, stellung) {
+  const schalter = page.locator(BEREICH).getByLabel('Umbruch');
+  if (stellung === 'an') {
+    await expect(schalter).toBeChecked();
+    return;
+  }
+  await expect(schalter).not.toBeChecked();
+}
+
 /** Stellt den Umschalter der Ansicht auf `name` („nur Änderungen“ oder „ganze Datei“) — per Klick wie der Mensch. */
 async function ansichtWaehlen(page, name) {
   await page.locator(BEREICH).getByRole('radiogroup', { name: 'Ansicht' }).getByRole('radio', { name, exact: true }).click();
@@ -687,7 +697,7 @@ async function sprungAntwortScheitern(page, pfad, status = 500) {
 
 module.exports = {
   pruefeBedienbarNachAlsText, ansichtWaehlen, ansichtPerTastaturWechseln, pruefeAnsicht, zeilenfarbenLesen, pruefeZeilenfarben, pruefeKontextzeileBinnen,
-  pruefeDiff, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, pruefeHerkunft, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, diffAntwortVerzoegern,
+  pruefeDiff, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, pruefeHerkunft, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, pruefeUmbruchStellung, diffAntwortVerzoegern,
   pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
   pruefeAbschnittZugeklappt, abschnittTrotzdemLaden, pruefeAbschnittZeile, pruefeAbschnittskopf,
   diffAntwortZuGross, ganzDateiErstScheitern, blockKnoten, warteAufFarbe, langeAufgabenBeimScrollen, zugeklapptRechtzeitigNachKlick, zugeklapptRechtzeitigNachAktion,

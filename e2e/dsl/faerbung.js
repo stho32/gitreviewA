@@ -33,7 +33,8 @@ function farbSprache(gr, page) {
   let dialogePruefen;
   let ausfall = null;
   let gewaehlterPfad = null;
-  let umbruchAn = false;
+  /** Der Startwert des Umschalters „Umbruch“ ist „an“ (R00032) — die Zelle schaltet nur, wenn sie „aus“ will. */
+  let umbruchAn = true;
 
   /** Startet gitreviewA im Repo der Vorbereitung und öffnet die Seite (Fenster 1280 × 800); `ausfall` aus AUSFAELLE. */
   async function starten({ vorbereitung = 'Repo F', ausfall: gewaehlterAusfall = null } = {}) {
@@ -41,7 +42,7 @@ function farbSprache(gr, page) {
     const repo = art.anlegen(path.join(gr.eigenerOrdner(), 'repo'));
     lauf = await gr.gitreviewAStarten(repo, art.commits.map(name => repo.hashes[name]));
     ausfall = gewaehlterAusfall;
-    umbruchAn = false;
+    umbruchAn = true;
     meldungen = await farbe.mitschriftEinrichten(page);
     anfragen = farbe.anfragenMitschreiben(page);
     if (ausfall) {

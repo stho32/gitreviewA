@@ -133,18 +133,18 @@ test.describe('Umschalter und Wahl', () => {
     await diff.starten();
     await diff.ansichtWaehlen(GANZE_DATEI);
     await diff.dateiAnsehen('breit.txt');
-    await diff.langeZeileEinzeilig(2, LANGE_ZEILE);
+    await diff.langeZeileUmbrochen(2, LANGE_ZEILE);
     await diff.ansichtWaehlen(NUR_AENDERUNGEN);
-    await diff.langeZeileEinzeilig(2, LANGE_ZEILE);
+    await diff.langeZeileUmbrochen(2, LANGE_ZEILE);
     await diff.ansichtWaehlen(GANZE_DATEI);
     await diff.umbruchUmschalten();
-    await diff.langeZeileUmbrochen(2, LANGE_ZEILE);
+    await diff.langeZeileEinzeilig(2, LANGE_ZEILE);
 
     await diff.ansichtWaehlen(NUR_AENDERUNGEN);
-    await diff.langeZeileUmbrochen(2, LANGE_ZEILE);
+    await diff.langeZeileEinzeilig(2, LANGE_ZEILE);
     await diff.ansichtWaehlen(GANZE_DATEI);
 
-    await diff.langeZeileUmbrochen(2, LANGE_ZEILE);
+    await diff.langeZeileEinzeilig(2, LANGE_ZEILE);
   });
 });
 

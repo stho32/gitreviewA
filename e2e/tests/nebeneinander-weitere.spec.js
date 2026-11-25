@@ -106,7 +106,7 @@ test.describe('Nebeneinander-Ansicht — Färbung, große Dateien, Anmerken', ()
     ]);
   });
 
-  test('Kriterium 7: Breite und Umbruch zweispaltig — ohne Umbruch einzeilig mit waagerechtem Scrollen, mit Umbruch umbrochen', async ({ neben }) => {
+  test('Kriterium 7: Breite und Umbruch zweispaltig — beim Start umbrochen, auf Wunsch einzeilig mit waagerechtem Scrollen', async ({ neben }) => {
     await neben.starten({ vorbereitung: 'Repo A', commits: ['q', 'p'], modus: 'einzeln' });
     await neben.anordnungWaehlen('nebeneinander');
     await neben.dateiAnsehen('breit.txt');
@@ -120,10 +120,15 @@ test.describe('Nebeneinander-Ansicht — Färbung, große Dateien, Anmerken', ()
     expect(Math.abs(mitUmbruch.breiteAlt - mitUmbruch.breiteNeu), 'beide Code-Spalten gleich breit (mit Umbruch)').toBeLessThanOrEqual(1);
   });
 
-  test('Kriterium 7: die Nummernspalten bleiben schmal, die Code-Spalte trägt die längste Zeile ohne Überlauf', async ({ neben }) => {
+  test('Kriterium 7: die Nummernspalten bleiben schmal, die Code-Spalte trägt die längste Zeile ohne Überlauf (ohne Umbruch)', async ({ neben }) => {
     await neben.starten({ vorbereitung: 'Repo A', commits: ['q', 'p'], modus: 'einzeln' });
     await neben.anordnungWaehlen('nebeneinander');
     await neben.dateiAnsehen('breit.txt');
+
+    // Die Spaltenbreite nach `<colgroup>` gilt für einzeilig: mit Umbruch teilen sich die beiden Code-Spalten die Breite fest
+    // (R00023, Kriterium 7; R00032: der Umbruch startet „an“, deshalb hier ausdrücklich ausschalten).
+    await neben.umbruchUmschalten();
+    await neben.umbruchIst('aus');
 
     // `breit.txt` ist hinzugefügt: Zeile 2 trägt rechts 300 Zeichen, die linke Seite ist leer.
     const spalten = await neben.spaltenbreiten(2);

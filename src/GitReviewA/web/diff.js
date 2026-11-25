@@ -22,17 +22,22 @@
   const LESETEXT = { plus: 'hinzugefügt: ', minus: 'entfernt: ' };
   const VORZEICHEN = { plus: '+', minus: '−', kontext: '' };
 
+  /** Werte des Umschalters „Umbruch“ (R00032, `umbruch-werte.js`): der Start ist „an“, die Stellung bleibt am Bereich. */
+  const umbruchWerte = window.gitreviewaUmbruchWerte;
+
   /** `datei`: die gewählte Datei, `alsText` ihre Wahl „Als Text zeigen“; `diffansicht`: `aenderungen` oder `ganz`, nur im Speicher der Seite
       (nach Neuladen wieder „nur Änderungen“); `leerraum`: „beachten“ (Start) oder „ignorieren“, ebenfalls nur im Speicher der Seite;
+      `umbruch`: „an“ (Start, R00032) oder „aus“, ebenfalls nur im Speicher der Seite;
       `zugeklappt`: Zeilen eines langen Textes, die erst „Trotzdem laden“ zeichnet;
       `anzeige`: zählt jeden neuen Inhalt des Bereichs — eine Färbung gilt nur für die Anzeige, für die sie gestellt wurde;
       `sprung`: das Ziel der gewählten Datei aus `sprung-geladen` (null, solange keine Antwort da ist); `gezeichnet`: Commit, Pfad und
       Zeilen der zuletzt gezeichneten Ansicht (samt aufgedeckten Lücken; null ohne Wahl) — daran hängt, ob ein Ziel noch gilt;
       `gewaehlteZeile`: die angeklickte Zeile neu, sonst null. */
-  const zustand = { letzteLadung: 0, datei: null, alsText: false, diffansicht: 'aenderungen', leerraum: 'beachten', zugeklappt: null, anzeige: 0, sprung: null, gezeichnet: null, gewaehlteZeile: null, anzeigeDaten: null, ganz: null, gesamt: null, aufgedeckt: {}, lueckenfehler: {}, ganzLaeuft: null, neuerInhalt: false };
+  const zustand = { letzteLadung: 0, datei: null, alsText: false, diffansicht: 'aenderungen', leerraum: 'beachten', umbruch: umbruchWerte.startstellung(), zugeklappt: null, anzeige: 0, sprung: null, gezeichnet: null, gewaehlteZeile: null, anzeigeDaten: null, ganz: null, gesamt: null, aufgedeckt: {}, lueckenfehler: {}, ganzLaeuft: null, neuerInhalt: false };
 
   function init() {
     const ansicht = ansichtElemente();
+    zeichneUmbruch(ansicht);
     zeigeAufforderungZurWahl(ansicht);
     ansicht.umbruchElement.addEventListener('change', () => schalteUmbruch(ansicht));
     ansicht.leerraumElement.addEventListener('change', () => schalteLeerraum(ansicht));
@@ -91,9 +96,18 @@
     return new Worker('faerben.js');
   }
 
-  /** Die Wahl liegt am Bereich, nicht am Diff: sie bleibt beim Wechsel von Datei und Commit. */
+  /** Die Wahl liegt am Bereich, nicht am Diff: sie bleibt beim Wechsel von Datei und Commit. Der Umschalter kippt die Stellung
+      (R00032); die Anzeige folgt ihr — `.umbr` am Bereich und der Kontrollzustand der Checkbox. */
   function schalteUmbruch(ansicht) {
-    ansicht.wurzelElement.classList.toggle('umbr', ansicht.umbruchElement.checked);
+    zustand.umbruch = umbruchWerte.umschalten(zustand.umbruch);
+    zeichneUmbruch(ansicht);
+  }
+
+  /** Stellung → Anzeige: die Checkbox zeigt „an“ als angekreuzt, der Bereich trägt die Umbruch-Regeln (`.umbr`). */
+  function zeichneUmbruch(ansicht) {
+    const umbrochen = umbruchWerte.umbrochen(zustand.umbruch);
+    ansicht.umbruchElement.checked = umbrochen;
+    ansicht.wurzelElement.classList.toggle('umbr', umbrochen);
   }
 
   /** Wie Umbruch und Ansicht liegt die Leerraum-Stellung am Bereich: sie gilt für jede weitere Datei und jeden weiteren Commit,

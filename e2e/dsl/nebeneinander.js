@@ -76,6 +76,9 @@ function nebenSprache(gr, page) {
     hatPaar: (links, rechts) => nebenSeite.hatZeilenpaar(page, links, rechts),
     breiteUndUmbruch: neu => nebenSeite.pruefeBreiteUndUmbruch(page, neu),
     spaltenbreiten: neu => nebenSeite.spaltenbreitenLesen(page, neu),
+    /** Der Umschalter „Umbruch“ (R00032): umschalten und die Stellung prüfen. */
+    umbruchUmschalten: () => diffSeite.umbruchUmschalten(page),
+    umbruchIst: stellung => diffSeite.pruefeUmbruchStellung(page, stellung),
     sprungzeile: (neu, name) => nebenSeite.pruefeSprungzeile(page, neu, name),
     sprungzeileImVerborgenen: neu => nebenSeite.sprungzeileLiegtImVerborgenen(page, neu),
     sprunglinks: () => nebenSeite.sprunglinksZaehlen(page),

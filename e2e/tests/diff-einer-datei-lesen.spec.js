@@ -99,16 +99,16 @@ test.describe('Diff einer Datei lesen', () => {
     await diff.diffZeigt({ pfad: 'f.txt', zeilen: [{ kopf: '@@ -0,0 +1 @@' }, { plus: 'neu', neu: 1 }] });
   });
 
-  test('soll lange Zeilen erst auf Wunsch umbrechen und die Wahl beim Dateiwechsel behalten', async ({ diff }) => {
+  test('soll lange Zeilen umbrochen zeigen, auf Wunsch einzeilig schalten und die Wahl beim Dateiwechsel behalten', async ({ diff }) => {
     await diff.starten();
     await diff.dateiAnsehen('breit.txt');
 
-    await diff.langeZeileEinzeilig(2, LANGE_ZEILE);
-    await diff.umbruchUmschalten();
     await diff.langeZeileUmbrochen(2, LANGE_ZEILE);
+    await diff.umbruchUmschalten();
+    await diff.langeZeileEinzeilig(2, LANGE_ZEILE);
     await diff.dateiAnsehen('src/b.txt');
     await diff.dateiAnsehen('breit.txt');
-    await diff.langeZeileUmbrochen(2, LANGE_ZEILE);
+    await diff.langeZeileEinzeilig(2, LANGE_ZEILE);
   });
 
   test('soll fremden Text als Text zeigen und richtungsändernde Zeichen als Marke', async ({ diff }) => {

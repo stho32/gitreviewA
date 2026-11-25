@@ -140,8 +140,9 @@ async function pruefeKontextEinmalGelesen(page) {
   }
 }
 
-/** Kriterium 7: ohne Umbruch steht die lange Zeile einzeilig und der Bereich scrollt waagerecht, mit Umbruch ist sie mehrere
-    Bildschirmzeilen hoch und der Bereich scrollt nicht waagerecht; beide Code-Spalten sind gleich breit. Liefert die Messwerte. */
+/** Kriterium 7: beim Start („Umbruch“ an, R00032) ist die lange Zeile mehrere Bildschirmzeilen hoch und der Bereich scrollt
+    nicht waagerecht; nach dem Umschalten steht sie eine Bildschirmzeile hoch und der Bereich scrollt waagerecht; beide
+    Code-Spalten sind gleich breit. Liefert die Messwerte. */
 async function pruefeBreiteUndUmbruch(page, neu) {
   const messen = () => page.evaluate(([selektor, nummer]) => {
     const zeile = document.querySelector(`${selektor}[data-neu="${nummer}"]`);
@@ -156,14 +157,14 @@ async function pruefeBreiteUndUmbruch(page, neu) {
     };
   }, [ZEILE, neu]);
   await expect(page.locator(`${ZEILE}[data-neu="${neu}"]`)).toBeVisible();
-  const ohneUmbruch = await messen();
+  const mitUmbruch = await messen();
   await page.locator('#diff .diff-kopf').getByLabel('Umbruch').click();
   await page.waitForFunction(([selektor, nummer]) => {
     const zeile = document.querySelector(`${selektor}[data-neu="${nummer}"]`);
     const roll = document.querySelector('#diff .df-sc');
-    return zeile && roll.scrollWidth <= roll.clientWidth;
+    return zeile && roll.scrollWidth > roll.clientWidth;
   }, [ZEILE, neu], { polling: 'raf', timeout: 10000 });
-  const mitUmbruch = await messen();
+  const ohneUmbruch = await messen();
   return { ohneUmbruch, mitUmbruch };
 }
 
