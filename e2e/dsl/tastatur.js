@@ -60,6 +60,7 @@ function tastaturSprache(gr, page) {
     statuszeile: (text, tasten) => tastatur.pruefeStatuszeile(page, text, tasten),
     statuszeileOhne: text => tastatur.pruefeKeinStatuszeilenEintrag(page, text),
     statuszeilenTexte: () => tastatur.statuszeileTexte(page),
+    statuszeileDom: () => tastatur.statuszeileDom(page),
     hilfeOffen: offen => tastatur.pruefeHilfeOffen(page, offen),
     hilfeGruppen: () => tastatur.hilfeGruppen(page),
     hilfeNichtVerfuegbar: text => tastatur.pruefeHilfeNichtVerfuegbar(page, text),

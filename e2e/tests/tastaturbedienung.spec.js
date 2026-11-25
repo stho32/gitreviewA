@@ -234,3 +234,31 @@ test.describe('R00030 Diff und Anmerkung — Enter, a, e, s, w, l, o, g', () => 
     await tast.fokusAufLuecke(1);
   });
 });
+test.describe('R00030 Statuszeile', () => {
+  test('nennt die wichtigsten Kürzel des Bereichs, in „Einzeln“ zusätzlich den Commit, und ist keine Live-Region', async ({ tast }) => {
+    await tast.starten();
+
+    await tast.statuszeile('Datei', 'j k');
+    await tast.statuszeile('Abschnitt', 'n p');
+    await tast.statuszeile('Zeile', '↑ ↓');
+    await tast.statuszeile('anmerken', 'Enter');
+    await tast.statuszeile('abhaken', 'x');
+    await tast.statuszeile('nächste ungeprüfte', 'u');
+    await tast.statuszeile('alle Kürzel', '?');
+    await tast.statuszeileOhne('Commit');
+
+    const zusammen = await tast.statuszeileDom();
+    expect(zusammen.tag, 'Fußzeile').toBe('footer');
+    expect(zusammen.label, 'Name der Fußzeile').toBe('Tastaturkürzel');
+    expect(zusammen.live, 'keine Live-Region').toBeNull();
+    expect(zusammen.tasten.length).toBeGreaterThan(0);
+    for (const taste of zusammen.tasten) {
+      expect(taste.verborgen, `kbd ${taste.text} lesbar`).toBeNull();
+    }
+
+    await tast.druecke('m');
+    await tast.statuszeile('Commit', '[ ]');
+    const einzeln = await tast.statuszeileDom();
+    expect(einzeln.texte.some(text => text.trim().endsWith('Commit')), 'Commit-Zeile').toBe(true);
+  });
+});

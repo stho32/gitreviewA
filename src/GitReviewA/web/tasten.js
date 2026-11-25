@@ -16,6 +16,8 @@
 
   function init() {
     document.addEventListener('keydown', beiTaste);
+    zeichneStatuszeile();
+    document.addEventListener('modus-gewechselt', zeichneStatuszeile);
     document.addEventListener('datei-gewaehlt', () => {
       if (zustand.fokusNachSprung) {
         zustand.fokusNachSprung = false;
@@ -416,6 +418,36 @@
     }
     window.gitreviewaHilfe.schliessen();
     return true;
+  }
+
+  /* ── Statuszeile (B2904) ── */
+
+  /** Die Fußzeile aus dem Katalog: die wichtigsten Kürzel des Bereichs; in „Einzeln“ zusätzlich `[`/`]`. Keine zweite Liste. */
+  function zeichneStatuszeile() {
+    const fuss = document.querySelector('footer.statuszeile');
+    if (!fuss) {
+      return;
+    }
+    const lage = {
+      modus: window.gitreviewaModus ? window.gitreviewaModus.hole() : werte().EINZELN,
+      vorhanden: vorhandeneAktionen(),
+    };
+    fuss.replaceChildren(...werte().statuszeile(lage).map(statuszeileElement));
+  }
+
+  /** Eine Zeile der Fußzeile: je Taste ein `<kbd>` (lesbar für Screenreader), danach ihr kurzer Text. */
+  function statuszeileElement(zeile) {
+    const element = document.createElement('span');
+    if (zeile.rechts) {
+      element.className = 'rechts';
+    }
+    for (const taste of zeile.anzeige) {
+      const kbd = document.createElement('kbd');
+      kbd.textContent = taste;
+      element.append(kbd);
+    }
+    element.append(document.createTextNode(` ${zeile.text}`));
+    return element;
   }
 
   /* ── Ansage ── */

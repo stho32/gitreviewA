@@ -116,6 +116,24 @@ async function pruefeKeinStatuszeilenEintrag(page, text) {
   }, { message: `Statuszeile ohne ${text}`, timeout: 5000 }).toBe(false);
 }
 
+/** Die Statuszeile als DOM: Element, Name, Live-Region, Tastenhinweise und ihre Sichtbarkeit für Screenreader. */
+async function statuszeileDom(page) {
+  return page.evaluate(selektor => {
+    const fuss = document.querySelector(selektor);
+    if (!fuss) {
+      return null;
+    }
+    return {
+      tag: fuss.tagName.toLowerCase(),
+      label: fuss.getAttribute('aria-label'),
+      live: fuss.getAttribute('aria-live'),
+      rolle: fuss.getAttribute('role'),
+      tasten: [...fuss.querySelectorAll('kbd')].map(kbd => ({ text: kbd.textContent, verborgen: kbd.getAttribute('aria-hidden') })),
+      texte: [...fuss.querySelectorAll('span')].map(zeile => zeile.textContent.trim()),
+    };
+  }, STATUSZEILE);
+}
+
 /** Die Hilfe: offen, ihre Gruppen und Einträge, die Markierung nicht verfügbarer Aktionen. */
 async function hilfeOffen(page) {
   return page.locator(HILFE).evaluate(element => !element.hidden);
@@ -314,6 +332,7 @@ module.exports = {
   statuszeilenTasten,
   pruefeStatuszeile,
   statuszeileTexte,
+  statuszeileDom,
   pruefeKeinStatuszeilenEintrag,
   hilfeOffen,
   pruefeHilfeOffen,

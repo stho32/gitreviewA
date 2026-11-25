@@ -57,7 +57,7 @@
   const STATUSZEILE = [
     ['dateiWeiter', 'dateiZurueck'],
     ['abschnittWeiter', 'abschnittZurueck'],
-    ['zeileWeiter', 'zeileZurueck'],
+    ['zeileZurueck', 'zeileWeiter'],
     ['zeileAnmerken'],
     ['abhaken'],
     ['naechsteUngepruefte'],
