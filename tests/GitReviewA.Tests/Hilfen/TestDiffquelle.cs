@@ -11,6 +11,7 @@ internal sealed class TestDiffquelle(string patch, string? scheitertFuer = null,
 {
     private readonly List<Dateiaenderung> gelesen = [];
     private readonly List<Diffumfang> gelesenMitUmfang = [];
+    private readonly List<Leerraum> gelesenMitLeerraum = [];
     private readonly List<Dateiaenderung> alsTextGelesen = [];
     private readonly Lock sperre = new();
 
@@ -62,17 +63,34 @@ internal sealed class TestDiffquelle(string patch, string? scheitertFuer = null,
         }
     }
 
+    /// <summary>Die Leerraum-Stellung des letzten Lesevorgangs; `null` ohne einen (R00026).</summary>
+    public Leerraum? ZuletztGelesenMitLeerraum
+    {
+        get
+        {
+            lock (sperre)
+            {
+                if (gelesenMitLeerraum.Count == 0)
+                {
+                    return null;
+                }
+                return gelesenMitLeerraum[^1];
+            }
+        }
+    }
+
     public static TestDiffquelle Leer()
     {
         return new TestDiffquelle("");
     }
 
-    public string Lesen(string hash, Dateiaenderung datei, Diffumfang umfang)
+    public string Lesen(string hash, Dateiaenderung datei, Diffumfang umfang, Leerraum leerraum)
     {
         lock (sperre)
         {
             gelesen.Add(datei);
             gelesenMitUmfang.Add(umfang);
+            gelesenMitLeerraum.Add(leerraum);
         }
         if (hash == zuGrossFuer)
         {
@@ -86,7 +104,7 @@ internal sealed class TestDiffquelle(string patch, string? scheitertFuer = null,
         return patch;
     }
 
-    public string AlsTextLesen(string hash, Dateiaenderung datei, Diffumfang umfang)
+    public string AlsTextLesen(string hash, Dateiaenderung datei, Diffumfang umfang, Leerraum leerraum)
     {
         lock (sperre)
         {

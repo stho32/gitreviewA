@@ -443,6 +443,75 @@ public class DiffEndpunktTests
         Assert.That(dokument.RootElement.TryGetProperty("patch", out _), Is.False, "kein Patch, auch kein gekürzter");
     }
 
+    /// <summary>R00026: die Leerraum-Stellung des Umschalters geht über die feste Liste der Endpunkt-Parameter in die Diffquelle.</summary>
+    [TestCase("", "Beachten")]
+    [TestCase("&leerraum=beachten", "Beachten")]
+    [TestCase("&leerraum=ignorieren", "Ignorieren")]
+    public async Task Wenn_Leerraum_Stellung_bekannt_oder_ohne_Angabe_dann_200_und_sie_geht_an_die_Quelle(string zusatz, string erwartet)
+    {
+        var dateien = new TestDateiquelle(new() { [HashQ] = DateienVonQ() });
+        var diffquelle = new TestDiffquelle(PatchVonB);
+        await using var server = await StarteServer(dateien, diffquelle, new StringWriter(), Protokollstufe.Warnung);
+        using var client = new HttpClient();
+
+        var antwort = await client.GetAsync(DiffAdresse(server, HashQ, "src/b.txt", zusatz));
+
+        Assert.That(antwort.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        Assert.That(diffquelle.Lesevorgaenge, Is.EqualTo(1));
+        Assert.That(diffquelle.ZuletztGelesenMitLeerraum.ToString(), Is.EqualTo(erwartet));
+    }
+
+    [TestCase("&leerraum=egal")]
+    [TestCase("&leerraum=IGNORIEREN")]
+    [TestCase("&leerraum=w")]
+    [TestCase("&leerraum=")]
+    [TestCase("&leerraum=1")]
+    [TestCase("&leerraum=ignorieren&leerraum=ignorieren")]
+    public async Task Wenn_Leerraum_Stellung_unbekannt_dann_400_ohne_Lesevorgang(string zusatz)
+    {
+        var dateien = new TestDateiquelle(new() { [HashQ] = DateienVonQ() });
+        var diffquelle = new TestDiffquelle(PatchVonB);
+        await using var server = await StarteServer(dateien, diffquelle, new StringWriter(), Protokollstufe.Warnung);
+        using var client = new HttpClient();
+
+        var antwort = await client.GetAsync(DiffAdresse(server, HashQ, "src/b.txt", zusatz));
+
+        Assert.That(antwort.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        Assert.That(dateien.Lesevorgaenge + diffquelle.Lesevorgaenge + diffquelle.TextLesevorgaenge, Is.Zero);
+    }
+
+    [Test]
+    public async Task Wenn_Leerraum_Stellung_und_Umfang_unbekannt_dann_400_ohne_Lesevorgang()
+    {
+        var dateien = new TestDateiquelle(new() { [HashQ] = DateienVonQ() });
+        var diffquelle = new TestDiffquelle(PatchVonB);
+        await using var server = await StarteServer(dateien, diffquelle, new StringWriter(), Protokollstufe.Warnung);
+        using var client = new HttpClient();
+
+        var antwort = await client.GetAsync(DiffAdresse(server, HashQ, "src/b.txt", "&umfang=voll&leerraum=egal"));
+
+        Assert.That(antwort.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+        Assert.That(diffquelle.Lesevorgaenge, Is.Zero);
+    }
+
+    [Test]
+    public async Task Wenn_Leerraum_ignoriert_dann_nennt_die_Debug_Zeile_Datei_Ansicht_und_Stellung()
+    {
+        var dateien = new TestDateiquelle(new() { [HashQ] = DateienVonQ() });
+        var protokollziel = new StringWriter();
+        await using var server = await StarteServer(dateien, new TestDiffquelle(PatchVonB), protokollziel, Protokollstufe.Debug);
+        using var client = new HttpClient();
+
+        await client.GetAsync(DiffAdresse(server, HashQ, "src/b.txt", "&leerraum=ignorieren"));
+        await client.GetAsync(DiffAdresse(server, HashQ, "src/b.txt", "&umfang=ganz&leerraum=ignorieren"));
+        await client.GetAsync(DiffAdresse(server, HashQ, "src/b.txt"));
+
+        var zeilen = protokollziel.ToString().Split('\n');
+        Assert.That(zeilen.Count(zeile => zeile.EndsWith($"GET /api/commits/{HashQ}/diff Datei src/b.txt Leerraum ignorieren", StringComparison.Ordinal)), Is.EqualTo(1));
+        Assert.That(zeilen.Count(zeile => zeile.EndsWith($"GET /api/commits/{HashQ}/diff Datei src/b.txt ganze Datei Leerraum ignorieren", StringComparison.Ordinal)), Is.EqualTo(1));
+        Assert.That(zeilen.Count(zeile => zeile.EndsWith($"GET /api/commits/{HashQ}/diff Datei src/b.txt", StringComparison.Ordinal)), Is.EqualTo(1), "„beachten“ nennt keine Stellung");
+    }
+
     private static Dateiaenderungen DateienVonQ()
     {
         return new Dateiaenderungen([

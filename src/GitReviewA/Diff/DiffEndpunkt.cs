@@ -26,11 +26,12 @@ internal static class DiffEndpunkt
         return (string hash, string? pfad, bool? alsText, HttpRequest http) =>
         {
             var istBekannterUmfang = Umfangsparameter.Lies(http.Query[Umfangsparameter.Name], out var umfang);
-            if (pfad is null || !istBekannterUmfang)
+            var istBekannteStellung = Leerraumparameter.Lies(http.Query[Leerraumparameter.Name], out var leerraum);
+            if (pfad is null || !istBekannterUmfang || !istBekannteStellung)
             {
                 return Results.BadRequest();
             }
-            var ergebnis = interactor.Lesen(new Diffanfrage(hash, pfad, alsText == true, umfang));
+            var ergebnis = interactor.Lesen(new Diffanfrage(hash, pfad, alsText == true, umfang, leerraum));
             return AlsHttpAntwort(ergebnis);
         };
     }

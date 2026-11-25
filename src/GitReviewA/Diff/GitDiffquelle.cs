@@ -17,15 +17,15 @@ internal sealed class GitDiffquelle : IDiffquelle
         this.grenze = grenze;
     }
 
-    public string Lesen(string hash, Dateiaenderung datei, Diffumfang umfang)
+    public string Lesen(string hash, Dateiaenderung datei, Diffumfang umfang, Leerraum leerraum)
     {
-        var ausgabe = GitLeser.DiffLesen(hash, datei, umfang, arbeitsordner, grenze);
+        var ausgabe = GitLeser.DiffLesen(hash, datei, umfang, arbeitsordner, grenze, leerraum);
         return Diffaufbereitung.PatchAbErstemHunk(ausgabe);
     }
 
-    public string AlsTextLesen(string hash, Dateiaenderung datei, Diffumfang umfang)
+    public string AlsTextLesen(string hash, Dateiaenderung datei, Diffumfang umfang, Leerraum leerraum)
     {
-        var ausgabe = GitLeser.DiffAlsTextLesen(hash, datei, umfang, arbeitsordner, grenze);
+        var ausgabe = GitLeser.DiffAlsTextLesen(hash, datei, umfang, arbeitsordner, grenze, leerraum);
         return Diffaufbereitung.PatchAbErstemHunk(ausgabe);
     }
 

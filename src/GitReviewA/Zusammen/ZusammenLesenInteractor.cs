@@ -157,7 +157,7 @@ internal sealed class ZusammenLesenInteractor : INettoDateiliste
         {
             return new Diffabschnitt(stelle.Commit, art, diffquelle.BinaerGrund(stelle.Commit, stelle.Datei), string.Empty);
         }
-        return new Diffabschnitt(stelle.Commit, art, null, diffquelle.Lesen(stelle.Commit, stelle.Datei, umfang));
+        return new Diffabschnitt(stelle.Commit, art, null, diffquelle.Lesen(stelle.Commit, stelle.Datei, umfang, Leerraum.Beachten));
     }
 
     private static CommitHashes HashesDerAuswahl(Commitzeilen commits)

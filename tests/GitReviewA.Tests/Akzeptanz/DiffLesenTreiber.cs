@@ -51,12 +51,18 @@ internal sealed class DiffLesenTreiber
     /// <summary>Wie <see cref="Lesen(string, string, bool)"/>, mit der Wahl „Als Text zeigen“ bei einer Binärdatei.</summary>
     public Dateiansicht Lesen(string hash, string pfad, bool ganzeDatei, bool alsText)
     {
+        return Lesen(hash, pfad, ganzeDatei, alsText, Leerraum.Beachten);
+    }
+
+    /// <summary>Wie <see cref="Lesen(string, string, bool, bool)"/>, mit der Leerraum-Stellung des Umschalters (R00026).</summary>
+    public Dateiansicht Lesen(string hash, string pfad, bool ganzeDatei, bool alsText, Leerraum leerraum)
+    {
         var umfang = Diffumfang.Aenderungen;
         if (ganzeDatei)
         {
             umfang = Diffumfang.Ganz;
         }
-        var ergebnis = interactor.Lesen(new Diffanfrage(hash, pfad, alsText, umfang));
+        var ergebnis = interactor.Lesen(new Diffanfrage(hash, pfad, alsText, umfang, leerraum));
         return Dateiansicht.Aus(ergebnis);
     }
 

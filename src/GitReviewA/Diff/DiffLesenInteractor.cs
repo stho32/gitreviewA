@@ -111,7 +111,7 @@ internal sealed class DiffLesenInteractor(Commitzeilen commits, GemerkteDateique
         }
     }
 
-    /// <summary>Die Debug-Zeile nennt die Wahl des Menschen: „als Text“ bei einer Binärdatei, „ganze Datei“ für die Ansicht.</summary>
+    /// <summary>Die Debug-Zeile nennt die Wahl des Menschen: „als Text“ bei einer Binärdatei, die Ansicht und die Leerraum-Stellung.</summary>
     private static string WahlText(Diffanfrage anfrage)
     {
         var wahl = "";
@@ -122,6 +122,10 @@ internal sealed class DiffLesenInteractor(Commitzeilen commits, GemerkteDateique
         if (anfrage.Umfang == Diffumfang.Ganz)
         {
             wahl += " ganze Datei";
+        }
+        if (anfrage.Leerraum == Leerraum.Ignorieren)
+        {
+            wahl += " Leerraum ignorieren";
         }
         return wahl;
     }
@@ -134,7 +138,7 @@ internal sealed class DiffLesenInteractor(Commitzeilen commits, GemerkteDateique
         string? grund = null;
         if (art == Diffaufbereitung.ArtText)
         {
-            patch = diffquelle.Lesen(hash, datei, anfrage.Umfang);
+            patch = diffquelle.Lesen(hash, datei, anfrage.Umfang, anfrage.Leerraum);
         }
         if (art == Diffaufbereitung.ArtBinaer)
         {
@@ -143,7 +147,7 @@ internal sealed class DiffLesenInteractor(Commitzeilen commits, GemerkteDateique
         var binaerAlsTextGewaehlt = art == Diffaufbereitung.ArtBinaer && anfrage.AlsText;
         if (binaerAlsTextGewaehlt)
         {
-            patch = diffquelle.AlsTextLesen(hash, datei, anfrage.Umfang);
+            patch = diffquelle.AlsTextLesen(hash, datei, anfrage.Umfang, anfrage.Leerraum);
         }
         return new DiffAntwort(datei.Pfad, datei.Status, datei.AlterPfad, art, grund, patch);
     }

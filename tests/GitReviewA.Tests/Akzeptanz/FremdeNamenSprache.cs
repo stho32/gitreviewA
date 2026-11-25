@@ -58,6 +58,12 @@ internal sealed class FremdeNamenSprache
         return treiber.Lesen(repo.Hash(commit), name, ganzeDatei: false, alsText: true);
     }
 
+    /// <summary>Wie <see cref="Diff"/>, mit der Leerraum-Stellung „ignorieren“ (R00026).</summary>
+    public Dateiansicht DiffMitIgnoriertemLeerraum(string commit, string name)
+    {
+        return treiber.Lesen(repo.Hash(commit), name, ganzeDatei: false, alsText: false, Leerraum.Ignorieren);
+    }
+
     public string[] Protokollzeilen()
     {
         return treiber.Protokollzeilen();

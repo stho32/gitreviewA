@@ -123,6 +123,33 @@ public class DiffLesenFremdeNamenTests
         Assert.That(diff.Ausgang, Is.EqualTo(NameNichtLesbar));
     }
 
+    /// <summary>R00026 (#10): die neue Leerraum-Stellung erbt die Ausgabegrenze der Aufrufstelle nicht automatisch — hier mit kleiner Grenze geprobt.</summary>
+    [Test]
+    public void Wenn_Leerraum_ignoriert_und_die_Ausgabegrenze_greift_dann_zu_gross_ohne_Patch()
+    {
+        using var repo = FremdeNamenRepo.N();
+        var mitKleinerGrenze = FremdeNamenSprache.AufrufMitGrenze(repo, ["n", "b"], new Ausgabegrenze(64));
+
+        var zuGross = mitKleinerGrenze.DiffMitIgnoriertemLeerraum("n", "t⟨0xFE⟩.txt");
+
+        Assert.That(zuGross.Ausgang, Is.EqualTo("zu groß"), "die Ausgabegrenze gilt auch mit `-w`");
+        Assert.That(zuGross.Zeilen, Is.Empty, "kein gekürzter Rumpf");
+    }
+
+    /// <summary>R00026 (#10/#28): die Namensprüfung (LF/CR) gilt auch mit `-w` — der Name erreicht git nie.</summary>
+    [Test]
+    public void Wenn_Leerraum_ignoriert_und_der_Name_ein_Zeilenende_traegt_dann_abgewiesen_ohne_Lesevorgang()
+    {
+        using var repo = FremdeNamenRepo.N();
+        var quelle = TestDiffquelle.Leer();
+        var mitQuelle = FremdeNamenSprache.AufrufMitDiffquelle(repo, ["n", "b"], quelle);
+
+        var diff = mitQuelle.DiffMitIgnoriertemLeerraum("n", FremdeNamenRepo.NameMitZeilenumbruchUndFF);
+
+        Assert.That(diff.Ausgang, Is.EqualTo(NameNichtLesbar));
+        Assert.That(quelle.Lesevorgaenge, Is.Zero, "der Name mit Zeilenende ging nicht an git");
+    }
+
     [Test]
     public void Wenn_der_woertliche_Name_w_FF_txt_ohne_Zwilling_angefragt_dann_plus_woertlich()
     {
