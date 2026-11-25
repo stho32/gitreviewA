@@ -386,6 +386,15 @@ async function pruefeAnordnung(page, wert) {
   await expect.poll(() => anordnung(page), { message: `Anordnung ${wert}`, timeout: 5000 }).toEqual({ anordnung: wert, gedrueckt: wert });
 }
 
+/** Der Fokus steht auf der gewählten Commit-Zeile, nicht im Auswahlfeld (B2: ein `select` sperrt alle Kürzel). */
+async function pruefeFokusCommitZeile(page) {
+  await expect.poll(() => page.evaluate(() => {
+    const aktiv = document.activeElement;
+    const zeile = document.querySelector('#commit-liste .commit-zeile[aria-current="true"]');
+    return Boolean(aktiv && zeile && zeile.contains(aktiv));
+  }), { message: 'Fokus auf der gewählten Commit-Zeile', timeout: 5000 }).toBe(true);
+}
+
 /** Die gewählte Diff-Ansicht (`aenderungen` oder `ganz`). */
 async function ansichtWert(page) {
   return page.evaluate(() => {
@@ -514,6 +523,7 @@ module.exports = {
   pruefeUmbruch,
   pruefeLeerraum,
   pruefeAnordnung,
+  pruefeFokusCommitZeile,
   pruefeAnsicht,
   pruefeCommit,
   keineDateiGewaehlt,

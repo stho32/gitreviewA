@@ -212,7 +212,8 @@
     return true;
   }
 
-  /** `[`/`]` betätigen den Commit-Wähler; der Fokus steht danach auf dem Commit-Feld (Entscheidung des PO). */
+  /** `[`/`]` betätigen den Commit-Wähler; der Fokus steht danach auf der neuen Commit-Zeile (Entscheidung des PO, R00030 AK Z. 33).
+      Nicht im Auswahlfeld: ein `select` ist ein Textfeld und sperrte jedes weitere Kürzel (B2 des Code-Reviews). */
   function schrittCommit(schritt) {
     if (!window.gitreviewaModus || window.gitreviewaModus.istZusammen()) {
       return false;
@@ -222,11 +223,15 @@
       return false;
     }
     knopf.click();
-    const wahl = document.getElementById('waehler-auswahl');
-    if (wahl) {
-      wahl.focus({ preventScroll: true });
-    }
+    fokussiereCommitZeile(knopf);
     return true;
+  }
+
+  /** Der Fokus auf die gewählte Commit-Zeile — die neue Wahl ohne die Kürzel zu sperren; ohne Zeile der betätigte Knopf. */
+  function fokussiereCommitZeile(knopf) {
+    const zeile = document.querySelector('#commit-liste .commit-zeile[aria-current="true"]');
+    const wahl = zeile ? zeile.querySelector('.commit-wahl') : null;
+    (wahl || knopf).focus({ preventScroll: true });
   }
 
   /* ── Diff: Abschnitte, Anmerken, Umschalten, Sprünge (B2902/B2903) ── */

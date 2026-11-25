@@ -87,6 +87,29 @@ test.describe('R00030 Dateiliste und Haken — j, k, x, m, u, [, ]', () => {
     await tast.commit('z1');
   });
 
+  test('[ und ] wirken dreimal hintereinander; der Fokus landet nicht im Auswahlfeld (Kürzel bleiben wirksam)', async ({ tast }) => {
+    await tast.starten({ modus: 'einzeln' });
+    await tast.commit('z1');
+
+    await tast.druecke(']');
+    await tast.commit('z2');
+    await tast.druecke(']');
+    await tast.commit('z3');
+    // Am letzten Commit angekommen: ein weiterer Druck bewegt nichts.
+    await tast.druecke(']');
+    await tast.commit('z3');
+
+    await tast.druecke('[');
+    await tast.commit('z2');
+    await tast.druecke('[');
+    await tast.commit('z1');
+    await tast.druecke('[');
+    await tast.commit('z1');
+
+    // Nach dem Wechsel steht der Fokus auf der neuen Wahl, nicht im Auswahlfeld — sonst sperrt das `select` jedes weitere Kürzel.
+    await tast.fokusCommitZeile();
+  });
+
   test('m wechselt den Modus wie der Umschalter, die Wahl folgt der Regel des Wechsels', async ({ tast }) => {
     await tast.starten();
     await tast.dateiAnsehen('src/a.txt');
