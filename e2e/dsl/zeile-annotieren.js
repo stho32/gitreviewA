@@ -248,6 +248,10 @@ function annotierSprache(gr, page) {
     artMitTastaturWaehlen: name => anmerkungSeite.artMitTastaturWaehlen(page, name),
     /** Der Stand aller Anmerkungen vom Server (mit `art`). */
     anmerkungenAufDemServer: () => anmerkungSeite.anmerkungenAufDemServer(page),
+    /** Der Anmerkungskopf zeigt die Art als Wort (R00036). */
+    artAmKopf: (nummer, wort) => anmerkungSeite.pruefeArtAmKopf(page, nummer, wort),
+    /** Ohne Art steht im Kopf nichts Zusätzliches. */
+    keineArtAmKopf: nummer => anmerkungSeite.pruefeKeineArtAmKopf(page, nummer),
 
     /* ── Datei anmerken (R00022) ── */
     dateiAnmerken: () => anmerkungSeite.dateiAnmerken(page),

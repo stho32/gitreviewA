@@ -292,7 +292,8 @@
   }
 
   /** Der Kopf nennt die stabile Nummer der Anmerkung (nicht ihre Position im Ergebnis) und trägt „Ändern“ und „Löschen“; er nimmt nach Speichern und
-      Abbrechen den Fokus wieder auf. Ein Fehler beim Löschen steht als Meldung im Kopf; eine laufende Löschung lässt ihren Knopf gesperrt. */
+      Abbrechen den Fokus wieder auf. Ein Fehler beim Löschen steht als Meldung im Kopf; eine laufende Löschung lässt ihren Knopf gesperrt.
+      Eine Anmerkung mit Art zeigt das Wort „Muss“, „Frage“ oder „Idee“ vor dem Text (R00036), ohne Art nichts Zusätzliches. */
   function anmerkungskopfElement(ansicht, anmerkung) {
     const kopfElement = document.createElement('div');
     kopfElement.className = 'anm-kopf';
@@ -312,7 +313,15 @@
       knopfElement('btn', 'Ändern', () => oeffneOderFokussiereAenderung(ansicht, anmerkung)),
       loeschenElement,
     );
-    kopfElement.append(nummerElement, meldungElement, rechtsElement);
+    kopfElement.append(nummerElement);
+    const wort = artWort(anmerkung.art);
+    if (wort) {
+      const wortElement = document.createElement('span');
+      wortElement.className = 'anm-art-wort';
+      wortElement.textContent = wort;
+      kopfElement.append(wortElement);
+    }
+    kopfElement.append(meldungElement, rechtsElement);
     return kopfElement;
   }
 

@@ -499,6 +499,16 @@ async function anmerkungenAufDemServer(page) {
   });
 }
 
+/** Der Kopf der Anmerkung zeigt die Art als Wort vor dem Text (R00036). */
+async function pruefeArtAmKopf(page, nummer, wort) {
+  await expect(anmerkungszeile(page, nummer).locator('.anm-kopf .anm-art-wort')).toHaveText(wort);
+}
+
+/** Ohne Art steht im Kopf nichts Zusätzliches. */
+async function pruefeKeineArtAmKopf(page, nummer) {
+  await expect(anmerkungszeile(page, nummer).locator('.anm-kopf .anm-art-wort')).toHaveCount(0);
+}
+
 /** Anmerkungszeile über ihre stabile Nummer im Kopf („Anmerkung n“), nicht über ihre Stelle. */
 function anmerkungszeile(page, nummer) {
   return page.locator(`${ANMERKUNGSZEILE}[data-anmerkung="${nummer}"]`);
@@ -758,7 +768,7 @@ module.exports = {
   aenderungOeffnen, pruefeKopfNenntNummer, pruefeFokusAufKopf, pruefeAnzahlAenderungsfelder, pruefeAnmerkungszeileEnthaelt, abbrechen, pruefeSpeichernGesperrt,
   aenderungAntwortetEinmal, aenderungVerzoegern,
   aenderungsfeldTextSchreiben, pruefeAenderungsfeldText, aenderungsfeldSpeichern, aenderungsfeldSpeichernUndWarten, caretPosition, fokusAufKnopf, pruefeKnopfHatFokus,
-  pruefeArtgruppe, pruefeArtGewaehlt, artWaehlen, artMitTastaturWaehlen, anmerkungenAufDemServer,
+  pruefeArtgruppe, pruefeArtGewaehlt, artWaehlen, artMitTastaturWaehlen, anmerkungenAufDemServer, pruefeArtAmKopf, pruefeKeineArtAmKopf,
   loeschungOeffnen, zweimalLoeschen, loeschenPerTastatur, pruefeKeineAnmerkungszeile, pruefeLoeschenGesperrt, pruefeKopfmeldung,
   loeschungAntwortetEinmal, loeschungVerzoegern, loeschungVerzoegertAntworten, loeschenErneut, pruefeLoeschenFrei,
 };

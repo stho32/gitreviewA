@@ -69,6 +69,32 @@ test.describe('Art der Anmerkung am Notizfeld', () => {
     ]);
   });
 
+  test('Kopf: die Art steht als Wort vor dem Text — in beiden Modi, Ansichten und Anordnungen; ohne Art nichts', async ({ anm }) => {
+    await anm.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });
+    await anm.dateiAnsehen('src/a.txt');
+    await anm.zeileAnklicken({ neu: 2 });
+    await anm.artWaehlen('Muss');
+    await anm.textSchreiben('src/a.txt', 2, 'ZWEI groß?');
+    await anm.speichern('src/a.txt', 2);
+    await anm.feldZu('src/a.txt', 2);
+    await anm.zeileAnklicken({ neu: 3 });
+    await anm.textSchreiben('src/a.txt', 3, 'ohne Art');
+    await anm.speichern('src/a.txt', 3);
+    await anm.feldZu('src/a.txt', 3);
+
+    await anm.artAmKopf(1, 'Muss');
+    await anm.keineArtAmKopf(2);
+    await anm.ansichtWaehlen('ganze Datei');
+    await anm.artAmKopf(1, 'Muss');
+    await anm.anordnungWaehlen('nebeneinander');
+    await anm.artAmKopf(1, 'Muss');
+    await anm.modusWaehlen('einzeln');
+    await anm.commitAnsehen('z3');
+    await anm.dateiAnsehen('src/a.txt');
+    await anm.artAmKopf(1, 'Muss');
+    await anm.keineArtAmKopf(2);
+  });
+
   test('Taste 2 bei gewählter Diff-Zeile öffnet das Feld mit Frage und dem Fokus im Textfeld; Ziffern im Text sind Text', async ({ anm }) => {
     await anm.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });
     await anm.dateiAnsehen('src/a.txt');
