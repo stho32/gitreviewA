@@ -96,6 +96,21 @@ public class AnmerkungLoeschenTests
     }
 
     [Test]
+    public void Wenn_zweimal_dieselbe_Nummer_geloescht_wird_dann_trifft_die_zweite_Anfrage_NichtGefunden()
+    {
+        using var repo = DiffRepo.A();
+        var gr = AnmerkungLoeschenSprache.Aufruf(repo, ["q", "p"]);
+        gr.LegeAn("q", "lang.txt", 18, "erster");
+        gr.LegeAn("q", "src/b.txt", 2, "zweiter");
+
+        var erste = gr.Loesche(1);
+        var zweite = gr.Loesche(1);
+
+        Assert.That((erste.Ausgang, zweite.Ausgang), Is.EqualTo(("geloescht", "nicht gefunden")));
+        Assert.That(gr.Anmerkungen(), Is.EqualTo(new[] { gr.Anmerkung(2, "q", "src/b.txt", 2, "zweiter") }));
+    }
+
+    [Test]
     public void Wenn_der_Lauf_beendet_ist_dann_abgelehnt_als_Beendet_und_das_Ergebnis_bleibt()
     {
         using var repo = DiffRepo.A();
