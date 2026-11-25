@@ -173,6 +173,60 @@ public class DateiansichtLaufTests
         Assert.That(nachher.Koerper, Is.EqualTo(vorher.Koerper));
     }
 
+    [Test]
+    public async Task Wenn_der_Lauf_im_Hintergrund_gestartet_und_mit_StrgC_abgebrochen_wird_dann_130_und_Review_abgebrochen()
+    {
+        using var d = OrdnerD.Anlegen();
+        var dll = typeof(GitReviewA.Aufruf.Aufrufleser).Assembly.Location;
+        var dotnet = DotnetPfad();
+        var fehlerdatei = Path.Combine(d.Ordner, "stderr.txt");
+        var codedatei = Path.Combine(d.Ordner, "exit.txt");
+        var pidDatei = Path.Combine(d.Ordner, "pid.txt");
+        var befehl = $"{dotnet} '{dll}' --dateien a.sql --kein-browser --port 0 2>'{fehlerdatei}' & echo $! > '{pidDatei}'; wait $!; echo $? > '{codedatei}'";
+        using var bash = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("bash", ["-c", befehl])
+        {
+            WorkingDirectory = d.Ordner,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        }) ?? throw new InvalidOperationException("bash startet nicht");
+
+        await WarteAufInhalt(fehlerdatei, "http://127.0.0.1:");
+        var pid = int.Parse((await File.ReadAllTextAsync(pidDatei)).Trim(), System.Globalization.CultureInfo.InvariantCulture);
+        using (var kill = System.Diagnostics.Process.Start("kill", ["-INT", pid.ToString(System.Globalization.CultureInfo.InvariantCulture)]))
+        {
+            kill?.WaitForExit();
+        }
+        await bash.WaitForExitAsync();
+
+        var fehler = await File.ReadAllTextAsync(fehlerdatei);
+        var code = (await File.ReadAllTextAsync(codedatei)).Trim();
+        Assert.That(code, Is.EqualTo("130"));
+        Assert.That(fehler, Does.Contain("Review abgebrochen"));
+        Assert.That(bash.StandardOutput.ReadToEnd(), Is.Empty);
+    }
+
+    private static async Task WarteAufInhalt(string pfad, string text)
+    {
+        var frist = System.Diagnostics.Stopwatch.StartNew();
+        while (frist.Elapsed < TimeSpan.FromSeconds(20))
+        {
+            if (File.Exists(pfad) && (await File.ReadAllTextAsync(pfad)).Contains(text, StringComparison.Ordinal))
+            {
+                return;
+            }
+            await Task.Delay(20);
+        }
+        Assert.Fail($"„{text}“ erschien nicht in {pfad}");
+    }
+
+    private static string DotnetPfad()
+    {
+        using var which = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("which", "dotnet") { RedirectStandardOutput = true });
+        var pfad = which?.StandardOutput.ReadToEnd().Trim() ?? "dotnet";
+        which?.WaitForExit();
+        return pfad;
+    }
+
     private static int Fehlerzeilen(string fehler)
     {
         return fehler.Split('\n').Count(zeile => zeile.Contains("[Dateiansicht]", StringComparison.Ordinal));
