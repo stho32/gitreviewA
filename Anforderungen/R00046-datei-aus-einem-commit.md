@@ -8,11 +8,11 @@ datum: 2026-11-25
 
 ## Beschreibung
 
-Eine Angabe der Form `<commit>:<pfad>` zeigt den Stand einer Datei in einem Commit — etwa `gitreviewA --dateien 3f2a9c1:sql/001.sql` —, mit allem, was die Dateiansicht für Dateien vom Datenträger kann ([R00043](R00043-datei-ansehen-und-kopieren.md), [R00044](R00044-stelle-suchen-und-bereich-kopieren.md)). Der neue Lesepfad über `git` läuft über `GitStart`, mit Ausgabegrenze und Namensprüfung an der Aufrufstelle (Lehre #10). Unbekannter Commit, unbekannter Pfad, Verzeichnis, Link, Submodul, ein Name mit Zeilenumbruch oder kein Repository: Grund auf stderr, Exit 2, kein Server.
+Eine Angabe der Form `<commit>:<pfad>` zeigt den Stand einer Datei in einem Commit — etwa `gitreviewA --dateien 3f2a9c1:sql/001.sql` —, mit allem, was die Dateiansicht für Dateien vom Datenträger kann ([R00043](R00043-datei-ansehen-und-kopieren.md), [R00044](R00044-stelle-suchen-und-bereich-kopieren.md)). Der neue Lesepfad läuft über den bestehenden Blob-Leser (`git cat-file blob`, PO Zeile 208) und damit über `GitStart`, mit Ausgabegrenze und Namensprüfung an der Aufrufstelle (Lehre #10). Unbekannter Commit, unbekannter Pfad, Verzeichnis, Link, Submodul, ein Name mit Zeilenumbruch oder kein Repository: Grund auf stderr, Exit 2, kein Server.
 
 Zahlt ein auf: [Vision](R00000-vision.md) — „Einzelne Dateien ansehen und kopieren“ („der Stand in einem Commit über `<commit>:<pfad>`“) und Leitplanke „Git über die `git`-Kommandozeile … gilt für Diffs und `<commit>:<pfad>`“.
 
-Entschieden vom product-owner (`AI-Team/po-entscheidungen.md`, Zeile 200): `<commit>:<pfad>` neben Dateien vom Datenträger.
+Entschieden vom product-owner (`AI-Team/po-entscheidungen.md`, Zeilen 200/208): `<commit>:<pfad>` neben Dateien vom Datenträger, gelesen über den bestehenden Blob-Leser `git cat-file blob` (Zeile 208 präzisiert Zeile 200, dort „über `git show`“).
 
 ### Domänenbezug
 
@@ -24,7 +24,7 @@ Die KI hat die Migration schon committet und schreibt weiter; der Arbeitsbaum is
 
 ## Funktionale Anforderungen
 
-- **Erkennen** (Pflichtpunkt 5, die eine Stelle): eine Angabe ist eine Commitquelle, wenn vor dem ersten `:` 4–64 Hexziffern stehen (dieselbe Form wie im Review-Aufruf, R00001) und dahinter ein nicht leerer Pfad; sonst ist sie ein Pfad auf dem Datenträger. `./` vorn erzwingt den Datenträger (`./cafe:x.sql`). Lesen, Anzeigename, Kopf und Startgründe fragen nur diese Unterscheidung. Namen wie `HEAD` oder Zweige sind hier keine Commits (wie im Review; offene Frage 1).
+- **Erkennen** (Pflichtpunkt 5, die eine Stelle): eine Angabe ist eine Commitquelle, wenn vor dem ersten `:` 4–64 Hexziffern stehen (dieselbe Form wie im Review-Aufruf, R00001) und dahinter ein nicht leerer Pfad; sonst ist sie ein Pfad auf dem Datenträger. `./` vorn erzwingt den Datenträger (`./cafe:x.sql`). Lesen, Anzeigename, Kopf und Startgründe fragen nur diese Unterscheidung. Namen wie `HEAD` oder Zweige sind hier keine Commits (wie im Review; entschieden, PO Zeile 207).
 - **Pfad**: wie bei git relativ zur Wurzel des Repositories (`<c>:sql/a.sql`); `<c>:./a.sql` relativ zum Startordner. Der Pfad wird wörtlich genommen (keine Pathspec-Magie).
 - **Namensprüfung**: ein Pfad mit LF oder CR → „Name nicht übergebbar“ (Wortlaut wie R00014), ohne git zu starten. Unsichtbare und richtungsändernde Zeichen sind erlaubt und erscheinen als Marke.
 - **Auflösen**: der Commit wird über `GitStart` aufgelöst und der gelieferte volle Hash gegen die Eingabe geprüft (ein Tag, der wie das Präfix heißt, lenkt nie still um — Meldung wie `HashpraefixPruefer`, Lehre #2). Der Eintrag des Pfads im Commit bestimmt die Art: Datei oder ausführbare Datei → lesen; „ist im Commit ein Verzeichnis“, „ist im Commit ein symbolischer Link“, „ist im Commit ein Submodul“, „Pfad im Commit nicht gefunden“, „Commit nicht gefunden“; Größe über 8 MiB → „zu groß (über 8 MiB)“ vor dem Lesen.
@@ -64,7 +64,7 @@ Vorbereitung: **Repo C** (Skript in `user-stories/R00046.md`): Commit `c1` mit `
 - [ ] 5. Gegeben Repo C und der Start im Unterordner `sql/`, wenn man `<c1>:sql/a.sql` und `<c1>:./a.sql` startet, dann zeigen beide `sql/a.sql` aus `c1`; `<c1>:a.sql` ergibt „Pfad im Commit nicht gefunden“. *Ebene: Integration (Lehre #6).*
 - [ ] 6. Gegeben `--dateien a.sql <c1>:sql/a.sql` (Datenträger und Commit gemischt, mit R00045), dann stehen beide in Aufrufreihenfolge in der Liste, und ein Wechsel zwischen ihnen zeigt die zwei Stände. *Ebene: Integration (Liste).*
 
-Grenz- und Leerfälle bedacht: Hash mit 4 und 64 Ziffern sowie 3 und 65 (Unit beim Bauen: 3/65 sind Datenträgerpfade), leerer Pfad (2), Größe genau 8 MiB (wie R00043), Merge- und Wurzelcommit (derselbe Weg, ein Test beim Bauen). Verworfen: Namen wie `HEAD:pfad` (offene Frage 1).
+Grenz- und Leerfälle bedacht: Hash mit 4 und 64 Ziffern sowie 3 und 65 (Unit beim Bauen: 3/65 sind Datenträgerpfade), leerer Pfad (2), Größe genau 8 MiB (wie R00043), Merge- und Wurzelcommit (derselbe Weg, ein Test beim Bauen). Verworfen: Namen wie `HEAD:pfad` (entschieden, PO Zeile 207).
 
 **Pflichtpunkte der Detailplanung**: 1 Grenzen — Kriterien 2, 4 (Hashform, Pfad, 8 MiB an der Aufrufstelle); 2 Anzeigeverfahren — nicht betroffen über R00043 hinaus (dieselbe Ansicht, Kopf mit Hash, Kriterium 1); 3 festes Layout — nicht betroffen (Kopf wie R00043, voller Hash statt Pfad in derselben Zeile); 4 Ausführungsort — Startgründe stderr, git-Rohtext nur Debug; 5 eine Stelle — das Erkennen der Quellenart (Kriterium 2, Zeilen „leerer Pfad“ und `./`; Lesen, Anzeigename, Kopf, Gründe fragen nur sie).
 
@@ -106,11 +106,11 @@ Grenz- und Leerfälle bedacht: Hash mit 4 und 64 Ziffern sowie 3 und 65 (Unit be
 
 ## Offene Fragen
 
-An den product-owner; bis zur Antwort gilt die Empfehlung.
+Keine offenen. Der product-owner hat die Fragen am 2026-11-25 entschieden (`AI-Team/po-entscheidungen.md`, Zeilen 207, 208, 211); die Antworten sind oben eingearbeitet:
 
-1. **Namen statt Hash** (`HEAD:pfad`, `main:pfad`): nicht jetzt (Empfehlung: wie im Review nur Hexhashes; Namen gemeinsam mit der offenen Frage zu Zweig- und Tag-Namen aus R00006 entscheiden).
-2. **`git cat-file blob` statt `git show`**: der PO nennt `git show`. Empfehlung: den bestehenden, gehärteten Blob-Leser (`git cat-file blob`, Ausgabegrenze, auch für Namen mit Rohbytes) nehmen — er liefert die Bytes des Commits und kennt kein Textconv; `git show` brächte einen zweiten Lesepfad mit eigener Härtung (Lehre #10). Beides liest über die git-Kommandozeile (Leitplanke).
-3. **Pfad relativ zur Wurzel** (git-Regel, `./` für den Startordner): Empfehlung so — die KI kennt die Form aus `git show`.
+1. **Namen statt Hash** (`HEAD:pfad`, `main:pfad`) — entschieden (PO Zeile 207): nur Hexhash; `HEAD` und Zweig- oder Tagnamen kommen gemeinsam mit der offenen Frage zu Namen aus R00006, nicht vorher.
+2. **`git cat-file blob` statt `git show`** — entschieden (PO Zeile 208): der bestehende, gehärtete Blob-Leser (`git cat-file blob`, Ausgabegrenze, Namensprüfung) — kein zweiter Lesepfad. Zeile 208 präzisiert Zeile 200 (dort „über `git show`“): gemeint war „über die git-Kommandozeile“.
+3. **Pfad relativ zur Wurzel** (git-Regel, `./` für den Startordner) — entschieden (PO Zeile 211): so; die KI kennt die Form aus git, keine zweite Schreibweise.
 
 ## Manuelle Vorbereitungstätigkeiten
 
