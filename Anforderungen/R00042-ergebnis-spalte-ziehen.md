@@ -90,7 +90,9 @@ Grenz- und Leerfälle bedacht: Grenzen 240/640/Diff 320 (Kriterien 1, 2); schmal
 
 ## Offene Fragen
 
-1. **Wer gibt beim Schrumpfen zuerst nach**: Empfehlung die Ergebnis-Spalte (rechts), weil Liste und Diff die Arbeit tragen und die Spalte eine Begleitung ist (Material 3 „supporting pane“ weicht zuerst). Alternative: beide Seiten anteilig.
+Keine offenen. Der product-owner hat die Frage am 2026-11-25 entschieden (`AI-Team/po-entscheidungen.md`, Zeile 199); die Antwort ist oben eingearbeitet:
+
+1. **Wer gibt beim Schrumpfen zuerst nach** — entschieden (PO Zeile 199): die Ergebnis-Spalte (rechts), weil Liste und Diff die Arbeit tragen und die Spalte eine Begleitung ist (Material 3 „supporting pane“ weicht zuerst); wächst das Fenster, kommen die gewählten Breiten zurück, eine eingeklappte Spalte bleibt zu, bis sie ausgeklappt wird. Alternative „beide Seiten anteilig“ verworfen.
 
 ## Manuelle Vorbereitungstätigkeiten
 
