@@ -59,6 +59,7 @@ function naechsteSprache(gr, page) {
     /** Wartet, bis die Dateiliste der gezeigten Sicht `anzahl` Zeilen hat. */
     dateienWarten: anzahl => seite.aufDateizeilenWarten(page, anzahl),
     dateiWaehlen: pfad => seite.dateiWaehlen(page, pfad),
+    darstellung: art => seite.darstellungWaehlen(page, art),
     commitAnsehen: name => seite.commitWaehlen(page, kurzerName(name)),
     abhaken: name => hakenSeite.kaestchenBetaetigen(page, name),
     fortschritt: text => hakenSeite.pruefeFortschritt(page, text),

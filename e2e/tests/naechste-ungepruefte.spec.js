@@ -48,6 +48,16 @@ test.describe('Sprung in „Zusammen“ (je Datei)', () => {
   });
 });
 
+test.describe('Liste und Baum', () => {
+  test('soll im Baum dieselbe Reihenfolge nehmen wie in der flachen Liste (Reihenfolge)', async ({ naechste }) => {
+    await naechste.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });
+    await naechste.dateienWarten(3);
+    await naechste.darstellung('baum');
+
+    await naechste.reihe(['README.md', 'src/a.txt', 'src/b.txt', 'README.md']);
+  });
+});
+
 test.describe('Sprung in „Einzeln“ (je Stelle, über Commits)', () => {
   test('soll durch die Stellen aller Commits springen und der Commit-Wähler wechselt mit (Szenario 4)', async ({ naechste }) => {
     await naechste.starten({ vorbereitung: 'Repo Z', modus: 'einzeln' });
