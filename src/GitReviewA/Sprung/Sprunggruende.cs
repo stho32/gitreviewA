@@ -10,4 +10,19 @@ internal static class Sprunggruende
     public const string NameNichtUebergebbar = "Name nicht übergebbar";
     public const string NameNichtEindeutig = "Name nicht eindeutig";
     public const string PfadVerlaesstRepository = "Pfad verlässt das Repository";
+
+    public static string Aus(Sprungablehnung ablehnung)
+    {
+        switch (ablehnung)
+        {
+            case Sprungablehnung.StatusGeloescht:
+                return DateiFehlt;
+            case Sprungablehnung.NameNichtUebergebbar:
+                return NameNichtUebergebbar;
+            case Sprungablehnung.PfadVerlaesstRepository:
+                return PfadVerlaesstRepository;
+            default:
+                throw new InvalidOperationException($"Ablehnung {ablehnung} hat keinen Grund");
+        }
+    }
 }
