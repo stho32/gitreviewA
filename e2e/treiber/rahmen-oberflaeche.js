@@ -15,6 +15,8 @@ const STATUSZEILE = '.statuszeile';
 const DATEIZEILE = '#datei-zeilen .datei-zeile';
 const TRENNER = '#diff [role="separator"], .gr-ansicht [role="separator"]';
 const EINKLAPPEN = '#diff .gr-einklappen, .gr-ansicht .gr-einklappen';
+const ANM_ZELLE = '#diff .anm-zelle';
+const ANM_DATEI_BEREICH = '#diff .anm-datei-bereich';
 
 /** Der Bildlauf der Seite selbst: Überhang heißt, die Seite scrollt (R00033: „Seite scrollt nicht“ = kein Überhang). */
 function seite(page) {
@@ -140,7 +142,47 @@ function lageDerWahl(page) {
   });
 }
 
+/** Masse des Diff-Bereichs und der Anmerkungszellen: sichtbare Höhe des Rollbereichs, Zahl und Lage der letzten Zelle,
+    Höhe des Datei-Anmerkungsbereichs und Seitenüberhang (Befund B1: feste Kinder dürfen den Diff nicht verdrängen). */
+function masseDerAnmerkungen(page) {
+  return page.evaluate(([zelle, bereich]) => {
+    const sc = document.querySelector('#diff .df-sc');
+    const zellen = document.querySelectorAll(zelle);
+    const letzte = zellen.length > 0 ? zellen[zellen.length - 1] : null;
+    const bereichElement = document.querySelector(bereich);
+    const seite = document.scrollingElement;
+    return {
+      diffClientHoehe: sc ? sc.clientHeight : null,
+      anmZellen: zellen.length,
+      letzteUnten: letzte ? Math.round(letzte.getBoundingClientRect().bottom) : null,
+      fensterHoehe: window.innerHeight,
+      anmBereichHoehe: bereichElement ? Math.round(bereichElement.getBoundingClientRect().height) : 0,
+      seitenUeberhang: seite.scrollHeight - window.innerHeight,
+    };
+  }, [ANM_ZELLE, ANM_DATEI_BEREICH]);
+}
+
 /* ── Prüfungen ── */
+
+/** Der Diff-Rollbereich bleibt benutzbar: er hat sichtbare Höhe, auch wenn über ihm Anmerkungen stehen (Befund B1). */
+async function pruefeDiffRollbereichBenutzbar(page) {
+  const masse = await masseDerAnmerkungen(page);
+  expect(masse.diffClientHoehe, `Diff-Rollbereich benutzbar — ${JSON.stringify(masse)}`).toBeGreaterThan(0);
+}
+
+/** Die letzte Anmerkungszelle liegt ganz im Fenster — die Seite selbst scrollt nicht (Abnahme-Probe B1). */
+async function pruefeLetzteAnmerkungImFenster(page) {
+  const masse = await masseDerAnmerkungen(page);
+  expect(masse.anmZellen, 'es stehen Anmerkungszellen').toBeGreaterThan(0);
+  expect(masse.letzteUnten, `letzte Anmerkung im Fenster — ${JSON.stringify(masse)}`).toBeLessThanOrEqual(masse.fensterHoehe);
+  expect(masse.seitenUeberhang, 'die Seite selbst scrollt nicht').toBeLessThanOrEqual(0);
+}
+
+/** Die letzte Anmerkungszelle ist erreichbar: erst in den Blick gerollt, liegt sie dann ganz im Fenster (Befund B1). */
+async function pruefeLetzteAnmerkungErreichbar(page) {
+  await page.locator(ANM_ZELLE).last().scrollIntoViewIfNeeded();
+  await pruefeLetzteAnmerkungImFenster(page);
+}
 
 /** Die Seite selbst hat keinen Bildlauf. */
 async function pruefeKeinSeitenbildlauf(page) {
@@ -228,6 +270,7 @@ async function letzteLueckeInDenBlick(page) {
 module.exports = {
   KOPF, COMMIT_ZEILE, DATEIEN_KOPF, DATEIEN_WERKZEUGE, LISTE, DIFF_KOPF, DIFF, STATUSZEILE, DATEIZEILE,
   seite, rollstand, setzeRollversatz, lage, standbild, stehendeTeile, ganzImRollbereich, abstandZumRand, lageDerWahl, letzteLueckeInDenBlick,
+  masseDerAnmerkungen, pruefeDiffRollbereichBenutzbar, pruefeLetzteAnmerkungImFenster, pruefeLetzteAnmerkungErreichbar,
   pruefeKeinSeitenbildlauf, pruefeSeitenbildlauf, pruefeRollbereich, pruefeKeinRollbereich, pruefeUnveraendert,
   pruefeVersatzGleich, pruefeVersatzGeaendert, pruefeDiffOben, pruefeKeinTrennerKeinEinklappen, pruefeEineSpalte, pruefeZweiSpalten,
 };

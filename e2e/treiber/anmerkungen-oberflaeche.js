@@ -186,6 +186,17 @@ async function pruefeDateiKnopfSichtbar(page) {
   await expect(page.locator(DATEI_KNOPF)).toBeVisible();
 }
 
+/** Legt `anzahl` Datei-Anmerkungen über den echten Knopf „Datei anmerken“ an; jede bekommt `text` samt laufender Nummer.
+    Nacheinander, damit jede Antwort abgewartet ist, bevor die nächste Anmerkung entsteht (Befund B1: viele Datei-Anmerkungen). */
+async function dateiAnmerkungenAnlegen(page, anzahl, text) {
+  for (let nummer = 1; nummer <= anzahl; nummer += 1) {
+    await page.locator(DATEI_KNOPF_BUTTON).click();
+    await page.locator('#diff .anm-datei-bereich textarea.anm-eingabe').fill(`${text} (${nummer})`);
+    await page.locator('#diff .anm-datei-bereich button.btn-haupt').click();
+    await expect(page.locator('#diff .anm-text'), `Datei-Anmerkungen nach Nummer ${nummer}`).toHaveCount(nummer, { timeout: 5000 });
+  }
+}
+
 async function pruefeDateiKnopfVerborgen(page) {
   await expect(page.locator(DATEI_KNOPF)).toBeHidden();
 }
@@ -537,7 +548,7 @@ async function pruefeLoeschenFrei(page, nummer) {
 module.exports = {
   zeileAnklicken, zeileDoppeltAnklicken, zeileImAbschnittAnklicken, pruefeAnmerkungenUnterImAbschnitt, pruefeAnzahlFelder, pruefeFeldtext, pruefeFeldOffenMitFokus, textSchreiben, speichern, zweimalSpeichern, pruefeFeldZu, pruefeKeinFeld, pruefeFeldmeldung,
   pruefeAnmerkungenUnter, pruefeAnzahlAnmerkungszeilen, pruefeAnmerkungszeilenSindKeineDiffzeilen,
-  dateianmerkungenOben, pruefeDateianmerkungenOben, pruefeKeineDateianmerkung, anzahlDateianmerkungen, pruefeDateianmerkungUeberDenZeilen, dateiAnmerken, pruefeDateiKnopfSichtbar, pruefeDateiKnopfVerborgen, hakenAntwortetMit, pruefeDateiKnopfGesperrt, pruefeDateiKnopfBedienbar,
+  dateianmerkungenOben, pruefeDateianmerkungenOben, pruefeKeineDateianmerkung, anzahlDateianmerkungen, pruefeDateianmerkungUeberDenZeilen, dateiAnmerken, pruefeDateiKnopfSichtbar, dateiAnmerkungenAnlegen, pruefeDateiKnopfVerborgen, hakenAntwortetMit, pruefeDateiKnopfGesperrt, pruefeDateiKnopfBedienbar,
   dateiAnmerkenAmHinweis, pruefeHinweisAnmerkenSichtbar, pruefeHinweisAnmerkenVerborgen,
   pruefeHinweisEntfernt, pruefeKeinHinweisEntfernt, pruefeHinweisAusserhalb, pruefeKeinHinweisAusserhalb,
   inDenDiffTabben, pfeilAbBis, taste, pruefeFokusAufZeile, anlegenAntwortetEinmal, anlegenVerzoegern, pruefeAnmerkungenBinnen,

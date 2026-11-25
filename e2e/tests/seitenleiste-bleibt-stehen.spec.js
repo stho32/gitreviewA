@@ -6,6 +6,7 @@
 const { test, expect } = require('../dsl/seitenleiste.js');
 
 const ERSTE_ZEILE = '#datei-zeilen .datei-zeile:first-child';
+const DATEI_ANMERKUNG = 'Die Umbenennung bricht den Aufrufer in der Auswertung; bitte die zweite Stelle nachziehen und den Test ergaenzen.';
 
 test.describe('Zwei getrennte Rollbereiche', () => {
   test('die Seite selbst scrollt nicht, Dateiliste und Diff-Bereich haben je eine eigene Bildlaufleiste', async ({ seit }) => {
@@ -249,5 +250,39 @@ test.describe('Alle Anzeigeverfahren und der Anschluss', () => {
     await seit.diffGanzUnten();
     expect(await seit.diffZeilen(), 'Diff-Zeilen nach dem Bildlauf').toBe(zeilen);
     await seit.keinSeitenbildlauf();
+  });
+});
+
+// Befund B1 (R00033, Nacharbeit): Im festen Rahmen können die festen Kinder über dem Diff-Rollbereich nicht schrumpfen; in
+// „Einzeln“ drücken viele Datei-Anmerkungen den Diff-Rollbereich auf 0 px und die Seite scrollt nicht mehr. Abnahme-Probe
+// wörtlich: 10 Datei-Anmerkungen bei 1280×800, 6 bei 1280×800, 4 bei 1280×600 → `.df-sc` clientHeight > 0 und die letzte
+// `.anm-zelle` erreichbar; dazu „Zusammen“ mit vielen Datei-Anmerkungen (dort liegen sie im Rollbereich).
+test.describe('Datei-Anmerkungen verdrängen den Diff nicht', () => {
+  for (const fall of [
+    { name: '10 Datei-Anmerkungen, 1280×800', anzahl: 10, fenster: { width: 1280, height: 800 } },
+    { name: '6 Datei-Anmerkungen, 1280×800', anzahl: 6, fenster: { width: 1280, height: 800 } },
+    { name: '4 Datei-Anmerkungen, 1280×600', anzahl: 4, fenster: { width: 1280, height: 600 } },
+  ]) {
+    test(`${fall.name}: der Diff-Rollbereich bleibt benutzbar und die letzte Anmerkung ist erreichbar`, async ({ seit }) => {
+      await seit.starten({ vorbereitung: 'Repo S zwei Commits', modus: 'einzeln', fenster: fall.fenster });
+      await seit.dateiAnsehen('lang.txt');
+
+      await seit.dateiAnmerkungenAnlegen(fall.anzahl, DATEI_ANMERKUNG);
+
+      await seit.keinSeitenbildlauf();
+      await seit.diffRollbereichBenutzbar();
+      await seit.letzteAnmerkungImFenster();
+    });
+  }
+
+  test('„Zusammen“ mit vielen Datei-Anmerkungen: der Diff-Rollbereich bleibt benutzbar und die letzte Anmerkung erreichbar', async ({ seit }) => {
+    await seit.starten({ vorbereitung: 'Repo S zwei Commits', modus: 'zusammen' });
+    await seit.dateiAnsehen('lang.txt');
+
+    await seit.dateiAnmerkungenAnlegen(10, DATEI_ANMERKUNG);
+
+    await seit.keinSeitenbildlauf();
+    await seit.diffRollbereichBenutzbar();
+    await seit.letzteAnmerkungErreichbar();
   });
 });

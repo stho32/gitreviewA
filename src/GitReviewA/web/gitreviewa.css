@@ -297,6 +297,15 @@ kbd{font:11px/1.2 var(--kd-mono);padding:1px 4px;border:1px solid var(--kd-line-
   /* Diff-Bereich: der Kopf steht, die Zeilen scrollen im eigenen Bereich */
   .gr-diff{margin-block-start:0;padding:var(--kd-s5);min-block-size:0;display:flex;flex-direction:column;overflow:hidden}
   .gr-diff>:not(.df-sc){flex:none}
-  .df-sc{flex:1 1 auto;min-block-size:0;overflow:auto}
+  /* Befund B1: im festen Rahmen kann kein festes Kind schrumpfen. Das Datei-Anmerkungsfeld wächst mit jeder Datei-Anmerkung;
+     es bekommt eine Obergrenze (Anteil der Diff-Höhe) mit eigenem Bildlauf, damit es den Diff-Rollbereich nicht auf 0 px
+     drückt (gleiches Muster wie `.gr-commits`). Der Diff-Rollbereich darunter behält eine benutzbare Mindesthöhe; seine
+     Basis 0 lässt ihn den Rest nehmen, ohne den Anmerkungsbereich wegzudrücken (die Inhaltshöhe des Diffs wäre sonst
+     die Schrumpf-Basis und saugte den ganzen Platz auf). */
+  .gr-diff>.anm-datei-bereich{flex:0 1 auto;min-block-size:0;max-block-size:min(40%,32rem);overflow:auto}
+  /* Meldungen (`.gr-status`) über dem Rollbereich sind kurz; wird eine doch lang, bekommt sie dieselbe Obergrenze mit eigenem
+     Bildlauf, statt über den festen Rahmen zu laufen (Befund B1: Klasse der festen Kinder über dem Rollbereich). */
+  .gr-diff>.diff-meldung,.gr-diff>.anmerkung-hinweis{max-block-size:6rem;overflow:auto}
+  .df-sc{flex:1 1 0;min-block-size:8rem;overflow:auto}
   .statuszeile{flex:none}
 }

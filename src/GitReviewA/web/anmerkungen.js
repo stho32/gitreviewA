@@ -166,6 +166,11 @@
     if (feld) {
       blockElement.querySelector('tbody').append(feld.feldzeileElement);
     }
+    // Befund B1: im festen Rahmen ist der Bereich ein eigener Rollbereich mit Obergrenze; die jüngste Anmerkung (zuletzt
+    // angehängt) bleibt so im Blick, ohne dass der Diff-Rollbereich darunter verdrängt wird.
+    if (bereichElement.scrollHeight > bereichElement.clientHeight) {
+      bereichElement.scrollTop = bereichElement.scrollHeight;
+    }
   }
 
   /** Die Dateianmerkungen der Stelle (Commit, Datei) über den Diff-Zeilen eines Abschnitts; die lückenlose Kette und die

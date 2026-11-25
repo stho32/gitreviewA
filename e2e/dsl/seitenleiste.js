@@ -10,6 +10,7 @@ const diffSeite = require('../treiber/diff-oberflaeche.js');
 const tastatur = require('../treiber/tastatur-oberflaeche.js');
 const naechsteSeite = require('../treiber/naechste-oberflaeche.js');
 const rahmen = require('../treiber/rahmen-oberflaeche.js');
+const anmerkungen = require('../treiber/anmerkungen-oberflaeche.js');
 const repos = require('../treiber/diff-repos.js');
 
 const FENSTER = { width: 1280, height: 800 };
@@ -94,6 +95,13 @@ function seitenleisteSprache(gr, page) {
     keinTrennerKeinEinklappen: () => rahmen.pruefeKeinTrennerKeinEinklappen(page),
     eineSpalte: () => rahmen.pruefeEineSpalte(page),
     zweiSpalten: () => rahmen.pruefeZweiSpalten(page),
+
+    /* ── Viele Datei-Anmerkungen über dem Diff (Befund B1) ── */
+    dateiAnmerkungenAnlegen: (anzahl, text) => anmerkungen.dateiAnmerkungenAnlegen(page, anzahl, text),
+    masseDerAnmerkungen: () => rahmen.masseDerAnmerkungen(page),
+    diffRollbereichBenutzbar: () => rahmen.pruefeDiffRollbereichBenutzbar(page),
+    letzteAnmerkungImFenster: () => rahmen.pruefeLetzteAnmerkungImFenster(page),
+    letzteAnmerkungErreichbar: () => rahmen.pruefeLetzteAnmerkungErreichbar(page),
 
     /* ── Wahl, Fokus und Sprünge ── */
     fokusAufDateizeile: pfad => tastatur.pruefeFokusDateizeile(page, pfad),
