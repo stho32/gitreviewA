@@ -2,6 +2,7 @@
 // Spezifikation R00027 „Im Diff suchen“ — Suchfeld und Zähler (B2604) am echten Programm (Browser-Eigenes: Feld, Fokus, Tasten).
 // Gesucht wird nur in der gezeigten Datei, wörtlich; die Rechnung selbst prüfen die Bausteintests (suche-werte.spec.js).
 const { test, expect } = require('../dsl/gitreviewa.js');
+const diffSeite = require('../treiber/diff-oberflaeche.js');
 
 const SUCHE_TXT = ['z01 eins zwei', 'z02 zwei drei', 'z03 drei zwei', 'z04 vier', 'z05 zwei vier', 'z06 a.c', 'z07 abc'].join('\n') + '\n';
 
@@ -147,5 +148,139 @@ test.describe('Im Diff suchen (R00027) — Treffer markieren und springen (B2605
 
     await gr.pruefeKeineFormatierung(page);
     await dialogePruefen();
+  });
+});
+
+const FARBIG_JS = 'function gruss() { return "Hallo"; }\nreturn gruss();\n';
+
+function nummernZeilen(anzahl, praefix) {
+  return Array.from({ length: anzahl }, (_, index) => `${praefix} ${String(index + 1).padStart(5, '0')}`).join('\n') + '\n';
+}
+
+/** Wählt eine Datei und wartet, bis ihr Diff `zeilen` Zeilen gezeichnet hat. */
+async function dateiUndWarten(page, gr, name, zeilen) {
+  await gr.dateiWaehlen(page, name);
+  await expect(page.locator('#diff .df-sc tr[data-art]')).toHaveCount(zeilen);
+}
+
+test.describe('Im Diff suchen (R00027) — Anschluss an Färbung, Wechsel und Grenzen (B2606)', () => {
+  test('soll beim Wechsel der Datei die Treffer neu rechnen und den Begriff behalten (Szenario 4)', async ({ gr, page }) => {
+    const repo = gr.repoMitDateien({ 'suche.txt': SUCHE_TXT, 'fremd.txt': FREMD_TXT });
+    const lauf = await gr.gitreviewAStarten(repo, [repo.hash]);
+    await gr.oberflaecheOeffnen(page, lauf, 'einzeln');
+    await sucheTxtWaehlen(page, gr);
+
+    await gr.sucheSuchen(page, 'zwei');
+    await expect(gr.sucheZaehler(page)).toHaveText('1 von 4');
+
+    await dateiUndWarten(page, gr, 'fremd.txt', 3);
+    await expect(gr.sucheFeld(page)).toHaveValue('zwei');
+    await expect(gr.sucheZaehler(page)).toHaveText('keine Treffer');
+    await expect(gr.sucheMarken(page)).toHaveCount(0);
+
+    await sucheTxtWaehlen(page, gr);
+    await expect(gr.sucheZaehler(page)).toHaveText('1 von 4');
+    await expect(gr.sucheMarken(page)).toHaveCount(4);
+  });
+
+  test('soll die Markierung nach dem Ende der Färbung erneut auftragen und die Färbung nicht brechen (Szenario 9 und 10)', async ({ gr, page }) => {
+    const repo = gr.repoMitDateien({ 'farbig.js': FARBIG_JS });
+    const lauf = await gr.gitreviewAStarten(repo, [repo.hash]);
+    await gr.oberflaecheOeffnen(page, lauf, 'einzeln');
+    await dateiUndWarten(page, gr, 'farbig.js', 3);
+    await expect.poll(() => diffSeite.warteAufFarbe(page)).toBe('ja');
+
+    await gr.sucheSuchen(page, 'return');
+    await expect(gr.sucheMarken(page)).toHaveCount(2);
+    const traegtFarbe = await gr.sucheMarken(page).first().evaluate(mark => {
+      const farbElement = mark.closest('[class*="tk-"]') || mark.querySelector('[class*="tk-"]');
+      return Boolean(farbElement) && mark.textContent === 'return';
+    });
+    expect(traegtFarbe, 'die markierte Stelle trägt weiter ihre Farbrolle (tk-)').toBe(true);
+
+    await page.evaluate(() => {
+      window.__zeichnet = 0;
+      document.addEventListener('diff-gezeichnet', () => {
+        window.__zeichnet += 1;
+      });
+    });
+    await gr.dateiWaehlen(page, 'farbig.js');
+    await page.waitForFunction(() => window.__zeichnet >= 1, undefined, { timeout: 10000, polling: 'raf' });
+    await expect.poll(() => page.locator('#diff .df-sc').getAttribute('data-farbe'), { timeout: 15000 }).toBe('ja');
+    await expect(gr.sucheMarken(page)).toHaveCount(2);
+    await expect(gr.sucheZaehler(page)).toHaveText('1 von 2');
+  });
+
+  test('soll eine zugeklappte große Datei nicht durchsuchen und nach „Trotzdem laden“ Treffer finden (Szenario 5)', async ({ gr, page }) => {
+    const repo = gr.repoMitDateien({ 'riesig.txt': nummernZeilen(30000, 'zeile') });
+    const lauf = await gr.gitreviewAStarten(repo, [repo.hash]);
+    await gr.oberflaecheOeffnen(page, lauf, 'einzeln');
+    await gr.dateiWaehlen(page, 'riesig.txt');
+    await diffSeite.pruefeZugeklappt(page, 'riesig.txt', 'Sehr lang: 30.000 Zeilen — zugeklappt');
+
+    await gr.sucheSuchen(page, 'zeile');
+    await expect(gr.sucheZaehler(page)).toHaveText('keine Treffer');
+    await expect(gr.sucheMarken(page)).toHaveCount(0);
+
+    await diffSeite.trotzdemLaden(page);
+    await expect(page.locator('#diff .df-sc tr[data-art]')).toHaveCount(30001);
+    await expect(gr.sucheZaehler(page)).toHaveText('1 von 10000+');
+    await expect(gr.sucheMarken(page)).toHaveCount(10000);
+  });
+
+  test('soll eine späte Antwort einer früheren Wahl verwerfen (Szenario 11, verzögerter Diff)', async ({ gr, page }) => {
+    const repo = gr.repoMitDateien({ 'suche.txt': SUCHE_TXT, 'fremd.txt': FREMD_TXT });
+    const lauf = await gr.gitreviewAStarten(repo, [repo.hash]);
+    await gr.oberflaecheOeffnen(page, lauf, 'einzeln');
+    const verzoegert = await diffSeite.diffAntwortVerzoegern(page, 'suche.txt');
+
+    await gr.dateiWaehlen(page, 'suche.txt');
+    await dateiUndWarten(page, gr, 'fremd.txt', 3);
+    await gr.sucheSuchen(page, 'zwei');
+    await expect(gr.sucheZaehler(page)).toHaveText('keine Treffer');
+
+    await verzoegert.eingetroffen();
+    await expect(gr.sucheZaehler(page)).toHaveText('keine Treffer');
+    await expect(gr.sucheMarken(page)).toHaveCount(0);
+  });
+
+  test('soll 20 000 Zeilen spätestens 1 s nach Enter zählen und markieren, in Häppchen unter 150 ms (Szenario 11, Grenzen)', async ({ gr, page }) => {
+    const repo = gr.repoMitDateien({ 'gross.txt': nummernZeilen(20000, 'zeile') });
+    const lauf = await gr.gitreviewAStarten(repo, [repo.hash]);
+    await gr.oberflaecheOeffnen(page, lauf, 'einzeln');
+    await dateiUndWarten(page, gr, 'gross.txt', 20001);
+
+    await page.evaluate(() => {
+      window.__langeAufgaben = [];
+      window.__beobachter = new PerformanceObserver(liste => {
+        for (const eintrag of liste.getEntries()) {
+          window.__langeAufgaben.push(eintrag.duration);
+        }
+      });
+      window.__beobachter.observe({ entryTypes: ['longtask'] });
+    });
+    const start = Date.now();
+    await gr.sucheFeld(page).fill('zeile');
+    await page.evaluate(() => new Promise(fertig => {
+      const feld = document.querySelector('#diff-suche');
+      const zaehler = document.querySelector('.diff-suche-zaehler');
+      window.__suchStart = performance.now();
+      feld.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+      const warten = () => {
+        if (zaehler.textContent === '1 von 10000+' && document.querySelectorAll('#diff .df-sc .suche-treffer').length === 10000) {
+          window.__suchDauer = performance.now() - window.__suchStart;
+          return fertig();
+        }
+        requestAnimationFrame(warten);
+      };
+      requestAnimationFrame(warten);
+    }));
+    const dauer = await page.evaluate(() => window.__suchDauer);
+    const laengste = await page.evaluate(() => Math.max(0, ...window.__langeAufgaben));
+    console.log(`Messwert: 20000 Zeilen gesucht und markiert in ${dauer} ms (rund ${Date.now() - start} ms); längste Aufgabe ${laengste} ms`);
+    await expect(gr.sucheZaehler(page)).toHaveText('1 von 10000+');
+    await expect(gr.sucheMarken(page)).toHaveCount(10000);
+    expect(dauer, `${dauer} ms (Grenze 1000, Ziel 700)`).toBeLessThanOrEqual(1000);
+    expect(laengste, `längste Aufgabe ${laengste} ms (Grenze 150)`).toBeLessThanOrEqual(150);
   });
 });
