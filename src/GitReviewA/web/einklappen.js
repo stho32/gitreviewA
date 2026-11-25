@@ -107,6 +107,9 @@
       const beschriftung = document.createElement('span');
       beschriftung.className = 'gr-einklappen-text';
       knopf.append(pfeil, beschriftung);
+      // Der Zeiger nimmt dem Knopf nicht den Fokus: mit `preventDefault` bleibt ein Fokus stehen, wo er war (etwa im offenen
+      // Notizfeld des Diffs, Lehre #23); ein Fokus in der Leiste wandert in `umschalten` auf den Knopf, ein verlorener auch.
+      knopf.addEventListener('pointerdown', ereignis => ereignis.preventDefault());
       knopf.addEventListener('click', umschalten);
       behaelter.append(knopf);
       // Der Katalog legt den Hinweis (`<kbd>` und `aria-keyshortcuts`) an das Bedienelement, sobald es gebaut ist.

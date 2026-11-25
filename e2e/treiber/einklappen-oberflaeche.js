@@ -221,6 +221,61 @@ function diffPfad(page) {
   return page.locator('#diff .diff-pfad').textContent();
 }
 
+/**
+ * Misst ereignisgenau, wie lange das Einklappen bis zur Wirkung braucht (Zustand, `hidden` und die Stellung am Rahmen stehen),
+ * in Millisekunden. Dieselbe Messung dient der Positivkontrolle, wenn eine verzögerte Antwort im Weg steht.
+ */
+function messeEinklappen(page) {
+  return page.evaluate(async () => {
+    const knopf = document.getElementById('einklappen');
+    const rahmen = document.querySelector('.gr-ansicht');
+    const leiste = document.getElementById('seitenleiste');
+    const start = performance.now();
+    knopf.click();
+    const wirkt = () => knopf.getAttribute('aria-expanded') === 'false'
+      && leiste.hidden === true
+      && rahmen.classList.contains('gr-eingeklappt');
+    while (performance.now() - start < 5000) {
+      if (wirkt()) {
+        await new Promise(fertig => requestAnimationFrame(fertig));
+        return performance.now() - start;
+      }
+      await new Promise(fertig => requestAnimationFrame(fertig));
+    }
+    return performance.now() - start;
+  });
+}
+
+/** Positivkontrolle der Zeitmessung: bei verzögerten Diff-Antworten dauert der Wechsel der Datei messbar länger (bis der Diff
+    den neuen Pfad zeigt). Ohne Verzögerung kehrt dieselbe Messung schnell zurück. */
+function messeDateiwechsel(page, pfad) {
+  return page.evaluate(async ziel => {
+    const zeile = [...document.querySelectorAll('#datei-zeilen .datei-zeile')].find(element => element.dataset.pfad === ziel);
+    const start = performance.now();
+    zeile.click();
+    // Der Pfad steht schon vor der Antwort; „geladen“ heißt: keine Meldung mehr und der Rollbereich sichtbar.
+    const steht = () => document.querySelector('#diff .diff-pfad').textContent === ziel
+      && document.querySelector('#diff .diff-meldung').textContent === ''
+      && document.querySelector('#diff .df-sc').hidden === false;
+    while (performance.now() - start < 10000) {
+      if (steht()) {
+        await new Promise(fertig => requestAnimationFrame(fertig));
+        return performance.now() - start;
+      }
+      await new Promise(fertig => requestAnimationFrame(fertig));
+    }
+    return performance.now() - start;
+  }, pfad);
+}
+
+/** Hält jede Diff-Antwort `ms` zurück (verzögerter Fake): eine Anfrage, die neu gestellt würde, wäre dann messbar langsam. */
+async function verzoegerteDiffAntworten(page, ms) {
+  await page.route('**/diff?**', async route => {
+    await new Promise(weiter => setTimeout(weiter, ms));
+    await route.continue();
+  });
+}
+
 /* ── Prüfungen ── */
 
 /** Der Knopf ist da und nennt seinen Zustand über `aria-expanded`. */
@@ -299,7 +354,7 @@ module.exports = {
   KNOPF, STREIFEN, SEITENLEISTE, RAHMEN, TRENNER,
   knopf, betatigen, tasteB, knopfAngaben, sichtbarerFokusring, seitenleisteAngaben, streifenAngaben, grenzlage,
   pruefeZustand, pruefeKnopf, pruefeKnopfAnDerGrenze, pruefeFokusUndRing, fokusVorgaengerDesTrenners, tabVomKopf, tabReihe, ersteUngepruefteOeffnen, alleHakenSetzen,
-  pruefeNaechsteMeldung, diffPfad, hilfeOeffnen, hilfeEintraege,
+  pruefeNaechsteMeldung, diffPfad, messeEinklappen, messeDateiwechsel, verzoegerteDiffAntworten, hilfeOeffnen, hilfeEintraege,
   pruefeSeitenleisteVerborgen, pruefeSeitenleisteSichtbar, pruefeStreifen, pruefeVolleBreite,
   pruefeDiffBreiter, pruefeKeinTrennzug,
 };

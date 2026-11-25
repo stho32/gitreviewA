@@ -5,6 +5,7 @@
 // Seite, Prozess, git, Tasten und Selektoren.
 const { test: basis, expect } = require('./breite.js');
 const einkl = require('../treiber/einklappen-oberflaeche.js');
+const anmerkungSeite = require('../treiber/anmerkungen-oberflaeche.js');
 
 function einklappenSprache(seit, page) {
   return Object.assign({}, seit, {
@@ -23,6 +24,14 @@ function einklappenSprache(seit, page) {
     alleHakenSetzen: () => einkl.alleHakenSetzen(page),
     naechsteMeldung: () => einkl.pruefeNaechsteMeldung(page, 'Alles abgehakt'),
     diffPfad: () => einkl.diffPfad(page),
+    /* ── Zeitwert des Einklappens und seine Positivkontrolle (ereignisgenau) ── */
+    dauerEinklappen: () => einkl.messeEinklappen(page),
+    dauerDateiwechsel: pfad => einkl.messeDateiwechsel(page, pfad),
+    verzoegerteDiffAntworten: ms => einkl.verzoegerteDiffAntworten(page, ms),
+    /* ── Markierung eines Zeilenbereichs (R00031) über Umschalt-Klick ── */
+    bereichWaehlen: (von, bis) => anmerkungSeite.bereichWaehlen(page, von, bis),
+    markierteZeilen: () => anmerkungSeite.markierteZeilen(page),
+    bereichFeldname: (datei, von, bis) => `Anmerkung zu ${datei}, Zeile ${von}–${bis}`,
     hilfeOeffnen: () => einkl.hilfeOeffnen(page),
     hilfeEintraege: () => einkl.hilfeEintraege(page),
     fortschritt: () => page.locator('#kopf-fortschritt .haken-zaehler').textContent(),

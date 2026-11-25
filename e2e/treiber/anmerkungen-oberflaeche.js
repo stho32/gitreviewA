@@ -753,7 +753,7 @@ module.exports = {
   pruefeMarkiertImAbschnitt,
   pruefeBereichsfeldImAbschnitt,
   bereichImAbschnittSpeichern,
-  pruefeMarkiert,
+  pruefeMarkiert, markierteZeilen,
   pruefeMarkierungNichtNurFarbe,
   pruefeKeineMarkierung,
   pruefeHinweis,
