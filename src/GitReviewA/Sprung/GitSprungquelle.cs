@@ -3,14 +3,19 @@ using GitReviewA.Git;
 namespace GitReviewA.Sprung;
 
 /// <summary>
-/// Der Arbeitsbaum als Sprungquelle: Dateisystemzugriff hinter <see cref="ISprungquelle"/>. Ein Symlink wird an seinem Endziel
-/// beurteilt: führt es aus der Repositorywurzel hinaus, ist das <see cref="Sprungvorhandensein.VerlaesstWurzel"/> — auch wenn das
-/// Ziel existiert; sonst zählt, ob das Endziel da ist. `File.Exists` allein genügt nicht: .NET meldet auch einen ins Leere
-/// zeigenden Symlink als vorhanden.
+/// Der Arbeitsbaum als Sprungquelle: Dateisystemzugriff hinter <see cref="ISprungquelle"/>. Beurteilt wird der **aufgelöste** Pfad —
+/// jeder Bestandteil wird durch sein Endziel ersetzt, `.` und `..` gerechnet —, und erst das Ergebnis gegen die ebenso aufgelöste
+/// Repositorywurzel geprüft: die letzte Komponente allein genügt nicht, ein Symlink im **Elternverzeichnis** führte den Link sonst aus
+/// der Wurzel. Liegt der aufgelöste Pfad außerhalb, ist das <see cref="Sprungvorhandensein.VerlaesstWurzel"/> — auch wenn das Ziel
+/// existiert; sonst zählt, ob es da ist. `File.Exists` allein genügt nicht: .NET meldet auch einen ins Leere zeigenden Symlink als vorhanden.
 /// </summary>
 internal sealed class GitSprungquelle : ISprungquelle
 {
+    /// <summary>Ab so vielen Verweisen in einem Pfad gilt die Verkettung als nicht auflösbar (wie das Betriebssystem, `MAXSYMLINKS`).</summary>
+    private const int HoechstzahlVerweiseInEinemPfad = 40;
+
     private readonly Ausgabegrenze grenze;
+    private readonly string aufgeloesteWurzel;
 
     public GitSprungquelle(string repositorywurzel) : this(repositorywurzel, Ausgabegrenze.Standard)
     {
@@ -20,6 +25,7 @@ internal sealed class GitSprungquelle : ISprungquelle
     {
         Repositorywurzel = repositorywurzel;
         this.grenze = grenze;
+        aufgeloesteWurzel = Path.TrimEndingDirectorySeparator(AufgeloesterPfad(repositorywurzel) ?? Path.GetFullPath(repositorywurzel));
     }
 
     public string Repositorywurzel { get; }
@@ -31,32 +37,17 @@ internal sealed class GitSprungquelle : ISprungquelle
 
     public Sprungvorhandensein PruefeVorhandensein(string absoluterPfad)
     {
-        var info = AlsDateiinfo(absoluterPfad);
-        if (info is null)
+        var ziel = AufgeloesterPfad(absoluterPfad);
+        if (ziel is null)
         {
             return Sprungvorhandensein.Fehlt;
         }
-        var istVerweis = info.LinkTarget is not null;
-        if (istVerweis)
-        {
-            return VerweisZustand(info);
-        }
-        return DateiZustand(absoluterPfad);
-    }
-
-    private Sprungvorhandensein VerweisZustand(FileInfo info)
-    {
-        var endziel = info.ResolveLinkTarget(returnFinalTarget: true);
-        if (endziel is null)
-        {
-            return Sprungvorhandensein.Fehlt;
-        }
-        var verlaesstDieWurzel = !LiegtInWurzel(endziel.FullName);
+        var verlaesstDieWurzel = !LiegtInWurzel(ziel);
         if (verlaesstDieWurzel)
         {
             return Sprungvorhandensein.VerlaesstWurzel;
         }
-        return DateiZustand(endziel.FullName);
+        return DateiZustand(ziel);
     }
 
     private static Sprungvorhandensein DateiZustand(string pfad)
@@ -69,33 +60,93 @@ internal sealed class GitSprungquelle : ISprungquelle
         return Sprungvorhandensein.Fehlt;
     }
 
-    /// <summary>Ein unsyntaktischer Pfad kann nicht außerhalb liegen; die Vorhandenprüfung meldet ihn dann als fehlend.</summary>
-    private static FileInfo? AlsDateiinfo(string absoluterPfad)
+    /// <summary>
+    /// Der Pfad mit jedem Bestandteil aufgelöst: `Path.GetFullPath` rechnet `.` und `..`, jeder Bestandteil, der ein Verweis ist, wird
+    /// durch sein (ebenso aufgelöstes) Ziel ersetzt — erst dieser Pfad ist der, auf den der Dateizugriff wirklich geht. `null` heißt
+    /// „nicht auflösbar“ (unsyntaktischer Pfad oder Verkettung ohne Ende); ein solcher Pfad liegt nicht außerhalb der Wurzel.
+    /// </summary>
+    private static string? AufgeloesterPfad(string pfad)
     {
         try
         {
-            return new FileInfo(absoluterPfad);
+            return Aufloesen(Path.GetFullPath(pfad));
         }
-        catch (Exception fehler) when (fehler is ArgumentException or PathTooLongException or NotSupportedException)
+        catch (Exception fehler) when (fehler is ArgumentException or IOException or NotSupportedException)
         {
             return null;
         }
     }
 
-    private bool LiegtInWurzel(string pfad)
+    private static string Aufloesen(string pfad)
     {
-        var wurzel = Path.TrimEndingDirectorySeparator(Path.GetFullPath(Repositorywurzel));
-        var ziel = Path.GetFullPath(pfad);
-        var istDieWurzelSelbst = ziel == wurzel;
+        var loesung = Path.GetPathRoot(pfad) ?? string.Empty;
+        var offen = new Queue<string>(BestandteileNachDerWurzel(pfad, loesung));
+        var verweise = 0;
+        while (offen.Count > 0)
+        {
+            var naechster = Path.Combine(loesung, offen.Dequeue());
+            var ziel = Verweisziel(naechster);
+            if (ziel is null)
+            {
+                loesung = naechster;
+                continue;
+            }
+            verweise += 1;
+            var verweiseSindOhneEnde = verweise > HoechstzahlVerweiseInEinemPfad;
+            if (verweiseSindOhneEnde)
+            {
+                throw new IOException($"Verweise ohne Ende ab {pfad}");
+            }
+            var zielpfad = Zielpfad(ziel, loesung);
+            loesung = Path.GetPathRoot(zielpfad) ?? string.Empty;
+            offen = new Queue<string>(BestandteileNachDerWurzel(zielpfad, loesung).Concat(offen));
+        }
+        return loesung;
+    }
+
+    /// <summary>Das rohe Ziel eines Verweises oder `null`, wenn der Pfad kein Verweis ist — auch für einen ins Leere zeigenden.</summary>
+    private static string? Verweisziel(string pfad)
+    {
+        try
+        {
+            return new FileInfo(pfad).LinkTarget;
+        }
+        catch (Exception fehler) when (fehler is ArgumentException or IOException or NotSupportedException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Das Ziel eines Verweises als absoluter Pfad; ein relatives Ziel gilt ab dem Verzeichnis des Verweises.</summary>
+    private static string Zielpfad(string ziel, string verzeichnisDesVerweises)
+    {
+        var istAbsolut = Path.IsPathRooted(ziel);
+        if (istAbsolut)
+        {
+            return Path.GetFullPath(ziel);
+        }
+        return Path.GetFullPath(Path.Combine(verzeichnisDesVerweises, ziel));
+    }
+
+    /// <summary>Die Bestandteile eines absoluten Pfades ohne seine Wurzel, in Reihenfolge.</summary>
+    private static IEnumerable<string> BestandteileNachDerWurzel(string pfad, string wurzel)
+    {
+        var bestandteile = pfad[wurzel.Length..];
+        return bestandteile.Split([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar], StringSplitOptions.RemoveEmptyEntries);
+    }
+
+    private bool LiegtInWurzel(string aufgeloesterPfad)
+    {
+        var istDieWurzelSelbst = aufgeloesterPfad == aufgeloesteWurzel;
         if (istDieWurzelSelbst)
         {
             return true;
         }
-        var istWurzelverzeichnis = wurzel == Path.DirectorySeparatorChar.ToString();
+        var istWurzelverzeichnis = aufgeloesteWurzel == Path.DirectorySeparatorChar.ToString();
         if (istWurzelverzeichnis)
         {
             return true;
         }
-        return ziel.StartsWith(wurzel + Path.DirectorySeparatorChar, StringComparison.Ordinal);
+        return aufgeloesterPfad.StartsWith(aufgeloesteWurzel + Path.DirectorySeparatorChar, StringComparison.Ordinal);
     }
 }

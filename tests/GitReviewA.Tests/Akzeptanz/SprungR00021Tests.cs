@@ -144,6 +144,30 @@ public class SprungR00021Tests
     }
 
     [Test]
+    public void Wenn_ein_Verweis_im_Elternverzeichnis_aus_der_Wurzel_fuehrt_dann_Grund_Pfad_verlaesst_das_Repository()
+    {
+        using var repo = SprungRepo.M();
+        var sprache = SprungSprache.Aufruf(repo.Ordner, repo.Hash, "m1", "m2");
+
+        var bild = sprache.Sprung("m1", "verzeichnis/passwd");
+
+        Assert.That(bild, Is.EqualTo(new Sprungbild("beantwortet", "", false, Sprunggruende.PfadVerlaesstRepository)));
+        Assert.That(sprache.Arbeitsbaumpruefungen, Is.Zero);
+    }
+
+    [Test]
+    public void Wenn_das_Verweisziel_in_der_Wurzel_liegt_dann_bleibt_der_Link()
+    {
+        using var repo = SprungRepo.MInDerWurzel();
+        var sprache = SprungSprache.Aufruf(repo.Ordner, repo.Hash, "m1", "m2");
+
+        var bild = sprache.Sprung("m1", "verzeichnis/passwd");
+
+        Assert.That(bild.Ziel, Is.EqualTo(Ziel(repo.Ordner, "verzeichnis/passwd")), "der Link bleibt, das Ziel ist der angefragte Pfad");
+        Assert.That(bild.Grund, Is.Empty);
+    }
+
+    [Test]
     public void Wenn_das_Repo_Diff_Programme_setzt_dann_dasselbe_Ziel_und_kein_Marker()
     {
         using var repo = SprungRepo.SMitDiffProgrammen();

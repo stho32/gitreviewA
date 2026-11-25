@@ -65,6 +65,34 @@ internal sealed class SprungRepo : IDisposable
         return l;
     }
 
+    /// <summary>Repo M: `m1` legt `verzeichnis/passwd` an, `m2` ersetzt `verzeichnis` durch einen Verweis auf `/etc` (Commit A und B der Probe).</summary>
+    public static SprungRepo M()
+    {
+        return MitVerzeichnisverweis("/etc");
+    }
+
+    /// <summary>Repo M, aber der Verweis bleibt in der Wurzel: `verzeichnis` zeigt auf das Verzeichnis `echt` mit demselben Inhalt.</summary>
+    public static SprungRepo MInDerWurzel()
+    {
+        return MitVerzeichnisverweis("echt");
+    }
+
+    /// <summary>
+    /// `m1` legt `verzeichnis/passwd` an, `m2` ersetzt `verzeichnis` durch einen Verweis auf <paramref name="verweisziel"/>. Das
+    /// Verzeichnis `echt` trägt denselben Inhalt in der Wurzel: die beiden Repos der Probe unterscheiden sich nur im Verweisziel.
+    /// </summary>
+    private static SprungRepo MitVerzeichnisverweis(string verweisziel)
+    {
+        var m = new SprungRepo(WegwerfRepo.MitCommits());
+        m.Schreibe("verzeichnis/passwd", "root:x:0:0\n");
+        m.Committe("m1", "Datei im Verzeichnis");
+        m.Git("rm", "-q", "-r", "verzeichnis");
+        m.Schreibe("echt/passwd", "root:x:0:0\n");
+        File.CreateSymbolicLink(Path.Combine(m.Ordner, "verzeichnis"), verweisziel);
+        m.Committe("m2", "Verzeichnis als Verweis");
+        return m;
+    }
+
     public static readonly string[] Markerdateien = ["marker-extern", "marker-textconv", "marker-command"];
 
     /// <summary>

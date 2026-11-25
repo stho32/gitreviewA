@@ -127,6 +127,117 @@ public class SprungvorhandenseinTests
     }
 
     [Test]
+    public void Wenn_ein_Verweis_im_Elternverzeichnis_aus_der_Wurzel_fuehrt_dann_verlaesst_die_Wurzel()
+    {
+        var ordner = EigenesVerzeichnis();
+        var aussen = EigenesVerzeichnis();
+        try
+        {
+            File.WriteAllText(Path.Combine(aussen, "passwd"), "root:x:0:0\n");
+            File.CreateSymbolicLink(Path.Combine(ordner, "verzeichnis"), aussen);
+            var quelle = new GitSprungquelle(ordner);
+
+            var vorhanden = quelle.PruefeVorhandensein(Path.Combine(ordner, "verzeichnis", "passwd"));
+
+            Assert.That(vorhanden, Is.EqualTo(Sprungvorhandensein.VerlaesstWurzel), "das Ziel liegt außerhalb, auch wenn es existiert");
+        }
+        finally
+        {
+            Loesche(ordner);
+            Loesche(aussen);
+        }
+    }
+
+    [Test]
+    public void Wenn_der_Verweis_zwei_Ebenen_tiefer_aus_der_Wurzel_fuehrt_dann_verlaesst_die_Wurzel()
+    {
+        var ordner = EigenesVerzeichnis();
+        var aussen = EigenesVerzeichnis();
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(aussen, "b"));
+            File.WriteAllText(Path.Combine(aussen, "b", "c.txt"), "eins\n");
+            File.CreateSymbolicLink(Path.Combine(ordner, "a"), aussen);
+            var quelle = new GitSprungquelle(ordner);
+
+            var vorhanden = quelle.PruefeVorhandensein(Path.Combine(ordner, "a", "b", "c.txt"));
+
+            Assert.That(vorhanden, Is.EqualTo(Sprungvorhandensein.VerlaesstWurzel), "das Ziel liegt außerhalb, auch wenn es existiert");
+        }
+        finally
+        {
+            Loesche(ordner);
+            Loesche(aussen);
+        }
+    }
+
+    [Test]
+    public void Wenn_ein_relatives_Verweisziel_aus_der_Wurzel_fuehrt_dann_verlaesst_die_Wurzel()
+    {
+        var eltern = EigenesVerzeichnis();
+        var ordner = Path.Combine(eltern, "repo");
+        var aussen = Path.Combine(eltern, "aussen");
+        try
+        {
+            Directory.CreateDirectory(ordner);
+            Directory.CreateDirectory(aussen);
+            File.WriteAllText(Path.Combine(aussen, "passwd"), "root:x:0:0\n");
+            File.CreateSymbolicLink(Path.Combine(ordner, "verzeichnis"), "../aussen");
+            var quelle = new GitSprungquelle(ordner);
+
+            var vorhanden = quelle.PruefeVorhandensein(Path.Combine(ordner, "verzeichnis", "passwd"));
+
+            Assert.That(vorhanden, Is.EqualTo(Sprungvorhandensein.VerlaesstWurzel), "das Ziel liegt außerhalb der Wurzel");
+        }
+        finally
+        {
+            Loesche(eltern);
+        }
+    }
+
+    [Test]
+    public void Wenn_das_Ziel_des_Verweises_ausserhalb_der_Wurzel_fehlt_dann_verlaesst_die_Wurzel()
+    {
+        var ordner = EigenesVerzeichnis();
+        var aussen = EigenesVerzeichnis();
+        try
+        {
+            File.CreateSymbolicLink(Path.Combine(ordner, "verzeichnis"), aussen);
+            var quelle = new GitSprungquelle(ordner);
+
+            var vorhanden = quelle.PruefeVorhandensein(Path.Combine(ordner, "verzeichnis", "passwd"));
+
+            Assert.That(vorhanden, Is.EqualTo(Sprungvorhandensein.VerlaesstWurzel), "der Grund ist das Verlassen der Wurzel, nicht die fehlende Datei");
+        }
+        finally
+        {
+            Loesche(ordner);
+            Loesche(aussen);
+        }
+    }
+
+    [Test]
+    public void Wenn_ein_Verweis_auf_ein_Verzeichnis_in_der_Wurzel_zeigt_dann_ist_die_Datei_darin_vorhanden()
+    {
+        var ordner = EigenesVerzeichnis();
+        try
+        {
+            Directory.CreateDirectory(Path.Combine(ordner, "echt"));
+            File.WriteAllText(Path.Combine(ordner, "echt", "passwd"), "root:x:0:0\n");
+            File.CreateSymbolicLink(Path.Combine(ordner, "verzeichnis"), "echt");
+            var quelle = new GitSprungquelle(ordner);
+
+            var vorhanden = quelle.PruefeVorhandensein(Path.Combine(ordner, "verzeichnis", "passwd"));
+
+            Assert.That(vorhanden, Is.EqualTo(Sprungvorhandensein.Vorhanden), "das Verweisziel liegt in der Wurzel");
+        }
+        finally
+        {
+            Loesche(ordner);
+        }
+    }
+
+    [Test]
     public void Wenn_die_Datei_im_Arbeitsbaum_entfernt_ist_dann_fehlt_auch_im_Repo_S()
     {
         using var repo = SprungRepo.S();
