@@ -450,3 +450,17 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-25 | #42 | Entwicklung | security-reviewer | bestanden | 15 min | Claude Sonnet: Angriffsmatrix 113 Zeilen (4e2ef6c), 20 Lücken, E1–E5 · claude · Lauf 42-security-reviewer-1 · 1,92 $ · Karte gesamt 6,80 $ |
 | 2026-11-25 | #42 | Entwicklung | product-owner | bestanden | 1 min | Claude Sonnet: L1–L20 und E1–E5 einsortiert (cf455b0) · claude · sonnet · Lauf 42-product-owner-2 · 0,28 $ · Karte gesamt 7,08 $ |
 | 2026-11-25 | #42 | Entwicklung | planer | bestanden | 5 min | opencode: Matrix-Lücken als Kriterien (R00043 +10), B4209 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 42-planer-3 · 0,11 $ · Karte gesamt 7,19 $ |
+| 2026-11-25 | #38 | Entwicklung | entwickler | bestanden | 50 min | opencode: B3401–B3405, NUnit 1322, E2E 830/830 dreimal · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 38-entwickler-1 · 0,083 $ · Karte gesamt 0,080 $ |
+| 2026-11-25 | #38 | Reviews | code-reviewer | befund | 5 min | opencode: B1 Fokus am Trennzug geht beim Einklappen verloren · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 38-code-reviewer-1 · 0,023 $ · Karte gesamt 0,10 $ |
+| 2026-11-25 | #38 | Reviews | security-reviewer | bestanden | 5 min | opencode: reines Layout · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 38-security-reviewer-1 · 0,021 $ · Karte gesamt 0,12 $ |
+| 2026-11-25 | #41 | Detailplanung | entwickler | bestanden | 48 min | opencode: B3501–B3507, NUnit 1395, E2E 820/820, ohne Art byte-genau · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 41-entwickler-1 · 0,16 $ · Karte gesamt 8,09 $ |
+| 2026-11-25 | #55 | Entwicklung | entwickler | bestanden | 18 min | opencode: 403 für fremde Herkunft auf GET, Schutz auf normalisiertem Pfad, 39/39, 3 Mutanten rot · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 55-entwickler-1 · 0,39 $ · Karte gesamt 0,39 $ |
+| 2026-11-25 | #55 | Reviews | security-reviewer | bestanden | 3 min | Claude Sonnet: rohe Socket-Proben (39 Pfade, 28 Kombinationen, alle Methoden), Browser-Durchgang 0×403, kein Muss · claude · Lauf 55-security-reviewer-1 · 0,67 $ · Karte gesamt 1,06 $ |
+| 2026-11-25 | #38 | Nacharbeit | entwickler | bestanden | 15 min | opencode: Fokus vom Trennzug gerettet, rot→grün · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 38-entwickler-2 · 0,21 $ · Karte gesamt 0,33 $ |
+| 2026-11-25 | #41 | Reviews | code-reviewer | bestanden | 7 min | opencode: kein Muss · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 41-code-reviewer-1 · 0,13 $ · Karte gesamt 8,22 $ |
+| 2026-11-25 | #41 | Reviews | security-reviewer | bestanden | 7 min | opencode: kein Muss · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 41-security-reviewer-1 · 0,081 $ · Karte gesamt 8,30 $ |
+
+## Retrospektive #55 Server: fremder Origin auf GET und Pfadvarianten (2026-11-25)
+- Befund aus der Angriffsmatrix zu #42 (security-reviewer Sonnet): GET mit fremdem Origin lieferte 200, Pfadvarianten umgingen die exakte Schreibweise. Bau 18 min (Schutz-Middleware auf dem normalisierten Pfad, rohe Socket-Proben, 23/31 rot → 39/39 grün, 3 Mutanten rot), Security-Review Sonnet ohne Muss (39 Pfade, 28 Kombinationen, alle Methoden, Browser-Durchgang). Karte gesamt 1,06 $.
+- Lehre: Sicherheitsproben für Pfade über den Socket senden — HTTP-Clients normalisieren die Varianten weg.
+- Gate: NUnit 1361/1361, Playwright 804/805 je Lauf (zwei Wackler, Karte angelegt).
