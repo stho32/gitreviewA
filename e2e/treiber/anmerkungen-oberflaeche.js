@@ -187,6 +187,22 @@ async function pruefeDateiKnopfVerborgen(page) {
   await expect(page.locator(DATEI_KNOPF)).toBeHidden();
 }
 
+/** Beantwortet `GET /api/haken` mit diesem Stand — für die Sperre am „Datei anmerken“-Knopf (R00014). */
+async function hakenAntwortetMit(page, stand) {
+  await page.route('**/api/haken', async route => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(stand) });
+  });
+}
+
+async function pruefeDateiKnopfGesperrt(page, grund) {
+  await expect(page.locator(DATEI_KNOPF_BUTTON)).toBeDisabled();
+  await expect(page.locator('#diff .diff-datei-grund')).toHaveText(grund);
+}
+
+async function pruefeDateiKnopfBedienbar(page) {
+  await expect(page.locator(DATEI_KNOPF_BUTTON)).toBeEnabled();
+}
+
 /** Positiv geprüft: die Anmerkungszeilen tragen keine Merkmale einer Diff-Zeile und keine Zeilenklassen der Färbung. */
 async function pruefeAnmerkungszeilenSindKeineDiffzeilen(page) {
   const merkmale = await page.locator(ANMERKUNGSZEILE).evaluateAll(zeilen => zeilen.map(zeile => ({
@@ -499,7 +515,7 @@ async function pruefeLoeschenFrei(page, nummer) {
 module.exports = {
   zeileAnklicken, zeileDoppeltAnklicken, zeileImAbschnittAnklicken, pruefeAnmerkungenUnterImAbschnitt, pruefeAnzahlFelder, pruefeFeldtext, pruefeFeldOffenMitFokus, textSchreiben, speichern, zweimalSpeichern, pruefeFeldZu, pruefeKeinFeld, pruefeFeldmeldung,
   pruefeAnmerkungenUnter, pruefeAnzahlAnmerkungszeilen, pruefeAnmerkungszeilenSindKeineDiffzeilen,
-  dateianmerkungenOben, pruefeDateianmerkungenOben, pruefeKeineDateianmerkung, anzahlDateianmerkungen, pruefeDateianmerkungUeberDenZeilen, dateiAnmerken, pruefeDateiKnopfSichtbar, pruefeDateiKnopfVerborgen,
+  dateianmerkungenOben, pruefeDateianmerkungenOben, pruefeKeineDateianmerkung, anzahlDateianmerkungen, pruefeDateianmerkungUeberDenZeilen, dateiAnmerken, pruefeDateiKnopfSichtbar, pruefeDateiKnopfVerborgen, hakenAntwortetMit, pruefeDateiKnopfGesperrt, pruefeDateiKnopfBedienbar,
   pruefeHinweisEntfernt, pruefeKeinHinweisEntfernt, pruefeHinweisAusserhalb, pruefeKeinHinweisAusserhalb,
   inDenDiffTabben, pfeilAbBis, taste, pruefeFokusAufZeile, anlegenAntwortetEinmal, anlegenVerzoegern, pruefeAnmerkungenBinnen,
   pruefeAnmerkungOhneHtml, sichtbarerAnmerkungstext,

@@ -408,7 +408,20 @@
     return commitZaehler(zustand.stand.stellen, zustand.bestaetigtRoh);
   }
 
-  window.gitreviewaHaken = { zaehlerJeCommit };
+  /** Der Sperrgrund der gezeigten Stelle im Diff-Kopf — dieselbe Regel wie das Kästchen (R00014): in „Zusammen“ je Datei, in
+      „Einzeln“ je Stelle; leer, wenn keine Stelle gesperrt ist oder nichts gezeigt wird. */
+  function diffSperrgrund() {
+    if (!zustand.diffPfad) {
+      return '';
+    }
+    if (zustand.modus === 'zusammen') {
+      const datei = dateiDerZeile(zustand.diffPfad);
+      return datei ? dateiSperrgrund(datei) : '';
+    }
+    return sperrgrundRoh(rohSchluessel(zustand.diffCommit, zustand.diffPfad));
+  }
+
+  window.gitreviewaHaken = { zaehlerJeCommit, diffSperrgrund };
 
   document.addEventListener('DOMContentLoaded', init);
 }());

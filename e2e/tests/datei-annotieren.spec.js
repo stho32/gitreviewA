@@ -226,4 +226,19 @@ test.describe('Datei annotieren — Bedienweg und Browser-Eigenes', () => {
     await anm.dateiAnsehen('lang.txt');
     await anm.dateiKnopfSichtbar();
   });
+
+  test('an einer gesperrten Stelle ist „Datei anmerken“ nicht bedienbar und nennt den Grund (PO zu R00022 Frage 3)', async ({ anm }) => {
+    await anm.starten({ modus: 'einzeln', seiteOeffnen: false });
+    await anm.hakenAntwortetMit({
+      stellen: [{ commit: anm.hash('q'), datei: 'lang.txt', abgehakt: false, sperrgrund: 'Diff nicht lesbar: Name nicht eindeutig' }],
+      abgehakt: 0,
+      gesamt: 1,
+    });
+    await anm.seiteOeffnen();
+
+    await anm.dateiAnsehen('src/b.txt');
+    await anm.dateiKnopfBedienbar();
+    await anm.dateiAnsehen('lang.txt');
+    await anm.dateiKnopfGesperrt('Diff nicht lesbar: Name nicht eindeutig');
+  });
 });

@@ -167,6 +167,9 @@ function annotierSprache(gr, page) {
     dateiAnmerken: () => anmerkungSeite.dateiAnmerken(page),
     dateiKnopfSichtbar: () => anmerkungSeite.pruefeDateiKnopfSichtbar(page),
     dateiKnopfVerborgen: () => anmerkungSeite.pruefeDateiKnopfVerborgen(page),
+    hakenAntwortetMit: stand => anmerkungSeite.hakenAntwortetMit(page, stand),
+    dateiKnopfGesperrt: grund => anmerkungSeite.pruefeDateiKnopfGesperrt(page, grund),
+    dateiKnopfBedienbar: () => anmerkungSeite.pruefeDateiKnopfBedienbar(page),
     /** `erwartet`: `{ text, stelle }` je Dateianmerkung über den Diff-Zeilen, in Reihenfolge. */
     dateianmerkungenOben: erwartet => anmerkungSeite.pruefeDateianmerkungenOben(page, erwartet),
     keineDateianmerkung: () => anmerkungSeite.pruefeKeineDateianmerkung(page),

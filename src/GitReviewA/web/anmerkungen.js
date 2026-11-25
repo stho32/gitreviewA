@@ -22,6 +22,7 @@
       rollElement: wurzelElement.querySelector('.df-sc'),
       hinweisElement: wurzelElement.querySelector('.anmerkung-hinweis'),
       dateiKnopfElement: wurzelElement.querySelector('.datei-anmerken'),
+      dateiGrundElement: wurzelElement.querySelector('.diff-datei-grund'),
       dateiKnopfZiel: wurzelElement.querySelector('.diff-datei-anmerken'),
     };
     ansicht.rollElement.addEventListener('click', ereignis => waehleZeilePerKlick(ansicht, ereignis));
@@ -29,6 +30,8 @@
     ansicht.dateiKnopfElement.addEventListener('click', () => oeffneOderFokussiereDateiFeld(ansicht));
     document.addEventListener('diff-gezeichnet', ereignis => merkeUndZeigeAn(ansicht, ereignis.detail));
     document.addEventListener('diff-geleert', () => zeigeDateiKnopf(ansicht, false));
+    document.addEventListener('haken-stand-geladen', () => aktualisiereDateiSperre(ansicht));
+    document.addEventListener('modus-gewechselt', () => aktualisiereDateiSperre(ansicht));
     document.addEventListener('datei-gewaehlt', () => zeigeHinweis(ansicht, ''));
     document.addEventListener('commit-gewaehlt', () => zeigeHinweis(ansicht, ''));
     ladeAnmerkungen(ansicht);
@@ -566,9 +569,33 @@
     }
   }
 
-  /** „Datei anmerken“-Knopf im Diff-Kopf nur zeigen, wenn ein Diff gezeichnet ist. */
+  /** „Datei anmerken“-Knopf im Diff-Kopf nur zeigen, wenn ein Diff gezeichnet ist; an einer gesperrten Stelle (R00014) ist er
+      nicht bedienbar und nennt den Grund als Text daneben — dieselbe Form wie das Kästchen (PO-Entscheidung zu R00022 Frage 3). */
   function zeigeDateiKnopf(ansicht, sichtbar) {
     ansicht.dateiKnopfZiel.hidden = !sichtbar;
+    if (sichtbar) {
+      aktualisiereDateiSperre(ansicht);
+    }
+  }
+
+  /** Sperrgrund der gezeigten Stelle aus dem Haken-Stand: leer, solange kein Stand gelesen ist. */
+  function sperrgrundDerStelle() {
+    if (window.gitreviewaHaken && window.gitreviewaHaken.diffSperrgrund) {
+      return window.gitreviewaHaken.diffSperrgrund();
+    }
+    return '';
+  }
+
+  function aktualisiereDateiSperre(ansicht) {
+    if (ansicht.dateiKnopfZiel.hidden) {
+      return;
+    }
+    const grund = sperrgrundDerStelle();
+    const gesperrt = grund !== '';
+    ansicht.dateiKnopfElement.disabled = gesperrt;
+    ansicht.dateiKnopfElement.setAttribute('aria-disabled', String(gesperrt));
+    ansicht.dateiKnopfElement.setAttribute('aria-label', gesperrt ? `Datei anmerken — nicht möglich: ${grund}` : 'Datei anmerken');
+    ansicht.dateiGrundElement.textContent = grund;
   }
 
   /* ── Änderung: Feld unter der Anmerkung, eine Anfrage je Feld ── */
