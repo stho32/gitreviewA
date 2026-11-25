@@ -15,6 +15,7 @@ const VORBEREITUNGEN = {
   'Repo G': { anlegen: repos.repoG, commits: ['g2'] },
   'Repo A': { anlegen: repos.repoA, commits: ['q', 'p'] },
   'Repo C': { anlegen: repos.repoC, commits: ['c2', 'c1'] },
+  'Repo W': { anlegen: repos.repoW, commits: ['w2', 'w1'] },
   'Repo U': { anlegen: repos.repoU, commits: ['u'] },
   'Große Diffs': { anlegen: repos.repoGross, commits: ['w'] },
   'Eine Zeile in 20 000': { anlegen: repos.repoUMitV, commits: ['v'] },
@@ -80,6 +81,15 @@ function nebenSprache(gr, page) {
     sprunglinks: () => nebenSeite.sprunglinksZaehlen(page),
     anordnungKlicken: wert => nebenSeite.anordnungKlicken(page, wert),
     paarBinnen: (links, rechts, fristMs) => nebenSeite.pruefePaarBinnen(page, () => nebenSeite.anordnungKlicken(page, 'nebeneinander'), links, rechts, fristMs),
+    /** Lücken von „nur Änderungen“ (R00026, Nacharbeit I0007) und die aufgedeckten Zeilen in beiden Spalten. */
+    luecken: () => diffSeite.lueckenLesen(page),
+    lueckeAufklappen: (nummer, ganz = false, perTastatur = false) => diffSeite.lueckeAufklappen(page, nummer, ganz, perTastatur),
+    lueckeMeldet: (nummer, text) => diffSeite.lueckeMeldet(page, nummer, text),
+    antwortErsetzen: optionen => diffSeite.diffAntwortErsetzen(page, optionen),
+    hatZeile: neu => diffSeite.zeileVorhanden(page, neu),
+    zeilentext: neu => diffSeite.zeilentextLesen(page, neu),
+    /** Das Paar der Tabellenzeile mit Nummer neu `neu` (links die alte, rechts die neue Seite) — auch aufgedeckter Kontext. */
+    paarMitZeile: (neu, erwartet) => nebenSeite.pruefePaarMitZeile(page, neu, erwartet),
   };
 }
 

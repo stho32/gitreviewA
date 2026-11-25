@@ -49,9 +49,10 @@ async function warteAufZeichnung(page) {
   }, 'Diff wird geladen …', { polling: 'raf', timeout: 15000 });
 }
 
-/** Die Tabellenzeilen der Nebeneinander-Ansicht: Hunk-Kopf, Hinweiszeile oder ein Paar (links alt, rechts neu). */
-async function zeilenPaareLesen(page) {
-  return page.locator(ZEILE).evaluateAll(zeilen => {
+/** Die Tabellenzeilen der Nebeneinander-Ansicht: Hunk-Kopf, Hinweiszeile oder ein Paar (links alt, rechts neu);
+    `einschraenkung` grenzt die Auswahl ein (etwa `[data-neu="7"]` für eine einzelne Zeile). */
+async function zeilenPaareLesen(page, einschraenkung = '') {
+  return page.locator(`${ZEILE}${einschraenkung}`).evaluateAll(zeilen => {
     const seite = (zelle, feld) => {
       if (!zelle) {
         return null;
@@ -100,6 +101,18 @@ function erwarteteSeite(seite) {
 
 async function pruefeZeilenPaare(page, erwartet) {
   await expect.poll(() => zeilenPaareLesen(page), 'Zeilenpaare').toEqual(erwartet.map(alsPaar));
+}
+
+/** Das gelesene Paar der Tabellenzeile mit Nummer neu `neu` (links die alte, rechts die neue Seite) — auch eine aufgedeckte
+    Kontextzeile trägt ihre Nummer neu und steht in beiden Spalten (R00026, Nacharbeit I0007). */
+async function pruefePaarMitZeile(page, neu, erwartet) {
+  await expect.poll(async () => {
+    const paare = await zeilenPaareLesen(page, `[data-neu="${neu}"]`);
+    if (paare.length === 0) {
+      return null;
+    }
+    return paare[0];
+  }, `Zeile neu ${neu}`).toEqual(alsPaar(erwartet));
 }
 
 /** Die Spaltenköpfe „alte Fassung“/„neue Fassung“ und ihre Namen (je über zwei Spalten). */
@@ -272,7 +285,7 @@ async function hatZeilenpaar(page, linksText, rechtsText) {
 }
 
 module.exports = {
-  anordnungWaehlen, pruefeAnordnung, pruefeGruppe, anordnungPerTastatur, warteAufZeichnung, zeilenPaareLesen, pruefeZeilenPaare, pruefeSpaltenkoepfe, pruefeKontextEinmalGelesen, pruefeBreiteUndUmbruch,
+  anordnungWaehlen, pruefeAnordnung, pruefeGruppe, anordnungPerTastatur, warteAufZeichnung, zeilenPaareLesen, pruefeZeilenPaare, pruefePaarMitZeile, pruefeSpaltenkoepfe, pruefeKontextEinmalGelesen, pruefeBreiteUndUmbruch,
   spaltenbreitenLesen, pruefeSprungzeile, sprungzeileLiegtImVerborgenen, sprunglinksZaehlen,
   linksTextzelleAnklicken, rechtsTextzelleAnklicken, farbeRollenLesen, entferntHinweis, hatZeilenpaar, anordnungKlicken, pruefePaarBinnen, ROLLBEREICH, ZEILE,
 };

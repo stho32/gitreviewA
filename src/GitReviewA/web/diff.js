@@ -490,7 +490,7 @@
   function zeichneZeilen(ansicht, antwort, zeilen, lueckenliste = null) {
     zeigeMeldung(ansicht, '', false);
     if (istNebeneinander()) {
-      zeichneNebeneinander(ansicht, antwort, zeilen);
+      zeichneNebeneinander(ansicht, antwort, zeilen, lueckenliste);
       return;
     }
     const teile = anzeigeTeile(zeilen, lueckenliste);
@@ -520,24 +520,73 @@
 
   /** Nebeneinander (R00023): dieselben Zeilen der Ansicht, in zwei Spalten gepaart (alt links, neu rechts). Die Zeichenrechnung
       bleibt die der Zeilen (keine zweite); die Textinhalte baut `textzellenInhalt` — Lesetexte, Marken und Farbstücke. Die Blöcke
-      folgen derselben Knotengrenze wie einspaltig (`bereichBauen`, B2206), die Links sitzen an der Nummer-neu-Seite (B2207). */
-  function zeichneNebeneinander(ansicht, antwort, zeilen) {
-    const tabelle = gegenueberstellen(zeilen);
-    if (zustand.gezeichnet) {
-      zustand.gezeichnet.zeilen = zeilen;
-    }
+      folgen derselben Knotengrenze wie einspaltig (`bereichBauen`, B2206), die Links sitzen an der Nummer-neu-Seite (B2207).
+      `lueckenliste`: die Lücken von „nur Änderungen“ (R00026) oder null — ihre Bedienelemente stehen wie einspaltig zwischen den
+      Blöcken, ihre aufgedeckten Kontextzeilen sind dieselben Zeilen der ganzen Datei und stehen in beiden Spalten. */
+  function zeichneNebeneinander(ansicht, antwort, zeilen, lueckenliste = null) {
+    const teile = anzeigeTeile(zeilen, lueckenliste);
     const name = bereichsname(antwort);
     const textzellen = zeile => textzellenInhalt(zeile, sichtbarTeile(zeile.text));
+    const aufbau = nebenAufbau(teile, name, textzellen);
+    if (zustand.gezeichnet) {
+      // Die gezeichnete Folge samt den aufgedeckten Zeilen ist wie einspaltig die eine Quelle für Links, Färbung und die
+      // Wahl der Sprungzeile (R00026, Befund B1).
+      zustand.gezeichnet.zeilen = aufbau.zeilen;
+    }
     ansicht.rollElement.setAttribute('aria-label', name);
-    ansicht.rollElement.replaceChildren(window.gitreviewaNebeneinander.bereichBauen(tabelle, zeilen, name, textzellen));
+    ansicht.rollElement.replaceChildren(aufbau.sammelElement);
     ansicht.rollElement.hidden = false;
-    setzeSprunglinksNeben(ansicht, tabelle, zeilen);
+    setzeSprunglinksNeben(ansicht, aufbau.tabelle, aufbau.zeilen);
     aktualisiereSprungkopf(ansicht);
-    faerbeNeben(ansicht, antwort, tabelle, zeilen);
+    faerbeNeben(ansicht, antwort, aufbau.tabelle, aufbau.zeilen);
     const bereiche = zustand.datei && zustand.datei.modus === 'zusammen'
       ? [{ commit: zustand.datei.commit, betreff: betreffVon(zustand.datei.commit), bereichElement: ansicht.rollElement }]
       : null;
     meldeGezeichnet(ansicht, antwort.pfad, bereiche);
+  }
+
+  /** Die zweispaltige Ansicht als Folge von Blöcken und Lücken-Bedienelementen: je Folge zusammenhängender Diff-Zeilen ein
+      Abschnitt aus Blöcken, dazwischen das Bedienelement einer Lücke — dieselbe Aufteilung wie einspaltig (`blockelemente`).
+      `tabelle` und `zeilen` sind über alle Abschnitte fortlaufend indiziert, damit die beiden indexbasierten Verbraucher
+      (Links, Färbung) die eine gezeichnete Folge lesen; die Paarung rechnet je Abschnitt, weil ein Bedienelement nur vor einem
+      Hunk-Kopf steht und eine Paarung dort nie getrennt wird. */
+  function nebenAufbau(teile, name, textzellen) {
+    const sammelElement = document.createDocumentFragment();
+    const tabelle = [];
+    const zeilen = [];
+    let abschnitt = [];
+    const spueleAbschnitt = () => {
+      if (abschnitt.length === 0) {
+        return;
+      }
+      const abschnittszeilen = abschnitt.map(teil => teil.zeile);
+      const versatz = zeilen.length;
+      const abschnittstabelle = gegenueberstellen(abschnittszeilen);
+      sammelElement.append(window.gitreviewaNebeneinander.bereichBauen(abschnittstabelle, abschnittszeilen, name, textzellen));
+      for (const eintrag of abschnittstabelle) {
+        tabelle.push({ art: eintrag.art, links: indexMitVersatz(eintrag.links, versatz), rechts: indexMitVersatz(eintrag.rechts, versatz) });
+      }
+      zeilen.push(...abschnittszeilen);
+      abschnitt = [];
+    };
+    for (const teil of teile) {
+      if (teil.luecke) {
+        spueleAbschnitt();
+        sammelElement.append(lueckenElement(teil));
+        continue;
+      }
+      abschnitt.push(teil);
+    }
+    spueleAbschnitt();
+    return { sammelElement, tabelle, zeilen };
+  }
+
+  /** Der Index der Paarung, um den Anfang seines Abschnitts verschoben; die leere Seite einer Paarung (`null`) bleibt leer. */
+  function indexMitVersatz(stelle, versatz) {
+    if (stelle === null || stelle === undefined) {
+      return null;
+    }
+    return stelle + versatz;
   }
 
   /** Links nach VS Code (R00021) auch zweispaltig: an der Nummer-neu-Seite der Tabellenzeile; der Hunk-Kopf wie einspaltig; eine
