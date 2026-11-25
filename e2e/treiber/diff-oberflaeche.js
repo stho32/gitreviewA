@@ -139,7 +139,18 @@ async function pruefeAbschnittskopf(page, commit, erwartet, rohzeichen) {
   expect(text, 'rohe Steuerzeichen im Abschnittskopf').not.toContain(rohzeichen);
 }
 
+/** Wartet ereignisgenau (je Animationsbild), bis die Zeile mit Nummer neu `neu` gezeichnet ist. Das Zeichnen von 20 000 Zeilen mit
+    Links dauert länger als die Standardfrist der Prüfung; das Merkmal ist die gezeichnete Zeile selbst, keine feste Pause (R00017). */
+async function warteAufZeile(page, neu) {
+  await page.waitForFunction(
+    nummer => document.querySelector(`#diff .dz tr[data-art][data-neu="${nummer}"]`) !== null,
+    neu,
+    { polling: 'raf', timeout: 30000 },
+  );
+}
+
 async function pruefeZeile(page, neu, text) {
+  await warteAufZeile(page, neu);
   await expect(page.locator(`${ZEILE}[data-neu="${neu}"] .c`)).toHaveText(`hinzugefügt: ${text}`);
   await expect(page.locator(MELDUNG)).toHaveText('');
 }
