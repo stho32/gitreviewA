@@ -30,6 +30,18 @@ test.describe('Anschluss an Nächste ungeprüfte und Fokus (B3404)', () => {
     await einklappen.fokusAufKnopf();
   });
 
+  test('der Fokus auf dem Trennzug geht beim Einklappen auf den Knopf (B1)', async ({ einklappen }) => {
+    await einklappen.starten({ vorbereitung: 'Repo S' });
+    await einklappen.fokussiereTrenner();
+    await einklappen.tasteB();
+    await einklappen.eingeklappt();
+    await einklappen.fokusAufKnopf();
+
+    const reihe = await einklappen.tabReihe(1);
+    expect(reihe[0].inKopf, 'kein Feld im Kopf nach dem Knopf').toBe(false);
+    expect(reihe[0].inDiff, 'der nächste Stopp liegt im Diff').toBe(true);
+  });
+
   test('die eingeklappten Listenelemente sind nicht im Tab-Weg; die Reihenfolge bleibt Kopf → Knopf → Diff → Statuszeile (Szenario 3)', async ({ einklappen }) => {
     await einklappen.starten({ vorbereitung: 'Repo S' });
     await einklappen.dateiAnsehen('lang.txt');

@@ -23,9 +23,10 @@
 
   /**
    * Eine Seitenleiste ein-/ausklappbar machen. `seite` nennt: `rahmen` (die Rahmenfläche, an der die Klasse wirkt), `leiste`
-   * (die Seitenleiste), `streifen` (der Ort des Knopfes an der Grenze), `knopfId`, `klasse` (die Stellung am Rahmen),
-   * `bezeichnung` (Anfangs des Namens), `ereignis` (der Zustandswechsel), `wahl` (die Zeile, die beim Ausklappen in den Blick
-   * kommt) und `medien` (die Mediengrenze des zweispaltigen Aufbaus).
+   * (die Seitenleiste), `streifen` (der Ort des Knopfes an der Grenze), `trenner` (der Trennzug, der beim Einklappen
+   * verschwindet), `knopfId`, `klasse` (die Stellung am Rahmen), `bezeichnung` (Anfangs des Namens), `ereignis` (der
+   * Zustandswechsel), `wahl` (die Zeile, die beim Ausklappen in den Blick kommt) und `medien` (die Mediengrenze des
+   * zweispaltigen Aufbaus).
    */
   function anlegen(seite) {
     const zustand = { eingeklappt: werte().start() };
@@ -41,6 +42,11 @@
 
     function streifen() {
       return document.querySelector(seite.streifen);
+    }
+
+    function trenner() {
+      const rahmenElement = rahmen();
+      return rahmenElement ? rahmenElement.querySelector(seite.trenner) : null;
     }
 
     function init() {
@@ -145,19 +151,20 @@
 
     /**
      * Die Betätigung (Klick oder Taste `b`, die denselben Knopf betätigt): Stellung wechseln, sonst nichts. Der Fokus geht nie
-     * ins Leere: hatte er in der Leiste gestanden (die jetzt `hidden`/`inert` ist) oder war er nirgends, steht er danach auf dem
-     * Knopf; stand er anderswo (etwa im offenen Notizfeld des Diffs), bleibt er dort — das Einklappen verwirft keine Eingabe
-     * (Lehre #23). Beim Ausklappen bleibt der Fokus auf demselben Bedienelement.
+     * ins Leere: hatte er in einem Element gestanden, das jetzt verschwindet (Leiste `hidden`/`inert` oder Trennzug
+     * `display:none`), oder war er nirgends, steht er danach auf dem Knopf; stand er anderswo (etwa im offenen Notizfeld des
+     * Diffs), bleibt er dort — das Einklappen verwirft keine Eingabe (Lehre #23). Beim Ausklappen bleibt der Fokus auf demselben
+     * Bedienelement.
      */
     function umschalten() {
       if (!zweispaltig()) {
         return;
       }
       // Der Fokusstand wird vor dem Anwenden gelesen: das Verbergen blurst das Element erst mit der nächsten Stilberechnung.
-      const fokusInLeiste = leiste() !== null && leiste().contains(document.activeElement);
+      const fokusWirdVerborgen = wirdVerborgen(document.activeElement);
       zustand.eingeklappt = werte().umschalten(zustand.eingeklappt);
       anwenden();
-      if (knopf && (document.activeElement === knopf || fokusInLeiste || fokusNirgends())) {
+      if (knopf && (document.activeElement === knopf || fokusWirdVerborgen || fokusNirgends())) {
         knopf.focus({ preventScroll: true });
       }
       if (!zustand.eingeklappt) {
@@ -166,7 +173,22 @@
       document.dispatchEvent(new CustomEvent(seite.ereignis, { detail: { eingeklappt: zustand.eingeklappt } }));
     }
 
-    /** Hat der Fokus keinen Halter mehr (das Element war in der eben verborgenen Leiste, oder es war keiner gesetzt)? */
+    /**
+     * Wird dieses Element durch das Einklappen verborgen? Die Leiste verschwindet per `hidden`/`inert`, der Trennzug per CSS
+     * (`display:none`); ein Fokus in einem von beiden fällt sonst auf `BODY`. Nachbarn der Leiste haben eigene Tab-Stopps und
+     * gehören darum in dieselbe Prüfung.
+     */
+    function wirdVerborgen(element) {
+      if (element === null) {
+        return false;
+      }
+      const leisteElement = leiste();
+      const trennerElement = trenner();
+      return (leisteElement !== null && leisteElement.contains(element))
+        || (trennerElement !== null && trennerElement.contains(element));
+    }
+
+    /** Hat der Fokus keinen Halter mehr (das Element war in einem eben verborgenen Teil, oder es war keiner gesetzt)? */
     function fokusNirgends() {
       const aktiv = document.activeElement;
       return aktiv === null || aktiv === document.body || aktiv === document.documentElement;
@@ -196,6 +218,7 @@
       rahmen: RAHMEN,
       leiste: SEITENLEISTE,
       streifen: STREIFEN,
+      trenner: '.gr-trenner',
       knopfId: 'einklappen',
       klasse: 'gr-eingeklappt',
       bezeichnung: 'Seitenleiste',
