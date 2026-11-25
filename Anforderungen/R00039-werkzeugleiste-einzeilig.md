@@ -88,8 +88,10 @@ Grenz- und Leerfälle bedacht: keine Datei gewählt (Leiste ohne Pfad und ohne d
 
 ## Offene Fragen
 
-1. **Inhalt des Menüs**: Empfehlung wie beschrieben (vier Anzeigeverfahren; Suche, Haken, Datei anmerken, VS Code bleiben draußen). Alternative: auch „Datei anmerken“ und „In VS Code“ ins Menü — dann wären zwei häufige Wege einen Klick weiter weg.
-2. **Breite für eine Zeile**: Empfehlung 600 px Diff-Breite, darunter höchstens zwei Zeilen; Grenzwert innerhalb der Leitplanken (Material 3 „medium“ beginnt bei 600 dp).
+Keine offenen. Der product-owner hat beide Fragen am 2026-11-25 entschieden (`AI-Team/po-entscheidungen.md`, Zeile 196); die Antworten sind oben eingearbeitet:
+
+1. **Inhalt des Menüs** — entschieden (PO Zeile 196): wie beschrieben (vier Anzeigeverfahren; Suche, Haken, Datei anmerken, VS Code bleiben draußen). Alternative „auch ‚Datei anmerken‘ und ‚In VS Code‘ ins Menü“ verworfen — dann wären zwei häufige Wege einen Klick weiter weg.
+2. **Breite für eine Zeile** — entschieden (PO Zeile 196): 600 px Diff-Breite, darunter höchstens zwei Zeilen; Grenzwert innerhalb der Leitplanken (Material 3 „medium“ beginnt bei 600 dp).
 
 ## Manuelle Vorbereitungstätigkeiten
 
