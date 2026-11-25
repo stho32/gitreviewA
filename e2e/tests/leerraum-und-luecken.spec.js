@@ -236,16 +236,110 @@ test.describe('Lücke aufklappen', () => {  test('soll die Lücken ankündigen, 
     expect(await diff.luecken()).toEqual([]);
   });
 
-  test('soll bei einem Fehler beim Lesen der ganzen Datei die Meldung zeigen', async ({ diff }) => {
+  test('soll bei einem Fehler die Lücke zugeklappt lassen, sie melden und erneut versuchen lassen', async ({ diff }) => {
     await diff.starten();
     await diff.antwortErsetzen({ pfad: 'lang.txt', patch: WEIT_AENDERUNGEN });
-    await diff.antwortErsetzen({ pfad: 'lang.txt', umfang: 'ganz', status: 500 });
+    await diff.ganzErstScheitern('lang.txt', 500, WEIT_GANZ);
     await diff.dateiAnsehen('lang.txt');
+
+    await expect.poll(() => diff.zeilenzahl()).toBe(18);
 
     await diff.lueckeAufklappen(2);
 
-    await diff.diffMeldetFehler('lang.txt', 'Diff konnte nicht gelesen werden');
-    await diff.dateiGewaehlt('lang.txt');
+    await expect.poll(() => diff.zeilenzahl()).toBe(18);
+    await expect.poll(() => diff.luecken()).toHaveLength(2);
+    await diff.lueckeMeldet(2, 'Diff konnte nicht gelesen werden');
+
+    await diff.lueckeAufklappen(2);
+
+    await expect.poll(() => diff.zeilenzahl()).toBe(38);
+    expect(await diff.zeilentext(9)).toBe('z09');
+  });
+
+  test('soll bei „zu groß“ die Lücke zugeklappt lassen und melden', async ({ diff }) => {
+    await diff.starten();
+    await diff.antwortErsetzen({ pfad: 'lang.txt', patch: WEIT_AENDERUNGEN });
+    const meldung = 'Diff zu groß — die Ausgabe von git überschreitet die Grenze von 1024 Byte';
+    await diff.antwortZuGross('lang.txt', meldung, 'ganz');
+    await diff.dateiAnsehen('lang.txt');
+
+    await expect.poll(() => diff.zeilenzahl()).toBe(18);
+
+    await diff.lueckeAufklappen(2);
+
+    await expect.poll(() => diff.zeilenzahl()).toBe(18);
+    await expect.poll(() => diff.luecken()).toHaveLength(2);
+    await diff.lueckeMeldet(2, meldung);
+  });
+
+  test('soll die ganze Datei auch bei zwei schnellen Klicks nur einmal lesen (R00026 Z. 31)', async ({ diff }) => {
+    await diff.starten();
+    await weitDateiZeigen(diff);
+    await diff.antwortErsetzen({ pfad: 'lang.txt', umfang: 'ganz', patch: WEIT_GANZ, verzoegerungMs: 800 });
+    await diff.anfragenBeobachten();
+
+    await diff.lueckeAufklappen(2);
+    await diff.lueckeAufklappen(2);
+
+    await expect.poll(() => diff.zeilenzahl()).toBe(38);
+    const gelesen = (await diff.anfragenGezaehlt()).filter(anfrage => anfrage.umfang === 'ganz');
+    expect(gelesen).toHaveLength(1);
+  });
+});
+
+test.describe('Aufgedeckte Zeilen tragen ihren eigenen Text und Link (R00021, B1)', () => {
+  const TEXT = neu => (neu === 5 ? 'const z05 = 50;' : neu === 35 ? 'const z35 = 350;' : `const z${String(neu).padStart(2, '0')} = ${neu};`);
+
+  test('soll jede aufgedeckte Zeile mit eigenem Text und eigenem VS-Code-Link zeigen (gefärbt)', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Repo C' });
+    await diff.dateiAnsehen('code.js');
+    await expect.poll(() => diff.zeilenzahl()).toBe(18);
+    await expect.poll(() => diff.warteAufFarbe()).toBe('ja');
+
+    await diff.lueckeAufklappen(2);
+
+    await expect.poll(() => diff.zeilenzahl()).toBe(38);
+    await expect.poll(() => diff.warteAufFarbe()).toBe('ja');
+
+    await diff.zeilenMitEigenemLink(9, 28, TEXT);
+  });
+
+  test('soll dieselbe Zuordnung ohne Syntaxfarben zeigen (ungefärbt)', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Repo C' });
+    await diff.dateiAnsehen('code.txt');
+    await expect.poll(() => diff.zeilenzahl()).toBe(18);
+    await expect.poll(() => diff.warteAufFarbe()).toBe('nein');
+
+    await diff.lueckeAufklappen(2);
+
+    await expect.poll(() => diff.zeilenzahl()).toBe(38);
+    await diff.zeilenMitEigenemLink(9, 28, TEXT);
+  });
+
+  test('soll nach „ganz“ alle aufgedeckten Zeilen mit eigenem Text und Link zeigen', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Repo C' });
+    await diff.dateiAnsehen('code.js');
+    await expect.poll(() => diff.zeilenzahl()).toBe(18);
+    await expect.poll(() => diff.warteAufFarbe()).toBe('ja');
+
+    await diff.lueckeAufklappen(2, true);
+
+    await expect.poll(() => diff.zeilenzahl()).toBe(41);
+    await expect.poll(() => diff.warteAufFarbe()).toBe('ja');
+
+    await diff.zeilenMitEigenemLink(9, 31, TEXT);
+  });
+
+  test('soll in „ganze Datei“ jede Zeile mit eigenem Text und Link zeigen (Positivkontrolle)', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Repo C' });
+    await diff.dateiAnsehen('code.js');
+
+    await diff.ansichtWaehlen('ganze Datei');
+
+    await expect.poll(() => diff.zeilenzahl()).toBe(62);
+    await expect.poll(() => diff.warteAufFarbe()).toBe('ja');
+
+    await diff.zeilenMitEigenemLink(1, 60, TEXT);
   });
 });
 

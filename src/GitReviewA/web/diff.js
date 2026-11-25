@@ -13,6 +13,8 @@
   const HINWEIS_ZUR_WAHL = 'Datei wählen, um ihren Diff zu sehen';
   const KEINE_ZEILENAENDERUNGEN = 'Keine Zeilenänderungen';
   const DIFF_NICHT_GELESEN = 'Diff konnte nicht gelesen werden';
+  /** Rückfallmeldung, wenn der Server „zu groß“ ohne Meldung schickt (die Lücke bleibt zugeklappt, R00026). */
+  const DIFF_ZU_GROSS = 'Diff zu groß';
   /** Antwort 422: der Name meint keine Datei eindeutig oder lässt sich nicht an git geben — der Inhalt bleibt ungelesen, nie „keine Änderungen“. */
   const NAME_NICHT_LESBAR = 'Diff dieser Datei nicht lesbar (Name mit ungültigem Byte)';
   const STATUS_NAME_NICHT_LESBAR = 422;
@@ -25,9 +27,9 @@
       `zugeklappt`: Zeilen eines langen Textes, die erst „Trotzdem laden“ zeichnet;
       `anzeige`: zählt jeden neuen Inhalt des Bereichs — eine Färbung gilt nur für die Anzeige, für die sie gestellt wurde;
       `sprung`: das Ziel der gewählten Datei aus `sprung-geladen` (null, solange keine Antwort da ist); `gezeichnet`: Commit, Pfad und
-      Zeilen des zuletzt gezeichneten Diffs (null ohne Wahl) — daran hängt, ob ein Ziel noch gilt; `gewaehlteZeile`: die angeklickte
-      Zeile neu, sonst null. */
-  const zustand = { letzteLadung: 0, datei: null, alsText: false, diffansicht: 'aenderungen', leerraum: 'beachten', zugeklappt: null, anzeige: 0, sprung: null, gezeichnet: null, gewaehlteZeile: null, anzeigeDaten: null, ganz: null, gesamt: null, aufgedeckt: {} };
+      Zeilen der zuletzt gezeichneten Ansicht (samt aufgedeckten Lücken; null ohne Wahl) — daran hängt, ob ein Ziel noch gilt;
+      `gewaehlteZeile`: die angeklickte Zeile neu, sonst null. */
+  const zustand = { letzteLadung: 0, datei: null, alsText: false, diffansicht: 'aenderungen', leerraum: 'beachten', zugeklappt: null, anzeige: 0, sprung: null, gezeichnet: null, gewaehlteZeile: null, anzeigeDaten: null, ganz: null, gesamt: null, aufgedeckt: {}, lueckenfehler: {}, ganzLaeuft: null };
 
   function init() {
     const ansicht = ansichtElemente();
@@ -123,6 +125,8 @@
     zustand.ganz = null;
     zustand.gesamt = null;
     zustand.aufgedeckt = {};
+    zustand.lueckenfehler = {};
+    zustand.ganzLaeuft = null;
     const vorherGezeichnet = zustand.gezeichnet;
     zustand.gezeichnet = { commit: datei.commit, pfad: datei.pfad, zeilen: [] };
     const istDieselbeStelle = vorherGezeichnet !== null && vorherGezeichnet.commit === datei.commit && vorherGezeichnet.pfad === datei.pfad;
@@ -272,16 +276,21 @@
   }
 
   /** `antwort`: Pfad und Patch der gezeigten Ansicht — an ihnen hängen Sprache und Grenze der Färbung. `lueckenliste`: die Lücken der
-      Ansicht (R00026) oder null; das offene Bedienelement einer Lücke ist eine eigene Zeile über der Spaltenbreite, sie zählt nicht
-      zu den Diff-Zeilen — `zustand.gezeichnet.zeilen` und die Farbschicht bleiben deshalb unberührt. */
+      Ansicht (R00026) oder null; das Bedienelement einer Lücke ist keine Diff-Zeile, es zählt nicht zu `tr[data-art]` und damit nicht
+      zur gezeichneten Folge, die Links und Färbung als einzige Quelle lesen. */
   function zeichneZeilen(ansicht, antwort, zeilen, lueckenliste = null) {
     zeigeMeldung(ansicht, '', false);
+    const teile = anzeigeTeile(zeilen, lueckenliste);
+    // Die gezeichnete Folge ist die eine Quelle für Links und Färbung: die Diff-Zeilen samt den aufgedeckten Zeilen, in
+    // Reihenfolge der DOM-Zeilen (`tr[data-art]`). Ohne sie paaren die beiden indexbasierten Verbraucher Zeile und Nummer
+    // falsch, sobald eine Lücke aufgedeckt ist (R00026, Befund B1).
+    const gezeichneteZeilen = teile.filter(teil => teil.zeile).map(teil => teil.zeile);
     if (zustand.gezeichnet) {
-      zustand.gezeichnet.zeilen = zeilen;
+      zustand.gezeichnet.zeilen = gezeichneteZeilen;
     }
     const name = `Änderungen in ${antwort.pfad}`;
     const sammelElement = document.createDocumentFragment();
-    for (const block of blockelemente(zeilen, lueckenliste, name)) {
+    for (const block of blockelemente(teile, name)) {
       sammelElement.append(block);
     }
     ansicht.rollElement.setAttribute('aria-label', name);
@@ -289,13 +298,13 @@
     ansicht.rollElement.hidden = false;
     setzeSprunglinks(ansicht);
     aktualisiereSprungkopf(ansicht);
-    faerbeZeilen(ansicht, antwort, zeilen);
+    faerbeZeilen(ansicht, antwort, gezeichneteZeilen);
     meldeGezeichnet(ansicht, antwort.pfad);
   }
 
   /** Die Blöcke der Ansicht in Reihenfolge: je Folge zusammenhängender Diff-Zeilen ein Block (höchstens 500 Zeilen), dazwischen
-      das Bedienelement der Lücke. */
-  function blockelemente(zeilen, lueckenliste, name) {
+      das Bedienelement der Lücke. `teile`: die Ansicht als Folge `{zeile}` oder `{luecke, rest}`. */
+  function blockelemente(teile, name) {
     const bloeckeDerAnsicht = [];
     let segment = [];
     const spueleSegment = () => {
@@ -304,7 +313,7 @@
       }
       segment = [];
     };
-    for (const teil of anzeigeTeile(zeilen, lueckenliste)) {
+    for (const teil of teile) {
       if (teil.luecke) {
         spueleSegment();
         bloeckeDerAnsicht.push(lueckenElement(teil));
@@ -370,7 +379,8 @@
   }
 
   /** Das Bedienelement einer Lücke: die Zahl der verborgenen Zeilen und je ein Knopf für den nächsten Schritt und „ganz“;
-      beide sind per Tastatur bedienbar und tragen ihren Text als Namen (R00026). */
+      beide sind per Tastatur bedienbar und tragen ihren Text als Namen (R00026). Scheitert das Lesen der ganzen Datei, trägt
+      die Lücke ihre Meldung und bleibt zugeklappt (R00026, Fehlerpfad). */
   function lueckenElement({ luecke, rest: verborgen }) {
     const element = document.createElement('div');
     element.className = 'dz-l';
@@ -378,6 +388,14 @@
     textElement.className = 'dz-l-text';
     textElement.textContent = `${verborgen.toLocaleString('de-DE')} verborgene Zeile${verborgen === 1 ? '' : 'n'}`;
     element.append(textElement, lueckenKnopf(luecke, verborgen, false), lueckenKnopf(luecke, verborgen, true));
+    const fehler = zustand.lueckenfehler[lueckenschluessel(luecke)];
+    if (fehler) {
+      const fehlerElement = document.createElement('span');
+      fehlerElement.className = 'dz-l-fehler';
+      fehlerElement.setAttribute('role', 'alert');
+      fehlerElement.textContent = fehler;
+      element.append(fehlerElement);
+    }
     return element;
   }
 
@@ -398,7 +416,8 @@
     return knopfElement;
   }
 
-  /** Ein Klick oder Enter auf das Bedienelement einer Lücke: die ganze Datei bei Bedarf lesen, die Lücke füllen, neu zeichnen. */
+  /** Ein Klick oder Enter auf das Bedienelement einer Lücke: die ganze Datei bei Bedarf lesen, die Lücke füllen, neu zeichnen.
+      Scheitert das Lesen, bleibt die Lücke zugeklappt und trägt ihre Meldung; erneut betätigen versucht es wieder (R00026). */
   async function klappeLueckeAuf(ansicht, ereignis) {
     const knopfElement = ereignis.target.closest('.dz-l-auf');
     if (!knopfElement) {
@@ -409,10 +428,18 @@
     if (!luecke || zustand.datei === null) {
       return;
     }
-    const ganze = await holeGanzeDatei(ansicht);
-    if (!ganze || zustand.anzeigeDaten !== daten) {
+    const ergebnis = await holeGanzeDatei(ansicht);
+    if (zustand.anzeigeDaten !== daten) {
       return;
     }
+    if (!ergebnis.ganz) {
+      if (ergebnis.fehler) {
+        zustand.lueckenfehler[lueckenschluessel(luecke)] = ergebnis.fehler;
+        zeichneAnsicht(ansicht, daten.antwort, daten.zeilen, 'aenderungen');
+      }
+      return;
+    }
+    delete zustand.lueckenfehler[lueckenschluessel(luecke)];
     const bisher = aufgedecktVon(luecke);
     const anzahl = knopfElement.dataset.ganz === 'wahr' ? luecke.zahl : naechsterSchritt(luecke, bisher);
     zustand.aufgedeckt[lueckenschluessel(luecke)] = anzahl;
@@ -431,28 +458,53 @@
   }
 
   /** Die Zeilen der ganzen Datei der gezeigten Stelle: höchstens einmal je Datei und Leerraum-Stellung, erst auf die erste
-      Aufklapp-Betätigung (R00026). Eine späte Antwort einer früheren Wahl wird verworfen. */
+      Aufklapp-Betätigung (R00026). Eine späte Antwort einer früheren Wahl wird verworfen; ein laufender Lesevorgang wird geteilt,
+      damit ein zweiter Klick dieselbe Datei nicht ein zweites Mal liest. Liefert `{ganz}` oder `{fehler}` (bzw. `{verworfen}`). */
   async function holeGanzeDatei(ansicht) {
     const schluessel = dateischluessel();
     if (zustand.ganz !== null && zustand.ganz.schluessel === schluessel) {
-      return zustand.ganz;
+      return { ganz: zustand.ganz };
     }
+    const laufend = zustand.ganzLaeuft;
+    if (laufend !== null && laufend.schluessel === schluessel) {
+      return laufend.versprechen;
+    }
+    const versprechen = ganzeDateiLesen(schluessel);
+    zustand.ganzLaeuft = { schluessel, versprechen };
+    try {
+      return await versprechen;
+    } finally {
+      if (zustand.ganzLaeuft !== null && zustand.ganzLaeuft.versprechen === versprechen) {
+        zustand.ganzLaeuft = null;
+      }
+    }
+  }
+
+  /** Liest die ganze Datei der Stelle `schluessel`; ohne spätere Wahl. Bei Erfolg merkt sie `ganz` und `gesamt`, sonst bleibt
+      `ganz` leer — ein erneuter Versuch liest wieder (R00026). */
+  async function ganzeDateiLesen(schluessel) {
     let antwort;
     try {
       antwort = await diffAbrufen(zustand.datei, false, 'ganz', zustand.leerraum);
     } catch (fehler) {
       if (schluessel === dateischluessel()) {
-        zeigeMeldung(ansicht, fehlertextZu(fehler), true);
+        return { fehler: fehlertextZu(fehler) };
       }
-      return null;
+      return { verworfen: true };
     }
-    if (schluessel !== dateischluessel() || antwort.zuGross || antwort.patch === undefined) {
-      return null;
+    if (schluessel !== dateischluessel()) {
+      return { verworfen: true };
+    }
+    if (antwort.zuGross) {
+      return { fehler: antwort.meldung || DIFF_ZU_GROSS };
+    }
+    if (antwort.patch === undefined) {
+      return { fehler: DIFF_NICHT_GELESEN };
     }
     const ganzeZeilen = ganzeDateiZeilen(antwort.patch);
     zustand.ganz = { schluessel, zeilen: ganzeZeilen };
     zustand.gesamt = gesamtzeilen(ganzeZeilen);
-    return zustand.ganz;
+    return { ganz: zustand.ganz };
   }
 
   /** Die Stelle, für die eine ganze Datei gelesen wird: Datei, Commit und Leerraum-Stellung. */
