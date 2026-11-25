@@ -2,11 +2,13 @@
 // Bausteintests (ohne Browser) der Anmerkungs-Rechnung: welche Diff-Zeile annotierbar ist und welche Anmerkungen eine Ansicht zeigt (R00010)
 // und wie der Stand nach einer geänderten Anmerkung aussieht (R00018).
 const { test, expect } = require('@playwright/test');
-const { zeilenziel, anmerkungsstand, anmerkungsstandJeSicht, hinweisAusserhalb, hinweisAusserhalbMitCommits, mitGeaendertemText, ohneAnmerkung, dateianmerkungen, ENTFERNT_HINWEIS } = require('../../../src/GitReviewA/web/anmerkungen-werte.js');
+const { zeilenziel, anmerkungsstand, anmerkungsstandJeSicht, anmerkungsstelle, stellentext, hinweisAusserhalb, hinweisAusserhalbMitCommits, mitGeaendertemText, ohneAnmerkung, dateianmerkungen, artDerAnmerkung, ENTFERNT_HINWEIS } = require('../../../src/GitReviewA/web/anmerkungen-werte.js');
 
 const Q = 'q'.repeat(40);
 const P = 'p'.repeat(40);
 const anmerkung = (nummer, zeile, text, { commit = Q, datei = 'lang.txt' } = {}) => ({ nummer, commit, datei, zeile, text });
+/** Eine Bereichsanmerkung (R00031): ohne `zeile`, mit `von`/`bis` — dieselbe Gestalt, die der Server liefert. */
+const bereich = (nummer, von, bis, text, { commit = Q, datei = 'lang.txt' } = {}) => ({ nummer, commit, datei, zeile: null, von, bis, text });
 /** „nur Änderungen“ von lang.txt in q zeigt die Nummern neu 1–6 und 15–19. */
 const NUR_AENDERUNGEN_LANG = new Set([1, 2, 3, 4, 5, 6, 15, 16, 17, 18, 19]);
 const GANZE_DATEI_LANG = new Set(Array.from({ length: 19 }, (_, index) => index + 1));
@@ -245,7 +247,36 @@ test.describe('Baustein Ohne Anmerkung', () => {
   });
 });
 
+test.describe('Baustein Art der Anmerkung (R00031)', () => {
+  test('soll eine Anmerkung ohne Zeile und ohne Bereich als Dateianmerkung lesen', () => {
+    expect(artDerAnmerkung(anmerkung(1, null, 'ganze Datei'))).toBe('datei');
+  });
+
+  test('soll eine Anmerkung mit Zeile als Zeilenanmerkung lesen', () => {
+    expect(artDerAnmerkung(anmerkung(1, 18, 'Zeile'))).toBe('zeile');
+  });
+
+  test('soll eine Anmerkung mit von und bis als Bereich lesen, auch ohne Zeile (die eine Stelle, die die drei Arten trennt)', () => {
+    expect(artDerAnmerkung(bereich(1, 3, 7, 'Bereich'))).toBe('bereich');
+  });
+
+  test('soll die Stelle eines Bereichs an seinem Ende nennen (Nummer neu bis) und die einer Dateianmerkung als null', () => {
+    expect(anmerkungsstelle(bereich(1, 3, 7, 'Bereich'))).toBe(7);
+    expect(anmerkungsstelle(anmerkung(2, 18, 'Zeile'))).toBe(18);
+    expect(anmerkungsstelle(anmerkung(3, null, 'ganze Datei'))).toBe(null);
+  });
+
+  test('soll einen Bereich als Zeilenbereich nennen und eine Zeilenanmerkung als Zeile', () => {
+    expect(stellentext(bereich(1, 3, 7, 'Bereich'))).toBe('Zeilen 3–7');
+    expect(stellentext(anmerkung(2, 18, 'Zeile'))).toBe('Zeile 18');
+  });
+});
+
 test.describe('Baustein Dateianmerkungen (R00022)', () => {
+  test('soll eine Bereichsanmerkung nicht als Dateianmerkung lesen (sie hat ebenfalls keine Zeile)', () => {
+    expect(dateianmerkungen([bereich(1, 3, 7, 'Bereich')], Q, 'lang.txt')).toEqual([]);
+  });
+
   test('soll ohne Anmerkung leer sein', () => {
     expect(dateianmerkungen([], Q, 'lang.txt')).toEqual([]);
   });
@@ -272,6 +303,12 @@ test.describe('Baustein Dateianmerkungen (R00022)', () => {
     const anmerkungen = [anmerkung(1, null, 'in p', { commit: P }), anmerkung(2, null, 'in b', { datei: 'src/b.txt' })];
 
     expect(dateianmerkungen(anmerkungen, Q, 'lang.txt')).toEqual([]);
+  });
+
+  test('soll aus Datei-, Zeilen- und Bereichsanmerkungen derselben Stelle nur die Dateianmerkungen nehmen', () => {
+    const anmerkungen = [bereich(1, 3, 7, 'Bereich'), anmerkung(2, null, 'ganze Datei'), anmerkung(3, 18, 'Zeile'), bereich(4, 5, 10, 'noch ein Bereich')];
+
+    expect(dateianmerkungen(anmerkungen, Q, 'lang.txt').map(eintrag => eintrag.nummer)).toEqual([2]);
   });
 
   test('soll einen Namen mit unsichtbarem Zeichen über seinen rohen Namen finden', () => {

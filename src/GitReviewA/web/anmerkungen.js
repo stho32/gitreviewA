@@ -319,28 +319,31 @@
     return stelleDesZiels(anmerkung);
   }
 
-  /** Die Stelle eines Ziels wie im Ergebnis und im Feldnamen: Bereich, Zeile oder ganze Datei. */
+  /** Die Stelle eines Ziels wie im Ergebnis und im Feldnamen: Bereich, Zeile oder ganze Datei — die Art kommt aus der einen
+      Stelle (`artDerAnmerkung`), nie aus einem eigenen `zeile`-Vergleich. */
   function stelleDesZiels(ziel) {
     const pfad = sichtbarerPfad(ziel.datei);
-    if (Number.isInteger(ziel.von) && Number.isInteger(ziel.bis)) {
-      return `${pfad}:${ziel.von}-${ziel.bis}`;
+    switch (artDerAnmerkung(ziel)) {
+      case 'bereich':
+        return `${pfad}:${ziel.von}-${ziel.bis}`;
+      case 'zeile':
+        return `${pfad}:${ziel.zeile}`;
+      default:
+        return `${pfad} (ganze Datei)`;
     }
-    if (ziel.zeile === null || ziel.zeile === undefined) {
-      return `${pfad} (ganze Datei)`;
-    }
-    return `${pfad}:${ziel.zeile}`;
   }
 
   /** Der Name des Notizfelds: „Anmerkung zu <Datei>, Zeile <n>“ bzw. „… Zeile <von>–<bis>“ (R00031), ohne Zeile die ganze Datei. */
   function feldnameDesZiels(ziel) {
     const pfad = sichtbarerPfad(ziel.datei);
-    if (Number.isInteger(ziel.von) && Number.isInteger(ziel.bis)) {
-      return `Anmerkung zu ${pfad}, Zeile ${ziel.von}–${ziel.bis}`;
+    switch (artDerAnmerkung(ziel)) {
+      case 'bereich':
+        return `Anmerkung zu ${pfad}, Zeile ${ziel.von}–${ziel.bis}`;
+      case 'zeile':
+        return `Anmerkung zu ${pfad}, Zeile ${ziel.zeile}`;
+      default:
+        return feldnameDerDatei(ziel.datei);
     }
-    if (ziel.zeile === null || ziel.zeile === undefined) {
-      return feldnameDerDatei(ziel.datei);
-    }
-    return `Anmerkung zu ${pfad}, Zeile ${ziel.zeile}`;
   }
 
   function ausserhalbElement(hinweis) {
@@ -423,7 +426,7 @@
       bereiche.push({ commit: zustand.auswahl.commit, von: zustand.auswahl.von, bis: zustand.auswahl.bis });
     }
     for (const anmerkung of zustand.anmerkungen) {
-      if (anmerkung.datei === gezeichnet.pfad && Number.isInteger(anmerkung.von) && Number.isInteger(anmerkung.bis)) {
+      if (anmerkung.datei === gezeichnet.pfad && artDerAnmerkung(anmerkung) === 'bereich') {
         bereiche.push({ commit: anmerkung.commit, von: anmerkung.von, bis: anmerkung.bis });
       }
     }

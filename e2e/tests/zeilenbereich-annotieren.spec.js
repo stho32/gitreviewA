@@ -250,6 +250,88 @@ test.describe('Der Bereich bleibt an seiner Stelle (Szenario 6)', () => {
   });
 });
 
+test.describe('Die Anzeige zeigt eine Bereichsanmerkung genau einmal (Abnahme-Probe Anzeige-Befund)', () => {
+  // Abnahme-Probe aus dem Entwicklertest-Befund: `#diff tr.anm[data-anmerkung="1"]` genau 1 und `#diff .anm-datei tr.anm` = 0
+  // für Bereiche — in „Einzeln“/„Zusammen“ × „nur Änderungen“/„ganze Datei“ und mit Umbruch/Suche/nebeneinander. Eine
+  // Bereichsanmerkung hat ebenfalls `zeile === null`; der Datei-Block darf sie nicht als Dateianmerkung führen (R00031, R00022).
+  /** Jede genannte Nummer genau einmal im ganzen Diff-Bereich und keine Bereichsanmerkung im Datei-Block. */
+  async function bereichGenauEinmal(anm, nummern) {
+    for (const nummer of nummern) {
+      await anm.anmerkungszeilenMitNummer(nummer, 1);
+    }
+    await anm.anzahlDateianmerkungen(0);
+  }
+
+  /** Zwei Bereiche an r2 über die Schnittstelle, Seite neu laden, Datei wählen. */
+  async function zweiBereicheAnR2(anm) {
+    await anm.bereichUeberDieSchnittstelleAnlegen('r2', 'lang.txt', 3, 7, 'erster');
+    await anm.bereichUeberDieSchnittstelleAnlegen('r2', 'lang.txt', 5, 10, 'zweiter');
+    await anm.neuLaden();
+    await anm.dateiAnsehen('lang.txt');
+  }
+
+  test('soll in „Einzeln“ jede Bereichsanmerkung genau einmal zeigen — beide Ansichten, mit Umbruch, Suche und nebeneinander', async ({ anm }) => {
+    await anm.starten({ vorbereitung: 'Repo R (Bereich)', modus: 'einzeln' });
+    await anm.dateiAnsehen('lang.txt');
+    await zweiBereicheAnR2(anm);
+
+    await anm.ansichtWaehlen('nur Änderungen');
+    // Das Ende 10 des zweiten Bereichs liegt in der Lücke: er steht dann im Hinweis, nicht als Anmerkungszeile.
+    await anm.anmerkungszeilenMitNummer(2, 0);
+    await bereichGenauEinmal(anm, [1]);
+
+    await anm.ansichtWaehlen('ganze Datei');
+    await bereichGenauEinmal(anm, [1, 2]);
+
+    await anm.umbruchUmschalten();
+    await bereichGenauEinmal(anm, [1, 2]);
+
+    await anm.suchen('z0');
+    await bereichGenauEinmal(anm, [1, 2]);
+
+    await anm.anordnungWaehlen('nebeneinander');
+    await bereichGenauEinmal(anm, [1, 2]);
+  });
+
+  test('soll in „Zusammen“ jede Bereichsanmerkung genau einmal zeigen — beide Ansichten, mit Umbruch, Suche und nebeneinander', async ({ anm }) => {
+    await anm.starten({ vorbereitung: 'Repo R (Bereich)', modus: 'zusammen' });
+    await anm.dateiAnsehen('lang.txt');
+    await zweiBereicheAnR2(anm);
+
+    // „Zusammen“ rechnet netto gegen den Elternstand des ältesten Commits der Auswahl; r1 ist die Wurzel, also erscheint
+    // die ganze Datei als hinzugefügt — es gibt keine Lücke, beide Bereiche sind in jeder Ansicht sichtbar.
+    await anm.ansichtWaehlen('nur Änderungen');
+    await bereichGenauEinmal(anm, [1, 2]);
+
+    await anm.ansichtWaehlen('ganze Datei');
+    await bereichGenauEinmal(anm, [1, 2]);
+
+    await anm.umbruchUmschalten();
+    await bereichGenauEinmal(anm, [1, 2]);
+
+    await anm.suchen('z0');
+    await bereichGenauEinmal(anm, [1, 2]);
+
+    await anm.anordnungWaehlen('nebeneinander');
+    await bereichGenauEinmal(anm, [1, 2]);
+  });
+
+  test('soll einen Bereich an r1 genau einmal zeigen und Zeilen- und Dateianmerkung je einmal lassen', async ({ anm }) => {
+    await anm.starten({ vorbereitung: 'Repo R (Bereich)', commits: ['r1'], modus: 'einzeln' });
+    await anm.dateiAnsehen('lang.txt');
+    await anm.bereichUeberDieSchnittstelleAnlegen('r1', 'lang.txt', 3, 7, 'bereich r1');
+    await anm.ueberDieSchnittstelleAnlegen('r1', 'lang.txt', 20, 'zeile r1');
+    await anm.dateianmerkungUeberDieSchnittstelleAnlegen('r1', 'lang.txt', 'datei r1');
+    await anm.neuLaden();
+    await anm.dateiAnsehen('lang.txt');
+    await anm.ansichtWaehlen('ganze Datei');
+
+    await anm.anmerkungszeilenMitNummer(1, 1);
+    await anm.anmerkungszeilenMitNummer(2, 1);
+    await anm.anzahlDateianmerkungen(1);
+  });
+});
+
 test.describe('Fremder Text bleibt Text (Szenario 9)', () => {
   test('soll die markierten fremden Zeilen und den Anmerkungstext als Text zeigen, das Richtungszeichen als Marke', async ({ anm }) => {
     await anm.starten({ vorbereitung: 'Repo R (Bereich)', commits: ['r1'] });

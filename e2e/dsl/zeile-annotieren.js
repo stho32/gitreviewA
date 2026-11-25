@@ -182,6 +182,12 @@ function annotierSprache(gr, page) {
     anmerkungenUnterImAbschnitt: (commit, datei, ziel, texte) => anmerkungSeite.pruefeAnmerkungenUnterImAbschnitt(page, hash(commit), ziel, texte.map(text => ({ text, stelle: `${datei}:${ziel.neu}` }))),
     keineAnmerkungUnter: ziel => anmerkungSeite.pruefeAnmerkungenUnter(page, ziel, []),
     anzahlAnmerkungszeilen: anzahl => anmerkungSeite.pruefeAnzahlAnmerkungszeilen(page, anzahl),
+    /** Alle Anmerkungszeilen der stabilen Nummer `nummer` (Datei-Block und Zeilen zusammen): genau `anzahl` (Abnahme der Anzeige). */
+    anmerkungszeilenMitNummer: (nummer, anzahl) => anmerkungSeite.pruefeAnzahlAnmerkungszeilenMitNummer(page, nummer, anzahl),
+    /** Umbruch ein-/ausschalten (I0033: Start an) — die Anzeige prüft die Anmerkung in beiden Stellungen. */
+    umbruchUmschalten: () => diffSeite.umbruchUmschalten(page),
+    /** Im Diff suchen (R00027): Begriff eintragen und mit Enter bestätigen. */
+    suchen: begriff => seite.sucheSuchen(page, begriff),
     anmerkungszeilenSindKeineDiffzeilen: () => anmerkungSeite.pruefeAnmerkungszeilenSindKeineDiffzeilen(page),
     hinweisEntfernt: text => anmerkungSeite.pruefeHinweisEntfernt(page, text),
     keinHinweisEntfernt: () => anmerkungSeite.pruefeKeinHinweisEntfernt(page),

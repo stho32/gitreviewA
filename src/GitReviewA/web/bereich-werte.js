@@ -82,11 +82,18 @@
     return stand;
   }
 
+  /** Die **eine** Stelle, die die Art einer Anmerkung trennt (`anmerkungen-werte.js`); hier nur der Zugriff, der in Node
+      (require) wie im Browser (window) funktioniert. */
+  function artDerAnmerkung(anmerkung) {
+    const werte = typeof require === 'function' ? require('./anmerkungen-werte.js') : window;
+    return werte.artDerAnmerkung(anmerkung);
+  }
+
   /** Die Bereichsanmerkungen einer Datei in Anlegereihenfolge als `[{von, bis}]` — Zeilen- und Dateianmerkungen bleiben draußen.
       Der Name wird roh verglichen (die Marke ist nur die Anzeige). */
   function bereicheDerAnmerkungen(anmerkungen, datei) {
     return anmerkungen
-      .filter(anmerkung => anmerkung.datei === datei && Number.isInteger(anmerkung.von) && Number.isInteger(anmerkung.bis))
+      .filter(anmerkung => anmerkung.datei === datei && artDerAnmerkung(anmerkung) === 'bereich')
       .map(anmerkung => ({ von: anmerkung.von, bis: anmerkung.bis }));
   }
 

@@ -22,10 +22,24 @@
     return { art: 'annotierbar', neu: zeile.neu };
   }
 
-  /** Dateianmerkungen der Stelle (R00022): Anmerkungen des Laufs (Anlegereihenfolge) + Commit + Datei → die Anmerkungen **ohne Zeile**
-      dieser Stelle in Anlegereihenfolge. Der Name wird roh verglichen (die Marke ist nur die Anzeige). */
+  /** Die **eine** Stelle, die die Art einer Anmerkung trennt (R00031): `'bereich'` (von und bis), `'zeile'` (eine Nummer neu),
+      sonst `'datei'` (die ganze Datei). Eine Bereichsanmerkung trägt ebenfalls `zeile === null`; wer nur darauf prüft, hält sie
+      für eine Dateianmerkung. Alle Wege — Datei-Block, Zeilenanzeige, Stelle und Feldname, Markierung, Ergebnis — fragen hier. */
+  function artDerAnmerkung(anmerkung) {
+    if (Number.isInteger(anmerkung.von) && Number.isInteger(anmerkung.bis)) {
+      return 'bereich';
+    }
+    if (Number.isInteger(anmerkung.zeile)) {
+      return 'zeile';
+    }
+    return 'datei';
+  }
+
+  /** Dateianmerkungen der Stelle (R00022): Anmerkungen des Laufs (Anlegereihenfolge) + Commit + Datei → die Dateianmerkungen
+      dieser Stelle in Anlegereihenfolge (keine Zeilen- und keine Bereichsanmerkung). Der Name wird roh verglichen (die Marke ist
+      nur die Anzeige). */
   function dateianmerkungen(anmerkungen, commit, datei) {
-    return anmerkungen.filter(anmerkung => anmerkung.commit === commit && anmerkung.datei === datei && anmerkung.zeile === null);
+    return anmerkungen.filter(anmerkung => anmerkung.commit === commit && anmerkung.datei === datei && artDerAnmerkung(anmerkung) === 'datei');
   }
 
   /** Eine Sicht der gezeigten Datei ist ein Abschnitt: `{ commit, gezeigteNummern }`. Ein Netto-Diff hat eine Sicht, eine Ansicht
@@ -59,18 +73,19 @@
 
   /** Die Zeile, an der eine Anmerkung steht: ihre Nummer neu, bei einem Bereich dessen Ende `bis` (R00031); null für die ganze Datei. */
   function anmerkungsstelle(anmerkung) {
-    if (Number.isInteger(anmerkung.zeile)) {
-      return anmerkung.zeile;
+    switch (artDerAnmerkung(anmerkung)) {
+      case 'bereich':
+        return anmerkung.bis;
+      case 'zeile':
+        return anmerkung.zeile;
+      default:
+        return null;
     }
-    if (Number.isInteger(anmerkung.bis)) {
-      return anmerkung.bis;
-    }
-    return null;
   }
 
   /** Die Stelle als Text für einen Hinweis: „Zeile 10“ oder „Zeilen 3–7“ (R00031). */
   function stellentext(eintrag) {
-    if (Number.isInteger(eintrag.zeile)) {
+    if (artDerAnmerkung(eintrag) === 'zeile') {
       return `Zeile ${eintrag.zeile}`;
     }
     return `Zeilen ${eintrag.von}–${eintrag.bis}`;
@@ -96,7 +111,7 @@
 
   /** Ob unter den Stellen ein Bereich ist (dann heißt es „an Zeilen“, nicht „an einer Zeile“). */
   function istBereich(ausserhalb) {
-    return ausserhalb.some(eintrag => !Number.isInteger(eintrag.zeile));
+    return ausserhalb.some(eintrag => artDerAnmerkung(eintrag) === 'bereich');
   }
 
   /** Wie `hinweisAusserhalb`, nennt aber eine Anmerkung eines anderen Commits derselben Datei mit Kurz-Hash: eine Ansicht ohne
@@ -152,5 +167,5 @@
     return anmerkungen.filter(anmerkung => anmerkung.nummer !== nummer);
   }
 
-  Object.assign(ziel, { zeilenziel, anmerkungsstand, anmerkungsstandJeSicht, anmerkungsstelle, stellentext, hinweisAusserhalb, hinweisAusserhalbMitCommits, mitGeaendertemText, ohneAnmerkung, dateianmerkungen, ENTFERNT_HINWEIS });
+  Object.assign(ziel, { zeilenziel, anmerkungsstand, anmerkungsstandJeSicht, anmerkungsstelle, stellentext, artDerAnmerkung, hinweisAusserhalb, hinweisAusserhalbMitCommits, mitGeaendertemText, ohneAnmerkung, dateianmerkungen, ENTFERNT_HINWEIS });
 })(typeof module !== 'undefined' ? module.exports : window);

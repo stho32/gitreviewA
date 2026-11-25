@@ -262,6 +262,12 @@ async function pruefeAnzahlAnmerkungszeilen(page, anzahl) {
   await expect(page.locator(ANMERKUNGSZEILE)).toHaveCount(anzahl);
 }
 
+/** Alle Anmerkungszeilen der stabilen Nummer `nummer` im ganzen Diff-Bereich: Datei-Block (`#diff .anm-datei`) **und** Zeilen
+    (`#diff .dz`). Eine Anmerkung steht genau einmal (Abnahme der Anzeige, R00031). */
+async function pruefeAnzahlAnmerkungszeilenMitNummer(page, nummer, anzahl) {
+  await expect(page.locator(`#diff tr.anm[data-anmerkung="${nummer}"]`), `Anmerkungszeilen der Nummer ${nummer}`).toHaveCount(anzahl);
+}
+
 /* ── Dateianmerkungen über den Diff-Zeilen (R00022) ── */
 
 /** Die Dateianmerkungen über den Diff-Zeilen: je Eintrag Text und Stelle, in Reihenfolge. */
@@ -685,7 +691,7 @@ module.exports = {
   pruefeHinweis,
   pruefeKeinHinweis,
   zeileAnklicken, zeileDoppeltAnklicken, zeileImAbschnittAnklicken, pruefeAnmerkungenUnterImAbschnitt, pruefeAnzahlFelder, pruefeFeldtext, pruefeFeldOffenMitFokus, textSchreiben, speichern, zweimalSpeichern, pruefeFeldZu, pruefeKeinFeld, pruefeFeldmeldung,
-  pruefeAnmerkungenUnter, pruefeAnzahlAnmerkungszeilen, pruefeAnmerkungszeilenSindKeineDiffzeilen,
+  pruefeAnmerkungenUnter, pruefeAnzahlAnmerkungszeilen, pruefeAnzahlAnmerkungszeilenMitNummer, pruefeAnmerkungszeilenSindKeineDiffzeilen,
   dateianmerkungenOben, pruefeDateianmerkungenOben, pruefeKeineDateianmerkung, anzahlDateianmerkungen, pruefeDateianmerkungUeberDenZeilen, dateiAnmerken, pruefeDateiKnopfSichtbar, dateiAnmerkungenAnlegen, pruefeDateiKnopfVerborgen, hakenAntwortetMit, pruefeDateiKnopfGesperrt, pruefeDateiKnopfBedienbar,
   dateiAnmerkenAmHinweis, pruefeHinweisAnmerkenSichtbar, pruefeHinweisAnmerkenVerborgen,
   pruefeHinweisEntfernt, pruefeKeinHinweisEntfernt, pruefeHinweisAusserhalb, pruefeKeinHinweisAusserhalb,
