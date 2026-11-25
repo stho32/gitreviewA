@@ -3,6 +3,7 @@
 // Gesucht wird nur in der gezeigten Datei, wörtlich; die Rechnung selbst prüfen die Bausteintests (suche-werte.spec.js).
 const { test, expect } = require('../dsl/gitreviewa.js');
 const diffSeite = require('../treiber/diff-oberflaeche.js');
+const repos = require('../treiber/wegwerf-repo.js');
 const { SUCHE_TXT, FREMD_TXT, FARBIG_JS, nummernZeilen, dateiUndWarten } = require('../dsl/suche.js');
 
 async function repoY(gr) {
@@ -266,5 +267,71 @@ test.describe('Im Diff suchen (R00027) — Anschluss an Färbung, Wechsel und Gr
     await expect(gr.sucheMarken(page)).toHaveCount(10000);
     expect(dauer, `${dauer} ms (Grenze 1000, Ziel 700)`).toBeLessThanOrEqual(1000);
     expect(laengste, `längste Aufgabe ${laengste} ms (Grenze 150)`).toBeLessThanOrEqual(150);
+  });
+});
+
+const WEIT_1 = Array.from({ length: 12 }, (_, index) => `l${String(index + 1).padStart(2, '0')}`).join('\n') + '\n';
+const WEIT_2 = WEIT_1.replace('l06', 'L06');
+
+/** Ein Repo mit zwei Commits: `y1` legt `weit.txt` an (12 Zeilen), `y2` ändert nur Zeile 6 — mit Lücken davor und danach (R00026). */
+function repoLuecken(gr) {
+  const ordner = repos.leeresRepoAnlegen();
+  repos.dateiSchreiben(ordner, 'weit.txt', WEIT_1);
+  repos.commitAnlegen(ordner, { betreff: 'Anlegen' });
+  repos.dateiSchreiben(ordner, 'weit.txt', WEIT_2);
+  const y2 = repos.commitAnlegen(ordner, { betreff: 'Ändern' });
+  return gr.gemerktesRepo({ ordner, hash: y2 });
+}
+
+test.describe('Im Diff suchen (R00027) — alle Anzeigeverfahren (Lehre #7)', () => {
+  test('soll in „Zusammen“ genauso suchen wie in „Einzeln“', async ({ gr, page }) => {
+    const repo = await repoY(gr);
+    const lauf = await gr.gitreviewAStarten(repo, [repo.hash]);
+    await gr.oberflaecheOeffnen(page, lauf, 'zusammen');
+    await sucheTxtWaehlen(page, gr);
+
+    await gr.sucheSuchen(page, 'zwei');
+    await expect(gr.sucheZaehler(page)).toHaveText('1 von 4');
+    await expect(gr.sucheMarken(page)).toHaveCount(4);
+  });
+
+  test('soll in „ganze Datei“ genauso suchen wie in „nur Änderungen“', async ({ gr, page }) => {
+    const repo = await repoY(gr);
+    const lauf = await gr.gitreviewAStarten(repo, [repo.hash]);
+    await gr.oberflaecheOeffnen(page, lauf, 'einzeln');
+    await sucheTxtWaehlen(page, gr);
+
+    await diffSeite.ansichtWaehlen(page, 'ganze Datei');
+    await expect(gr.sucheFeld(page)).toHaveValue('');
+    await gr.sucheSuchen(page, 'zwei');
+    await expect(gr.sucheZaehler(page)).toHaveText('1 von 4');
+    await expect(gr.sucheMarken(page)).toHaveCount(4);
+  });
+
+  test('soll nebeneinander genauso suchen wie untereinander', async ({ gr, page }) => {
+    const repo = await repoY(gr);
+    const lauf = await gr.gitreviewAStarten(repo, [repo.hash]);
+    await gr.oberflaecheOeffnen(page, lauf, 'einzeln');
+    await sucheTxtWaehlen(page, gr);
+
+    await page.locator('.anordnung-wahl [data-anordnung="nebeneinander"]').click();
+    await expect(page.locator('.anordnung-wahl [data-anordnung="nebeneinander"]')).toHaveAttribute('aria-pressed', 'true');
+    await gr.sucheSuchen(page, 'zwei');
+    await expect(gr.sucheZaehler(page)).toHaveText('1 von 4');
+  });
+
+  test('soll eine aufgeklappte Lücke mitdurchsuchen (R00026)', async ({ gr, page }) => {
+    const repo = repoLuecken(gr);
+    const lauf = await gr.gitreviewAStarten(repo, [repo.hash]);
+    await gr.oberflaecheOeffnen(page, lauf, 'einzeln');
+    await dateiUndWarten(page, gr, 'weit.txt', 9);
+
+    await gr.sucheSuchen(page, 'l01');
+    await expect(gr.sucheZaehler(page)).toHaveText('keine Treffer');
+    await expect(gr.sucheMarken(page)).toHaveCount(0);
+
+    await diffSeite.lueckeAufklappen(page, 0, true);
+    await expect(gr.sucheZaehler(page)).toHaveText('1 von 1');
+    await expect(gr.sucheMarken(page)).toHaveCount(1);
   });
 });
