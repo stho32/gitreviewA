@@ -30,6 +30,8 @@ const VORBEREITUNGEN = {
   'Repo N': { anlegen: fremdeNamen.repoN, commits: ['n', 'b'] },
   // R00026: `w2` ändert Leerraum und entfernte Stellen, `w1` legt an — die Auswahl ist `w2` zuerst.
   'Repo W': { anlegen: repos.repoW, commits: ['w2', 'w1'] },
+  // R00026-Nacharbeit (B1): `c2` ändert in `code.js`/`code.txt` die Zeilen 5 und 35 — gefärbt bzw. ungefärbt.
+  'Repo C': { anlegen: repos.repoC, commits: ['c2', 'c1'] },
 };
 
 function diffSprache(gr, page) {
@@ -118,9 +120,14 @@ function diffSprache(gr, page) {
     },
     /** Beantwortet die Diff-Anfrage in der Stellung `leerraum` mit einem Ersatz-Patch (oder einem Fehler), wahlweise verzögert. */
     antwortErsetzen: optionen => diffSeite.diffAntwortErsetzen(page, optionen),
-    /** Die Lücken der gezeigten Ansicht (R00026), ihr Betätigen und die gezeichneten Zeilen. */
+    /** Beantwortet die erste Anfrage `umfang=ganz` für `pfad` mit `status`, jede weitere mit `patch` (Fehlerpfad, R00026). */
+    ganzErstScheitern: (pfad, status, patch) => diffSeite.ganzDateiErstScheitern(page, pfad, status, patch),
+    /** Die Lücken der gezeigten Ansicht (R00026), ihr Betätigen, ihre Meldung und die gezeichneten Zeilen. */
     luecken: () => diffSeite.lueckenLesen(page),
     lueckeAufklappen: (nummer, ganz = false, perTastatur = false) => diffSeite.lueckeAufklappen(page, nummer, ganz, perTastatur),
+    lueckeMeldet: (nummer, text) => diffSeite.lueckeMeldet(page, nummer, text),
+    /** Jede Zeile mit Nummer neu `von`…`bis` trägt ihren eigenen Text und ihren eigenen VS-Code-Link (R00021/R00026). */
+    zeilenMitEigenemLink: (von, bis, text) => diffSeite.pruefeZeilenMitEigenemLink(page, von, bis, text),
     zeilenzahl: () => diffSeite.zeilenZaehlen(page),
     hatZeile: neu => diffSeite.zeileVorhanden(page, neu),
     zeilentext: neu => diffSeite.zeilentextLesen(page, neu),
@@ -135,8 +142,8 @@ function diffSprache(gr, page) {
     },
     antwortVerzoegern: pfad => diffSeite.diffAntwortVerzoegern(page, pfad),
     ganzeDateiVerzoegern: pfad => diffSeite.diffAntwortVerzoegern(page, pfad, 'ganz'),
-    /** Der Server meldet für `pfad` den Ausgang „zu groß“ mit `meldung` (über der Ausgabegrenze). */
-    antwortZuGross: (pfad, meldung) => diffSeite.diffAntwortZuGross(page, pfad, meldung),
+    /** Der Server meldet für `pfad` den Ausgang „zu groß“ mit `meldung` (über der Ausgabegrenze); `umfang` grenzt ein. */
+    antwortZuGross: (pfad, meldung, umfang = null) => diffSeite.diffAntwortZuGross(page, pfad, meldung, umfang),
     /** Knotenzahl je Block des gezeigten Diffs. */
     blockKnoten: () => diffSeite.blockKnoten(page),
     warteAufFarbe: () => diffSeite.warteAufFarbe(page),

@@ -235,13 +235,31 @@ async function diffAntwortVerzoegern(page, pfad, umfang = null) {
   };
 }
 
-/** Beantwortet den Diff von `pfad` mit dem Ausgang „zu groß“ (Kennzeichen und Meldung), so wie der Server über der Ausgabegrenze. */
-async function diffAntwortZuGross(page, pfad, meldung) {
+/** Beantwortet den Diff von `pfad` mit dem Ausgang „zu groß“ (Kennzeichen und Meldung), so wie der Server über der Ausgabegrenze.
+    `umfang` grenzt ein (`null` = „nur Änderungen“, `'ganz'` = die ganze Datei). */
+async function diffAntwortZuGross(page, pfad, meldung, umfang = null) {
   await page.route(url => {
     const adresse = url.toString();
     const abfrage = new URL(adresse).searchParams;
-    return adresse.includes('/diff?') && abfrage.get('pfad') === pfad;
+    return adresse.includes('/diff?') && abfrage.get('pfad') === pfad && abfrage.get('umfang') === umfang;
   }, route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ zuGross: true, meldung }) }));
+}
+
+/** Beantwortet die erste Anfrage `umfang=ganz` für `pfad` mit `status`, jede weitere mit `patch` — so wird der zweite
+    Aufklapp-Versuch nach einem Fehler möglich (R00026, Fehlerpfad). */
+async function ganzDateiErstScheitern(page, pfad, status, patch) {
+  let ersteAntwort = true;
+  await page.route(url => {
+    const adresse = url.toString();
+    const abfrage = new URL(adresse).searchParams;
+    return adresse.includes('/diff?') && abfrage.get('pfad') === pfad && abfrage.get('umfang') === 'ganz';
+  }, route => {
+    if (ersteAntwort) {
+      ersteAntwort = false;
+      return route.fulfill({ status, contentType: 'application/json', body: JSON.stringify({ meldung: 'Diff konnte nicht gelesen werden' }) });
+    }
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ pfad, status: 'M', alterPfad: null, art: 'text', grund: null, patch }) });
+  });
 }
 
 /** Merkt jede Diff-Anfrage (`pfad`, `umfang`, `leerraum`) und lässt sie weiterlaufen; `fallback`, damit später gesetzte Routen (etwa
@@ -309,6 +327,33 @@ async function lueckeAufklappen(page, nummer, ganz = false, perTastatur = false)
     return;
   }
   await knopf.click();
+}
+
+/** Die Meldung der `nummer`-ten Lücke (ab 1), z. B. wenn das Lesen der ganzen Datei scheitert (R00026). */
+async function lueckeMeldet(page, nummer, text) {
+  await expect(page.locator(`${ROLLBEREICH} .dz-l`).nth(nummer - 1).locator('.dz-l-fehler')).toHaveText(text);
+}
+
+/** Jede Diff-Zeile mit Nummer neu `von`…`bis` trägt ihren eigenen Text `text(neu)` und einen Link `:<neu>` in der Nummernspalte;
+    die Textzelle trägt keinen Link (R00021/R00026). Der Lesetext für Screenreader (`.vh`) zählt nicht zum Zeilentext. */
+async function pruefeZeilenMitEigenemLink(page, von, bis, text) {
+  for (let neu = von; neu <= bis; neu += 1) {
+    const zeile = page.locator(`${ZEILE}[data-neu="${neu}"]`);
+    await expect(zeile, `Zeile ${neu}`).toHaveCount(1);
+    const gelesen = await zeile.locator('td.c').evaluate(zelle => {
+      const lesetext = zelle.querySelector('.vh');
+      let inhalt = zelle.textContent;
+      if (lesetext) {
+        inhalt = inhalt.slice(lesetext.textContent.length);
+      }
+      return inhalt;
+    });
+    expect(gelesen, `Text Zeile ${neu}`).toBe(text(neu));
+    const href = await zeile.locator('td.neu a').getAttribute('href');
+    expect(href, `Link Zeile ${neu}`).not.toBeNull();
+    expect(Number(href.split(':').pop()), `Link-Ziel Zeile ${neu}`).toBe(neu);
+    await expect(zeile.locator('td.c a'), `kein Link in der Textzelle ${neu}`).toHaveCount(0);
+  }
 }
 
 /** Zahl der gezeichneten Diff-Zeilen. */
@@ -507,9 +552,9 @@ module.exports = {
   pruefeBedienbarNachAlsText, ansichtWaehlen, ansichtPerTastaturWechseln, pruefeAnsicht, zeilenfarbenLesen, pruefeZeilenfarben, pruefeKontextzeileBinnen,
   pruefeDiff, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, diffAntwortVerzoegern,
   pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
-  diffAntwortZuGross, blockKnoten, warteAufFarbe, langeAufgabenBeimScrollen, zugeklapptRechtzeitigNachKlick, zugeklapptRechtzeitigNachAktion,
+  diffAntwortZuGross, ganzDateiErstScheitern, blockKnoten, warteAufFarbe, langeAufgabenBeimScrollen, zugeklapptRechtzeitigNachKlick, zugeklapptRechtzeitigNachAktion,
   pruefeSprungzeile, pruefeSprungzeileName, sprungzeileLiegtImVerborgenen, pruefeSprungkopfName, sprungHunkLink, zeileWaehlen,
   pruefeSprungVerweis, pruefeSprungGrund, pruefeSprungHinweis, sprungAntwortVerzoegern, sprungAntwortScheitern,
   leerraumUmschalten, leerraumPerTastaturUmschalten, pruefeLeerraumStellung, diffAnfragenBeobachten, diffAntwortErsetzen,
-  lueckenLesen, lueckeAufklappen, zeilenZaehlen, zeileVorhanden, zeilentextLesen,
+  lueckenLesen, lueckeAufklappen, lueckeMeldet, pruefeZeilenMitEigenemLink, zeilenZaehlen, zeileVorhanden, zeilentextLesen,
 };

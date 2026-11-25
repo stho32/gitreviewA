@@ -67,6 +67,26 @@ function weitDatei() {
   return zeilenRumpf.join('');
 }
 
+/** Repo C (R00026-Nacharbeit, B1): `c1` „Anlegen“ legt `code.js` und `code.txt` (je 60 Zeilen `const zNN = NN;`) an;
+    `c2` „Aendern“ ändert in beiden die Zeilen 5 und 35. `code.js` trägt Syntaxfarben, `code.txt` nicht — die Probe der
+    Färbung und der Links braucht beides. */
+function repoC(ordner) {
+  repoAnlegen(ordner);
+  const inhalt = codeInhalt();
+  dateiSchreiben(ordner, 'code.js', inhalt);
+  dateiSchreiben(ordner, 'code.txt', inhalt);
+  const c1 = commitAnlegen(ordner, { betreff: 'Anlegen' });
+  const geaendert = inhalt.replace('const z05 = 5;', 'const z05 = 50;').replace('const z35 = 35;', 'const z35 = 350;');
+  dateiSchreiben(ordner, 'code.js', geaendert);
+  dateiSchreiben(ordner, 'code.txt', geaendert);
+  const c2 = commitAnlegen(ordner, { betreff: 'Aendern' });
+  return { ordner, hashes: { c1, c2 } };
+}
+
+function codeInhalt() {
+  return Array.from({ length: 60 }, (_, index) => `const z${String(index + 1).padStart(2, '0')} = ${index + 1};\n`).join('');
+}
+
 /** Repo A, dazu drei Diff-Programme in der Konfiguration, die je eine Markerdatei im Repo anlegen. */
 function repoAMitDiffProgrammen(ordner) {
   const repo = repoA(ordner);
@@ -238,4 +258,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoX, repoK, repoMitBidiPfad, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoW, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoX, repoK, repoMitBidiPfad, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };
