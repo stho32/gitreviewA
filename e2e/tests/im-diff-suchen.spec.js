@@ -385,24 +385,32 @@ test.describe('Im Diff suchen (R00027) — alle Anzeigeverfahren (Lehre #7)', ()
     await expect(gr.sucheMarken(page)).toHaveCount(2);
     await expect(gr.sucheZaehler(page)).toHaveText('1 von 2');
 
-    // Variante A: dieselbe Datei erneut wählen — Neuzeichnen, danach färbt der Diff neu.
-    await gr.dateiWaehlen(page, 'farbig.js');
+    // Jede Variante muss wirklich neu zeichnen (und danach erneut färben) — sonst bliebe die Marke ohnehin stehen und
+    // die Prüfung wäre wertlos. Gezählt wird das Ereignis `diff-gezeichnet`.
+    await page.evaluate(() => {
+      window.__gezeichnet = 0;
+      document.addEventListener('diff-gezeichnet', () => {
+        window.__gezeichnet += 1;
+      });
+    });
+    const neuGezeichnet = async (aktion) => {
+      const vorher = await page.evaluate(() => window.__gezeichnet);
+      await aktion();
+      await expect.poll(() => page.evaluate(() => window.__gezeichnet), { timeout: 15000 }).toBeGreaterThan(vorher);
+      await expect.poll(() => abschnittFarbe(page), { timeout: 15000 }).toBe('ja');
+      await expect(gr.sucheMarken(page)).toHaveCount(2);
+      await expect(gr.sucheZaehler(page)).toHaveText('1 von 2');
+    };
+
+    // Variante A: dieselbe Datei erneut wählen.
+    await neuGezeichnet(() => gr.dateiWaehlen(page, 'farbig.js'));
     await expect(page.locator('#diff .df-sc tr[data-art]')).toHaveCount(3);
-    await expect.poll(() => abschnittFarbe(page), { timeout: 15000 }).toBe('ja');
-    await expect(gr.sucheMarken(page)).toHaveCount(2);
-    await expect(gr.sucheZaehler(page)).toHaveText('1 von 2');
 
     // Variante B: Ansicht „ganze Datei“ umschalten.
-    await diffSeite.ansichtWaehlen(page, 'ganze Datei');
-    await expect.poll(() => abschnittFarbe(page), { timeout: 15000 }).toBe('ja');
-    await expect(gr.sucheMarken(page)).toHaveCount(2);
-    await expect(gr.sucheZaehler(page)).toHaveText('1 von 2');
+    await neuGezeichnet(() => diffSeite.ansichtWaehlen(page, 'ganze Datei'));
 
     // Variante C: Leerraum-Stellung umschalten.
-    await diffSeite.leerraumUmschalten(page);
-    await expect.poll(() => abschnittFarbe(page), { timeout: 15000 }).toBe('ja');
-    await expect(gr.sucheMarken(page)).toHaveCount(2);
-    await expect(gr.sucheZaehler(page)).toHaveText('1 von 2');
+    await neuGezeichnet(() => diffSeite.leerraumUmschalten(page));
   });
 
   test('soll eine aufgeklappte Lücke mitdurchsuchen (R00026)', async ({ gr, page }) => {
