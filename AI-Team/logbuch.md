@@ -204,3 +204,8 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Lehre (Projekt, `AI-Team/gelerntes.md`): neue git-Lesepfade erben Grenze und Namensprüfung nicht; je Pfad Probe mit kleiner Grenze und LF/CR-Namen.
 - Gate 1 rot: zwei Tests aus #20 riefen Konstruktoren mit der alten Parameterliste, die #10 erweitert hatte (semantischer Konflikt zweier Karten). `wache zurueck`, Merge-Korrektur in 2 Testzeilen durch den Director, Gate 2 grün (NUnit 913/913, Playwright 324/324 zweimal).
 - Lehre (Director): Der Gate-Befehl verdeckte den Build-Fehler, weil `grep` den Exit-Code schluckte — Build-Exit-Code getrennt prüfen und bei Rot abbrechen. Und: Karten, die gemeinsame Konstruktoren erweitern, nach jedem Merge sofort rebasen und das Testprojekt bauen lassen.
+
+## Retrospektive #23 I0023 Anmerkung ändern (2026-11-25)
+- Durchlauf: planer + product-owner (3 Fragen) 7 min, Bau 20 min, Code-Review 2 Muss in der Bedienung (Pfeiltasten im Änderungsfeld, Neuzeichnen verwarf Eingaben), Security-Review Lauf 1 abgedriftet ohne Urteil (0,17 $, Vorschlag an die Fabrik), Nacharbeit (Netzabbruch, fortgesetzt), enge Nachprüfung + voller Security-Review ohne Muss, Entwicklertest 11 Szenarien ohne Befund. Karte gesamt 1,56 $.
+- Lehre (code-reviewer): Ein zweites Feld derselben Bauart erbt Wächter und Platz im Neuzeichnen des ersten nicht — Probe: Feld tippen, Datei wechseln, zurück.
+- Merge: Export-Liste der E2E-DSL (beide Seiten erhalten) und ein Testaufruf mit der alten Parameterliste von `Webserver.StartenAsync` (Merge-Korrektur); vor dem Merge im Worktree gebaut und getestet. Gate NUnit 968/968, Playwright 343/343 zweimal.
