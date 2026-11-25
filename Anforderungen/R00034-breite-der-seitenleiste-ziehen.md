@@ -24,11 +24,11 @@ Die Seitenleiste hat heute eine feste Breite (der Entwurf zeichnet 360 px, das h
 
 ## Funktionale Anforderungen
 
-- **Trenner**: ein senkrechter Trenner zwischen Seitenleiste und Diff, sichtbar als schmale Ziehfläche an der Grenze (heute die 1-px-Kante aus dem Entwurf, `.leiste{border-right}`). Er sitzt **nur** im zweispaltigen Aufbau (R00033); unter der Mindestbreite für zwei Spalten gibt es ihn nicht.
+- **Trenner**: ein senkrechter Trenner zwischen Seitenleiste und Diff, sichtbar als schmale Ziehfläche an der Grenze (heute die 1-px-Kante aus dem Entwurf, `.leiste{border-right}`). Er sitzt **nur** im zweispaltigen Aufbau (R00033); unter 566 px gibt es ihn nicht.
 - **Ziehen**: Drücken und Ziehen mit der Maus (Pointer-Ereignisse) ändert die Breite beider Seiten mit; die Seitenleiste folgt der Zeigerposition, der Diff nimmt den Rest.
-- **Tastatur**: der Trenner ist mit **Tab** erreichbar (`tabindex`) und trägt `role="separator"`, `aria-orientation="vertical"`, `aria-valuenow` (aktuelle Breite), `aria-valuemin`, `aria-valuemax` und einen Namen, der mit dem sichtbaren Text beginnt („Breite der Dateiliste“). **Pfeil links/rechts** verstellen um einen Schritt (Empfehlung 16 px), **Pos1/Ende** setzen auf Mindest-/Höchstbreite; der Fokusring ist sichtbar (R00030, B2907).
+- **Tastatur**: der Trenner ist mit **Tab** erreichbar (`tabindex`) und trägt `role="separator"`, `aria-orientation="vertical"`, `aria-controls` (auf die Seitenleiste — das Element, das Commit-Zeile und Dateiliste umschließt), `aria-valuenow` (aktuelle Breite), `aria-valuemin`, `aria-valuemax` und einen Namen, der mit dem sichtbaren Text beginnt („Breite der Dateiliste“). **Pfeil links/rechts** verstellen um 16 px, **Pos1/Ende** setzen auf Mindest-/Höchstbreite; der Fokusring ist sichtbar (R00030, B2907).
 - **Doppelklick** auf den Trenner setzt die **Startbreite** zurück.
-- **Mindest- und Höchstbreite** (geklemmt; die Zahlen als Empfehlung, offene Frage): Seitenleiste **240–640 px**, Diff **mindestens 320 px**; die tatsächliche Höchstbreite ist `min(640, Fensterbreite − 320 − Trennerbreite)`. Ein Zug über die Grenze wird geklemmt, nie verworfen. Ist die Höchstbreite kleiner als die Mindestbreite, gilt der Rückfall auf eine Spalte (R00033). Startbreite **360 px**.
+- **Mindest- und Höchstbreite** (geklemmt): Seitenleiste **240–640 px**, Diff **mindestens 320 px**; die tatsächliche Höchstbreite ist `min(640, Fensterbreite − 320 − Trennerbreite)`. Ein Zug über die Grenze wird geklemmt, nie verworfen. Ist die Höchstbreite kleiner als die Mindestbreite, gilt der Rückfall auf eine Spalte (R00033, unter 566 px). Startbreite **360 px**; ein Doppelklick setzt genau darauf zurück.
 - **Zustand**: die Breite ist ein Zustand der Seite (nur RAM); sie bleibt beim Wechsel von Datei, Commit, Modus, Ansicht und Anordnung, auch ohne gewählte Datei; nach dem Neuladen gilt wieder die Startbreite (nichts wird gespeichert, wie „Umbruch“/„Ansicht“/„Anordnung“).
 - **Ohne Neuzeichnen** (Lehre #23): die Breite wirkt über das Layout (eine CSS-Variable am Rahmen), **ohne** den Diff neu zu zeichnen. Ein offenes Notizfeld (R00010/R00022/R00031), Markierungen, die Treffer der Suche (R00027) und die Bildlaufposition des Diffs bleiben unverändert. Gilt in beiden Modi, beiden Ansichten und beiden Anordnungen (Lehre #7).
 - **Tastenkatalog**: ändert sich die Tastenbelegung für dieses Bedienelement (etwa ein Kürzel), ist es ein Eintrag im Katalog von I0015 (R00030), keine zweite Liste.
@@ -50,15 +50,15 @@ Vorbereitung: **Repo Z** (aus [R00012](R00012-oberflaeche-liste-detail-zusammen.
 - [ ] Gegeben die Seitenleiste auf 500 px gezogen, wenn man den Trenner **doppelklickt**, dann steht sie wieder bei der Startbreite 360 px. *Ebene: Playwright (Browser-Eigenes).*
 
 ### Tastatur und Barrierefreiheit
-- [ ] Gegeben der zweispaltige Aufbau, wenn man mit Tab bis zum Trenner geht, dann hat er den Fokus, trägt `role="separator"`, `aria-orientation="vertical"`, `aria-valuenow` mit der aktuellen Breite, `aria-valuemin`, `aria-valuemax` und einen Namen, der mit dem sichtbaren Text beginnt; die Pfeiltaste rechts erhöht um 16 px, links senkt um 16 px; Pos1 setzt auf 240 px, Ende auf die Höchstbreite; ein sichtbarer Fokusring liegt am Trenner. *Ebene: Playwright (Fokus, Tastendruck, `aria-*` — Browser-Eigenes).*
+- [ ] Gegeben der zweispaltige Aufbau, wenn man mit Tab bis zum Trenner geht, dann hat er den Fokus, trägt `role="separator"`, `aria-orientation="vertical"`, `aria-controls` (auf die Seitenleiste), `aria-valuenow` mit der aktuellen Breite, `aria-valuemin`, `aria-valuemax` und einen Namen, der mit dem sichtbaren Text beginnt; die Pfeiltaste rechts erhöht um 16 px, links senkt um 16 px; Pos1 setzt auf 240 px, Ende auf die Höchstbreite; ein sichtbarer Fokusring liegt am Trenner. *Ebene: Playwright (Fokus, Tastendruck, `aria-*` — Browser-Eigenes).*
 - [ ] Gegeben der Trenner auf der Mindestbreite, wenn man die Pfeiltaste links drückt, dann ändert sich nichts (kein Wert unter 240 px, `aria-valuenow` bleibt). *Ebene: Unit (Breitenregel).*
 
 ### Zustand und Anzeigeverfahren (Lehre #7/#23)
 - [ ] Gegeben die Seitenleiste auf 500 px, wenn man die Datei wechselt, den Commit wechselt, auf „Einzeln“/„Zusammen“ und auf „ganze Datei“/„nebeneinander“ umschaltet, dann bleibt die Breite 500 px; nach dem Neuladen der Seite steht sie wieder bei 360 px (nichts gespeichert). *Ebene: Playwright (Browser-Eigenes) und Unit (Zustand: Start, Wechsel, Neuladen).*
 - [ ] Gegeben `src/a.txt` mit einem **offenen** Notizfeld an einer Zeile (Text „Klammer fehlt“) und einem Suchtreffer, wenn man den Trenner zieht, dann bleiben das offene Feld samt Text und Fokus, die Markierung, der Suchtreffer und die Bildlaufposition des Diffs erhalten; es wird keine neue Diff-Anfrage gestellt. *Ebene: Playwright (Browser-Eigenes; kein Neuzeichnen, Lehre #23).*
-- [ ] Gegeben ein Fenster von 700 px Breite (zweispaltig, aber enger), wenn man den Trenner ganz nach rechts zieht, dann klemmt die Höchstbreite bei `700 − 320 − 6 = 374 px` (nicht 640); unter der Mindestbreite für zwei Spalten verschwindet der Trenner ganz (eine Spalte, R00033). *Ebene: Unit (Breitenregel: Höchstbreite aus der Fensterbreite) und Playwright (Darstellung).*
+- [ ] Gegeben ein Fenster von 700 px Breite (zweispaltig, aber enger), wenn man den Trenner ganz nach rechts zieht, dann klemmt die Höchstbreite bei `700 − 320 − 6 = 374 px` (nicht 640); unter 566 px verschwindet der Trenner ganz (eine Spalte, R00033). *Ebene: Unit (Breitenregel: Höchstbreite aus der Fensterbreite) und Playwright (Darstellung).*
 
-Grenz- und Leerfälle bedacht: Ziehen über beide Grenzen; Tastendruck auf der Grenze; Fenster genau an der Mindestbreite; kein zweispaltiger Aufbau (kein Trenner); Modus/Ansicht ohne gewählte Datei. Verworfen als eigenes Kriterium: eine gespeicherte Breite über das Neuladen hinaus (`localStorage`), touch-Gesten, eine Breiten-Eingabe als Zahl.
+Grenz- und Leerfälle bedacht: Ziehen über beide Grenzen; Tastendruck auf der Grenze; Fenster genau an 566 px; kein zweispaltiger Aufbau (kein Trenner); Modus/Ansicht ohne gewählte Datei. Verworfen als eigenes Kriterium: eine gespeicherte Breite über das Neuladen hinaus (`localStorage`), touch-Gesten, eine Breiten-Eingabe als Zahl.
 
 ## Betroffene Verzeichnisstruktur
 
@@ -111,14 +111,14 @@ Nach Test-Pyramide und Konfiguration (Interactor je Interaction; Playwright nur 
 
 ## Offene Fragen
 
-Offen beim product-owner (Gestalt, nicht Vertrag):
+Keine offenen. Der product-owner hat alle vier Fragen am 2026-11-25 entschieden (`AI-Team/po-entscheidungen.md`, Zeilen 170–180, Commit `feb3296`); die Entscheidungen sind eingearbeitet:
 
-1. **Mindest- und Höchstbreite**: Empfehlung: Seitenleiste **240–640 px**, Diff mindestens **320 px**, Startbreite **360 px** (Entwurf und heutiges `minmax(280px,2fr) minmax(320px,3fr)`); die Höchstbreite wird zusätzlich durch die Fensterbreite begrenzt (`min(640, Fenster − 320 − 6)`). Alternativen: weiter (128–720 px), enger (280–520 px) oder die Grenzen ganz weglassen.
-2. **Startbreite und Doppelklick-Rücksetzung**: Empfehlung: Start 360 px, Doppelklick setzt genau darauf zurück. Alternative: Doppelklick setzt auf „halbe Fensterbreite".
-3. **Tastenschritt**: Empfehlung: 16 px je Pfeildruck, Pos1/Ende auf die Grenzen. Alternativen: 8 px, 32 px, oder kein Pos1/Ende.
-4. **Ort des Ausklapp-Knopfs** (gehört zu R00035, hier mitgemeint): Empfehlung: am Trenner (dieses Bedienelement), sodass sein Weg zurück sichtbar bleibt — deshalb `Braucht I0035` für R00035.
+1. **Mindest-, Höchst- und Startbreite: 240–640 px** (Seitenleiste), Diff mindestens 320 px, Höchstbreite `min(640, Fenster − 320 − 6)`, Start 360 px; Doppelklick setzt auf 360 px zurück.
+2. **Tastenschritt: 16 px** je Pfeil, Pos1/Ende auf die Grenzen; der Trenner trägt zusätzlich `aria-controls` auf die Seitenleiste.
+3. **RAM statt `localStorage`** — nach dem Neuladen gilt wieder die Startbreite (Vision „Nichts wird gespeichert“).
+4. **Ort des Ausklapp-Knopfs: am Trenner** (R00035) — `Braucht I0035` bleibt.
 
-Ohne Rückfrage entschieden (Empfehlung des planers, gilt bis zur Antwort): nur RAM — nach dem Neuladen gilt die Startbreite (wie „Umbruch“/„Ansicht“/„Anordnung“; Vision „nichts wird gespeichert“); die Breite überlebt Datei-, Commit-, Modus- und Ansichtswechsel; das Ziehen zeichnet den Diff nicht neu (Lehre #23); unter der Mindestbreite für zwei Spalten gibt es keinen Trenner.
+Ohne Rückfrage entschieden und vom product-owner bestätigt: nur RAM — nach dem Neuladen gilt wieder die Startbreite (wie „Umbruch“/„Ansicht“/„Anordnung“); die Breite überlebt Datei-, Commit-, Modus-, Ansichts- und Anordnungswechsel; das Ziehen zeichnet den Diff nicht neu (Lehre #23); unter 566 px gibt es keinen Trenner.
 
 ## Manuelle Vorbereitungstätigkeiten
 
