@@ -1,41 +1,73 @@
-/* gitreviewA — Datei abhaken (R00011): liest den Stand aller Stellen nach der Commit-Leiste (erstes Ereignis `commit-gewaehlt`), zeigt
-   „n von m abgehakt“ mit Balken über der Dateiliste und führt die Kästchen der Dateizeilen (Ereignis `dateiliste-gezeichnet`); an einer
-   gesperrten Stelle (R00014) steht der Grund neben der Zeile, und das Kästchen ändert nichts.
-   Ein Klick sendet den Zielzustand; das Kästchen zeigt immer den vom Server bestätigten Zustand. Je Stelle ist höchstens eine Anfrage
-   unterwegs; wer währenddessen erneut klickt, ändert nur den Wunsch, und die laufende Anfrage sendet ihn nach. */
+/* gitreviewA — Abhaken je Modus (R00011, R00012): „Einzeln“ führt das Kästchen je Stelle (Commit und Datei), „Zusammen“ je Datei
+   (alle ihre Stellen auf einmal). Der Kopf zeigt „n von m Stellen abgehakt“ bzw. „n von m Dateien abgehakt“; der Diff-Kopf trägt
+   dasselbe Kästchen wie die gewählte Zeile. Ein Klick wünscht den Zielzustand; gezeichnet wird erst der vom Server bestätigte Zustand.
+   Je Stelle bzw. Datei ist höchstens eine Anfrage unterwegs; weitere Klicks ändern nur den Wunsch. */
 (function () {
   'use strict';
 
   const zustand = {
     istLesbar: false,
-    abgehakt: 0,
-    gesamt: 0,
-    nichtLesbar: 0,
-    bestaetigt: new Map(),
-    sperrgrund: new Map(),
+    modus: 'einzeln',
+    stand: null,
+    bestaetigtRoh: new Map(),
+    sperrgrundRoh: new Map(),
+    bestaetigtAnzeige: new Map(),
+    sperrgrundAnzeige: new Map(),
     wunsch: new Map(),
     unterwegs: new Set(),
     angezeigterCommit: null,
+    nettoDateien: [],
+    diffPfad: null,
+    diffCommit: null,
   };
 
   function init() {
     const ansicht = ansichtElemente();
     document.addEventListener('commit-gewaehlt', () => ladeStand(ansicht), { once: true });
     document.addEventListener('dateiliste-gezeichnet', ereignis => {
-      zustand.angezeigterCommit = ereignis.detail.commit;
+      uebernimmListe(ereignis.detail);
+      zeichneFortschritt(ansicht);
       zeigeKaestchen(ansicht);
     });
+    document.addEventListener('modus-gewechselt', () => {
+      zustand.modus = modusJetzt();
+      zeichneFortschritt(ansicht);
+      zeigeKaestchen(ansicht);
+      zeigeDiffKaestchen(ansicht);
+    });
+    document.addEventListener('diff-gezeichnet', ereignis => {
+      zustand.diffPfad = ereignis.detail.pfad;
+      zustand.diffCommit = ereignis.detail.commit;
+      zeigeDiffKaestchen(ansicht);
+    });
+    document.addEventListener('diff-geleert', () => {
+      zustand.diffPfad = null;
+      zustand.diffCommit = null;
+      zeigeDiffKaestchen(ansicht);
+    });
     ansicht.zeilenElement.addEventListener('click', ereignis => bedieneKaestchen(ansicht, ereignis));
+    ansicht.diffKaestchen.addEventListener('click', ereignis => bedieneDiffKaestchen(ansicht, ereignis));
+  }
+
+  function modusJetzt() {
+    if (window.gitreviewaModus && window.gitreviewaModus.hole) {
+      return window.gitreviewaModus.hole();
+    }
+    return 'einzeln';
   }
 
   function ansichtElemente() {
-    const fortschrittElement = document.querySelector('#dateiliste .haken-fortschritt');
+    const fortschrittElement = document.getElementById('kopf-fortschritt');
+    const diffWurzel = document.getElementById('diff');
     return {
       zaehlerElement: fortschrittElement.querySelector('.haken-zaehler'),
       balkenElement: fortschrittElement.querySelector('.haken-balken'),
+      anteilElement: fortschrittElement.querySelector('.haken-anteil'),
       ansageElement: fortschrittElement.querySelector('.haken-ansage'),
       meldungElement: fortschrittElement.querySelector('.haken-meldung'),
-      zeilenElement: document.getElementById('datei-zeilen'),
+      zeilenElement: document.getElementById('dateiliste'),
+      diffKaestchen: diffWurzel ? diffWurzel.querySelector('#diff-haken') : null,
+      diffHakenZiel: diffWurzel ? diffWurzel.querySelector('.gr-diff-haken') : null,
     };
   }
 
@@ -47,17 +79,12 @@
       ansicht.meldungElement.textContent = 'Fortschritt konnte nicht gelesen werden';
       return;
     }
-    for (const stelle of stand.stellen) {
-      const schluessel = stellenSchluessel(stelle.commit, stelle.datei);
-      zustand.bestaetigt.set(schluessel, stelle.abgehakt);
-      zustand.sperrgrund.set(schluessel, stelle.sperrgrund);
-    }
-    zustand.nichtLesbar = stand.stellen.filter(stelle => stelle.sperrgrund.length > 0).length;
-    zustand.abgehakt = stand.abgehakt;
-    zustand.gesamt = stand.gesamt;
+    uebernimmStand(stand);
     zustand.istLesbar = true;
+    document.dispatchEvent(new CustomEvent('haken-stand-geladen', { detail: stand }));
     zeichneFortschritt(ansicht);
     zeigeKaestchen(ansicht);
+    zeigeDiffKaestchen(ansicht);
   }
 
   async function standAbrufen() {
@@ -68,101 +95,273 @@
     return antwort.json();
   }
 
+  function uebernimmStand(stand) {
+    zustand.stand = stand;
+    for (const stelle of stand.stellen) {
+      const roh = rohSchluessel(stelle.commit, stelle.datei);
+      const anzeige = anzeigeSchluessel(stelle.commit, stelle.datei);
+      zustand.bestaetigtRoh.set(roh, stelle.abgehakt);
+      zustand.bestaetigtAnzeige.set(anzeige, stelle.abgehakt);
+      zustand.sperrgrundRoh.set(roh, stelle.sperrgrund);
+      zustand.sperrgrundAnzeige.set(anzeige, stelle.sperrgrund);
+    }
+  }
+
+  function uebernimmListe(detail) {
+    zustand.modus = detail.modus || modusJetzt();
+    zustand.angezeigterCommit = detail.commit || null;
+    zustand.nettoDateien = detail.modus === 'zusammen' ? detail.dateien : [];
+  }
+
+  function rohSchluessel(commit, pfad) {
+    return `${commit} ${pfad}`;
+  }
+
+  function anzeigeSchluessel(commit, pfad) {
+    return `${commit} ${sichtbarerName(pfad)}`;
+  }
+
+  function sichtbarerName(pfad) {
+    return window.sichtbarerName ? window.sichtbarerName(pfad) : pfad;
+  }
+
+  /* ── Fortschritt im Kopf ── */
+
   function zeichneFortschritt(ansicht) {
-    const text = fortschrittText(zustand.abgehakt, zustand.gesamt, zustand.nichtLesbar);
+    if (!zustand.istLesbar) {
+      return;
+    }
+    const zusammen = zustand.modus === 'zusammen';
+    const werte = zusammen ? fortschrittZusammenWerte() : fortschrittEinzelnWerte();
+    const einheit = zusammen ? 'Dateien' : 'Stellen';
+    const text = fortschrittText(werte.abgehakt, werte.gesamt, werte.nichtLesbar, einheit);
     ansicht.zaehlerElement.textContent = text;
     ansicht.ansageElement.textContent = text;
-    ansicht.balkenElement.hidden = zustand.gesamt === 0;
-    ansicht.balkenElement.querySelector('.haken-anteil').style.setProperty('--anteil', String(balkenAnteil(zustand.abgehakt, zustand.gesamt)));
+    ansicht.balkenElement.hidden = werte.gesamt === 0;
+    ansicht.anteilElement.style.setProperty('--anteil', String(balkenAnteil(werte.abgehakt, werte.gesamt)));
   }
 
-  /** Alle Kästchen der gezeichneten Liste: bestätigter Zustand, bedienbar erst mit gelesenem Stand und nie an einer gesperrten Stelle. */
+  function fortschrittZusammenWerte() {
+    return fortschrittZusammen(zustand.nettoDateien, zustand.bestaetigtAnzeige, istDateiGesperrt);
+  }
+
+  function fortschrittEinzelnWerte() {
+    const stand = zustand.stand;
+    if (!stand) {
+      return { abgehakt: 0, gesamt: 0, nichtLesbar: 0 };
+    }
+    return fortschrittEinzeln(stand.stellen, stand.abgehakt, stand.gesamt);
+  }
+
+  function istDateiGesperrt(datei) {
+    return datei.stellen.some(stelle => sperrgrundAnzeige(stelle) !== '');
+  }
+
+  function sperrgrundRoh(schluessel) {
+    return zustand.sperrgrundRoh.get(schluessel) || '';
+  }
+
+  function sperrgrundAnzeige(stelle) {
+    return zustand.sperrgrundAnzeige.get(anzeigeSchluessel(stelle.commit, stelle.pfad)) || '';
+  }
+
+  /* ── Kästchen in der Liste ── */
+
   function zeigeKaestchen(ansicht) {
+    const zusammen = zustand.modus === 'zusammen';
     for (const kaestchenElement of ansicht.zeilenElement.querySelectorAll('input.haken')) {
-      zeigeKaestchenZustand(kaestchenElement);
+      const zeileElement = kaestchenElement.closest('.datei-zeile');
+      if (zusammen) {
+        zeigeDateiKaestchen(kaestchenElement, zeileElement);
+      } else {
+        zeigeStelleKaestchen(kaestchenElement, zeileElement);
+      }
     }
   }
 
-  function zeigeKaestchenZustand(kaestchenElement) {
-    const zeileElement = kaestchenElement.closest('.datei-zeile');
-    const schluessel = stellenSchluessel(zustand.angezeigterCommit, zeileElement.dataset.pfad);
-    kaestchenElement.checked = zustand.bestaetigt.get(schluessel) === true;
+  function zeigeStelleKaestchen(kaestchenElement, zeileElement) {
+    const schluessel = rohSchluessel(zustand.angezeigterCommit, zeileElement.dataset.pfad);
+    const istAbgehakt = zustand.bestaetigtRoh.get(schluessel) === true;
+    const grund = sperrgrundRoh(schluessel);
+    kaestchenElement.checked = istAbgehakt;
+    kaestchenElement.indeterminate = false;
     kaestchenElement.disabled = !zustand.istLesbar;
-    zeigeSperre(zeileElement, kaestchenElement, sperrgrundDerStelle(schluessel));
+    kaestchenElement.setAttribute('aria-disabled', String(grund !== ''));
+    kaestchenElement.setAttribute('aria-label', kaestchenBezeichnung(sichtbarerName(zeileElement.dataset.pfad), grund));
+    zeileElement.querySelector('.haken-grund').textContent = grund;
   }
 
-  function sperrgrundDerStelle(schluessel) {
-    const istBekannt = zustand.sperrgrund.has(schluessel);
-    if (!istBekannt) {
-      return '';
+  function zeigeDateiKaestchen(kaestchenElement, zeileElement) {
+    const datei = dateiDerZeile(zeileElement.dataset.pfad);
+    if (!datei) {
+      kaestchenElement.checked = false;
+      kaestchenElement.indeterminate = false;
+      kaestchenElement.disabled = true;
+      kaestchenElement.setAttribute('aria-disabled', 'true');
+      return;
     }
-    return zustand.sperrgrund.get(schluessel);
+    const art = dateiZustand(datei.stellen, zustand.bestaetigtAnzeige);
+    const grund = dateiSperrgrund(datei);
+    kaestchenElement.checked = art === 'abgehakt';
+    kaestchenElement.indeterminate = art === 'teilweise';
+    kaestchenElement.disabled = !zustand.istLesbar;
+    kaestchenElement.setAttribute('aria-disabled', String(grund !== ''));
+    kaestchenElement.setAttribute('aria-label', kaestchenBezeichnung(datei.pfad, grund));
+    if (art === 'teilweise') {
+      kaestchenElement.setAttribute('aria-checked', 'mixed');
+    } else {
+      kaestchenElement.removeAttribute('aria-checked');
+    }
+    zeileElement.dataset.haken = art;
+    zeileElement.querySelector('.haken-grund').textContent = '';
   }
 
-  /** Gesperrt bleibt das Kästchen fokussierbar (aria-disabled statt disabled): so finden Tastatur und Vorlesen den Grund. */
-  function zeigeSperre(zeileElement, kaestchenElement, sperrgrund) {
-    const istGesperrt = sperrgrund.length > 0;
-    kaestchenElement.setAttribute('aria-disabled', String(istGesperrt));
-    kaestchenElement.setAttribute('aria-label', kaestchenBezeichnung(sichtbarerName(zeileElement.dataset.pfad), sperrgrund));
-    zeileElement.querySelector('.haken-grund').textContent = sperrgrund;
+  /** Der erste Sperrgrund der Datei; leer, wenn keine ihrer Stellen gesperrt ist. */
+  function dateiSperrgrund(datei) {
+    for (const stelle of datei.stellen) {
+      const grund = sperrgrundAnzeige(stelle);
+      if (grund !== '') {
+        return grund;
+      }
+    }
+    return '';
   }
 
-  /** Das native Umschalten wird verhindert: gezeichnet wird erst mit der Antwort des Servers. */
+  function dateiDerZeile(pfad) {
+    return zustand.nettoDateien.find(datei => datei.pfad === pfad) || null;
+  }
+
+  /* ── Kästchen im Diff-Kopf ── */
+
+  function zeigeDiffKaestchen(ansicht) {
+    const kaestchen = ansicht.diffKaestchen;
+    if (ansicht.diffHakenZiel) {
+      ansicht.diffHakenZiel.hidden = !zustand.diffPfad;
+    }
+    if (!kaestchen || !zustand.diffPfad) {
+      if (kaestchen) {
+        kaestchen.disabled = true;
+        kaestchen.setAttribute('aria-disabled', 'true');
+        kaestchen.checked = false;
+        kaestchen.indeterminate = false;
+      }
+      return;
+    }
+    if (zustand.modus === 'zusammen') {
+      const datei = dateiDerZeile(zustand.diffPfad);
+      if (!datei) {
+        kaestchen.disabled = true;
+        kaestchen.setAttribute('aria-disabled', 'true');
+        return;
+      }
+      const art = dateiZustand(datei.stellen, zustand.bestaetigtAnzeige);
+      const grund = dateiSperrgrund(datei);
+      kaestchen.checked = art === 'abgehakt';
+      kaestchen.indeterminate = art === 'teilweise';
+      kaestchen.disabled = !zustand.istLesbar;
+      kaestchen.setAttribute('aria-disabled', String(grund !== ''));
+      kaestchen.setAttribute('aria-label', kaestchenBezeichnung(datei.pfad, grund));
+      return;
+    }
+    const schluessel = rohSchluessel(zustand.diffCommit, zustand.diffPfad);
+    const grund = sperrgrundRoh(schluessel);
+    kaestchen.checked = zustand.bestaetigtRoh.get(schluessel) === true;
+    kaestchen.indeterminate = false;
+    kaestchen.disabled = !zustand.istLesbar;
+    kaestchen.setAttribute('aria-disabled', String(grund !== ''));
+    kaestchen.setAttribute('aria-label', kaestchenBezeichnung(sichtbarerName(zustand.diffPfad), grund));
+  }
+
+  /* ── Betätigung ── */
+
   function bedieneKaestchen(ansicht, ereignis) {
-    const kaestchenElement = ereignis.target.closest('input.haken');
-    if (!kaestchenElement) {
+    const kaestchen = ereignis.target.closest('input.haken');
+    if (!kaestchen) {
       return;
     }
     ereignis.preventDefault();
     if (!zustand.istLesbar) {
       return;
     }
-    const stelle = { commit: zustand.angezeigterCommit, pfad: kaestchenElement.closest('.datei-zeile').dataset.pfad };
-    const schluessel = stellenSchluessel(stelle.commit, stelle.pfad);
-    const istGesperrt = sperrgrundDerStelle(schluessel).length > 0;
-    if (istGesperrt) {
-      return;
+    const zeileElement = kaestchen.closest('.datei-zeile');
+    if (zustand.modus === 'zusammen') {
+      bedieneDatei(ansicht, zeileElement.dataset.pfad);
+    } else {
+      bedieneStelle(ansicht, zustand.angezeigterCommit, zeileElement.dataset.pfad);
     }
-    const istBestaetigtAbgehakt = zustand.bestaetigt.get(schluessel) === true;
-    zustand.wunsch.set(schluessel, naechsterZielzustand(istBestaetigtAbgehakt, zustand.wunsch.get(schluessel)));
-    ansicht.meldungElement.textContent = '';
-    sendeWunsch(ansicht, stelle, schluessel);
   }
 
-  /** Sendet, solange ein Wunsch offen ist — nacheinander, damit eine spätere Antwort nie von einer früheren überholt wird. */
-  async function sendeWunsch(ansicht, stelle, schluessel) {
-    const istSchonUnterwegs = zustand.unterwegs.has(schluessel);
-    if (istSchonUnterwegs) {
+  function bedieneDiffKaestchen(ansicht, ereignis) {
+    ereignis.preventDefault();
+    if (!zustand.istLesbar || !zustand.diffPfad) {
+      return;
+    }
+    if (zustand.modus === 'zusammen') {
+      bedieneDatei(ansicht, zustand.diffPfad);
+    } else {
+      bedieneStelle(ansicht, zustand.diffCommit, zustand.diffPfad);
+    }
+  }
+
+  function bedieneStelle(ansicht, commit, pfad) {
+    if (!commit) {
+      return;
+    }
+    const schluessel = rohSchluessel(commit, pfad);
+    if (sperrgrundRoh(schluessel) !== '') {
+      return;
+    }
+    const istBestaetigt = zustand.bestaetigtRoh.get(schluessel) === true;
+    const ziel = naechsterZielzustand(istBestaetigt, zustand.wunsch.get(schluessel));
+    zustand.wunsch.set(schluessel, ziel);
+    sendeWunsch(ansicht, schluessel, { commit, datei: pfad, abgehakt: ziel });
+  }
+
+  function bedieneDatei(ansicht, pfad) {
+    const datei = dateiDerZeile(pfad);
+    if (!datei || istDateiGesperrt(datei)) {
+      return;
+    }
+    const schluessel = `datei ${pfad}`;
+    const istBestaetigt = dateiZustand(datei.stellen, zustand.bestaetigtAnzeige) === 'abgehakt';
+    const ziel = naechsterZielzustand(istBestaetigt, zustand.wunsch.get(schluessel));
+    zustand.wunsch.set(schluessel, ziel);
+    sendeWunsch(ansicht, schluessel, { datei: pfad, abgehakt: ziel });
+  }
+
+  /** Sendet den jüngsten Wunsch einer Stelle bzw. Datei; solange einer unterwegs ist, übernimmt der nächste Zug ihn danach. */
+  async function sendeWunsch(ansicht, schluessel, rumpf) {
+    if (zustand.unterwegs.has(schluessel)) {
       return;
     }
     zustand.unterwegs.add(schluessel);
     try {
       while (zustand.wunsch.has(schluessel)) {
-        const zielzustand = zustand.wunsch.get(schluessel);
-        const antwort = await hakenSenden(stelle, zielzustand);
-        zustand.bestaetigt.set(schluessel, zielzustand);
-        if (zustand.wunsch.get(schluessel) === zielzustand) {
+        const ziel = zustand.wunsch.get(schluessel);
+        const antwort = await hakenSenden({ ...rumpf, abgehakt: ziel });
+        bestaetigeAntwort(schluessel, rumpf, ziel, antwort);
+        if (zustand.wunsch.get(schluessel) === ziel) {
           zustand.wunsch.delete(schluessel);
         }
-        zustand.abgehakt = antwort.abgehakt;
-        zustand.gesamt = antwort.gesamt;
         zeichneFortschritt(ansicht);
-        zeigeKaestchenDerStelle(ansicht, stelle);
+        zeigeKaestchen(ansicht);
+        zeigeDiffKaestchen(ansicht);
       }
     } catch {
       zustand.wunsch.delete(schluessel);
       ansicht.meldungElement.textContent = 'Haken konnte nicht gespeichert werden';
-      zeigeKaestchenDerStelle(ansicht, stelle);
+      zeigeKaestchen(ansicht);
+      zeigeDiffKaestchen(ansicht);
     } finally {
       zustand.unterwegs.delete(schluessel);
     }
   }
 
-  async function hakenSenden(stelle, abgehakt) {
+  async function hakenSenden(rumpf) {
     const antwort = await fetch('api/haken', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({ commit: stelle.commit, datei: stelle.pfad, abgehakt }),
+      body: JSON.stringify(rumpf),
     });
     if (!antwort.ok) {
       throw new Error(`Antwort ${antwort.status}`);
@@ -170,15 +369,27 @@
     return antwort.json();
   }
 
-  /** Nur, wenn die Liste noch den Commit der Stelle zeigt; nach einem Wechsel zeichnet `dateiliste-gezeichnet` den Zustand neu. */
-  function zeigeKaestchenDerStelle(ansicht, stelle) {
-    const istAngezeigt = stelle.commit === zustand.angezeigterCommit;
-    if (!istAngezeigt) {
+  function bestaetigeAntwort(schluessel, rumpf, ziel, antwort) {
+    if (zustand.stand) {
+      zustand.stand.abgehakt = antwort.abgehakt;
+      zustand.stand.gesamt = antwort.gesamt;
+    }
+    if (rumpf.commit) {
+      const roh = rohSchluessel(rumpf.commit, rumpf.datei);
+      const anzeige = anzeigeSchluessel(rumpf.commit, rumpf.datei);
+      zustand.bestaetigtRoh.set(roh, ziel);
+      zustand.bestaetigtAnzeige.set(anzeige, ziel);
       return;
     }
-    for (const zeileElement of ansicht.zeilenElement.querySelectorAll('.datei-zeile')) {
-      if (zeileElement.dataset.pfad === stelle.pfad) {
-        zeigeKaestchenZustand(zeileElement.querySelector('input.haken'));
+    const datei = dateiDerZeile(rumpf.datei);
+    if (datei) {
+      for (const stelle of datei.stellen) {
+        zustand.bestaetigtAnzeige.set(anzeigeSchluessel(stelle.commit, stelle.pfad), ziel);
+      }
+    }
+    for (const stelle of zustand.stand ? zustand.stand.stellen : []) {
+      if (sichtbarerName(stelle.datei) === rumpf.datei) {
+        zustand.bestaetigtRoh.set(rohSchluessel(stelle.commit, stelle.datei), ziel);
       }
     }
   }

@@ -7,11 +7,11 @@ const { test, NAME_MIT_HTML } = require('../dsl/datei-abhaken.js');
 const PQR = ['p', 'q', 'r'];
 
 test.describe('Datei abhaken', () => {
-  test('soll zu Beginn „0 von 8 abgehakt“ mit leerem Balken zeigen und keine Datei abgehakt (Kriterium 1)', async ({ abhaken }) => {
+  test('soll zu Beginn „0 von 8 Stellen abgehakt“ mit leerem Balken zeigen und keine Datei abgehakt (Kriterium 1)', async ({ abhaken }) => {
     await abhaken.starten({ commits: PQR });
     await abhaken.dateienWarten(4);
 
-    await abhaken.fortschritt('0 von 8 abgehakt');
+    await abhaken.fortschritt('0 von 8 Stellen abgehakt');
     await abhaken.balkenanteil(0);
     for (const name of ['README.md', 'alt.txt', 'src/a.txt', 'src/b.txt']) {
       await abhaken.istAbgehakt(name, false);
@@ -27,12 +27,12 @@ test.describe('Datei abhaken', () => {
   test('soll nur mit der Tastatur abhaken, den Fokus halten, keine Datei wählen und den Haken über Wechsel und Neuladen behalten (Kriterien 4 und 10)', async ({ abhaken }) => {
     await abhaken.starten({ commits: PQR });
     await abhaken.dateienWarten(4);
-    await abhaken.fortschritt('0 von 8 abgehakt');
+    await abhaken.fortschritt('0 von 8 Stellen abgehakt');
     await abhaken.dateiwahlenMitschreiben();
 
     await abhaken.perTastaturAbhaken('README.md');
 
-    await abhaken.fortschritt('1 von 8 abgehakt');
+    await abhaken.fortschritt('1 von 8 Stellen abgehakt');
     await abhaken.balkenanteil(0.125);
     await abhaken.istAbgehakt('README.md');
     await abhaken.kaestchenHeisst('README.md', 'Abgehakt: README.md');
@@ -43,16 +43,16 @@ test.describe('Datei abhaken', () => {
 
     await abhaken.commitAnsehen('q');
     await abhaken.dateienWarten(4);
-    await abhaken.fortschritt('1 von 8 abgehakt');
+    await abhaken.fortschritt('1 von 8 Stellen abgehakt');
     await abhaken.istAbgehakt('src/b.txt', false);
     await abhaken.dateiAnsehen('src/b.txt');
-    await abhaken.fortschritt('1 von 8 abgehakt');
+    await abhaken.fortschritt('1 von 8 Stellen abgehakt');
     await abhaken.commitAnsehen('p');
     await abhaken.dateienWarten(4);
     await abhaken.istAbgehakt('README.md');
     await abhaken.neuLaden();
     await abhaken.dateienWarten(4);
-    await abhaken.fortschritt('1 von 8 abgehakt');
+    await abhaken.fortschritt('1 von 8 Stellen abgehakt');
     await abhaken.istAbgehakt('README.md');
   });
 
@@ -65,7 +65,7 @@ test.describe('Datei abhaken', () => {
 
     await abhaken.abhaken('src/b.txt');
 
-    await abhaken.fortschritt('1 von 8 abgehakt');
+    await abhaken.fortschritt('1 von 8 Stellen abgehakt');
     await abhaken.istAbgehakt('src/b.txt');
     await abhaken.gewaehlteDateien(['alt.txt']);
     await abhaken.keineDateiwahlSeitdem();
@@ -75,7 +75,7 @@ test.describe('Datei abhaken', () => {
     await abhaken.commitAnsehen('q');
     await abhaken.dateienWarten(4);
     await abhaken.abhaken('src/b.txt');
-    await abhaken.fortschritt('0 von 8 abgehakt');
+    await abhaken.fortschritt('0 von 8 Stellen abgehakt');
     await abhaken.istAbgehakt('src/b.txt', false);
   });
 
@@ -85,7 +85,7 @@ test.describe('Datei abhaken', () => {
 
     await abhaken.abhaken(NAME_MIT_HTML);
 
-    await abhaken.fortschritt('1 von 1 abgehakt');
+    await abhaken.fortschritt('1 von 1 Stellen abgehakt');
     await abhaken.kaestchenHeisst(NAME_MIT_HTML, `Abgehakt: ${NAME_MIT_HTML}`);
     await abhaken.fremderTextBleibtText();
   });
@@ -94,26 +94,26 @@ test.describe('Datei abhaken', () => {
     test(`soll das Kästchen zurücksetzen und „Haken konnte nicht gespeichert werden“ zeigen, wenn das Setzen ${fall.art} scheitert (Kriterium 12)`, async ({ abhaken }) => {
       await abhaken.starten({ commits: PQR });
       await abhaken.dateienWarten(4);
-      await abhaken.fortschritt('0 von 8 abgehakt');
+      await abhaken.fortschritt('0 von 8 Stellen abgehakt');
       await abhaken.hakenSetzenScheitert(fall);
 
       await abhaken.abhaken('README.md');
 
       await abhaken.hakenMeldung('Haken konnte nicht gespeichert werden');
       await abhaken.istAbgehakt('README.md', false);
-      await abhaken.fortschritt('0 von 8 abgehakt');
+      await abhaken.fortschritt('0 von 8 Stellen abgehakt');
     });
   }
 
   for (const fall of [
-    { klicks: 2, gesendet: [true, false], erwartet: [], zaehler: '0 von 8 abgehakt' },
-    { klicks: 4, gesendet: [true, false], erwartet: [], zaehler: '0 von 8 abgehakt' },
-    { klicks: 3, gesendet: [true], erwartet: ['p:README.md'], zaehler: '1 von 8 abgehakt' },
+    { klicks: 2, gesendet: [true, false], erwartet: [], zaehler: '0 von 8 Stellen abgehakt' },
+    { klicks: 4, gesendet: [true, false], erwartet: [], zaehler: '0 von 8 Stellen abgehakt' },
+    { klicks: 3, gesendet: [true], erwartet: ['p:README.md'], zaehler: '1 von 8 Stellen abgehakt' },
   ]) {
     test(`soll bei ${fall.klicks} Klicks während einer um 800 ms verzögerten Antwort und einem Wechsel den letzten Wunsch nachsenden und genau ihn speichern (Kriterium 12)`, async ({ abhaken }) => {
       await abhaken.starten({ commits: PQR });
       await abhaken.dateienWarten(4);
-      await abhaken.fortschritt('0 von 8 abgehakt');
+      await abhaken.fortschritt('0 von 8 Stellen abgehakt');
       const gesendet = await abhaken.hakenSetzenVerzoegern(800);
 
       for (let klick = 0; klick < fall.klicks; klick += 1) {
@@ -151,12 +151,12 @@ test.describe('Datei abhaken', () => {
     test.expect(abhaken.ergebnis()).toBe('# Ergebnis manueller Review\n\nKeine Anmerkungen.\n');
   });
 
-  test('soll bei 2 000 Dateien „0 von 2000 abgehakt“ binnen 2 s nach dem Start, die Liste binnen 1 s und den neuen Zähler binnen 1 s nach dem Klick zeigen (Kriterium 15)', async ({ abhaken }) => {
+  test('soll bei 2 000 Dateien „0 von 2000 Stellen abgehakt“ binnen 2 s nach dem Start, die Liste binnen 1 s und den neuen Zähler binnen 1 s nach dem Klick zeigen (Kriterium 15)', async ({ abhaken }) => {
     await abhaken.starten({ vorbereitung: 'g', commits: ['g'] });
 
-    const bisZaehler = await abhaken.zeitSeitStartBisFortschritt('0 von 2000 abgehakt');
+    const bisZaehler = await abhaken.zeitSeitStartBisFortschritt('0 von 2000 Stellen abgehakt');
     const bisListe = await abhaken.dateienRechtzeitigNachKlick('g', 2000);
-    const bisNeuerZaehler = await abhaken.zeitVomKlickBisFortschritt('viele/datei-1000.txt', '1 von 2000 abgehakt');
+    const bisNeuerZaehler = await abhaken.zeitVomKlickBisFortschritt('viele/datei-1000.txt', '1 von 2000 Stellen abgehakt');
 
     test.info().annotations.push({ type: 'Messwerte', description: `Start bis Zähler ${bisZaehler} ms, Klick bis 2000 Zeilen ${bisListe} ms, Klick bis Zähler ${bisNeuerZaehler} ms` });
     console.log(`Messwerte 2000 Dateien: Start bis Zähler ${bisZaehler} ms, Klick bis Liste ${bisListe} ms, Klick bis Zähler ${bisNeuerZaehler} ms`);

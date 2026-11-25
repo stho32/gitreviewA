@@ -45,13 +45,14 @@
     return { plus: anteil(datei.plus), minus: anteil(datei.minus) };
   }
 
-  /** Richtungsändernde Zeichen: Einbettungen und Isolierungen, dazu LRM, RLM und ALM. */
-  const RICHTUNGSZEICHEN = /[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g;
+  /** Richtungs-, Format- und Steuerzeichen (außer Tab) sowie Zeilen- und Absatztrenner: dieselbe Klasse wie
+      `Fremdtext/UnsichtbareZeichen` im Server, keine zweite Zeichenliste. */
+  const UNSICHTBARE_ZEICHEN = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu;
 
-  /** Fremder Pfad („Trojan Source“): richtungsändernde Zeichen würden den Namen umdrehen; sie bleiben sichtbar als Marke `⟨U+202E⟩`
-      wie im Diff. Nur der angezeigte Name ist markiert, `datei.pfad` bleibt roh für Auswahl und Anfragen. */
+  /** Fremder Pfad („Trojan Source“): unsichtbare Zeichen stehen als Marke `⟨U+202E⟩`; nur der angezeigte Name ist markiert,
+      `datei.pfad` bleibt roh für Auswahl und Anfragen. Tab bleibt sichtbar wie im Server. */
   function sichtbarerName(name) {
-    return name.replace(RICHTUNGSZEICHEN, zeichen => `⟨U+${zeichen.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')}⟩`);
+    return name.replace(UNSICHTBARE_ZEICHEN, zeichen => (zeichen === '\t' ? zeichen : `⟨U+${zeichen.codePointAt(0).toString(16).toUpperCase().padStart(4, '0')}⟩`));
   }
 
   function flacheZeilen(dateien) {

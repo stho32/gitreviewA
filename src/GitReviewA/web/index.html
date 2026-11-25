@@ -7,9 +7,12 @@
 <link rel="stylesheet" href="kd-tokens.css">
 <link rel="stylesheet" href="kd-base.css">
 <link rel="stylesheet" href="gitreviewa.css">
+<script src="modus-werte.js" defer></script>
+<script src="modus.js" defer></script>
 <script src="commit-werte.js" defer></script>
 <script src="dateiliste-werte.js" defer></script>
 <script src="dateiliste.js" defer></script>
+<script src="zusammen.js" defer></script>
 <script src="haken-werte.js" defer></script>
 <script src="haken.js" defer></script>
 <script src="sprung-werte.js" defer></script>
@@ -28,6 +31,19 @@
 <body>
 <header class="kz">
   <div class="kz-z1">gitreviewA</div>
+  <div class="kz-lauf">
+    <span id="kopf-zahlen" class="kz-zahlen"></span>
+  </div>
+  <div class="kz-modus" role="group" aria-label="Modus">
+    <button type="button" id="modus-zusammen" class="kz-modus-knopf" aria-pressed="true">Zusammen</button>
+    <button type="button" id="modus-einzeln" class="kz-modus-knopf" aria-pressed="false">Einzeln</button>
+  </div>
+  <div id="kopf-fortschritt" class="haken-fortschritt">
+    <span class="haken-zaehler" aria-hidden="true"></span>
+    <span class="haken-balken" aria-hidden="true" hidden><span class="haken-anteil"></span></span>
+    <span class="haken-ansage vh" aria-live="polite" aria-atomic="true"></span>
+    <span class="haken-meldung" role="status"></span>
+  </div>
   <div class="gr-kopfaktionen">
     <button type="button" id="ergebnis-kopieren" class="kz-btn">Ergebnis kopieren</button>
     <button type="button" id="beenden" class="kz-btn">Beenden</button>
@@ -37,53 +53,63 @@
   <p id="kopieren-status" class="gr-status" role="status"></p>
   <p id="beenden-status" class="gr-status fehler" role="alert"></p>
   <div class="gr-ansicht">
-    <section class="gr-leiste" aria-label="Commits">
-      <p id="commit-status" class="gr-status muted" role="status">Commits werden geladen …</p>
-      <ol id="commit-liste" class="gr-commits" aria-label="Commits der Auswahl"></ol>
-    </section>
-    <section id="dateiliste" class="gr-dateiliste" aria-label="Dateien des gewählten Commits">
-      <div class="haken-fortschritt">
-        <span class="haken-zaehler" aria-hidden="true"></span>
-        <span class="haken-balken" aria-hidden="true" hidden><span class="haken-anteil"></span></span>
-        <span class="haken-ansage vh" aria-live="polite" aria-atomic="true"></span>
-        <span class="haken-meldung" role="status"></span>
-      </div>
-      <div class="dateien-kopf">
-        <p class="dateien-summe"></p>
-        <div class="darstellung" role="group" aria-label="Darstellung der Dateiliste">
-          <button type="button" data-darstellung="flach" aria-pressed="true">flach</button>
-          <button type="button" data-darstellung="baum" aria-pressed="false">Baum</button>
+    <div class="gr-links">
+      <section class="gr-leiste" aria-label="Commits">
+        <details id="commit-zeile" class="gr-commitzeile">
+          <summary id="commit-summary" class="gr-commit-summary">Commits werden geladen …</summary>
+          <p id="commit-status" class="gr-status muted" role="status"></p>
+          <ol id="commit-liste" class="gr-commits" aria-label="Commits der Auswahl"></ol>
+        </details>
+        <div id="commit-waehler" class="gr-waehler" hidden>
+          <div class="gr-waehler-zeile">
+            <button type="button" id="waehler-zurueck" class="btn" aria-label="Voriger Commit">◀</button>
+            <span id="waehler-stand" class="gr-waehler-stand"></span>
+            <button type="button" id="waehler-weiter" class="btn" aria-label="Nächster Commit">▶</button>
+          </div>
+          <select id="waehler-auswahl" class="gr-waehler-auswahl" aria-label="Commit wählen"></select>
+        </div>
+      </section>
+      <section id="dateiliste" class="gr-dateiliste" aria-label="Dateien">
+        <div class="dateien-kopf">
+          <p class="dateien-summe"></p>
+          <div class="darstellung" role="group" aria-label="Darstellung der Dateiliste">
+            <button type="button" data-darstellung="flach" aria-pressed="true">flach</button>
+            <button type="button" data-darstellung="baum" aria-pressed="false">Baum</button>
+          </div>
+        </div>
+        <p class="dateien-meldung gr-status muted" role="status"></p>
+        <ul id="datei-zeilen" class="gr-dateien" aria-label="Dateien"></ul>
+      </section>
+    </div>
+    <section id="diff" class="gr-diff" aria-label="Diff der gewählten Datei">
+      <div class="diff-kopf">
+        <h2 class="diff-pfad mono"></h2>
+        <div class="diff-sprung">
+          <span class="sprung-hinweis gr-status muted" role="status"></span>
+          <span class="sprung-grund gr-status muted" role="status"></span>
+          <a class="sprung-knopf btn" href="#" hidden>In VS Code</a>
+        </div>
+        <span class="diff-herkunft"></span>
+        <label class="gr-diff-haken"><input type="checkbox" id="diff-haken"> Haken</label>
+        <div class="diff-schalter">
+          <div class="seg diffansicht-wahl" role="radiogroup" aria-label="Ansicht">
+            <label><input type="radio" name="diffansicht" value="aenderungen" autocomplete="off" checked>nur Änderungen</label>
+            <label><input type="radio" name="diffansicht" value="ganz" autocomplete="off">ganze Datei</label>
+          </div>
+          <label class="ru-sch"><input type="checkbox" class="leerraum-schalter">Leerraum ignorieren</label>
+          <label class="ru-sch"><input type="checkbox" class="umbruch-schalter">Umbruch</label>
         </div>
       </div>
-      <p class="dateien-meldung gr-status muted" role="status"></p>
-      <ul id="datei-zeilen" class="gr-dateien" aria-label="Dateien"></ul>
+      <p class="diff-meldung gr-status muted" role="status"></p>
+      <div class="diff-wahl">
+        <button type="button" class="btn als-text" hidden>Als Text zeigen</button>
+        <button type="button" class="btn trotzdem-laden" hidden>Trotzdem laden</button>
+        <button type="button" class="btn erneut-laden" hidden>Erneut laden</button>
+      </div>
+      <p class="anmerkung-hinweis gr-status muted" role="status"></p>
+      <div class="df-sc" tabindex="0" role="region" hidden></div>
     </section>
   </div>
-  <section id="diff" class="gr-diff" aria-label="Diff der gewählten Datei">
-    <div class="diff-kopf">
-      <h2 class="diff-pfad mono"></h2>
-      <div class="diff-sprung">
-        <span class="sprung-hinweis gr-status muted" role="status"></span>
-        <span class="sprung-grund gr-status muted" role="status"></span>
-        <a class="sprung-knopf btn" href="#" hidden>In VS Code</a>
-      </div>
-      <div class="diff-schalter">
-        <div class="seg diffansicht-wahl" role="radiogroup" aria-label="Ansicht">
-          <label><input type="radio" name="diffansicht" value="aenderungen" autocomplete="off" checked>nur Änderungen</label>
-          <label><input type="radio" name="diffansicht" value="ganz" autocomplete="off">ganze Datei</label>
-        </div>
-        <label class="ru-sch"><input type="checkbox" class="leerraum-schalter">Leerraum ignorieren</label>
-        <label class="ru-sch"><input type="checkbox" class="umbruch-schalter">Umbruch</label>
-      </div>
-    </div>
-    <p class="diff-meldung gr-status muted" role="status"></p>
-    <div class="diff-wahl">
-      <button type="button" class="btn als-text" hidden>Als Text zeigen</button>
-      <button type="button" class="btn trotzdem-laden" hidden>Trotzdem laden</button>
-    </div>
-    <p class="anmerkung-hinweis gr-status muted" role="status"></p>
-    <div class="df-sc" tabindex="0" role="region" hidden></div>
-  </section>
 </main>
 </body>
 </html>

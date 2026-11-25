@@ -1,7 +1,11 @@
-/* gitreviewA — Commit-Leiste: Zeilen mit Kurz-Hash, Betreff, Autor, Datum und ausklappbarer Message; ein Commit ist gewählt.
-   Die Wahl meldet das Ereignis `commit-gewaehlt` (detail: hash); die Dateiliste hört darauf. */
+/* gitreviewA — Commit-Leiste: Zeilen mit Kurz-Hash, Betreff, Datum, Message; eine Zeile ist gewählt. Die Wahl meldet das Ereignis
+   `commit-gewaehlt` (detail: hash); die Dateiliste hört darauf. R00012: Die Leiste sitzt in einer schmalen Commit-Zeile über der
+   Dateiliste; zugeklappt trägt sie die Zusammenfassung, aufgeklappt (Modus „Einzeln“) die Zeilen. Im Modus „Einzeln“ führt der
+   Commit-Wähler durch die Auswahl; er zeigt Stellung, Kurz-Hash, Betreff, Autor, Zeit und je Commit den Haken-Stand. */
 (function () {
   'use strict';
+
+  const zustand = { commits: [], gewaehlt: null, zusammen: null, haken: null };
 
   async function init() {
     const statusElement = document.getElementById('commit-status');
@@ -10,14 +14,36 @@
     try {
       commits = await commitsLaden();
     } catch (fehler) {
-      statusElement.textContent = `Commits ließen sich nicht laden: ${fehler.message}`;
+      statusElement.textContent = `Commit-Leiste konnte nicht gelesen werden: ${fehler.message}`;
       statusElement.classList.add('fehler');
       return;
     }
-    zeichneCommitListe(listeElement, commits);
+    zustand.commits = commits;
+    zeichneLeiste(listeElement);
     statusElement.textContent = '';
     listeElement.addEventListener('click', ereignis => bedieneLeiste(listeElement, ereignis));
-    waehleErstenCommit(listeElement);
+    waehleErsten(listeElement);
+    zeichneKopfZahlen();
+    zeichneZusammenfassung();
+    baueWaehler();
+    document.addEventListener('modus-gewechselt', () => {
+      zeigeModus();
+      zeichneWaehler();
+    });
+    document.addEventListener('zusammen-geladen', ereignis => {
+      zustand.zusammen = ereignis.detail;
+      zeichneZusammenfassung();
+      zeichneKopfZahlen();
+    });
+    document.addEventListener('haken-stand-geladen', ereignis => {
+      zustand.haken = ereignis.detail;
+      zeichneWaehler();
+    });
+    document.addEventListener('dateiliste-gezeichnet', ereignis => {
+      zustand.dateienAnzahl = ereignis.detail.anzahl;
+      zeichneKopfZahlen();
+    });
+    zeigeModus();
   }
 
   async function commitsLaden() {
@@ -28,10 +54,9 @@
     return antwort.json();
   }
 
-  /** Fremder Text (Autor, Betreff, Message) nur über textContent — nie als HTML. */
-  function zeichneCommitListe(listeElement, commits) {
-    const zeilen = commits.map(commitZeileElement);
-    listeElement.replaceChildren(...zeilen);
+  /** Fremder Text (Betreff, Autor, Message) nur über textContent — nie als HTML. */
+  function zeichneLeiste(listeElement) {
+    listeElement.replaceChildren(...zustand.commits.map(commitZeileElement));
   }
 
   function commitZeileElement(commit, index) {
@@ -39,15 +64,15 @@
     const zeileElement = document.createElement('li');
     zeileElement.className = 'commit-zeile';
     zeileElement.dataset.hash = commit.hash;
-    zeileElement.append(wahlknopfElement(werte));
+    zeileElement.append(wahlElement(werte));
     if (werte.hatRumpf) {
       const rumpfId = `rumpf-${index}`;
-      zeileElement.append(messageSchalterElement(rumpfId), rumpfElement(rumpfId, werte.rumpf));
+      zeileElement.append(messageSchalterElement(rumpfId), rumpfElement(werte.rumpf, rumpfId));
     }
     return zeileElement;
   }
 
-  function wahlknopfElement(werte) {
+  function wahlElement(werte) {
     const knopfElement = document.createElement('button');
     knopfElement.type = 'button';
     knopfElement.className = 'commit-wahl';
@@ -68,8 +93,8 @@
     return schalterElement;
   }
 
-  function rumpfElement(rumpfId, rumpf) {
-    const element = textElement('div', 'rumpf', rumpf);
+  function rumpfElement(text, rumpfId) {
+    const element = textElement('p', 'rumpf', text);
     element.id = rumpfId;
     element.hidden = true;
     return element;
@@ -95,30 +120,172 @@
   }
 
   function schalteMessage(schalterElement) {
-    const warAusgeklappt = schalterElement.getAttribute('aria-expanded') === 'true';
-    schalterElement.setAttribute('aria-expanded', String(!warAusgeklappt));
-    document.getElementById(schalterElement.getAttribute('aria-controls')).hidden = warAusgeklappt;
+    const rumpfElement = document.getElementById(schalterElement.getAttribute('aria-controls'));
+    const warAufgeklappt = schalterElement.getAttribute('aria-expanded') === 'true';
+    schalterElement.setAttribute('aria-expanded', String(!warAufgeklappt));
+    rumpfElement.hidden = warAufgeklappt;
   }
 
-  function waehleErstenCommit(listeElement) {
-    const ersteZeileElement = listeElement.querySelector('.commit-zeile');
-    if (ersteZeileElement) {
-      waehleCommit(listeElement, ersteZeileElement);
+  function waehleErsten(listeElement) {
+    const ersteZeile = listeElement.querySelector('.commit-zeile');
+    if (ersteZeile) {
+      waehleCommit(listeElement, ersteZeile);
     }
   }
 
-  /** Erneutes Wählen des gewählten Commits liest nichts neu: ein Lesevorgang je Wahl. */
+  /** Erneutes Wählen derselben Zeile löst kein Ereignis aus (ein Lesevorgang je Wahl). */
   function waehleCommit(listeElement, zeileElement) {
-    const istSchonGewaehlt = zeileElement.getAttribute('aria-current') === 'true';
-    if (istSchonGewaehlt) {
+    if (zeileElement.getAttribute('aria-current') === 'true') {
       return;
     }
-    for (const gewaehltElement of listeElement.querySelectorAll('.commit-zeile[aria-current]')) {
-      gewaehltElement.removeAttribute('aria-current');
+    for (const element of listeElement.querySelectorAll('.commit-zeile[aria-current]')) {
+      element.removeAttribute('aria-current');
     }
     zeileElement.setAttribute('aria-current', 'true');
-    document.dispatchEvent(new CustomEvent('commit-gewaehlt', { detail: { hash: zeileElement.dataset.hash } }));
+    zustand.gewaehlt = zeileElement.dataset.hash;
+    document.dispatchEvent(new CustomEvent('commit-gewaehlt', { detail: { hash: zustand.gewaehlt } }));
+    zeichneWaehler();
   }
+
+  /* ── Zusammenfassung, Kopfzahlen, Wähler ── */
+
+  function istZusammen() {
+    return Boolean(window.gitreviewaModus && window.gitreviewaModus.istZusammen());
+  }
+
+  function kurzVon(hash) {
+    const commit = zustand.commits.find(eintrag => eintrag.hash === hash);
+    return commit ? commit.kurzHash : '';
+  }
+
+  function zeichneKopfZahlen() {
+    const element = document.getElementById('kopf-zahlen');
+    if (!element) {
+      return;
+    }
+    const anzahl = zustand.dateienAnzahl;
+    if (anzahl === undefined) {
+      element.textContent = `${zustand.commits.length} Commits`;
+      return;
+    }
+    element.textContent = window.gitreviewaModusWerte.kopfZahlen(zustand.commits.length, anzahl);
+  }
+
+  function zeichneZusammenfassung() {
+    const element = document.getElementById('commit-summary');
+    if (!element) {
+      return;
+    }
+    if (zustand.commits.length === 0) {
+      element.textContent = 'Keine Commits';
+      return;
+    }
+    const beschriftung = zustand.zusammen ? zustand.zusammen.beschriftung : 'lückenlos · netto';
+    const erster = zustand.commits[0].kurzHash;
+    const letzter = zustand.commits[zustand.commits.length - 1].kurzHash;
+    element.textContent = window.gitreviewaModusWerte.commitZeileText(zustand.commits.length, erster, letzter, beschriftung);
+  }
+
+  function baueWaehler() {
+    const zurueck = document.getElementById('waehler-zurueck');
+    const weiter = document.getElementById('waehler-weiter');
+    const wahl = document.getElementById('waehler-auswahl');
+    if (zurueck) {
+      zurueck.addEventListener('click', () => waehleNachbar(-1));
+    }
+    if (weiter) {
+      weiter.addEventListener('click', () => waehleNachbar(1));
+    }
+    if (wahl) {
+      wahl.addEventListener('change', () => waehleHash(wahl.value));
+    }
+    zeichneWaehler();
+  }
+
+  function waehleNachbar(schritt) {
+    const stelle = zustand.commits.findIndex(commit => commit.hash === zustand.gewaehlt);
+    const ziel = stelle + schritt;
+    if (ziel < 0 || ziel >= zustand.commits.length) {
+      return;
+    }
+    waehleHash(zustand.commits[ziel].hash);
+  }
+
+  function waehleHash(hash) {
+    const zeileElement = document.querySelector(`#commit-liste .commit-zeile[data-hash="${hash}"]`);
+    if (zeileElement) {
+      waehleCommit(document.getElementById('commit-liste'), zeileElement);
+    }
+  }
+
+  /** Zähler je Commit aus dem Stand der Haken: „abgehakt von gesamt“; ohne Stand bleibt der Zusatz weg. */
+  function hakenZusatz(commit) {
+    if (!zustand.haken) {
+      return '';
+    }
+    const stellen = zustand.haken.stellen.filter(stelle => stelle.commit === commit);
+    if (stellen.length === 0) {
+      return '';
+    }
+    const abgehakt = stellen.filter(stelle => stelle.abgehakt).length;
+    return ` · ${abgehakt} von ${stellen.length}`;
+  }
+
+  function zeichneWaehler() {
+    const waehler = document.getElementById('commit-waehler');
+    if (!waehler) {
+      return;
+    }
+    const zusammen = istZusammen();
+    waehler.hidden = zusammen;
+    if (zusammen) {
+      return;
+    }
+    const stelle = zustand.commits.findIndex(commit => commit.hash === zustand.gewaehlt);
+    const stand = document.getElementById('waehler-stand');
+    const wahl = document.getElementById('waehler-auswahl');
+    if (stand) {
+      const werte = stelle < 0 ? null : zeilenwerte(zustand.commits[stelle]);
+      stand.textContent = werte ? `${stelle + 1}/${zustand.commits.length} · ${werte.kurz} · ${werte.betreff} · ${werte.autor} · ${werte.datum}` : '—/—';
+    }
+    if (wahl) {
+      wahl.replaceChildren(...zustand.commits.map((commit, index) => {
+        const werte = zeilenwerte(commit);
+        const option = document.createElement('option');
+        option.value = commit.hash;
+        option.textContent = `${index + 1}/${zustand.commits.length} · ${werte.kurz} · ${werte.betreff}${hakenZusatz(commit.hash)}`;
+        option.selected = commit.hash === zustand.gewaehlt;
+        return option;
+      }));
+    }
+    const zurueck = document.getElementById('waehler-zurueck');
+    const weiter = document.getElementById('waehler-weiter');
+    if (zurueck) {
+      zurueck.disabled = stelle <= 0;
+    }
+    if (weiter) {
+      weiter.disabled = stelle < 0 || stelle >= zustand.commits.length - 1;
+    }
+  }
+
+  /** In „Zusammen“ ist die Commit-Zeile zugeklappt, in „Einzeln“ aufgeklappt. */
+  function zeigeModus() {
+    const zeile = document.getElementById('commit-zeile');
+    if (zeile) {
+      zeile.open = !istZusammen();
+    }
+    document.body.dataset.modus = istZusammen() ? 'zusammen' : 'einzeln';
+  }
+
+  window.gitreviewaCommits = {
+    hole: () => zustand.commits,
+    gewaehlt: () => zustand.gewaehlt,
+    kurzVon,
+    betreffVon: hash => {
+      const commit = zustand.commits.find(eintrag => eintrag.hash === hash);
+      return commit ? commit.betreff : '';
+    },
+  };
 
   document.addEventListener('DOMContentLoaded', init);
 }());

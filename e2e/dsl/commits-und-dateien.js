@@ -106,7 +106,7 @@ function reviewSprache(gr, page) {
     dateiwahlenMitschreiben: () => seite.dateiwahlenSammeln(page),
     dateiAnsehen: name => seite.dateiWaehlen(page, name),
     gewaehlteDateien: namen => seite.pruefeGewaehlteDateien(page, namen),
-    dateiwahlenWaren: wahlen => seite.pruefeDateiwahlen(page, wahlen.map(({ commit, ...rest }) => ({ commit: hash(commit), alterPfad: null, ...rest }))),
+    dateiwahlenWaren: wahlen => seite.pruefeDateiwahlen(page, wahlen.map(({ commit, ...rest }) => ({ commit: hash(commit), modus: 'einzeln', alterPfad: null, ...rest }))),
     antwortFuerDateienZurueckhalten: commit => seite.dateienAntwortZurueckhalten(page, hash(commit)),
     neuLaden: () => page.reload(),
     commitObjektEntfernen: commit => gr.commitObjektEntfernen(repo, hash(commit)),

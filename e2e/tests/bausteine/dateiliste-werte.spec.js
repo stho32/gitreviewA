@@ -71,16 +71,16 @@ test.describe('Baustein Dateiliste-Werte', () => {
     expect(baum).toEqual(['ordner:o⟨U+202E⟩r', 'datei:  a⟨U+2066⟩b⟨U+200F⟩c⟨U+200E⟩⟨U+061C⟩.txt', 'datei:ä ö.txt']);
   });
 
-  test('soll jedes richtungsändernde Zeichen markieren und kein anderes', () => {
-    const richtungszeichen = [0x061C, 0x200E, 0x200F, 0x202A, 0x202B, 0x202C, 0x202D, 0x202E, 0x2066, 0x2067, 0x2068, 0x2069];
-    const nachbarn = [0x061B, 0x061D, 0x200D, 0x2010, 0x2029, 0x202F, 0x2065, 0x206A];
+  test('soll jedes unsichtbare Zeichen markieren und kein sichtbares', () => {
+    const unsichtbare = [0x0000, 0x000A, 0x00AD, 0x061C, 0x200B, 0x200D, 0x200E, 0x200F, 0x202A, 0x202B, 0x202C, 0x202D, 0x202E, 0x2028, 0x2029, 0x2060, 0x2066, 0x2067, 0x2068, 0x2069, 0x206A, 0xFEFF, 0xE0041];
+    const sichtbare = [0x0009, 0x0041, 0x061B, 0x061D, 0x2010, 0x202F, 0x2065];
 
     const markiert = code => flacheZeilen([datei(`x${String.fromCodePoint(code)}y`)])[0].name;
 
-    for (const code of richtungszeichen) {
+    for (const code of unsichtbare) {
       expect(markiert(code)).toBe(`x⟨U+${code.toString(16).toUpperCase().padStart(4, '0')}⟩y`);
     }
-    for (const code of nachbarn) {
+    for (const code of sichtbare) {
       expect(markiert(code)).toBe(`x${String.fromCodePoint(code)}y`);
     }
   });

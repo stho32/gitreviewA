@@ -42,11 +42,21 @@
     }
     ansicht.alsTextElement.addEventListener('click', () => ladeDiff(ansicht, zustand.datei, true));
     ansicht.trotzdemLadenElement.addEventListener('click', () => klappeAuf(ansicht));
+    ansicht.erneutLadenElement.addEventListener('click', () => ladeDiff(ansicht, zustand.datei, zustand.alsText));
     ansicht.rollElement.addEventListener('click', ereignis => waehleZeile(ansicht, ereignis));
     ansicht.rollElement.addEventListener('click', ereignis => klappeLueckeAuf(ansicht, ereignis));
-    document.addEventListener('commit-gewaehlt', () => verwerfeWahl(ansicht));
+    document.addEventListener('commit-gewaehlt', () => {
+      if (!istZusammen()) {
+        verwerfeWahl(ansicht);
+      }
+    });
+    document.addEventListener('wahl-aufgehoben', () => verwerfeWahl(ansicht));
     document.addEventListener('datei-gewaehlt', ereignis => ladeDiff(ansicht, ereignis.detail, false));
     document.addEventListener('sprung-geladen', ereignis => uebernehmeSprung(ansicht, ereignis.detail));
+  }
+
+  function istZusammen() {
+    return window.gitreviewaModus ? window.gitreviewaModus.istZusammen() : false;
   }
 
   function ansichtElemente() {
@@ -58,12 +68,14 @@
       leerraumElement: wurzelElement.querySelector('.leerraum-schalter'),
       diffansichtElemente: wurzelElement.querySelectorAll('input[name="diffansicht"]'),
       pfadElement: wurzelElement.querySelector('.diff-pfad'),
+      herkunftElement: wurzelElement.querySelector('.diff-herkunft'),
       meldungElement: wurzelElement.querySelector('.diff-meldung'),
       alsTextElement: wurzelElement.querySelector('.als-text'),
       trotzdemLadenElement: wurzelElement.querySelector('.trotzdem-laden'),
       sprungVerweisElement: kopfElement.querySelector('.sprung-knopf'),
       sprungGrundElement: kopfElement.querySelector('.sprung-grund'),
       sprungHinweisElement: kopfElement.querySelector('.sprung-hinweis'),
+      erneutLadenElement: wurzelElement.querySelector('.erneut-laden'),
       rollElement: wurzelElement.querySelector('.df-sc'),
       farbschlange: farbschlange({ workerAnlegen: faerbeWorkerAnlegen }),
     };
@@ -153,19 +165,25 @@
     zeichneAntwort(ansicht, antwort, alsText, diffansicht);
   }
 
-  /** Die ganze Datei liest der Server nur auf ausdrückliche Wahl der Diffansicht; die Leerraum-Stellung gilt für beide Ansichten. */
+  /** Die ganze Datei liest der Server nur auf ausdrückliche Wahl der Diffansicht; die Leerraum-Stellung gilt für beide Ansichten.
+      „Zusammen“ fragt den Netto-Diff der Auswahl, „Einzeln“ den Diff des gewählten Commits. */
   async function diffAbrufen(datei, alsText, diffansicht, leerraum) {
     const abfrage = new URLSearchParams({ pfad: datei.pfad });
-    if (alsText) {
-      abfrage.set('alsText', 'true');
-    }
     if (diffansicht === 'ganz') {
       abfrage.set('umfang', 'ganz');
     }
     if (leerraum === 'ignorieren') {
       abfrage.set('leerraum', 'ignorieren');
     }
-    const adresse = `api/commits/${encodeURIComponent(datei.commit)}/diff?${abfrage}`;
+    let adresse;
+    if (datei.modus === 'zusammen') {
+      adresse = `api/zusammen/diff?${abfrage}`;
+    } else {
+      if (alsText) {
+        abfrage.set('alsText', 'true');
+      }
+      adresse = `api/commits/${encodeURIComponent(datei.commit)}/diff?${abfrage}`;
+    }
     const antwort = await fetch(adresse, { headers: { Accept: 'application/json' } });
     if (!antwort.ok) {
       throw new AntwortFehler(antwort.status);
@@ -192,22 +210,29 @@
     zustand.anzeige += 1;
     ansicht.farbschlange.aufraeumen();
     delete ansicht.rollElement.dataset.farbe;
+    ansicht.herkunftElement.textContent = '';
     ansicht.meldungElement.textContent = text;
     ansicht.meldungElement.classList.toggle('fehler', istFehler);
     ansicht.rollElement.replaceChildren();
     ansicht.rollElement.hidden = true;
     ansicht.alsTextElement.hidden = true;
     ansicht.trotzdemLadenElement.hidden = true;
+    ansicht.erneutLadenElement.hidden = !istFehler;
     zustand.zugeklappt = null;
     if (zustand.gezeichnet) {
       zustand.gezeichnet.zeilen = [];
     }
     aktualisiereSprungkopf(ansicht);
+    document.dispatchEvent(new CustomEvent('diff-geleert'));
   }
 
   function zeichneAntwort(ansicht, antwort, alsText, diffansicht) {
     if (antwort.zuGross) {
       zeigeMeldung(ansicht, antwort.meldung, false);
+      return;
+    }
+    if (zustand.datei && zustand.datei.modus === 'zusammen') {
+      zeichneZusammenAntwort(ansicht, antwort, alsText, diffansicht);
       return;
     }
     const binaerOhneWahl = antwort.art === 'binaer' && !alsText;
@@ -241,6 +266,123 @@
     zeichneZeilen(ansicht, antwort, zeilen, luecken(zeilen, zustand.gesamt));
   }
 
+  /** „Zusammen“: netto ein Diff über die ganze Auswahl; ohne Kette je Commit ein Abschnitt mit eigener Beschriftung. */
+  function zeichneZusammenAntwort(ansicht, antwort, alsText, diffansicht) {
+    if (antwort.netto) {
+      ansicht.herkunftElement.textContent = `netto aus ${kurzListe(antwort.commits)}`;
+      if (antwort.art === 'binaer' && !alsText) {
+        zeigeBinaerdatei(ansicht, antwort.grund);
+        return;
+      }
+      const zeilen = zeilenDerDiffansicht(antwort.patch, diffansicht);
+      if (zeilen.length === 0) {
+        zeigeMeldung(ansicht, KEINE_ZEILENAENDERUNGEN, false);
+        return;
+      }
+      const zuLangGrund = zuLang(zeilen);
+      if (zuLangGrund) {
+        zeigeZugeklappt(ansicht, antwort, zeilen, zuLangGrund);
+        return;
+      }
+      zeichneZeilen(ansicht, antwort, zeilen);
+      return;
+    }
+    ansicht.herkunftElement.textContent = 'je Commit, nicht netto — Es fehlen Commits der Auswahl';
+    const abschnitte = antwort.abschnitte || [];
+    if (abschnitte.length === 0) {
+      zeigeMeldung(ansicht, KEINE_ZEILENAENDERUNGEN, false);
+      return;
+    }
+    zeichneAbschnitte(ansicht, antwort, abschnitte, alsText, diffansicht);
+  }
+
+  function kurzListe(commits) {
+    return (commits || []).map(hash => kurzVon(hash)).filter(Boolean).join(', ');
+  }
+
+  function kurzVon(hash) {
+    if (window.gitreviewaCommits && window.gitreviewaCommits.kurzVon) {
+      return window.gitreviewaCommits.kurzVon(hash);
+    }
+    return String(hash).slice(0, 7);
+  }
+
+  function betreffVon(hash) {
+    if (window.gitreviewaCommits && window.gitreviewaCommits.betreffVon) {
+      return window.gitreviewaCommits.betreffVon(hash);
+    }
+    return '';
+  }
+
+  /** Ohne Kette: ein Abschnitt je Commit, mit Kurz-Hash und Betreff beschriftet; jede Abschnittsfläche meldet sich für Anmerkungen. */
+  function zeichneAbschnitte(ansicht, antwort, abschnitte, alsText, diffansicht) {
+    zeigeMeldung(ansicht, '', false);
+    ansicht.herkunftElement.textContent = 'je Commit, nicht netto — Es fehlen Commits der Auswahl';
+    const sammel = document.createDocumentFragment();
+    const bereiche = [];
+    for (const abschnitt of abschnitte) {
+      const bereichElement = document.createElement('div');
+      bereichElement.className = 'diff-abschnitt';
+      bereichElement.dataset.commit = abschnitt.commit;
+      const kopfElement = document.createElement('p');
+      kopfElement.className = 'diff-abschnitt-kopf';
+      const betreff = betreffVon(abschnitt.commit);
+      kopfElement.textContent = `Commit ${kurzVon(abschnitt.commit)}${betreff ? ` · ${betreff}` : ''}`;
+      bereichElement.append(kopfElement);
+      if (abschnitt.art === 'binaer' && !alsText) {
+        const hinweis = document.createElement('p');
+        hinweis.className = 'diff-abschnitt-hinweis';
+        hinweis.textContent = 'Binärdatei';
+        bereichElement.append(hinweis);
+      } else {
+        const zeilen = zeilenDerDiffansicht(abschnitt.patch, diffansicht);
+        if (zeilen.length === 0) {
+          const hinweis = document.createElement('p');
+          hinweis.className = 'diff-abschnitt-hinweis';
+          hinweis.textContent = KEINE_ZEILENAENDERUNGEN;
+          bereichElement.append(hinweis);
+        } else {
+          for (const block of bloecke(zeilen)) {
+            bereichElement.append(blockElement(block, `Änderungen in ${antwort.pfad}`));
+          }
+        }
+      }
+      sammel.append(bereichElement);
+      bereiche.push({ commit: abschnitt.commit, betreff: betreff, bereichElement });
+    }
+    ansicht.rollElement.setAttribute('aria-label', `Änderungen in ${antwort.pfad}`);
+    ansicht.rollElement.replaceChildren(sammel);
+    ansicht.rollElement.hidden = false;
+    faerbeAbschnitte(ansicht, antwort, abschnitte);
+    meldeGezeichnet(ansicht, antwort.pfad, bereiche);
+  }
+
+  /** Färbt je Abschnitt die Zeilen der eigenen Tabelle; eine Auflage für die ganze Anzeige. */
+  function faerbeAbschnitte(ansicht, antwort, abschnitte) {
+    const anzeige = zustand.anzeige;
+    const aktuell = () => anzeige === zustand.anzeige;
+    const sprache = spracheZuPfad(antwort.pfad);
+    const bereiche = [...ansicht.rollElement.querySelectorAll('.diff-abschnitt')];
+    for (let stelle = 0; stelle < bereiche.length; stelle += 1) {
+      const abschnitt = abschnitte[stelle];
+      const zeilen = abschnitt ? zeilenDerDiffansicht(abschnitt.patch, zustand.diffansicht) : [];
+      if (zeilen.length === 0) {
+        continue;
+      }
+      const bereich = bereiche[stelle];
+      const zeilenElemente = bereich.querySelectorAll('tr[data-art]');
+      const anzeigeElement = { ...ansicht, rollElement: bereich, zeilenElemente };
+      if (sprache) {
+        ansicht.farbschlange.stellen({
+          sprache,
+          zeilen: zeilen.map(zeile => ({ art: zeile.art, text: zeile.text })),
+          aktuell,
+          fertig: farbantwort => legeFarbeAuf(anzeigeElement, zeilen, farbantwort, aktuell),
+        });
+      }
+    }
+  }
+
   function zeilenDerDiffansicht(patch, diffansicht) {
     if (diffansicht === 'ganz') {
       return ganzeDateiZeilen(patch);
@@ -248,7 +390,8 @@
     return patchZeilen(patch);
   }
 
-  /** Ohne Wahl kein Byte-Inhalt: Hinweis mit Grund und der Schalter, der den Text erst auf Wunsch lädt (Entscheidung des PO). */
+  /** Ohne Wahl kein Byte-Inhalt: Hinweis mit Grund und der Schalter, der den Text erst auf Wunsch lädt (Entscheidung des PO).
+      „Zusammen“ kennt den Schalter nicht: der Netto-Endpunkt liest keine Bytes. */
   function zeigeBinaerdatei(ansicht, grund) {
     let meldung = 'Binärdatei';
     const grundText = GRUND_TEXT[grund];
@@ -256,7 +399,8 @@
       meldung = `Binärdatei — ${grundText}`;
     }
     zeigeMeldung(ansicht, meldung, false);
-    ansicht.alsTextElement.hidden = false;
+    const istZusammen = zustand.datei && zustand.datei.modus === 'zusammen';
+    ansicht.alsTextElement.hidden = istZusammen;
   }
 
   /** Über der Grenze bleibt der Text zugeklappt, bis der Mensch „Trotzdem laden“ wählt (B1604): der Hinweis nennt die überschrittene
@@ -299,7 +443,10 @@
     setzeSprunglinks(ansicht);
     aktualisiereSprungkopf(ansicht);
     faerbeZeilen(ansicht, antwort, gezeichneteZeilen);
-    meldeGezeichnet(ansicht, antwort.pfad);
+    const bereiche = zustand.datei && zustand.datei.modus === 'zusammen'
+      ? [{ commit: zustand.datei.commit, betreff: betreffVon(zustand.datei.commit), bereichElement: ansicht.rollElement }]
+      : null;
+    meldeGezeichnet(ansicht, antwort.pfad, bereiche);
   }
 
   /** Die Blöcke der Ansicht in Reihenfolge: je Folge zusammenhängender Diff-Zeilen ein Block (höchstens 500 Zeilen), dazwischen
@@ -516,14 +663,18 @@
   }
 
   /** `ersterBlockElement` erkennt der Empfänger wieder: ist er nicht mehr im Dokument, ist dieser Diff verworfen. */
-  function meldeGezeichnet(ansicht, pfad) {
+  function meldeGezeichnet(ansicht, pfad, bereiche) {
     const detail = {
+      modus: zustand.datei ? zustand.datei.modus : null,
       commit: zustand.datei.commit,
       pfad,
       ansicht: zustand.diffansicht,
       bereichElement: ansicht.rollElement,
       ersterBlockElement: ansicht.rollElement.firstElementChild,
     };
+    if (bereiche) {
+      detail.abschnitte = bereiche;
+    }
     document.dispatchEvent(new CustomEvent('diff-gezeichnet', { detail }));
   }
 

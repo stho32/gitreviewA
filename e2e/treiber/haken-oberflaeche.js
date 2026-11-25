@@ -2,7 +2,7 @@
 // Treiber Oberfläche „Datei abhaken“: der einzige Ort, der die Selektoren von Fortschrittszeile und Kästchen kennt.
 const { expect } = require('@playwright/test');
 
-const FORTSCHRITT = '#dateiliste .haken-fortschritt';
+const FORTSCHRITT = '#kopf-fortschritt';
 const DATEIZEILE = '#datei-zeilen .datei-zeile';
 const TAB_HOECHSTENS = 60;
 
@@ -191,7 +191,7 @@ async function pruefeKaestchenflaeche(page, name) {
 
 /** Wartet ereignisgenau (je Animationsbild) auf den Zählertext und liefert die Zeit seit `startMs`. */
 async function zeitBisFortschritt(page, text, startMs) {
-  await page.waitForFunction(erwartet => document.querySelector('#dateiliste .haken-zaehler').textContent === erwartet, text, { polling: 'raf', timeout: 5000 });
+  await page.waitForFunction(erwartet => document.querySelector('#kopf-fortschritt .haken-zaehler').textContent === erwartet, text, { polling: 'raf', timeout: 5000 });
   return Date.now() - startMs;
 }
 

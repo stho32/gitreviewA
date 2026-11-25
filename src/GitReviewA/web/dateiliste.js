@@ -1,17 +1,58 @@
-/* gitreviewA — Dateiliste des gewählten Commits: liest sie erst bei der Wahl (Ereignis `commit-gewaehlt`), zeigt sie flach oder als Baum
-   und hält die gewählte Datei als Zustand {commit, pfad, status, alterPfad}; jede Wahl meldet das Ereignis `datei-gewaehlt`.
-   Jede Dateizeile trägt ein Kästchen zum Abhaken und einen Platz für den Sperrgrund; beides führt haken.js, nach jedem Zeichnen gemeldet
-   mit `dateiliste-gezeichnet`. */
+/* gitreviewA — Dateiliste nach Modus (R00003, R00012): in „Einzeln“ die Dateien des gewählten Commits, in „Zusammen“ die
+   Netto-Liste der ganzen Auswahl. Gelesen wird erst bei Bedarf: in „Einzeln“ bei `commit-gewaehlt`, in „Zusammen“ beim
+   `zusammen-geladen` (der Lader ist `zusammen.js`). Flach oder Baum; die Wahl meldet `datei-gewaehlt` mit Modus, Pfad,
+   Status, AlterPfad und Commit. Jede Dateizeile trägt ein Kästchen zum Abhaken; beides führt `haken.js`, nach jedem Zeichnen
+   gemeldet mit `dateiliste-gezeichnet`. */
 (function () {
   'use strict';
 
-  const zustand = { commit: null, dateien: [], darstellung: 'flach', gewaehlterPfad: null, letzteLadung: 0 };
+  const zustand = {
+    modus: 'einzeln', commit: null, dateien: [], darstellung: 'flach', gewaehlterPfad: null, letzteLadung: 0,
+    uebernehmenAusstehend: false,
+  };
 
   function init() {
     const ansicht = ansichtElemente();
-    document.addEventListener('commit-gewaehlt', ereignis => ladeDateien(ansicht, ereignis.detail.hash));
+    zustand.modus = modusJetzt();
+    document.addEventListener('commit-gewaehlt', ereignis => {
+      zustand.commit = ereignis.detail.hash;
+      if (zustand.modus === 'einzeln') {
+        ladeDateien(ansicht, false);
+      }
+    });
+    document.addEventListener('modus-gewechselt', ereignis => {
+      const vorher = ereignis.detail.vorher;
+      zustand.modus = ereignis.detail.modus;
+      if (zustand.modus === 'zusammen' && vorher !== 'zusammen') {
+        zustand.uebernehmenAusstehend = true;
+      }
+      ladeAnsicht(ansicht, true);
+    });
+    document.addEventListener('zusammen-geladen', ereignis => {
+      if (zustand.modus !== 'zusammen') {
+        return;
+      }
+      const uebernehmen = zustand.uebernehmenAusstehend;
+      zustand.uebernehmenAusstehend = false;
+      uebernimmNettoStand(ansicht, ereignis.detail, uebernehmen);
+    });
+    document.addEventListener('zusammen-fehler', () => {
+      if (zustand.modus !== 'zusammen') {
+        return;
+      }
+      zeigeMeldung(ansicht, 'Dateien konnten nicht gelesen werden', true);
+      meldeGezeichnet();
+    });
     ansicht.darstellungElement.addEventListener('click', ereignis => waehleDarstellung(ansicht, ereignis));
     ansicht.zeilenElement.addEventListener('click', ereignis => waehleDatei(ansicht, ereignis));
+    ladeAnsicht(ansicht, false);
+  }
+
+  function modusJetzt() {
+    if (window.gitreviewaModus && window.gitreviewaModus.hole) {
+      return window.gitreviewaModus.hole();
+    }
+    return 'einzeln';
   }
 
   function ansichtElemente() {
@@ -24,12 +65,48 @@
     };
   }
 
-  /** Eine spätere Wahl verdrängt eine noch laufende Ladung: deren Antwort wird verworfen. */
-  async function ladeDateien(ansicht, hash) {
-    const ladung = zustand.letzteLadung + 1;
-    zustand.letzteLadung = ladung;
-    zustand.commit = hash;
+  /** Lädt die Ansicht des Modus; `uebernehmen` sagt, ob die bisherige Wahl in die neue Sicht übernommen wird (Moduswechsel). */
+  function ladeAnsicht(ansicht, uebernehmen) {
+    if (zustand.modus === 'zusammen') {
+      const stand = window.gitreviewaZusammen ? window.gitreviewaZusammen.hole() : null;
+      if (stand) {
+        uebernimmNettoStand(ansicht, stand, uebernehmen);
+      } else {
+        zustand.uebernehmenAusstehend = uebernehmen;
+        zeigeMeldung(ansicht, 'Dateien werden geladen …', false);
+      }
+      return;
+    }
+    if (zustand.commit) {
+      ladeDateien(ansicht, uebernehmen);
+    }
+  }
+
+  /** Eine spätere Ladung verdrängt eine noch laufende: deren Antwort wird verworfen. */
+  function neueLadung() {
+    zustand.letzteLadung += 1;
+    return zustand.letzteLadung;
+  }
+
+  /** Netto-Liste der Auswahl; die Wahl bleibt, wenn sie vorkommt, sonst die erste Datei (Moduswechsel, PO Frage 3). */
+  function uebernimmNettoStand(ansicht, stand, uebernehmen) {
+    neueLadung();
+    zustand.dateien = stand.dateien;
+    const uebernommen = wahlInNeuerSicht(stand.dateien, uebernehmen);
+    zustand.gewaehlterPfad = uebernommen ? uebernommen.pfad : null;
+    zeichneDateien(ansicht);
+    if (uebernommen) {
+      meldeWahl(uebernommen);
+    } else {
+      meldeWahlAufgehoben();
+    }
+  }
+
+  async function ladeDateien(ansicht, uebernehmen) {
+    const ladung = neueLadung();
+    const hash = zustand.commit;
     zustand.dateien = [];
+    const vorher = uebernehmen ? zustand.gewaehlterPfad : null;
     zustand.gewaehlterPfad = null;
     zeigeMeldung(ansicht, 'Dateien werden geladen …', false);
     let dateien;
@@ -38,6 +115,7 @@
     } catch {
       if (ladung === zustand.letzteLadung) {
         zeigeMeldung(ansicht, 'Dateien konnten nicht gelesen werden', true);
+        meldeGezeichnet();
       }
       return;
     }
@@ -45,7 +123,14 @@
       return;
     }
     zustand.dateien = dateien;
+    const uebernommen = wahlInNeuerSicht(dateien, uebernehmen, vorher);
+    zustand.gewaehlterPfad = uebernommen ? uebernommen.pfad : null;
     zeichneDateien(ansicht);
+    if (uebernommen) {
+      meldeWahl(uebernommen);
+    } else {
+      meldeWahlAufgehoben();
+    }
   }
 
   async function dateienAbrufen(hash) {
@@ -56,16 +141,39 @@
     return antwort.json();
   }
 
+  /** Wahl beim Moduswechsel: die bisherige Wahl, wenn sie vorkommt; sonst die erste Datei; ohne Übernahme keine Wahl. */
+  function wahlInNeuerSicht(sicht, uebernehmen, vorher) {
+    if (sicht.length === 0) {
+      return null;
+    }
+    if (!uebernehmen) {
+      return null;
+    }
+    const kandidat = vorher === undefined ? zustand.gewaehlterPfad : vorher;
+    if (kandidat) {
+      const treffer = sicht.find(eintrag => sichtbarerName(eintrag.pfad) === sichtbarerName(kandidat));
+      if (treffer) {
+        return treffer;
+      }
+    }
+    return sicht[0];
+  }
+
+  function sichtbarerName(pfad) {
+    return window.sichtbarerName ? window.sichtbarerName(pfad) : pfad;
+  }
+
   function zeigeMeldung(ansicht, text, istFehler) {
     ansicht.summeElement.textContent = '';
     ansicht.meldungElement.textContent = text;
-    ansicht.meldungElement.classList.toggle('fehler', istFehler);
+    ansicht.meldungElement.classList.toggle('fehler', Boolean(istFehler));
     ansicht.zeilenElement.replaceChildren();
   }
 
   function zeichneDateien(ansicht) {
     if (zustand.dateien.length === 0) {
       zeigeMeldung(ansicht, 'Keine Dateien geändert', false);
+      meldeGezeichnet();
       return;
     }
     ansicht.meldungElement.textContent = '';
@@ -80,10 +188,16 @@
       sammelElement.append(listeneintragElement(zeile, groesste));
     }
     ansicht.zeilenElement.replaceChildren(sammelElement);
-    document.dispatchEvent(new CustomEvent('dateiliste-gezeichnet', { detail: { commit: zustand.commit } }));
+    meldeGezeichnet();
   }
 
-  /** Fremder Text (Pfade) nur über textContent — nie als HTML. */
+  function meldeGezeichnet() {
+    document.dispatchEvent(new CustomEvent('dateiliste-gezeichnet', {
+      detail: { modus: zustand.modus, commit: zustand.commit, anzahl: zustand.dateien.length, dateien: zustand.dateien },
+    }));
+  }
+
+  /** Fremder Text (Pfade) nur per textContent; nie als HTML. */
   function listeneintragElement(zeile, groesste) {
     if (zeile.art === 'ordner') {
       const ordnerElement = eintragElement('ordner-zeile', zeile.tiefe);
@@ -93,14 +207,15 @@
     }
     const datei = zeile.datei;
     const dateiElement = eintragElement('datei-zeile', zeile.tiefe);
-    dateiElement.setAttribute('aria-current', String(datei.pfad === zustand.gewaehlterPfad));
+    const istGewaehlt = zustand.gewaehlterPfad !== null && sichtbarerName(datei.pfad) === sichtbarerName(zustand.gewaehlterPfad);
+    dateiElement.setAttribute('aria-current', String(istGewaehlt));
     dateiElement.dataset.pfad = datei.pfad;
     const statusElement = textElement(`status status-${datei.status}`, datei.status);
     dateiElement.append(hakenElement(datei), statusElement, textElement('pfad', zeile.name), textElement('haken-grund', ''), balkenElement(datei, groesste), textElement('zahlen mono', zahlenText(datei)));
     return dateiElement;
   }
 
-  /** Kästchen vor dem Pfad (Vorlage kanbanD „Gesehen“: Name „Abgehakt: <voller Pfad>“); gesperrt, bis haken.js den Stand kennt. */
+  /** Kästchen vor dem Pfad (Vorlage kanbanD „Gesehen“); gesperrt, bis haken.js den Stand kennt. */
   function hakenElement(datei) {
     const zielElement = document.createElement('label');
     zielElement.className = 'haken-ziel';
@@ -121,7 +236,7 @@
     return element;
   }
 
-  /** Größenbalken: je Zahl über 0 ein Teil mit seinem Anteil an der größten Änderung; Länge im CSS (Vorlage kanbanD). */
+  /** Größenbalken: je Zahl über 0 ein Anteil an der größten Änderung der Liste. */
   function balkenElement(datei, groesste) {
     const anteile = balkenTeile(datei, groesste);
     const balken = document.createElement('span');
@@ -146,34 +261,53 @@
   }
 
   function waehleDarstellung(ansicht, ereignis) {
-    const knopfElement = ereignis.target.closest('button[data-darstellung]');
-    if (!knopfElement) {
+    const knopf = ereignis.target.closest('button[data-darstellung]');
+    if (!knopf) {
       return;
     }
-    zustand.darstellung = knopfElement.dataset.darstellung;
-    for (const element of ansicht.darstellungElement.querySelectorAll('button[data-darstellung]')) {
-      element.setAttribute('aria-pressed', String(element === knopfElement));
+    zustand.darstellung = knopf.dataset.darstellung;
+    for (const anderer of ansicht.darstellungElement.querySelectorAll('button[data-darstellung]')) {
+      anderer.setAttribute('aria-pressed', String(anderer === knopf));
     }
     if (zustand.dateien.length > 0) {
       zeichneDateien(ansicht);
     }
   }
 
-  /** Das Kästchen setzt nur den Haken: ein Klick darauf wählt keine Datei. */
+  /** Das Kästchen wählt keine Datei. */
   function waehleDatei(ansicht, ereignis) {
-    const zeileElement = ereignis.target.closest('.datei-zeile');
-    const giltDemKaestchen = ereignis.target.closest('.haken-ziel') !== null;
-    if (!zeileElement || giltDemKaestchen) {
+    if (ereignis.target.closest('.haken-ziel') !== null) {
       return;
     }
-    const datei = zustand.dateien.find(d => d.pfad === zeileElement.dataset.pfad);
-    zustand.gewaehlterPfad = datei.pfad;
-    for (const element of ansicht.zeilenElement.querySelectorAll('.datei-zeile[aria-current="true"]')) {
-      element.setAttribute('aria-current', 'false');
+    const zeile = ereignis.target.closest('.datei-zeile');
+    if (!zeile) {
+      return;
     }
-    zeileElement.setAttribute('aria-current', 'true');
-    const gewaehlteDatei = { commit: zustand.commit, pfad: datei.pfad, status: datei.status, alterPfad: datei.alterPfad };
-    document.dispatchEvent(new CustomEvent('datei-gewaehlt', { detail: gewaehlteDatei }));
+    const datei = zustand.dateien.find(eintrag => eintrag.pfad === zeile.dataset.pfad);
+    if (!datei) {
+      return;
+    }
+    zustand.gewaehlterPfad = datei.pfad;
+    for (const andere of ansicht.zeilenElement.querySelectorAll('.datei-zeile')) {
+      andere.setAttribute('aria-current', String(andere === zeile));
+    }
+    meldeWahl(datei);
+  }
+
+  function meldeWahlAufgehoben() {
+    document.dispatchEvent(new CustomEvent('wahl-aufgehoben'));
+  }
+
+  function meldeWahl(datei) {
+    document.dispatchEvent(new CustomEvent('datei-gewaehlt', {
+      detail: {
+        modus: zustand.modus,
+        pfad: datei.pfad,
+        status: datei.status,
+        alterPfad: datei.alterPfad,
+        commit: zustand.modus === 'zusammen' ? datei.zustaendiger : zustand.commit,
+      },
+    }));
   }
 
   document.addEventListener('DOMContentLoaded', init);

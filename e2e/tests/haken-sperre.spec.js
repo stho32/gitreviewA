@@ -16,7 +16,7 @@ test.describe('Haken bei nicht lesbarem Diff gesperrt', () => {
   test('soll die drei Kästchen mit Grund sperren, „(3 nicht lesbar)“ zählen und die Sperre über Wechsel und Neuladen halten (Kriterium 8)', async ({ abhaken }) => {
     await abhaken.starten({ vorbereitung: 'Repo N mit v', commits: ['n', 'v'] });
     await abhaken.dateienWarten(9);
-    await abhaken.fortschritt('0 von 10 abgehakt (3 nicht lesbar)');
+    await abhaken.fortschritt('0 von 10 Stellen abgehakt (3 nicht lesbar)');
     await abhaken.istGesperrt(PAAR, 0, NICHT_EINDEUTIG);
     await abhaken.istGesperrt(PAAR, 1, NICHT_EINDEUTIG);
     await abhaken.istGesperrt(MIT_ZEILENUMBRUCH, 0, NICHT_UEBERGEBBAR);
@@ -28,7 +28,7 @@ test.describe('Haken bei nicht lesbarem Diff gesperrt', () => {
     await abhaken.gesperrtesKaestchenBetaetigen(MIT_ZEILENUMBRUCH, 0);
     await abhaken.abhaken('g.txt');
 
-    await abhaken.fortschritt('1 von 10 abgehakt (3 nicht lesbar)');
+    await abhaken.fortschritt('1 von 10 Stellen abgehakt (3 nicht lesbar)');
     await abhaken.istAbgehakt('g.txt');
     expect(hakenAnfragen(), 'nur das Kästchen von g.txt sendet').toBe(1);
     await abhaken.istGesperrt(PAAR, 0, NICHT_EINDEUTIG);
@@ -50,7 +50,7 @@ test.describe('Haken bei nicht lesbarem Diff gesperrt', () => {
 
     await abhaken.neuLaden();
     await abhaken.dateienWarten(9);
-    await abhaken.fortschritt('1 von 10 abgehakt (3 nicht lesbar)');
+    await abhaken.fortschritt('1 von 10 Stellen abgehakt (3 nicht lesbar)');
     await abhaken.istGesperrt(PAAR, 0, NICHT_EINDEUTIG);
     await abhaken.istGesperrt(PAAR, 1, NICHT_EINDEUTIG);
     await abhaken.istGesperrt(MIT_ZEILENUMBRUCH, 0, NICHT_UEBERGEBBAR);
@@ -61,7 +61,7 @@ test.describe('Haken bei nicht lesbarem Diff gesperrt', () => {
     await abhaken.starten({ vorbereitung: 'Repo N mit v', commits: ['b'] });
     await abhaken.dateienWarten(5);
 
-    await abhaken.fortschritt('0 von 5 abgehakt');
+    await abhaken.fortschritt('0 von 5 Stellen abgehakt');
   });
 
   test('soll beim Beenden das Ergebnis aus der Anforderung Byte für Byte schreiben und gesperrte Haken mit 400 abweisen (Kriterium 4, Programm)', async ({ programm }) => {
