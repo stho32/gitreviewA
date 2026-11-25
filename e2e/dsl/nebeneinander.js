@@ -74,6 +74,7 @@ function nebenSprache(gr, page) {
     fremderTextBleibtText: () => seite.pruefeKeineFormatierung(page),
     hatPaar: (links, rechts) => nebenSeite.hatZeilenpaar(page, links, rechts),
     breiteUndUmbruch: neu => nebenSeite.pruefeBreiteUndUmbruch(page, neu),
+    spaltenbreiten: neu => nebenSeite.spaltenbreitenLesen(page, neu),
     anordnungKlicken: wert => nebenSeite.anordnungKlicken(page, wert),
     paarBinnen: (links, rechts, fristMs) => nebenSeite.pruefePaarBinnen(page, () => nebenSeite.anordnungKlicken(page, 'nebeneinander'), links, rechts, fristMs),
   };

@@ -120,6 +120,19 @@ test.describe('Nebeneinander-Ansicht — Färbung, große Dateien, Anmerken', ()
     expect(Math.abs(mitUmbruch.breiteAlt - mitUmbruch.breiteNeu), 'beide Code-Spalten gleich breit (mit Umbruch)').toBeLessThanOrEqual(1);
   });
 
+  test('Kriterium 7: die Nummernspalten bleiben schmal, die Code-Spalte trägt die längste Zeile ohne Überlauf', async ({ neben }) => {
+    await neben.starten({ vorbereitung: 'Repo A', commits: ['q', 'p'], modus: 'einzeln' });
+    await neben.anordnungWaehlen('nebeneinander');
+    await neben.dateiAnsehen('breit.txt');
+
+    // `breit.txt` ist hinzugefügt: Zeile 2 trägt rechts 300 Zeichen, die linke Seite ist leer.
+    const spalten = await neben.spaltenbreiten(2);
+    expect(Math.abs(spalten.nummerLinks - 46), 'Nummernspalte alt').toBeLessThanOrEqual(1);
+    expect(Math.abs(spalten.nummerRechts - 46), 'Nummernspalte neu').toBeLessThanOrEqual(1);
+    expect(spalten.codeRechts, 'Code-Spalte neu trägt die 300 Zeichen ohne Überlauf').toBeGreaterThanOrEqual(spalten.textRechts);
+    expect(spalten.codeLinks, 'beide Code-Spalten gleich breit').toBeCloseTo(spalten.codeRechts, 0);
+  });
+
   test('Kriterium 12: fremder Text bleibt Text, die Lesereihenfolge stimmt', async ({ neben }) => {
     await neben.starten({ vorbereitung: 'Repo A', commits: ['q', 'p'], modus: 'einzeln' });
     await neben.anordnungWaehlen('nebeneinander');

@@ -63,9 +63,22 @@
     for (const zeile of block) {
       rumpfElement.append(zeileElement(zeile, zeilen, textzellen));
     }
-    tabelleElement.append(spaltenkoepfe(), rumpfElement);
+    tabelleElement.append(spaltengruppe(), spaltenkoepfe(), rumpfElement);
     blockElement.append(tabelleElement);
     return blockElement;
+  }
+
+  /** Die vier Spalten der Vorlage kanbanD `NEBEN_KOPF`: zwei schmale Nummernspalten (`col.cn`) und zwei gleich breite Code-Spalten
+      (`col.cc`). Ohne sie teilt `table-layout:fixed` die Tabelle in vier gleich breite Spalten — die Nummernspalten wären dann so
+      breit wie der Code und die längste Zeile liefe in die Nachbarspalte (R00023, Kriterium 7). */
+  function spaltengruppe() {
+    const gruppeElement = document.createElement('colgroup');
+    for (const klasse of ['cn', 'cc', 'cn', 'cc']) {
+      const spalteElement = document.createElement('col');
+      spalteElement.className = klasse;
+      gruppeElement.append(spalteElement);
+    }
+    return gruppeElement;
   }
 
   function spaltenkoepfe() {
@@ -196,8 +209,8 @@
   /** Höchstens so viele DOM-Knoten hat ein Block (B2206): wie `BLOCK_KNOTEN` in diff-werte.js, je Zeile aber beide Seiten. */
   const BLOCK_ZEILEN = 500;
   const BLOCK_KNOTEN = 5000;
-  /** Die Knoten um die Tabellenzeilen herum: Block, Tabelle, colgroup und Kopfzeile (großzügig). */
-  const BLOCK_GERUEST = 10;
+  /** Die Knoten um die Tabellenzeilen herum: Block, Tabelle, colgroup mit ihren vier Spalten und Kopfzeile (großzügig). */
+  const BLOCK_GERUEST = 14;
   /** Grundgerüst einer Zeile ohne das Textfeld, je Zeilenart — wie `GERUEST_NACH_ART` in diff-werte.js. */
   const GERUEST_NACH_ART = { kopf: 2, plus: 9, minus: 9, kontext: 7, hinweis: 5 };
 

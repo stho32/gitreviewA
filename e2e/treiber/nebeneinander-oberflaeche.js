@@ -154,6 +154,39 @@ async function pruefeBreiteUndUmbruch(page, neu) {
   return { ohneUmbruch, mitUmbruch };
 }
 
+/** Kriterium 7: die Breiten der vier Spalten der Zeile mit Nummer neu `neu` und die Breite ihres sichtbaren Textes (in px).
+    Der ausgeblendete Lesetext für Screenreader (`.vh`) zählt nicht zur Textbreite. */
+async function spaltenbreitenLesen(page, neu) {
+  await expect(page.locator(`${ZEILE}[data-neu="${neu}"]`)).toBeVisible();
+  return page.evaluate(([selektor, nummer]) => {
+    const zeile = document.querySelector(`${selektor}[data-neu="${nummer}"]`);
+    const breite = element => (element ? element.getBoundingClientRect().width : 0);
+    const textBreite = zelle => {
+      const bereich = document.createRange();
+      let groesste = 0;
+      for (const kind of zelle.childNodes) {
+        if (kind.nodeType === Node.ELEMENT_NODE && kind.classList.contains('vh')) {
+          continue;
+        }
+        bereich.selectNodeContents(kind);
+        for (const rechteck of bereich.getClientRects()) {
+          groesste = Math.max(groesste, rechteck.width);
+        }
+      }
+      return groesste;
+    };
+    const [nummerLinks, links, nummerRechts, rechts] = Array.from(zeile.children);
+    return {
+      nummerLinks: breite(nummerLinks),
+      nummerRechts: breite(nummerRechts),
+      codeLinks: breite(links),
+      codeRechts: breite(rechts),
+      textLinks: textBreite(links),
+      textRechts: textBreite(rechts),
+    };
+  }, [ZEILE, neu]);
+}
+
 /** Klickt die linke Textzelle der entfernten Zeile mit Nummer alt `alt` (R00023, Kriterium 10). */async function linksTextzelleAnklicken(page, alt) {
   await page.locator(`${ZEILE}[data-art="minus"][data-alt="${alt}"] td.c-alt`).click();
 }
@@ -223,6 +256,7 @@ async function hatZeilenpaar(page, linksText, rechtsText) {
 
 module.exports = {
   anordnungWaehlen, pruefeAnordnung, pruefeGruppe, anordnungPerTastatur, warteAufZeichnung, zeilenPaareLesen, pruefeZeilenPaare, pruefeSpaltenkoepfe, pruefeKontextEinmalGelesen, pruefeBreiteUndUmbruch,
+  spaltenbreitenLesen,
   linksTextzelleAnklicken, rechtsTextzelleAnklicken, farbeRollenLesen, entferntHinweis, hatZeilenpaar, anordnungKlicken, pruefePaarBinnen, ROLLBEREICH, ZEILE,
 };
 
