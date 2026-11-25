@@ -291,6 +291,20 @@ test.describe('Datei annotieren — Bedienweg und Browser-Eigenes', () => {
     expect(ergebnis).toContain('## 1. src/b.txt (ganze Datei)\n');
   });
 
+  test('Befund B2: das offene „Datei anmerken“-Feld behält seine Eingabe beim Neuzeichnen (R00022)', async ({ anm }) => {
+    await anm.starten({ modus: 'zusammen' });
+    await anm.dateiAnsehen('lang.txt');
+    await anm.dateiAnmerken();
+    await anm.dateiFeldTextSchreiben('lang.txt', 'getippt-bleibt');
+
+    // Eine Zeilenanmerkung speichern zeichnet die Anmerkungen neu (GET /api/anmerkungen, `diff-gezeichnet`).
+    await anm.annotieren('lang.txt', 18, 'eine Zeilennotiz');
+
+    await anm.dateiFeldEnthaelt('lang.txt', 'getippt-bleibt');
+    await anm.dateianmerkungenOben([]);
+    await anm.anmerkungenUnter('lang.txt', { neu: 18 }, ['eine Zeilennotiz']);
+  });
+
   test('an einer gesperrten Stelle ist „Datei anmerken“ nicht bedienbar und nennt den Grund (PO zu R00022 Frage 3)', async ({ anm }) => {
     await anm.starten({ modus: 'einzeln', seiteOeffnen: false });
     await anm.hakenAntwortetMit({

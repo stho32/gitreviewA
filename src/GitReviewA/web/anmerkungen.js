@@ -133,8 +133,9 @@
     return Boolean(gezeichnet && gezeichnet.abschnitte && gezeichnet.abschnitte.length > 0);
   }
 
-  /** Der Datei-Kopf über den Diff-Zeilen: die Dateianmerkungen der gewählten Stelle (Commit, Datei). Er steht in seinem eigenen
-      Bereich, den `zeigeMeldung` nicht leert (Befund B1). */
+  /** Der Datei-Kopf über den Diff-Zeilen: die Dateianmerkungen der gewählten Stelle (Commit, Datei) und das offene
+      „Datei anmerken“-Feld. Er steht in seinem eigenen Bereich, den `zeigeMeldung` nicht leert (Befund B1); das offene Feld wird
+      bei jedem Neuzeichnen aus dem Zustand wieder angehängt und behält so seine Eingabe (Befund B2). */
   function zeichneDateikopf(ansicht) {
     const bereichElement = ansicht.dateiBereichElement;
     bereichElement.replaceChildren();
@@ -143,14 +144,21 @@
       zustand.dateiFeld = null;
       return;
     }
-    if (zustand.dateiFeld && (zustand.dateiFeld.ziel.commit !== stelle.commit || zustand.dateiFeld.ziel.datei !== stelle.pfad)) {
+    const feld = zustand.dateiFeld && zustand.dateiFeld.ziel.commit === stelle.commit && zustand.dateiFeld.ziel.datei === stelle.pfad
+      ? zustand.dateiFeld
+      : null;
+    if (zustand.dateiFeld && !feld) {
       zustand.dateiFeld = null;
     }
     const anmerkungen = hatAbschnitte(zustand.gezeichnet) ? [] : dateianmerkungen(zustand.anmerkungen, stelle.commit, stelle.pfad);
-    if (anmerkungen.length === 0) {
+    if (anmerkungen.length === 0 && !feld) {
       return;
     }
-    bereichElement.append(dateianmerkungsblockElement(ansicht, anmerkungen));
+    const blockElement = dateianmerkungsblockElement(ansicht, anmerkungen);
+    bereichElement.append(blockElement);
+    if (feld) {
+      blockElement.querySelector('tbody').append(feld.feldzeileElement);
+    }
   }
 
   /** Die Dateianmerkungen der Stelle (Commit, Datei) über den Diff-Zeilen eines Abschnitts; die lückenlose Kette und die
@@ -596,18 +604,8 @@
     };
     feld.feldzeileElement = notizfeldzeileElement(feld);
     zustand.dateiFeld = feld;
-    dateiblockrumpf(ansicht).append(feld.feldzeileElement);
+    zeichneDateikopf(ansicht);
     feld.eingabeElement.focus();
-  }
-
-  /** Der Rumpf des Datei-Blocks im Datei-Kopf; legt den Block an, wenn die Stelle noch keine Anmerkung zeigt. */
-  function dateiblockrumpf(ansicht) {
-    let blockElement = ansicht.dateiBereichElement.querySelector('.anm-datei');
-    if (!blockElement) {
-      blockElement = dateianmerkungsblockElement(ansicht, []);
-      ansicht.dateiBereichElement.append(blockElement);
-    }
-    return blockElement.querySelector('tbody');
   }
 
   /** „Datei anmerken“-Knopf im Diff-Kopf nur zeigen, wenn eine Stelle gewählt ist; an einer gesperrten Stelle (R00014) ist er
