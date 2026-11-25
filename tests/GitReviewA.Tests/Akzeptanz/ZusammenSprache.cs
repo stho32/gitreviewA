@@ -71,9 +71,10 @@ internal sealed class ZusammenSprache
         return Blatt(pfad).Stellen.Select(stelle => $"{Name(stelle.Commit)}:{stelle.Datei.Pfad}").ToArray();
     }
 
-    public Diffbild Diff(string pfad, Diffumfang umfang = Diffumfang.Aenderungen)
+    /// <summary>Der Diff einer Datei in „Zusammen“; `leerraum` ist die Vergleichsstellung (R00026), ohne Angabe „beachten“.</summary>
+    public Diffbild Diff(string pfad, Diffumfang umfang = Diffumfang.Aenderungen, Leerraum leerraum = Leerraum.Beachten)
     {
-        var ergebnis = treiber.Diff(pfad, umfang);
+        var ergebnis = treiber.Diff(pfad, umfang, leerraum);
         var meldung = "";
         if (ergebnis.Meldung is not null)
         {

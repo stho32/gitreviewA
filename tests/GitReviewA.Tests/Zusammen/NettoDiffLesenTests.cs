@@ -21,7 +21,7 @@ public class NettoDiffLesenTests
     {
         using var z = ZusammenRepo.Z();
 
-        var patch = Diffaufbereitung.PatchAbErstemHunk(GitLeser.NettoDiffLesen("", z.Hash("z3"), Datei(z, "", "z3", "src/a.txt"), Diffumfang.Aenderungen, z.Ordner, Ausgabegrenze.Standard));
+        var patch = Diffaufbereitung.PatchAbErstemHunk(GitLeser.NettoDiffLesen("", z.Hash("z3"), Datei(z, "", "z3", "src/a.txt"), Diffumfang.Aenderungen, z.Ordner, Ausgabegrenze.Standard, Leerraum.Beachten));
 
         Assert.That(patch.Split('\n').Where(zeile => zeile.StartsWith('+')).Select(zeile => zeile[1..]),
             Is.EqualTo(new[] { "eins", "ZWEI", "drei", "vier" }));
@@ -34,7 +34,7 @@ public class NettoDiffLesenTests
     {
         using var z = ZusammenRepo.Z();
 
-        var patch = Diffaufbereitung.PatchAbErstemHunk(GitLeser.NettoDiffLesen("", z.Hash("z3"), Datei(z, "", "z3", "README.md"), Diffumfang.Aenderungen, z.Ordner, Ausgabegrenze.Standard));
+        var patch = Diffaufbereitung.PatchAbErstemHunk(GitLeser.NettoDiffLesen("", z.Hash("z3"), Datei(z, "", "z3", "README.md"), Diffumfang.Aenderungen, z.Ordner, Ausgabegrenze.Standard, Leerraum.Beachten));
 
         Assert.That(patch.Split('\n').Where(zeile => zeile.StartsWith('+')).Select(zeile => zeile[1..]), Is.EqualTo(new[] { "Lager", "Beispiel" }));
     }
@@ -45,7 +45,7 @@ public class NettoDiffLesenTests
     {
         using var z = ZusammenRepo.Umbenennung();
 
-        var patch = Diffaufbereitung.PatchAbErstemHunk(GitLeser.NettoDiffLesen(z.Hash("z1"), z.Hash("u"), Datei(z, "z1", "u", "neu.txt"), Diffumfang.Aenderungen, z.Ordner, Ausgabegrenze.Standard));
+        var patch = Diffaufbereitung.PatchAbErstemHunk(GitLeser.NettoDiffLesen(z.Hash("z1"), z.Hash("u"), Datei(z, "z1", "u", "neu.txt"), Diffumfang.Aenderungen, z.Ordner, Ausgabegrenze.Standard, Leerraum.Beachten));
 
         Assert.That(patch.Split('\n').Where(zeile => zeile.StartsWith('-')).Select(zeile => zeile[1..]), Is.EqualTo(new[] { "a2" }));
         Assert.That(patch.Split('\n').Where(zeile => zeile.StartsWith('+')).Select(zeile => zeile[1..]), Is.EqualTo(new[] { "A2" }));
@@ -65,12 +65,26 @@ public class NettoDiffLesenTests
         z.Git("config", "diff.x.textconv", programm);
         z.Git("config", "diff.x.command", programm);
 
-        var patch = GitLeser.NettoDiffLesen("", z.Hash("z3"), Datei(z, "", "z3", "src/a.txt"), Diffumfang.Aenderungen, z.Ordner, Ausgabegrenze.Standard);
+        var patch = GitLeser.NettoDiffLesen("", z.Hash("z3"), Datei(z, "", "z3", "src/a.txt"), Diffumfang.Aenderungen, z.Ordner, Ausgabegrenze.Standard, Leerraum.Beachten);
 
         Assert.That(patch, Does.Contain("+vier"));
         Assert.That(File.Exists(marker), Is.False, "das Programm aus der Konfiguration des Repos lief");
         z.Git("diff", z.Hash("z1"), z.Hash("z3"));
         Assert.That(File.Exists(marker), Is.True, "Kontrolle: das Marker-Programm ist über git diff aufrufbar");
+    }
+
+    [Test]
+    [Description("Nacharbeit I0027 / R00026 B2501: -w hängt am selben `git diff --stdin`-Aufruf; eine reine Leerraum-Änderung bleibt leer")]
+    public void Wenn_der_Netto_Diff_mit_ignoriertem_Leerraum_gelesen_wird_dann_bleibt_die_reine_Leerraum_Aenderung_leer()
+    {
+        using var z = ZusammenRepo.Leerraum();
+        var datei = Datei(z, "z1", "z2", "still.txt");
+
+        var beachten = GitLeser.NettoDiffLesen(z.Hash("z1"), z.Hash("z2"), datei, Diffumfang.Aenderungen, z.Ordner, Ausgabegrenze.Standard, Leerraum.Beachten);
+        var ignorieren = GitLeser.NettoDiffLesen(z.Hash("z1"), z.Hash("z2"), datei, Diffumfang.Aenderungen, z.Ordner, Ausgabegrenze.Standard, Leerraum.Ignorieren);
+
+        Assert.That(Diffaufbereitung.PatchAbErstemHunk(beachten), Does.Contain("-b").And.Contain("+  b"));
+        Assert.That(Diffaufbereitung.PatchAbErstemHunk(ignorieren), Is.Empty, "-w blendet die reine Einrückungsänderung aus");
     }
 
     /// <summary>Die Netto-Änderung der Datei — genau die, die der Interactor an den Diff gibt.</summary>

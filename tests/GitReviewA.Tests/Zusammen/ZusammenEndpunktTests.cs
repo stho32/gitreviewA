@@ -93,6 +93,41 @@ public class ZusammenEndpunktTests
     }
 
     [Test]
+    [Description("Nacharbeit I0027: der Endpunkt reicht die Leerraum-Stellung in den Netto-Diff; ohne Angabe gilt „beachten“")]
+    public async Task Wenn_leerraum_gesetzt_dann_reicht_der_Endpunkt_ihn_in_den_Netto_Diff()
+    {
+        var quelle = LueckenlosQuelle();
+        await using var server = await StarteServer(quelle: quelle);
+        using var client = new HttpClient();
+
+        var ignorieren = await client.GetAsync(new Uri(new Uri(server.Adresse), "api/zusammen/diff?pfad=src%2Fa.txt&leerraum=ignorieren"));
+        var ohneAngabe = await client.GetAsync(new Uri(new Uri(server.Adresse), "api/zusammen/diff?pfad=src%2Fa.txt"));
+
+        Assert.That((int)ignorieren.StatusCode, Is.EqualTo(200));
+        Assert.That(quelle.ZuletztLeerraum, Is.EqualTo(Leerraum.Ignorieren));
+        Assert.That((int)ohneAngabe.StatusCode, Is.EqualTo(200));
+        Assert.That(quelle.ZuletztLeerraum, Is.EqualTo(Leerraum.Beachten), "ohne Angabe gilt der Startwert");
+    }
+
+    [Test]
+    [Description("Nacharbeit I0027: ohne Kette reicht der Endpunkt die Leerraum-Stellung in die Abschnitte")]
+    public async Task Wenn_ohne_Kette_und_leerraum_ignorieren_dann_reicht_der_Endpunkt_ihn_in_die_Abschnitte()
+    {
+        var uebersicht = TestUebersichtsquelle.MitDateien(
+            new Commitdateien(HashP, new Dateiaenderungen([new Dateiaenderung("M", "src/a.txt", null, 1, 1)])),
+            new Commitdateien(HashQ, new Dateiaenderungen([new Dateiaenderung("A", "src/b.txt", null, 1, 0)])));
+        var quelle = new TestZusammenquelle { GegebeneElternfolge = new Elternfolge([new Elternzeile(HashP, ""), new Elternzeile(HashQ, "")]) };
+        var diffquelle = new TestDiffquelle(Patch);
+        await using var server = await StarteServer(uebersicht, quelle, diffquelle);
+
+        var json = await new HttpClient().GetStringAsync(new Uri(new Uri(server.Adresse), "api/zusammen/diff?pfad=src%2Fa.txt&leerraum=ignorieren"));
+
+        using var dokument = JsonDocument.Parse(json);
+        Assert.That(dokument.RootElement.GetProperty("abschnitte").GetArrayLength(), Is.EqualTo(1));
+        Assert.That(diffquelle.ZuletztGelesenMitLeerraum, Is.EqualTo(Leerraum.Ignorieren), "die Abschnitte vergleichen mit -w");
+    }
+
+    [Test]
     public async Task Wenn_ein_Abschnitt_ueber_der_Ausgabegrenze_liegt_dann_200_zu_gross_ohne_Patch()
     {
         var uebersicht = TestUebersichtsquelle.MitDateien(
@@ -164,6 +199,22 @@ public class ZusammenEndpunktTests
 
         Assert.That(antwort.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
         Assert.That(quelle.NettoDiffLesevorgaenge, Is.Zero);
+    }
+
+    [TestCase("api/zusammen/diff?pfad=src%2Fa.txt&leerraum=egal")]
+    [TestCase("api/zusammen/diff?pfad=src%2Fa.txt&leerraum=IGNORIEREN")]
+    [TestCase("api/zusammen/diff?pfad=src%2Fa.txt&leerraum=Beachten")]
+    [TestCase("api/zusammen/diff?pfad=src%2Fa.txt&leerraum=")]
+    [TestCase("api/zusammen/diff?pfad=src%2Fa.txt&leerraum=beachten&leerraum=ignorieren")]
+    public async Task Wenn_leerraum_ausserhalb_der_festen_Liste_dann_400_ohne_Lesevorgang(string adresse)
+    {
+        var quelle = LueckenlosQuelle();
+        await using var server = await StarteServer(quelle: quelle);
+
+        var antwort = await new HttpClient().GetAsync(new Uri(new Uri(server.Adresse), adresse));
+
+        Assert.That(antwort.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest), "nur „beachten“ und „ignorieren“ sind gültig, genau einmal");
+        Assert.That(quelle.NettoDiffLesevorgaenge, Is.Zero, "ein fremder Wert endet vor jedem git-Aufruf");
     }
 
     [TestCase("nicht-da.txt")]

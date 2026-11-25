@@ -36,8 +36,8 @@ internal sealed class GitZusammenquelle : IZusammenquelle
         return GitLeser.NettoDateienLesen(basis, spitze, arbeitsordner);
     }
 
-    public string NettoDiff(string basis, string spitze, Dateiaenderung datei, Diffumfang umfang)
+    public string NettoDiff(string basis, string spitze, Dateiaenderung datei, Diffumfang umfang, Leerraum leerraum)
     {
-        return GitLeser.NettoDiffLesen(basis, spitze, datei, umfang, arbeitsordner, grenze);
+        return GitLeser.NettoDiffLesen(basis, spitze, datei, umfang, arbeitsordner, grenze, leerraum);
     }
 }

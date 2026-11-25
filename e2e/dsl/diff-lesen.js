@@ -34,6 +34,8 @@ const VORBEREITUNGEN = {
   'Repo W': { anlegen: repos.repoW, commits: ['w2', 'w1'] },
   // R00026-Nacharbeit (B1): `c2` ändert in `code.js`/`code.txt` die Zeilen 5 und 35 — gefärbt bzw. ungefärbt.
   'Repo C': { anlegen: repos.repoC, commits: ['c2', 'c1'] },
+  // R00012-Nacharbeit I0027: `t2` stellt in `still.txt` nur die Einrückung um, `echt.txt` ändert wirklich — Aufruf nur `t2`.
+  'Repo Still': { anlegen: repos.repoStill, commits: ['t2'] },
 };
 
 function diffSprache(gr, page) {

@@ -152,12 +152,12 @@ internal static class GitLeser
     /// Der Netto-Diff einer Datei über die lückenlose Kette: ein Patch gegen den Elternstand des ältesten Commits, unabhängig von der
     /// Commit-Reihenfolge. Revisionen und Pfade kommen über stdin (<c>git diff --stdin</c>, wie <c>git log --stdin</c> in #28): .NET kann
     /// ein Byte außerhalb von UTF-8 nicht als Argument übergeben, und ein Pfad aus der Anfrage darf nie Argument werden.
+    /// <paramref name="leerraum"/> setzt `-w` auf denselben Aufruf (R00026).
     /// Über der <paramref name="grenze"/> Bytes kein Rumpf, sondern <see cref="GitZuGross"/> (wie <see cref="DiffLesen(string, Dateiaenderung, Diffumfang, string, Ausgabegrenze)"/>).
     /// </summary>
-    public static string NettoDiffLesen(string basis, string spitze, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner, Ausgabegrenze grenze)
+    public static string NettoDiffLesen(string basis, string spitze, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner, Ausgabegrenze grenze, Leerraum leerraum)
     {
-        // Die Netto-Ansicht (I0010) kennt keine Leerraum-Stellung; sie vergleicht unverändert.
-        var start = GitDiffStdinStart(umfang, arbeitsordner, Leerraum.Beachten);
+        var start = GitDiffStdinStart(umfang, arbeitsordner, leerraum);
         return AusfuehrenMitEingabe(start, NettoEingabe(basis, spitze, datei), $"git diff --stdin {Kurz(basis)}..{Kurz(spitze)} -- {datei.Pfad}", grenze);
     }
 

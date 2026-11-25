@@ -78,9 +78,9 @@ internal sealed class ZusammenTreiber
         return zusammen.Stand();
     }
 
-    public ZusammenDiffergebnis Diff(string pfad, Diffumfang umfang)
+    public ZusammenDiffergebnis Diff(string pfad, Diffumfang umfang, Leerraum leerraum)
     {
-        return zusammen.Diff(new Zusammenanfrage(pfad, umfang));
+        return zusammen.Diff(new Zusammenanfrage(pfad, umfang, leerraum));
     }
 
     public Hakenergebnis Hake(string? commit, string datei, bool abgehakt)
@@ -132,10 +132,10 @@ internal sealed class ZusammenTreiber
             return innere.NettoDateien(basis, spitze);
         }
 
-        public string NettoDiff(string basis, string spitze, Dateiaenderung datei, Diffumfang umfang)
+        public string NettoDiff(string basis, string spitze, Dateiaenderung datei, Diffumfang umfang, Leerraum leerraum)
         {
             NettoDiffLesevorgaenge++;
-            return innere.NettoDiff(basis, spitze, datei, umfang);
+            return innere.NettoDiff(basis, spitze, datei, umfang, leerraum);
         }
     }
 

@@ -289,6 +289,20 @@ function repoZ(ordner) {
   return { ordner, hashes: { z1, z2, z3 } };
 }
 
+/** Repo Still (R00012, Nacharbeit I0027): `t1` „Anlegen“ legt `still.txt` (`a`, `b`) und `echt.txt` (`x`, `y`) an; `t2` „Leerraum“
+    stellt in `still.txt` nur die Einrückung um (`b` → `  b`, reine Leerraum-Änderung) und ändert in `echt.txt` `y` → `Y`. Aufruf
+    `gitreviewA <t2>` ist die lückenlose Kette eines Commits gegen `t1` — der Netto-Diff zeigt den Leerraum-Vergleich. */
+function repoStill(ordner) {
+  repoAnlegen(ordner);
+  dateiSchreiben(ordner, 'still.txt', 'a\nb\n');
+  dateiSchreiben(ordner, 'echt.txt', 'x\ny\n');
+  const t1 = commitAnlegen(ordner, { betreff: 'Anlegen' });
+  dateiSchreiben(ordner, 'still.txt', 'a\n  b\n');
+  dateiSchreiben(ordner, 'echt.txt', 'x\nY\n');
+  const t2 = commitAnlegen(ordner, { betreff: 'Leerraum' });
+  return { ordner, hashes: { t1, t2 } };
+}
+
 /** Repo X (R00010): ein Commit `x` fügt die Datei `<b>x</b>.txt` mit der Zeile `eins` hinzu. */
 function repoX(ordner) {
   repoAnlegen(ordner);
@@ -317,4 +331,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoX, repoK, repoZ, repoMitRumpf, repoMitBidiPfad, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoX, repoK, repoZ, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };

@@ -13,5 +13,5 @@ internal interface IZusammenquelle
 
     Dateiaenderungen NettoDateien(string basis, string spitze);
 
-    string NettoDiff(string basis, string spitze, Dateiaenderung datei, Diffumfang umfang);
+    string NettoDiff(string basis, string spitze, Dateiaenderung datei, Diffumfang umfang, Leerraum leerraum);
 }

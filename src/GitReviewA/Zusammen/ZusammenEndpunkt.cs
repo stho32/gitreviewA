@@ -1,5 +1,6 @@
 using GitReviewA.Diff;
 using GitReviewA.Fremdtext;
+using GitReviewA.Git;
 using GitReviewA.Server;
 
 namespace GitReviewA.Zusammen;
@@ -39,7 +40,7 @@ internal static class ZusammenEndpunkt
             {
                 return Results.BadRequest();
             }
-            return AlsDiffantwort(interactor.Diff(new Zusammenanfrage(pfad, umfang)));
+            return AlsDiffantwort(interactor.Diff(new Zusammenanfrage(pfad, umfang, Leerraum.Beachten)));
         };
     }
 

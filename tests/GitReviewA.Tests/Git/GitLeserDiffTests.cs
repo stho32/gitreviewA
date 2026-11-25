@@ -282,14 +282,14 @@ public class GitLeserDiffTests
         var p = repo.Committe("p", "A", Zeitpunkt, "");
         var datei = new Dateiaenderung("A", "src/b.txt", null, 2, 0);
 
-        var vollstaendig = GitLeser.NettoDiffLesen("", p, datei, Diffumfang.Aenderungen, repo.Ordner, Ausgabegrenze.Standard);
+        var vollstaendig = GitLeser.NettoDiffLesen("", p, datei, Diffumfang.Aenderungen, repo.Ordner, Ausgabegrenze.Standard, Leerraum.Beachten);
         var grenze = Encoding.UTF8.GetByteCount(vollstaendig);
 
-        var anDerGrenze = GitLeser.NettoDiffLesen("", p, datei, Diffumfang.Aenderungen, repo.Ordner, new Ausgabegrenze(grenze));
+        var anDerGrenze = GitLeser.NettoDiffLesen("", p, datei, Diffumfang.Aenderungen, repo.Ordner, new Ausgabegrenze(grenze), Leerraum.Beachten);
 
         Assert.That(Encoding.UTF8.GetByteCount(anDerGrenze), Is.EqualTo(grenze), "die Ausgabe genau an der Grenze wird vollständig gelesen");
         Assert.That(Diffaufbereitung.PatchAbErstemHunk(anDerGrenze), Is.EqualTo("@@ -0,0 +1,2 @@\n+eins\n+zwei\n"));
-        Assert.Throws<GitZuGross>(() => GitLeser.NettoDiffLesen("", p, datei, Diffumfang.Aenderungen, repo.Ordner, new Ausgabegrenze(grenze - 1)));
+        Assert.Throws<GitZuGross>(() => GitLeser.NettoDiffLesen("", p, datei, Diffumfang.Aenderungen, repo.Ordner, new Ausgabegrenze(grenze - 1), Leerraum.Beachten));
     }
 
     [Test]

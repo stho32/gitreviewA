@@ -54,6 +54,25 @@ internal sealed class ZusammenRepo : IDisposable
         return z;
     }
 
+    /// <summary>Repo der Leerraum-Probe (Nacharbeit I0027): `z1` legt `still.txt` (`a`, `b`) und `echt.txt` (`x`, `y`) an, `z2`
+    /// stellt in `still.txt` nur die Einrückung um (`b` → `  b`) und ändert in `echt.txt` `y` → `Y`, `z3` und `z4` legen je eine
+    /// weitere Datei an. `z2` allein ist lückenlos (Basis `z1`), `z2 z4` hat eine Lücke (`z3` fehlt).</summary>
+    public static ZusammenRepo Leerraum()
+    {
+        var z = new ZusammenRepo(WegwerfRepo.MitCommits());
+        z.Schreibe("still.txt", "a\nb\n");
+        z.Schreibe("echt.txt", "x\ny\n");
+        z.Committe("z1", "Start");
+        z.Schreibe("still.txt", "a\n  b\n");
+        z.Schreibe("echt.txt", "x\nY\n");
+        z.Committe("z2", "Leerraum und echte Änderung");
+        z.Schreibe("dritte.txt", "d\n");
+        z.Committe("z3", "dritte Datei");
+        z.Schreibe("vierte.txt", "v\n");
+        z.Committe("z4", "vierte Datei");
+        return z;
+    }
+
     /// <summary>Repo der Umbenennung: `z1` legt `alt.txt` an, `u` benennt sie in `neu.txt` um und ändert die zweite Zeile.</summary>
     public static ZusammenRepo Umbenennung()
     {

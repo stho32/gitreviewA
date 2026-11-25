@@ -1,4 +1,5 @@
 using System.Runtime.Versioning;
+using GitReviewA.Diff;
 using GitReviewA.Git;
 
 namespace GitReviewA.Tests.Akzeptanz;
@@ -44,6 +45,37 @@ public class ZusammenAusgabegrenzeTests
         var sprache = ZusammenSprache.AufrufMitAusgabegrenze(z.Ordner, z.Hash, Klein(), "z1", "z3");
 
         var zuGross = sprache.Diff("riesig.txt");
+
+        Assert.That(sprache.Lueckenlos(), Is.False);
+        Assert.That(zuGross.Ausgang, Is.EqualTo("zu groß"));
+        Assert.That(zuGross.Abschnitte, Is.Empty);
+        Assert.That(zuGross.Meldung, Does.Contain("1024"));
+    }
+
+    [Test]
+    [Description("Lehre #10 (Nacharbeit I0027): die Ausgabegrenze bleibt am -w-Aufruf — lückenlos, „ignorieren“ → zu groß")]
+    public void Wenn_Zusammen_lueckenlos_mit_ignoriertem_Leerraum_ueber_der_Ausgabegrenze_dann_zu_gross_ohne_Patch()
+    {
+        using var z = ZusammenRepo.Grenze();
+        var sprache = ZusammenSprache.AufrufMitAusgabegrenze(z.Ordner, z.Hash, Klein(), "z1", "z2", "z3");
+
+        var zuGross = sprache.Diff("riesig.txt", Diffumfang.Aenderungen, Leerraum.Ignorieren);
+        var kontrolle = sprache.Diff("winzig.txt", Diffumfang.Aenderungen, Leerraum.Ignorieren);
+
+        Assert.That(zuGross.Ausgang, Is.EqualTo("zu groß"));
+        Assert.That(zuGross.Zeilen, Is.Empty, "kein gekürzter Rumpf, ganz oder gar nicht");
+        Assert.That(zuGross.Meldung, Does.Contain("1024"), "die Meldung nennt die Grenze");
+        Assert.That(kontrolle.Ausgang, Is.EqualTo("gelesen"), "unter der Grenze die Kontrolle");
+    }
+
+    [Test]
+    [Description("Lehre #10 (Nacharbeit I0027): die Ausgabegrenze bleibt am -w-Aufruf — ohne Kette, „ignorieren“ → zu groß")]
+    public void Wenn_Zusammen_ohne_Kette_mit_ignoriertem_Leerraum_ueber_der_Ausgabegrenze_dann_zu_gross()
+    {
+        using var z = ZusammenRepo.Grenze();
+        var sprache = ZusammenSprache.AufrufMitAusgabegrenze(z.Ordner, z.Hash, Klein(), "z1", "z3");
+
+        var zuGross = sprache.Diff("riesig.txt", Diffumfang.Aenderungen, Leerraum.Ignorieren);
 
         Assert.That(sprache.Lueckenlos(), Is.False);
         Assert.That(zuGross.Ausgang, Is.EqualTo("zu groß"));

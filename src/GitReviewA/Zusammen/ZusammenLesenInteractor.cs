@@ -155,7 +155,7 @@ internal sealed class ZusammenLesenInteractor : INettoDateiliste
             {
                 return Diffaufbereitung.Netto(datei.Datei, string.Empty, diffquelle.BinaerGrund(stand.Spitze, datei.Datei), commitsDerDatei);
             }
-            var patch = quelle.NettoDiff(stand.Basis, stand.Spitze, datei.Datei, umfang);
+            var patch = quelle.NettoDiff(stand.Basis, stand.Spitze, datei.Datei, umfang, Leerraum.Beachten);
             return Diffaufbereitung.Netto(datei.Datei, patch, null, commitsDerDatei);
         }
         return Diffaufbereitung.Abschnitte(datei.Datei, datei.Stellen.Select(stelle => Abschnitt(stelle, umfang)));

@@ -26,6 +26,9 @@ internal sealed class TestZusammenquelle : IZusammenquelle
 
     public Diffumfang? ZuletztUmfang { get; private set; }
 
+    /// <summary>Die Leerraum-Stellung des letzten Netto-Diffs; `null` ohne einen (R00026, Nacharbeit I0027).</summary>
+    public Leerraum? ZuletztLeerraum { get; private set; }
+
     public static TestZusammenquelle Leer()
     {
         return new TestZusammenquelle();
@@ -46,10 +49,11 @@ internal sealed class TestZusammenquelle : IZusammenquelle
         return GegebeneNetto;
     }
 
-    public string NettoDiff(string basis, string spitze, Dateiaenderung datei, Diffumfang umfang)
+    public string NettoDiff(string basis, string spitze, Dateiaenderung datei, Diffumfang umfang, Leerraum leerraum)
     {
         nettoDiffs.Add(datei.Pfad);
         ZuletztUmfang = umfang;
+        ZuletztLeerraum = leerraum;
         return Patch;
     }
 }

@@ -424,3 +424,35 @@ test.describe('Repo W (R00026)', () => {
     expect(await diff.hatZeile(9)).toBe(false);
   });
 });
+
+// Nacharbeit I0027 (R00012): der Leerraum-Umschalter liegt im Werkzeugkasten, den I0027 baut — er muss auch in „Zusammen“ wirken.
+// „Zusammen“ ist der Standard; der Netto-Diff der lückenlosen Kette vergleicht dann mit `-w`.
+test.describe('Zusammen: Leerraum-Umschalter (R00012, Nacharbeit)', () => {
+  const STILL = [
+    { kopf: '@@ -1,2 +1,2 @@' }, kontext('a', 1), { minus: 'b', alt: 2 }, { plus: '  b', neu: 2 },
+  ];
+  const ECHT = [
+    { kopf: '@@ -1,2 +1,2 @@' }, kontext('x', 1), { minus: 'y', alt: 2 }, { plus: 'Y', neu: 2 },
+  ];
+
+  test('soll in „Zusammen“ die reine Leerraum-Änderung ausblenden und die echte Änderung lassen', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Repo Still', modus: null });
+
+    await diff.dateiAnsehen('still.txt');
+    await diff.diffZeigt({ pfad: 'still.txt', zeilen: STILL });
+
+    await diff.leerraumUmschalten();
+
+    await diff.leerraumIst('ignorieren');
+    await diff.diffMeldet('still.txt', 'Keine Zeilenänderungen');
+
+    await diff.dateiAnsehen('echt.txt');
+    await diff.diffZeigt({ pfad: 'echt.txt', zeilen: ECHT });
+
+    await diff.leerraumUmschalten();
+
+    await diff.leerraumIst('beachten');
+    await diff.dateiAnsehen('still.txt');
+    await diff.diffZeigt({ pfad: 'still.txt', zeilen: STILL });
+  });
+});
