@@ -206,6 +206,7 @@ test.describe('Einzeilige und ganze Datei bleiben unverändert (Szenario 7)', ()
     await anm.feldOffenMitFokus('lang.txt', 20);
     await anm.textSchreiben('lang.txt', '20', 'nur die Zeile');
     await anm.speichern('lang.txt', '20');
+    await anm.feldZu('lang.txt', '20');
 
     const { ergebnis } = await anm.beendenUndErgebnisLesen();
 

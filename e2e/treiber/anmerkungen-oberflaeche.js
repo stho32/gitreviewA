@@ -18,6 +18,8 @@ const ANLEGEN = '**/api/anmerkungen';
 const AENDERUNG = /\/api\/anmerkungen\/\d+$/;
 const LOESCHUNG = /\/api\/anmerkungen\/\d+\/loeschen$/;
 const VERZOEGERUNG_MS = 1500;
+/** Die Antwort auf „Speichern“ ist kein Leistungsurteil: gewartet wird bis zum Testende, nicht 5 s (fremde Last auf dem Rechner). */
+const ANTWORT_FRIST_MS = 30000;
 
 /** `ziel`: `{ neu }`, `{ alt }` (entfernte Zeile), `'kopf'` oder `'hinweis'` (`\ No newline at end of file`). */
 function diffzeile(page, ziel) {
@@ -87,8 +89,23 @@ async function textSchreiben(page, name, text) {
   await feld(page, name).fill(text);
 }
 
+/** „Speichern“ und warten, bis der Server die Anfrage beantwortet hat: er trägt die Anmerkung in seinen Stand ein, bevor er
+    antwortet — deshalb darf „Beenden“ erst danach klicken (sonst überholt es das Anlegen). */
 async function speichern(page, name) {
+  const antwort = anfrageBeantwortet(page);
   await feldzeile(page, name).getByRole('button', { name: 'Speichern', exact: true }).click();
+  await antwort;
+}
+
+/** Die nächste Schreibanfrage auf /api/anmerkungen und ihre Antwort; ein abgebrochener Request antwortet nie — auf ihn endet das
+    Warten ohne Antwort, der Zustand steht dann im Feld (Meldung). */
+async function anfrageBeantwortet(page) {
+  const anfrage = await page.waitForRequest(eineSchreibanfrage, { timeout: ANTWORT_FRIST_MS });
+  await anfrage.response();
+}
+
+function eineSchreibanfrage(anfrage) {
+  return anfrage.method() === 'POST' && /\/api\/anmerkungen(\/\d+)?$/.test(anfrage.url());
 }
 
 /** Zwei Klicks kurz hintereinander auf „Speichern“, der zweite ohne Warten auf Bedienbarkeit. */
@@ -194,11 +211,13 @@ async function pruefeBereichsfeldImAbschnitt(page, commit, name) {
   await expect(abschnitt(page, commit).getByRole('textbox', { name, exact: true }), 'Bereichsfeld im Abschnitt').toBeFocused();
 }
 
-/** Text ins Bereichsfeld des Abschnitts, „Speichern“, danach ist das Feld zu. */
+/** Text ins Bereichsfeld des Abschnitts, „Speichern“, auf die Antwort warten, danach ist das Feld zu. */
 async function bereichImAbschnittSpeichern(page, commit, name, text) {
   const feldElement = abschnitt(page, commit).getByRole('textbox', { name, exact: true });
   await feldElement.fill(text);
+  const antwort = anfrageBeantwortet(page);
   await abschnitt(page, commit).locator('tr.anm-feld').getByRole('button', { name: 'Speichern', exact: true }).click();
+  await antwort;
   await expect(feldElement).toHaveCount(0);
 }
 
