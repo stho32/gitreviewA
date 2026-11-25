@@ -20,6 +20,7 @@ internal sealed class Webserver : IAsyncDisposable
 {
     private const string Startseite = "index.html";
     private const string Anfragekontext = "Anfrage";
+    private const string Apisegment = "/api";
     private const string Sicherheitsrichtlinie = "default-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'";
 
     private static readonly JsonSerializerOptions JsonOptionen = new(JsonSerializerDefaults.Web);
@@ -57,6 +58,7 @@ internal sealed class Webserver : IAsyncDisposable
         var lauscherPort = new LauscherPort();
         anwendung.Use(SchuetzeVorFremdemHost(lauscherPort, protokoll));
         anwendung.Use(SetzeSchutzkoepfe);
+        anwendung.Use(SchuetzeLeseanfragen(protokoll));
         anwendung.Use(ProtokolliereAnfrage(protokoll));
         BildeEndpunkte(anwendung, commits, oberflaeche, muster);
         MeldeMuster(protokoll, muster);
@@ -128,6 +130,29 @@ internal sealed class Webserver : IAsyncDisposable
         kontext.Response.Headers["Referrer-Policy"] = "no-referrer";
         kontext.Response.Headers.CacheControl = "no-store";
         await weiter(kontext);
+    }
+
+    /// <summary>
+    /// Eine Stelle für alle lesenden <c>/api/</c>-Endpunkte (Befundkarte #55): fremde Herkunft wird abgewiesen, bevor
+    /// die Routenauswahl den Endpunkt ausführt. Geprüft wird der Kestrel-normalisierte Pfad, den auch die Auswahl
+    /// benutzt — Schreibweise, abschließender Schrägstrich und Punktsegmente ändern daran nichts.
+    /// </summary>
+    private static Func<HttpContext, RequestDelegate, Task> SchuetzeLeseanfragen(StderrProtokoll protokoll)
+    {
+        return async (kontext, weiter) =>
+        {
+            var anfrage = kontext.Request;
+            var betrifftApi = anfrage.Path.StartsWithSegments(Apisegment, StringComparison.OrdinalIgnoreCase);
+            var istLeseanfrage = HttpMethods.IsGet(anfrage.Method);
+            var kommtVonFremd = FremdeHerkunft.IstFremd(anfrage.Headers.Origin, anfrage.Headers[FremdeHerkunft.Querherkunftskopf], kontext.Connection.LocalPort);
+            if (betrifftApi && istLeseanfrage && kommtVonFremd)
+            {
+                protokoll.Melde(Protokollstufe.Debug, Anfragekontext, FremdeHerkunft.Meldung);
+                await JsonAntwort.SendeMeldungAsync(kontext, StatusCodes.Status403Forbidden, FremdeHerkunft.Meldung);
+                return;
+            }
+            await weiter(kontext);
+        };
     }
 
     private static Func<HttpContext, RequestDelegate, Task> ProtokolliereAnfrage(StderrProtokoll protokoll)

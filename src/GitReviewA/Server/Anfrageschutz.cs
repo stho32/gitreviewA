@@ -6,7 +6,7 @@ namespace GitReviewA.Server;
 /// <summary>
 /// Schutz der zustandsändernden Endpunkte gegen fremde Webseiten: nur der eigene Origin (oder keiner, Befehlszeile),
 /// nur POST, nur genau application/json — das kann eine fremde Seite ohne CORS-Vorabanfrage nicht senden.
-/// Den Host prüft schon <see cref="HostPruefung"/> für jede Anfrage.
+/// Den Host prüft schon <see cref="HostPruefung"/> für jede Anfrage, den Ursprung <see cref="FremdeHerkunft"/>.
 /// </summary>
 internal static class Anfrageschutz
 {
@@ -17,9 +17,10 @@ internal static class Anfrageschutz
 
     public static Schutzurteil Beurteile(string methode, StringValues origin, StringValues inhaltstyp, int port)
     {
-        if (!IstEigenerOderKeinOrigin(origin, port))
+        var istFremderUrsprung = !FremdeHerkunft.IstEigenerOderKeiner(origin, port);
+        if (istFremderUrsprung)
         {
-            return Schutzurteil.Abgewiesen(StatusCodes.Status403Forbidden, "Anfrage von fremder Herkunft abgewiesen");
+            return Schutzurteil.Abgewiesen(StatusCodes.Status403Forbidden, FremdeHerkunft.Meldung);
         }
         var istErlaubteMethode = string.Equals(methode, ErlaubteMethode, StringComparison.Ordinal);
         if (!istErlaubteMethode)
@@ -31,17 +32,6 @@ internal static class Anfrageschutz
             return Schutzurteil.Abgewiesen(StatusCodes.Status415UnsupportedMediaType, "Inhaltstyp muss application/json sein");
         }
         return Schutzurteil.Zugelassen;
-    }
-
-    private static bool IstEigenerOderKeinOrigin(StringValues origin, int port)
-    {
-        if (origin.Count == 0)
-        {
-            return true;
-        }
-        var eigenerOrigin = $"http://{HostPruefung.Rechneradresse}:{port}";
-        var istGenauEinEigenerOrigin = origin.Count == 1 && string.Equals(origin[0], eigenerOrigin, StringComparison.Ordinal);
-        return istGenauEinEigenerOrigin;
     }
 
     private static bool IstGenauJson(StringValues inhaltstyp)
