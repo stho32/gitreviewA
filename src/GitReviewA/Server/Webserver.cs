@@ -7,6 +7,7 @@ using GitReviewA.Diff;
 using GitReviewA.Git;
 using GitReviewA.Haken;
 using GitReviewA.Protokoll;
+using GitReviewA.Sprung;
 using GitReviewA.Zusammen;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
@@ -39,7 +40,7 @@ internal sealed class Webserver : IAsyncDisposable
 
     public DateiAbhakenInteractor DateiAbhaken { get; }
 
-    public static async Task<Webserver> StartenAsync(int port, Commitzeilen commits, IDateiquelle dateiquelle, IDiffquelle diffquelle, IUebersichtsquelle uebersichtsquelle, IZusammenquelle zusammenquelle, Oberflaeche oberflaeche, StderrProtokoll protokoll)
+    public static async Task<Webserver> StartenAsync(int port, Commitzeilen commits, IDateiquelle dateiquelle, IDiffquelle diffquelle, IUebersichtsquelle uebersichtsquelle, IZusammenquelle zusammenquelle, Oberflaeche oberflaeche, StderrProtokoll protokoll, ISprungquelle? sprungquelle = null)
     {
         var anwendung = BaueAnwendung(port, protokoll);
         var anmerkungen = new Anmerkungsspeicher();
@@ -57,6 +58,10 @@ internal sealed class Webserver : IAsyncDisposable
         anwendung.MapGet(DiffEndpunkt.Muster, DiffEndpunkt.Fuer(new DiffLesenInteractor(commits, dateien, diffquelle, protokoll)));
         anwendung.MapGet(ZusammenEndpunkt.Listenmuster, ZusammenEndpunkt.Liste(zusammen));
         anwendung.MapGet(ZusammenEndpunkt.Diffmuster, ZusammenEndpunkt.Diff(zusammen));
+        if (sprungquelle is not null)
+        {
+            anwendung.MapGet(SprungEndpunkt.Muster, SprungEndpunkt.Fuer(new SprungInteractor(commits, dateien, sprungquelle, protokoll)));
+        }
         BildeRueckkanal(anwendung, commits, anmerkungen, haken, dateiAbhaken, new Stellensperre(uebersicht, protokoll), protokoll);
         await anwendung.StartAsync();
         lauscherPort.Wert = TatsaechlicherPort(anwendung);
