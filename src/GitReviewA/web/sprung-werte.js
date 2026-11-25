@@ -29,6 +29,15 @@
     return `${ziel}:${nummer}`;
   }
 
+  /** Der Name des Zeilen-Links für Vorlesewerkzeuge: „<pfad> Zeile <n>, in VS Code öffnen“ — die nackte Nummer allein wäre kein
+      sprechender Name; ohne Nummer `null`, dann trägt der Link keinen Namen. */
+  function sprungName(pfad, nummer) {
+    if (!Number.isInteger(nummer)) {
+      return null;
+    }
+    return `${pfad} Zeile ${nummer}, in VS Code öffnen`;
+  }
+
   /** Die erste Zeile der gezeigten Ansicht mit Nummer neu; ohne solche Nummer die erste Abschnittskopf-Nummer; sonst 1 (etwa bei
       Binärdatei oder unlesbarem Diff, wo es keine Zeilen gibt). */
   function ersteSprungzeile(zeilen) {
@@ -46,5 +55,5 @@
     return 1;
   }
 
-  Object.assign(ziel, { sprungZeile, sprungLink, ersteSprungzeile });
+  Object.assign(ziel, { sprungZeile, sprungLink, sprungName, ersteSprungzeile });
 })(typeof module !== 'undefined' ? module.exports : window);

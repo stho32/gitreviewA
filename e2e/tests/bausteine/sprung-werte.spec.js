@@ -1,7 +1,7 @@
 'use strict';
 // B2007 Baustein (ohne Browser) der Sprung-Rechnung: welche Nummer neu eine Zeile oder ein Abschnittskopf öffnet und wie der Link entsteht.
 const { test, expect } = require('@playwright/test');
-const { sprungZeile, sprungLink, ersteSprungzeile } = require('../../../src/GitReviewA/web/sprung-werte.js');
+const { sprungZeile, sprungLink, sprungName, ersteSprungzeile } = require('../../../src/GitReviewA/web/sprung-werte.js');
 
 const kopf = text => ({ art: 'kopf', alt: null, neu: null, text });
 const kontext = (text, alt, neu) => ({ art: 'kontext', alt, neu, text });
@@ -34,5 +34,10 @@ test.describe('Baustein Sprung-Werte', () => {
     expect(ersteSprungzeile([kopf('@@ -1,3 +1,4 @@'), kontext('a1', 1, 1), plus('A2', 2)])).toBe(1);
     expect(ersteSprungzeile([kopf('@@ -1,4 +0,0 @@'), minus('a1', 1)])).toBe(1);
     expect(ersteSprungzeile([])).toBe(1);
+  });
+
+  test('soll den Zeilen-Link mit Pfad und Zeile benennen und ohne Nummer keinen Namen liefern', () => {
+    expect(sprungName('src/a.txt', 2)).toBe('src/a.txt Zeile 2, in VS Code öffnen');
+    expect(sprungName('src/a.txt', null)).toBeNull();
   });
 });

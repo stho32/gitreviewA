@@ -293,7 +293,8 @@
   }
 
   /** Jede gezeichnete Zeile mit Nummer neu und jeder Abschnittskopf bekommt `href = ziel + ":" + nummer` — aus dem Ziel allein,
-      nie aus fremdem Text; die Zeile kennt nur der Browser. */
+      nie aus fremdem Text; die Zeile kennt nur der Browser. Nur der Link der Nummernspalte braucht einen eigenen Namen: er liegt
+      allein an der nackten Nummer, während der Abschnittskopf-Link seinen sichtbaren Text als Namen trägt. */
   function setzeSprunglinks(ansicht) {
     const gezeichnet = zustand.gezeichnet;
     if (!gezeichnet || gezeichnet.zeilen.length === 0) {
@@ -307,18 +308,20 @@
       if (!zeilenElement) {
         continue;
       }
-      const link = sprungLink(ziel, sprungZeile(zeile));
+      const nummer = sprungZeile(zeile);
+      const link = sprungLink(ziel, nummer);
       if (zeile.art === 'kopf') {
-        verlinkeZelle(zeilenElement.querySelector('td.c'), link);
+        verlinkeZelle(zeilenElement.querySelector('td.c'), link, null);
         continue;
       }
-      verlinkeZelle(zeilenElement.querySelector('td.neu'), link);
+      verlinkeZelle(zeilenElement.querySelector('td.neu'), link, sprungName(gezeichnet.pfad, nummer));
     }
   }
 
-  /** Setzt oder entfernt den Link einer Zelle, ohne ihren Inhalt umzubauen; der sichtbare Text bleibt derselbe. Die Zelle trägt
-      keine eigene Klasse: im Text der Diff-Zeile sind nur die Rollen der Färbung, Lesetext und Marken erlaubt (R00007). */
-  function verlinkeZelle(zelle, link) {
+  /** Setzt oder entfernt den Link einer Zelle, ohne ihren Inhalt umzubauen; der sichtbare Text bleibt derselbe. `name` benennt den
+      Link für Vorlesewerkzeuge — die Zelle der Nummer neu ist nicht verborgen, und die nackte Nummer allein wäre kein sprechender Name.
+      Der Link trägt keine eigene Klasse: im Text der Diff-Zeile sind nur die Rollen der Färbung, Lesetext und Marken erlaubt (R00007). */
+  function verlinkeZelle(zelle, link, name) {
     if (!zelle) {
       return;
     }
@@ -331,12 +334,23 @@
     }
     if (vorhandenerAnker) {
       vorhandenerAnker.setAttribute('href', link);
+      setzeAnkernamen(vorhandenerAnker, name);
       return;
     }
     const anker = document.createElement('a');
     anker.setAttribute('href', link);
+    setzeAnkernamen(anker, name);
     anker.append(...zelle.childNodes);
     zelle.replaceChildren(anker);
+  }
+
+  /** Ohne Namen trägt der Link nur seinen sichtbaren Text (der Abschnittskopf seinen Hunk-Titel). */
+  function setzeAnkernamen(anker, name) {
+    if (name) {
+      anker.setAttribute('aria-label', name);
+      return;
+    }
+    anker.removeAttribute('aria-label');
   }
 
   /** Entweder der Verweis „In VS Code“ auf die gewählte Zeile (ohne Wahl die erste Zeile mit Nummer neu) oder der Grund als Text;
@@ -469,7 +483,7 @@
     }
     diffzeileElement.append(
       verborgeneZelle('n alt', nummerText(zeile.alt)),
-      verborgeneZelle('n neu', nummerText(zeile.neu)),
+      nummernzelleNeu(nummerText(zeile.neu)),
       verborgeneZelle('m', vorzeichen),
       textzelleElement(zeile),
     );
@@ -487,6 +501,15 @@
     const zelleElement = document.createElement('td');
     zelleElement.className = klassen;
     zelleElement.setAttribute('aria-hidden', 'true');
+    zelleElement.textContent = text;
+    return zelleElement;
+  }
+
+  /** Die Spalte der Nummer neu trägt den Sprunglink (R00021); sie ist deshalb nicht `aria-hidden` — ein fokussierbares Element in
+      einem verborgenen Teilbaum hat für Vorlesewerkzeuge keinen Namen. Die übrigen Nummern- und Vorzeichenspalten bleiben verborgen. */
+  function nummernzelleNeu(text) {
+    const zelleElement = document.createElement('td');
+    zelleElement.className = 'n neu';
     zelleElement.textContent = text;
     return zelleElement;
   }

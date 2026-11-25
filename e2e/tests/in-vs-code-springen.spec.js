@@ -65,6 +65,29 @@ test.describe('Sprungziele je Stelle', () => {
   });
 });
 
+test.describe('Zugänglichkeit der Zeilen-Links', () => {
+  test('soll den Link der Zeile 2 benennen und nicht in einem verborgenen Teilbaum führen', async ({ gr, page }) => {
+    await starteS(gr, page);
+
+    await seite.dateiWaehlen(page, 'src/a.txt');
+
+    await diffSeite.pruefeSprungzeileName(page, 2, 'src/a.txt Zeile 2, in VS Code öffnen');
+    expect(await diffSeite.sprungzeileLiegtImVerborgenen(page, 2), 'fokussierbarer Link in einer verborgenen Zelle').toBe(false);
+  });
+
+  test('soll den Abschnittskopf-Link benennen und in der Ansicht ganze Datei denselben Namen tragen', async ({ gr, page }) => {
+    await starteS(gr, page);
+    await seite.dateiWaehlen(page, 'src/a.txt');
+
+    await diffSeite.pruefeSprungkopfName(page, '@@ -1,3 +1,4 @@');
+
+    await diffSeite.ansichtWaehlen(page, 'ganze Datei');
+
+    await diffSeite.pruefeSprungzeileName(page, 2, 'src/a.txt Zeile 2, in VS Code öffnen');
+    expect(await diffSeite.sprungzeileLiegtImVerborgenen(page, 2), 'fokussierbarer Link in einer verborgenen Zelle').toBe(false);
+  });
+});
+
 test.describe('Verweis im Diff-Kopf', () => {
   test('soll ohne gewählte Zeile auf die erste Zeile mit Nummer neu zeigen und nach der Wahl auf die gewählte', async ({ gr, page }) => {
     const repo = await starteS(gr, page);

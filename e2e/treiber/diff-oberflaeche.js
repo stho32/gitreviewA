@@ -331,6 +331,21 @@ async function pruefeSprungzeile(page, neu, href) {
   await expect(page.locator(`${ZEILE}[data-neu="${neu}"] a`)).toHaveAttribute('href', href);
 }
 
+/** Der Name des Zeilen-Links im ARIA-Schnappschuss: ein fokussierbarer Link in einem `aria-hidden`-Teilbaum hätte keinen. */
+async function pruefeSprungzeileName(page, neu, name) {
+  await expect(page.locator(`${ZEILE}[data-neu="${neu}"] a`)).toMatchAriaSnapshot(`- link "${name}"`);
+}
+
+/** Ob der Zeilen-Link in einem `aria-hidden`-Teilbaum liegt — dort hat er für Vorlesewerkzeuge keinen Namen. */
+async function sprungzeileLiegtImVerborgenen(page, neu) {
+  return page.locator(`${ZEILE}[data-neu="${neu}"] a`).evaluate(anker => anker.closest('[aria-hidden="true"]') !== null);
+}
+
+/** Der Name des Abschnittskopf-Links; er trägt seinen sichtbaren Text (den Hunk-Titel) als Namen. */
+async function pruefeSprungkopfName(page, name) {
+  await expect(page.locator(SPRUNG_KOPF).first()).toMatchAriaSnapshot(`- link "${name}"`);
+}
+
 /** Der Link des ersten Abschnittskopf-Links. */
 function sprungHunkLink(page) {
   return page.locator(SPRUNG_KOPF).first().getAttribute('href');
@@ -376,6 +391,6 @@ module.exports = {
   pruefeDiff, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, diffAntwortVerzoegern,
   pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
   diffAntwortZuGross, blockKnoten, warteAufFarbe, langeAufgabenBeimScrollen, zugeklapptRechtzeitigNachKlick, zugeklapptRechtzeitigNachAktion,
-  pruefeSprungzeile, sprungHunkLink, zeileWaehlen, pruefeSprungVerweis, pruefeSprungGrund,
-  pruefeSprungHinweis, sprungAntwortVerzoegern,
+  pruefeSprungzeile, pruefeSprungzeileName, sprungzeileLiegtImVerborgenen, pruefeSprungkopfName, sprungHunkLink, zeileWaehlen,
+  pruefeSprungVerweis, pruefeSprungGrund, pruefeSprungHinweis, sprungAntwortVerzoegern,
 };
