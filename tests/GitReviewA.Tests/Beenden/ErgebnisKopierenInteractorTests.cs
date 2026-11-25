@@ -89,7 +89,7 @@ public class ErgebnisKopierenInteractorTests
         private Aufbau(IUebersichtsquelle uebersichtsquelle)
         {
             var protokoll = new StderrProtokoll(new StringWriter(), TimeProvider.System, Protokollstufe.Debug);
-            dateiAbhaken = new DateiAbhakenInteractor(new GemerkteUebersicht(uebersichtsquelle), haken, protokoll);
+            dateiAbhaken = new DateiAbhakenInteractor(new GemerkteUebersicht(uebersichtsquelle), haken, TestNettoDateiliste.Leer(), protokoll);
             interactor = new ErgebnisKopierenInteractor(anmerkungen, dateiAbhaken);
         }
 

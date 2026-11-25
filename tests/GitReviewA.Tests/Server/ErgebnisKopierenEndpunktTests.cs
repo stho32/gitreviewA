@@ -148,6 +148,6 @@ public class ErgebnisKopierenEndpunktTests
     {
         var commits = new Commitzeilen([new Commitzeile(HashA, "Testperson", "2026-01-01T09:00:00+00:00", "Erster Commit", "")]);
         var protokoll = new StderrProtokoll(ziel, TimeProvider.System, Protokollstufe.Debug);
-        return await Webserver.StartenAsync(0, commits, TestDateiquelle.Leer(), TestDiffquelle.Leer(), TestUebersichtsquelle.Mit(HashA, "a.txt", "b.txt"), Oberflaeche.AusDemProgramm(), protokoll);
+        return await Webserver.StartenAsync(0, commits, TestDateiquelle.Leer(), TestDiffquelle.Leer(), TestUebersichtsquelle.Mit(HashA, "a.txt", "b.txt"), TestZusammenquelle.Leer(), Oberflaeche.AusDemProgramm(), protokoll);
     }
 }
