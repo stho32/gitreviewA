@@ -56,3 +56,23 @@ test.describe('Zwei getrennte Rollbereiche', () => {
     expect(werkzeuge.unten, 'Werkzeugzeile der Dateiliste sichtbar').toBeLessThanOrEqual(600);
   });
 });
+
+test.describe('Schmales Fenster', () => {
+  test('unter 566 px eine Spalte ohne getrennte Rollbereiche, ab 566 px zwei Spalten mit getrennten Rollbereichen', async ({ seit }) => {
+    await seit.starten({ vorbereitung: 'Repo S' });
+    await seit.dateiAnsehen('lang.txt');
+
+    await seit.fensterSetzen({ width: 560, height: 800 });
+
+    await seit.eineSpalte();
+    await seit.seitenbildlauf();
+    await seit.keinTrennerKeinEinklappen();
+
+    await seit.fensterSetzen({ width: 566, height: 800 });
+
+    await seit.zweiSpalten();
+    await seit.keinSeitenbildlauf();
+    await seit.listeIstRollbereich();
+    await seit.diffIstRollbereich();
+  });
+});

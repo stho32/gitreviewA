@@ -275,12 +275,13 @@ kbd{font:11px/1.2 var(--kd-mono);padding:1px 4px;border:1px solid var(--kd-line-
 .kz{--gr-fokus:var(--kd-head-text)}
 .kz :focus-visible{outline-color:var(--gr-fokus)}
 
-/* Fester Rahmen mit zwei getrennten Rollbereichen (R00033, B3201): ab 900 px — der Grenze, an der der zweispaltige Aufbau
-   heute beginnt — füllt der Aufbau die Fensterhöhe. Kopf und Werkzeugzeilen bleiben stehen, die Dateiliste und der
-   Diff-Bereich werden je ein eigener Rollbereich mit eigener Bildlaufleiste, und die Seite selbst scrollt nicht. Unterhalb
-   gilt der Rückfall oben (eine Spalte, Seite scrollt); die Grenze verschiebt B3202 auf 566 px. Die Regel steht am Dateiende,
-   damit sie die Grundregeln oben überschreibt. */
-@media (min-width:900px){
+/* Fester Rahmen mit zwei getrennten Rollbereichen (R00033, B3201/B3202): ab 566 px — der Summe der Mindestbreiten 240
+   (Seitenleiste) + 320 (Diff) + 6 (Trenner, PO 2026-11-25) — füllt der Aufbau die Fensterhöhe. Kopf und Werkzeugzeilen
+   bleiben stehen, die Dateiliste und der Diff-Bereich werden je ein eigener Rollbereich mit eigener Bildlaufleiste, und
+   die Seite selbst scrollt nicht. Unter 566 px gilt der Rückfall oben: eine Spalte, die Seite scrollt wie bisher, kein
+   Trenner und kein Ausklappen (R00034/R00035). Die 6 px des Trennzugs (I0035) liegen zwischen den beiden Spalten und sind
+   hier noch nicht belegt. Die Regel steht am Dateiende, damit sie die Grundregeln oben überschreibt. */
+@media (min-width:566px){
   html,body{block-size:100%;overflow:hidden}
   body{display:flex;flex-direction:column}
   .gr-inhalt{flex:1 1 auto;min-block-size:0;display:flex;flex-direction:column;padding:0}
