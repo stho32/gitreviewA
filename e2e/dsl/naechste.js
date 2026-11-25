@@ -1,7 +1,8 @@
 'use strict';
 // Testsprache „Nächste ungeprüfte“ (R00028): Repos und Commits heißen wie in der User Story — Repo Z mit z1/z2/z3 (drei Dateien in
-// „Zusammen“, sechs Stellen in „Einzeln“), Repo N mit `v` (zehn Stellen, drei gesperrt). „Nächste ungeprüfte“ = den Knopf in der
-// Werkzeugzeile der Dateiliste betätigen. Treiber darunter kennen Seite, Prozess, HTTP und git.
+// „Zusammen“, sechs Stellen in „Einzeln“), Repo N mit `v` (zehn Stellen, drei gesperrt) und Repo Q mit `i1` (sieben Stellen,
+// `app.lock` per `--ignore` oder Musterfeld ausgeblendet). „Nächste ungeprüfte“ = den Knopf in der Werkzeugzeile der Dateiliste
+// betätigen. Treiber darunter kennen Seite, Prozess, HTTP und git.
 const path = require('path');
 const { test: basis, expect } = require('./gitreviewa.js');
 const seite = require('../treiber/oberflaeche.js');
@@ -16,6 +17,7 @@ const FENSTER = { width: 1280, height: 800 };
 const VORBEREITUNGEN = {
   'Repo Z': { anlegen: ordner => repos.repoZ(ordner), commits: ['z1', 'z2', 'z3'] },
   'Repo N mit v': { anlegen: ordner => fremdeNamen.repoNMitV(ordner), commits: ['n', 'v'] },
+  'Repo Q': { anlegen: ordner => repos.repoQ(ordner), commits: ['i1'] },
   'viele Dateien': {
     ausWelt: gr => {
       const repo = gr.repoMitGrossemCommit(60);
@@ -38,12 +40,12 @@ function naechsteSprache(gr, page) {
   });
   const hash = name => repo.hashes[name];
 
-  async function starten({ vorbereitung = 'Repo Z', commits, modus = 'zusammen', ohneSeite = false } = {}) {
+  async function starten({ vorbereitung = 'Repo Z', commits, modus = 'zusammen', zusatz = [], ohneSeite = false } = {}) {
     const art = VORBEREITUNGEN[vorbereitung];
     repo = art.ausWelt ? art.ausWelt(gr) : art.anlegen(path.join(gr.eigenerOrdner(), 'repo'));
     const auswahl = commits || art.commits;
     zaehlerGit = beobachtung.gitZaehlerAnlegen(gr.eigenerOrdner());
-    lauf = await gr.gitreviewAStarten({ ordner: repo.ordner }, auswahl.map(hash), { pfadVorne: zaehlerGit.ordner });
+    lauf = await gr.gitreviewAStarten({ ordner: repo.ordner }, auswahl.map(hash), { pfadVorne: zaehlerGit.ordner, zusatz });
     if (!ohneSeite) {
       await page.setViewportSize(FENSTER);
       await gr.oberflaecheOeffnen(page, lauf, modus);
@@ -65,6 +67,9 @@ function naechsteSprache(gr, page) {
     fortschritt: text => hakenSeite.pruefeFortschritt(page, text),
     modusWaehlen: modus => seite.modusWaehlen(page, modus),
     neuLaden: () => seite.neuLaden(page),
+    musterEingeben: muster => seite.musterEingeben(page, muster),
+    ausblendenZaehler: text => seite.pruefeAusblendenZaehler(page, text),
+    dateilistenMeldung: text => seite.pruefeDateilistenMeldung(page, text),
 
     springen: () => naechsteSeite.springen(page),
     springenPerTastatur: () => naechsteSeite.springenPerTastatur(page),

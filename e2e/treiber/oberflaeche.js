@@ -248,6 +248,11 @@ function ausblendenZaehler(page) {
   return page.locator('#kopf-fortschritt .ausblenden-zaehler');
 }
 
+/** Der Zähler im Kopf nennt diese ausgeblendeten Dateien (R00025). */
+async function pruefeAusblendenZaehler(page, text) {
+  await expect(ausblendenZaehler(page)).toHaveText(text);
+}
+
 function ausblendenEingabe(page) {
   return page.locator(`${DATEILISTE} #ausblenden-eingabe`);
 }
@@ -440,7 +445,7 @@ module.exports = {
   dateienAntwortZurueckhalten, dialogeZaehlen,
   commitZeilenLesen, commitDetailsLesen, commitZeilen, aufZeilenWarten, commitWaehlen, gewaehlteCommits, messageSchalter, messageUmschalten, rumpf,
   dateilisteLesen, dateizeilen, aufDateizeilenWarten, dateiSumme, dateilistenMeldung, darstellungWaehlen, dateiWaehlen, gewaehlteDateien,
-  ausblendenZaehler, ausblendenEingabe, ausblendenFehler, ausblendenMuster, musterEingeben, musterEntfernen,
+  ausblendenZaehler, pruefeAusblendenZaehler, ausblendenEingabe, ausblendenFehler, ausblendenMuster, musterEingeben, musterEntfernen,
   dateiwahlenSammeln, gesammelteDateiwahlen, formatierungsElementeZaehlen,
   beendenKnopf, beendenBetaetigen, beendetMeldung, beendenFehler, beendenScheitertMit, modusWaehlen, neuLaden,
   kopfZahlen, fortschrittZaehler, commitZeileZusammenfassung, commitZeileText, pruefeKopfZahlen, pruefeFortschritt, pruefeCommitZeileZusammenfassung,

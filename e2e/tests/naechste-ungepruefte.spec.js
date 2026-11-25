@@ -141,6 +141,95 @@ test.describe('Knopf und Meldung', () => {
   });
 });
 
+/* ── Szenario 6: ausgeblendete Datei (R00025) ── */
+
+// Repo Q in der Reihenfolge der Liste (git): sieben Einträge, `app.lock` ist der zweite.
+const REPO_Q_ALLE = ['README.md', 'app.lock', 'build/out.log', 'docs/README.md', 'src/a.txt', 'src/b.txt', 'src/generated/api.cs'];
+const REPO_Q_SICHTBAR = REPO_Q_ALLE.filter(pfad => pfad !== 'app.lock');
+
+/** Springt durch die Einträge, hakt jeden ab und prüft den Fortschritt (Repo Q: m = 7, der verdeckte Eintrag bleibt offen). */
+async function springtUndHaktAb(naechste, pfade, einheit) {
+  for (const [nummer, pfad] of pfade.entries()) {
+    await naechste.springen();
+    await naechste.stelle(pfad);
+    await naechste.gewaehlteZeileAbhaken();
+    await naechste.fortschritt(`${nummer + 1} von 7 ${einheit} abgehakt`);
+  }
+}
+
+test.describe('Szenario 6: ausgeblendete Datei', () => {
+  test('soll mit --ignore die ausgeblendete Datei nie anspringen und am Ende umlaufen', async ({ naechste }) => {
+    await naechste.starten({ vorbereitung: 'Repo Q', modus: 'zusammen', zusatz: ['--ignore', '*.lock'] });
+    await naechste.dateienWarten(6);
+    await naechste.ausblendenZaehler('1 ausgeblendet, davon 1 Muster');
+
+    // Der achte Sprung läuft zur ersten ungeprüften um; app.lock ist nie ein Ziel (sonst stünde keine Zeile gewählt).
+    await naechste.reihe([...REPO_Q_SICHTBAR, 'README.md']);
+  });
+
+  test('soll in „Zusammen“ nach den sichtbaren Dateien „Alles Sichtbare abgehakt, 1 ausgeblendet“ melden', async ({ naechste }) => {
+    await naechste.starten({ vorbereitung: 'Repo Q', modus: 'zusammen', zusatz: ['--ignore', '*.lock'] });
+    await naechste.dateienWarten(6);
+
+    await springtUndHaktAb(naechste, REPO_Q_SICHTBAR, 'Dateien');
+
+    await naechste.knopfNichtBedienbar();
+    await naechste.meldung('Alles Sichtbare abgehakt, 1 ausgeblendet');
+  });
+
+  test('soll in „Einzeln“ die ausgeblendete Stelle überspringen und die Meldung nennen', async ({ naechste }) => {
+    await naechste.starten({ vorbereitung: 'Repo Q', modus: 'einzeln', zusatz: ['--ignore', '*.lock'] });
+    await naechste.dateienWarten(6);
+
+    await springtUndHaktAb(naechste, REPO_Q_SICHTBAR, 'Stellen');
+
+    await naechste.knopfNichtBedienbar();
+    await naechste.meldung('Alles Sichtbare abgehakt, 1 ausgeblendet');
+  });
+
+  test('soll ein Muster aus dem Feld beachten: der erste Sprung nimmt die erste sichtbare Datei', async ({ naechste }) => {
+    await naechste.starten({ vorbereitung: 'Repo Q', modus: 'zusammen' });
+    await naechste.dateienWarten(7);
+
+    await naechste.musterEingeben('*.md');
+
+    await naechste.ausblendenZaehler('2 ausgeblendet, davon 2 Muster');
+    await naechste.dateienWarten(5);
+    // Der erste Listeneintrag (README.md) ist ausgeblendet: die Suche beginnt bei der ersten sichtbaren Datei.
+    await naechste.reihe(['app.lock', 'build/out.log']);
+  });
+
+  test('soll ein Muster aus dem Feld in „Einzeln“ genauso beachten', async ({ naechste }) => {
+    await naechste.starten({ vorbereitung: 'Repo Q', modus: 'einzeln' });
+    await naechste.dateienWarten(7);
+
+    await naechste.musterEingeben('*.md');
+
+    await naechste.ausblendenZaehler('2 ausgeblendet, davon 2 Muster');
+    await naechste.dateienWarten(5);
+    await naechste.reihe(['app.lock', 'build/out.log']);
+  });
+
+  test('soll bei lauter ausgeblendeten Dateien die Zahl nennen (alles verdeckt)', async ({ naechste }) => {
+    await naechste.starten({ vorbereitung: 'Repo Q', modus: 'zusammen', zusatz: ['--ignore', '*'] });
+
+    await naechste.dateilistenMeldung('Alle Dateien ausgeblendet');
+
+    await naechste.knopfNichtBedienbar();
+    await naechste.meldung('Alles Sichtbare abgehakt, 7 ausgeblendet');
+  });
+
+  test('soll ohne Muster die ausgeblendete Datei erreichen und am Ende „Alles abgehakt“ melden (Kontrolle)', async ({ naechste }) => {
+    await naechste.starten({ vorbereitung: 'Repo Q', modus: 'zusammen' });
+    await naechste.dateienWarten(7);
+
+    await springtUndHaktAb(naechste, REPO_Q_ALLE, 'Dateien');
+
+    await naechste.knopfNichtBedienbar();
+    await naechste.meldung('Alles abgehakt');
+  });
+});
+
 test.describe('Kein neuer Weg, späte Antwort, beide Modi', () => {
   test('soll beim verzögerten Diff die späte Antwort der früheren Wahl verwerfen (Szenario 7)', async ({ naechste }) => {
     await naechste.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });

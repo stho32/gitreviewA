@@ -104,6 +104,18 @@
     }));
   }
 
+  /**
+   * Die Zahl der ausgeblendeten Dateien, die noch offen sind: je Datei höchstens einmal, auch wenn in „Einzeln“ mehrere ihrer
+   * Stellen offen sind (die Meldung nennt Dateien, R00028/R00025). `versteckte` sind die verdeckten Einträge der Sicht.
+   */
+  function ausgeblendeteOffene(modus, versteckte, stand) {
+    const offene = eintraege(modus, versteckte, stand).filter(eintrag => eintrag.zustand !== ABGEHAKT);
+    if (modus === ZUSAMMEN) {
+      return offene.length;
+    }
+    return new Set(offene.map(eintrag => eintrag.pfad)).size;
+  }
+
   /** Der Text neben dem Knopf, wenn keine ungeprüfte Stelle mehr erreichbar ist. */
   function meldung({ nichtLesbar, ausgeblendet }) {
     const zusatz = [];
@@ -120,7 +132,7 @@
     return `${kopf}, ${zusatz.join(', ')}`;
   }
 
-  const api = { ABGEHAKT, UNGEPRUEFT, GESPERRT, KEINE, naechster, eintraege, meldung };
+  const api = { ABGEHAKT, UNGEPRUEFT, GESPERRT, KEINE, naechster, eintraege, ausgeblendeteOffene, meldung };
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   } else {

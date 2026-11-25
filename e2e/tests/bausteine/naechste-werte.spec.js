@@ -3,7 +3,7 @@
 // Zustand bilden und darin die nächste ungeprüfte Stelle finden — vorwärts, gesperrte übersprungen, mit Umlauf. Kein `git`, kein
 // Server, kein Nachladen: nur die schon geladene Liste und der Stand.
 const { test, expect } = require('@playwright/test');
-const { naechster, eintraege, meldung, KEINE } = require('../../../src/GitReviewA/web/naechste-werte.js');
+const { naechster, eintraege, meldung, ausgeblendeteOffene, KEINE } = require('../../../src/GitReviewA/web/naechste-werte.js');
 
 const abgehakt = (pfad, commit) => ({ art: commit ? 'stelle' : 'datei', commit, pfad, zustand: 'abgehakt' });
 const ungeprueft = (pfad, commit) => ({ art: commit ? 'stelle' : 'datei', commit, pfad, zustand: 'ungeprueft' });
@@ -175,6 +175,28 @@ test.describe('Baustein Nächste-Werte — Einträge der gezeigten Sicht mit Zus
     expect(pfade(gebildet)).toEqual(['a.txt', 'b.txt', 'c.txt']);
     expect(naechster(gebildet, null)).toBe(1);
     expect(naechster(gebildet, { pfad: 'b.txt' })).toBe(1);
+  });
+});
+
+test.describe('Baustein Nächste-Werte — die ausgeblendeten offenen Dateien (Szenario 6)', () => {
+  test('soll in „Zusammen“ je verdeckter Datei zählen und abgehakte auslassen', () => {
+    const verdeckt = [datei('a.lock', [['i1', 'a.lock']]), datei('b.lock', [['i1', 'b.lock']])];
+
+    expect(ausgeblendeteOffene('zusammen', verdeckt, standAus())).toBe(2);
+    expect(ausgeblendeteOffene('zusammen', verdeckt, standAus(['i1 b.lock']))).toBe(1);
+  });
+
+  test('soll in „Einzeln“ je verdeckter Datei einmal zählen, auch wenn mehrere Stellen offen sind', () => {
+    const verdeckt = [{ commit: 'z1', datei: 'v.lock' }, { commit: 'z2', datei: 'v.lock' }, { commit: 'z2', datei: 'w.lock' }];
+
+    expect(ausgeblendeteOffene('einzeln', verdeckt, standAus())).toBe(2);
+  });
+
+  test('soll in „Einzeln“ eine vollständig abgehakte verdeckte Datei nicht zählen', () => {
+    const verdeckt = [{ commit: 'z1', datei: 'v.lock' }, { commit: 'z2', datei: 'v.lock' }];
+
+    expect(ausgeblendeteOffene('einzeln', verdeckt, standAus(['z1 v.lock', 'z2 v.lock']))).toBe(0);
+    expect(ausgeblendeteOffene('einzeln', verdeckt, standAus(['z1 v.lock']))).toBe(1);
   });
 });
 

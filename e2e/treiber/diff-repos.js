@@ -297,6 +297,20 @@ function repoZ(ordner) {
   return { ordner, hashes: { z1, z2, z3 } };
 }
 
+/** Repo Q (R00025): `i1` „Anlegen“ legt sieben Dateien an — `README.md`, `src/a.txt`, `src/b.txt`, `docs/README.md`,
+    `app.lock`, `build/out.log`, `src/generated/api.cs`. Über `--ignore '*.lock'` oder das Musterfeld ist `app.lock` auszublenden. */
+function repoQ(ordner) {
+  repoAnlegen(ordner);
+  dateiSchreiben(ordner, 'README.md', 'a\nb\n');
+  dateiSchreiben(ordner, 'src/a.txt', '1\n2\n3\n');
+  dateiSchreiben(ordner, 'src/b.txt', '1\n2\n');
+  dateiSchreiben(ordner, 'docs/README.md', 'x\n');
+  dateiSchreiben(ordner, 'app.lock', 'lock\n');
+  dateiSchreiben(ordner, 'build/out.log', 'log\n');
+  dateiSchreiben(ordner, 'src/generated/api.cs', 'class X {}\n');
+  return { ordner, hashes: { i1: commitAnlegen(ordner, { betreff: 'Anlegen' }) } };
+}
+
 /** Repo Still (R00012, Nacharbeit I0027): `t1` „Anlegen“ legt `still.txt` (`a`, `b`) und `echt.txt` (`x`, `y`) an; `t2` „Leerraum“
     stellt in `still.txt` nur die Einrückung um (`b` → `  b`, reine Leerraum-Änderung) und ändert in `echt.txt` `y` → `Y`. Aufruf
     `gitreviewA <t2>` ist die lückenlose Kette eines Commits gegen `t1` — der Netto-Diff zeigt den Leerraum-Vergleich. */
@@ -339,4 +353,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoX, repoK, repoZ, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoX, repoK, repoZ, repoQ, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };

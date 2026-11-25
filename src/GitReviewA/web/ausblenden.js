@@ -118,6 +118,7 @@
   window.gitreviewaAusblenden = {
     muster: () => zustand.muster,
     sichtbare: dateien => sichtbareDateien(dateien, zustand.muster),
+    istSichtbar: pfad => anzahlAusgeblendet([{ pfad }], zustand.muster) === 0,
   };
 
   document.addEventListener('DOMContentLoaded', init);

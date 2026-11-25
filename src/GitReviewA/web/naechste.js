@@ -1,9 +1,10 @@
 /* gitreviewA — Nächste ungeprüfte (R00028): der Knopf in der Werkzeugzeile der Dateiliste springt von der aktuellen Wahl zur
    nächsten ungeprüften Stelle — in „Zusammen“ je Datei, in „Einzeln“ je Stelle (Commit und Datei), über Commits hinweg, mit Umlauf;
-   abgehakte und gesperrte Stellen werden übersprungen. Die gefundene Zeile wird gewählt (derselbe Weg wie ein Klick: `datei-gewaehlt`
+   abgehakte und gesperrte Stellen werden übersprungen, ausgeblendete Dateien (R00025) sind keine Einträge und werden nie ein Ziel, und
+   die Meldung nennt sie als „n ausgeblendet“. Die gefundene Zeile wird gewählt (derselbe Weg wie ein Klick: `datei-gewaehlt`
    lädt den Diff, in „Einzeln“ wechselt vorher der Commit mit), sie kommt in den Blick; der Fokus bleibt auf dem Knopf, damit ein
-   weiterer Druck weitergeht. Gelesen wird nur die schon geladene Liste (`dateiliste-gezeichnet`) und der Stand des Hakens — kein
-   neuer Serverweg, kein neuer `git`-Aufruf, kein Nachladen. Die Suche selbst rechnet `naechste-werte.js`. */
+   weiterer Druck weitergeht. Gelesen wird nur die schon geladene Liste (`dateiliste-gezeichnet`), die Sicht des Ausblendens und der
+   Stand des Hakens — kein neuer Serverweg, kein neuer `git`-Aufruf, kein Nachladen. Die Suche selbst rechnet `naechste-werte.js`. */
 (function () {
   'use strict';
 
@@ -44,16 +45,22 @@
       return;
     }
     const eintraege = eintraegeJetzt();
-    if (eintraege === null || eintraege.length === 0) {
+    if (eintraege === null) {
       knopf.disabled = true;
       meldung.textContent = '';
       return;
     }
     knopf.disabled = naechsteWerte().naechster(eintraege, aktuelleStelle()) === naechsteWerte().KEINE;
-    meldung.textContent = knopf.disabled ? meldungstext(eintraege) : '';
+    const hatAussage = eintraege.length > 0 || ausgeblendeteZahl() > 0;
+    if (knopf.disabled && hatAussage) {
+      meldung.textContent = meldungstext(eintraege);
+    } else {
+      meldung.textContent = '';
+    }
   }
 
-  /** `k nicht lesbar` zählt die gesperrten Einträge (in „Zusammen“ Dateien, in „Einzeln“ Stellen) — dieselbe Klasse wie R00014. */
+  /** `k nicht lesbar` zählt die gesperrten Einträge (in „Zusammen“ Dateien, in „Einzeln“ Stellen) — dieselbe Klasse wie R00014;
+      `n ausgeblendet` zählt die verdeckten offenen Dateien (R00025, Szenario 6). */
   function meldungstext(eintraege) {
     const werte = naechsteWerte();
     return werte.meldung({
@@ -62,9 +69,22 @@
     });
   }
 
-  /** Zahl der ausgeblendeten ungeprüften Dateien: R00025 (Ausblenden) ist noch nicht gebaut, deshalb gibt es heute keine. */
+  /** Zahl der ausgeblendeten Dateien, die noch offen sind — die verdeckten Einträge der Sicht, in der Rechnung des Modus (R00025). */
   function ausgeblendeteZahl() {
-    return 0;
+    const haken = window.gitreviewaHaken;
+    if (!haken || !haken.istLesbar()) {
+      return 0;
+    }
+    const werte = naechsteWerte();
+    const stand = standJetzt(haken);
+    if (window.gitreviewaModus.istZusammen()) {
+      const sicht = zustand.sicht;
+      if (sicht === null || sicht.modus !== window.gitreviewaModusWerte.ZUSAMMEN) {
+        return 0;
+      }
+      return werte.ausgeblendeteOffene(window.gitreviewaModusWerte.ZUSAMMEN, verdeckteListe(sicht.dateien), stand);
+    }
+    return werte.ausgeblendeteOffene(window.gitreviewaModusWerte.EINZELN, verdeckteStellen(haken.stellen()), stand);
   }
 
   /** Derselbe Weg im leeren Diff-Bereich („Erste ungeprüfte öffnen“), solange keine Datei gewählt ist. */
@@ -146,25 +166,52 @@
 
   /* ── Einträge und Stand ── */
 
-  /** Die Einträge der Sicht mit Zustand; `null`, solange Liste oder Stand noch fehlen. */
+  /** Die Einträge der Sicht mit Zustand; `null`, solange Liste oder Stand noch fehlen. Gelesen wird die **sichtbare** Liste (R00025). */
   function eintraegeJetzt() {
     const sicht = zustand.sicht;
     const haken = window.gitreviewaHaken;
     if (!haken || !haken.istLesbar()) {
       return null;
     }
-    const stand = {
-      istAbgehakt: (commit, pfad) => haken.istAbgehakt(commit, pfad),
-      istGesperrt: (commit, pfad) => haken.sperrgrund(commit, pfad) !== '',
-    };
+    const stand = standJetzt(haken);
     if (window.gitreviewaModus.istZusammen()) {
       if (sicht === null || sicht.modus !== window.gitreviewaModusWerte.ZUSAMMEN) {
         return null;
       }
-      return naechsteWerte().eintraege(window.gitreviewaModusWerte.ZUSAMMEN, sicht.dateien, stand);
+      return naechsteWerte().eintraege(window.gitreviewaModusWerte.ZUSAMMEN, sichtbareListe(sicht.dateien), stand);
     }
-    // In „Einzeln“ sind die Stellen des Stands die Einträge — alle Stellen der Auswahl, also über Commits hinweg.
-    return naechsteWerte().eintraege(window.gitreviewaModusWerte.EINZELN, haken.stellen(), stand);
+    // In „Einzeln“ sind die Stellen des Stands die Einträge — alle Stellen der Auswahl, also über Commits hinweg, aber nur die sichtbaren Dateien.
+    return naechsteWerte().eintraege(window.gitreviewaModusWerte.EINZELN, sichtbareStellen(haken.stellen()), stand);
+  }
+
+  /** Der bestätigte Zustand je Stelle — dieselbe Auskunft für die Einträge der Suche und für die verdeckten Dateien der Meldung. */
+  function standJetzt(haken) {
+    return {
+      istAbgehakt: (commit, pfad) => haken.istAbgehakt(commit, pfad),
+      istGesperrt: (commit, pfad) => haken.sperrgrund(commit, pfad) !== '',
+    };
+  }
+
+  /** Ausblenden ist eine Sicht (R00025): hier gilt dieselbe wie in der Dateiliste — kein eigener Filter, nur `gitreviewaAusblenden`. */
+  function istSichtbar(pfad) {
+    return !window.gitreviewaAusblenden || window.gitreviewaAusblenden.istSichtbar(pfad);
+  }
+
+  function sichtbareListe(dateien) {
+    return dateien.filter(datei => istSichtbar(datei.pfad));
+  }
+
+  function sichtbareStellen(stellen) {
+    return stellen.filter(stelle => istSichtbar(stelle.datei));
+  }
+
+  /** Die verdeckten Einträge: sie sind keine Ziele, zählen aber als „n ausgeblendet“, solange sie offen sind. */
+  function verdeckteListe(dateien) {
+    return dateien.filter(datei => !istSichtbar(datei.pfad));
+  }
+
+  function verdeckteStellen(stellen) {
+    return stellen.filter(stelle => !istSichtbar(stelle.datei));
   }
 
   /** Die Stelle der aktuellen Wahl; ohne Wahl `null` (dann beginnt die Suche beim ersten Eintrag). */
