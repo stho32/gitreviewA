@@ -184,3 +184,9 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-25 | #10 | Nacharbeit | entwickler | bestanden | 3 h 23 min | opencode (nach Netzabbruch fortgesetzt): M1 Grenze und M2 Namensprüfung im Netto-Diff, S1–S3 behoben · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 10-entwickler-2 · 0,35 $ · Karte gesamt 1,21 $ |
 | 2026-11-25 | #23 | Nacharbeit | entwickler | bestanden | 3 h 19 min | opencode (nach Netzabbruch fortgesetzt): B1 Pfeiltasten, B2 Felder überstehen Neuzeichnen, S1 Grund · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 23-entwickler-2 · 0,23 $ · Karte gesamt 0,84 $ |
 | 2026-11-25 | #20 | Entwicklertest | entwicklertester | bestanden | 3 h 14 min | opencode (nach Netzabbruch fortgesetzt): US-1..US-8 bestanden, bytegleich, kein Befund · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 20-entwicklertester-1 · 0,14 $ · Karte gesamt 0,40 $ |
+
+## Retrospektive #20 I0020 Befunde kopieren (2026-11-25)
+- Durchlauf ganz über opencode: planer 5 min, product-owner bestätigt 3 Empfehlungen, Bau 17 min, beide Reviews ohne Muss (Byte-Vergleich Kopie = stdout im Prozess; fremder Origin blockiert, DNS-Rebinding 403), Entwicklertest 8 Szenarien ohne Befund. Karte gesamt 0,40 $.
+- Netzabbruch 22:48 (ECONNRESET zu OpenRouter, alle drei laufenden Rollen gleichzeitig): Läufe mit `--fortsetzen <sitzung>` und kurzem Fortsetzungsauftrag wieder aufgenommen, Board-Timer per `timer stoppen --ende 22:48` + `beginne` (idempotent) korrigiert; die Laufdauer im Journal zählt die Pause noch mit.
+- Lehre: Nach einem Abbruch zuerst `pgrep` und das Ende der `.jsonl` lesen — `error … ECONNRESET` heißt Netz, nicht Rolle; Commits im Worktree zeigen, wie weit die Rolle kam.
+- Gate: NUnit 839/839, Playwright 324/324 zweimal.

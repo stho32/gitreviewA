@@ -1,7 +1,7 @@
 ---
 application: gitreviewA
 wbs: Dokumentation/Planung/gitreviewa.md
-zuletzt: 2026-11-24
+zuletzt: 2026-11-25
 ---
 
 # Phasen — gitreviewA
@@ -34,3 +34,4 @@ zuletzt: 2026-11-24
 | I0003 | Entwicklertest | 2026-11-24 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | 9 Szenarien (R00016), Karte #3 |
 | I0030 | Entwicklertest | 2026-11-24 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | 7 Szenarien (R00014), Karte #29 |
 | I0014 | Entwicklertest | 2026-11-24 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | 9 Szenarien (R00017), Karte #14 |
+| I0020 | Entwicklertest | 2026-11-25 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | US-1 bis US-8 (R00020), Karte #20 |
