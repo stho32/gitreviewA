@@ -28,6 +28,8 @@ const VORBEREITUNGEN = {
   '20 000 Zeilen, eine geändert': { anlegen: repos.repoUMitV, commits: ['v'] },
   'Große Diffs': { anlegen: repos.repoGross, commits: ['w'] },
   'Repo N': { anlegen: fremdeNamen.repoN, commits: ['n', 'b'] },
+  // R00026: `w2` ändert Leerraum und entfernte Stellen, `w1` legt an — die Auswahl ist `w2` zuerst.
+  'Repo W': { anlegen: repos.repoW, commits: ['w2', 'w1'] },
 };
 
 function diffSprache(gr, page) {
@@ -123,6 +125,8 @@ function diffSprache(gr, page) {
     hatZeile: neu => diffSeite.zeileVorhanden(page, neu),
     zeilentext: neu => diffSeite.zeilentextLesen(page, neu),
     anfragenGezaehlt: () => anfragen,
+    /** Lädt die Seite neu (Browser-Eigenes): die Wahl von „Umbruch“, „Ansicht“ und „Leerraum“ lebt nur im Speicher. */
+    neuLaden: () => page.reload(),
     langeZeileEinzeilig: (neu, text) => diffSeite.pruefeEinzeilig(page, neu, text),
     langeZeileUmbrochen: (neu, text) => diffSeite.pruefeUmbrochen(page, neu, text),
     fremderTextBleibtText: async () => {

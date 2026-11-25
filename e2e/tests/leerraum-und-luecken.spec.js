@@ -11,6 +11,9 @@ const VON_SRC_B = {
 };
 const ERSATZ_PATCH = '@@ -1,1 +1,1 @@\n-alt\n+IGNORIERT\n';
 
+/** Ersatz für die ganze Datei: eine Zeile an einer Stelle, die im echten Diff nicht vorkommt — füllt sie eine Lücke, sieht man es. */
+const ERSATZ_GANZ = ['@@ -9,23 +9,23 @@', ...Array.from({ length: 23 }, () => ' ERSATZ')].join('\n');
+
 /** „nur Änderungen“ von `weit.txt` aus Repo W (R00026): zwei Abschnitte, dazwischen 23 verborgene Zeilen. */
 const WEIT_AENDERUNGEN = [
   '@@ -2,7 +2,7 @@',
@@ -123,8 +126,7 @@ test.describe('Laden bei Leerraum-Wechsel', () => {
   });
 });
 
-test.describe('Lücke aufklappen', () => {
-  test('soll die Lücken ankündigen, schrittweise aufdecken und die letzte erst mit der Gesamtzeilenzahl zeigen', async ({ diff }) => {
+test.describe('Lücke aufklappen', () => {  test('soll die Lücken ankündigen, schrittweise aufdecken und die letzte erst mit der Gesamtzeilenzahl zeigen', async ({ diff }) => {
     await diff.starten();
     await weitDateiZeigen(diff);
 
@@ -244,5 +246,87 @@ test.describe('Lücke aufklappen', () => {
 
     await diff.diffMeldetFehler('lang.txt', 'Diff konnte nicht gelesen werden');
     await diff.dateiGewaehlt('lang.txt');
+  });
+});
+
+test.describe('Repo W (R00026)', () => {
+  const LEERRAUM_BEACHTEN = [
+    { kopf: '@@ -1,4 +1,5 @@' }, kontext('eins', 1), { minus: 'zwei', alt: 2 }, { minus: 'drei', alt: 3 },
+    { plus: '  zwei', neu: 2 }, { plus: 'drei geaendert', neu: 3 }, kontext('vier', 4), { plus: '', neu: 5 },
+  ];
+  const LEERRAUM_IGNORIEREN = [
+    { kopf: '@@ -1,4 +1,5 @@' }, kontext('eins', 1), kontext('  zwei', 2), { minus: 'drei', alt: 3 },
+    { plus: 'drei geaendert', neu: 3 }, kontext('vier', 4), { plus: '', neu: 5 },
+  ];
+
+  test('soll die Einrückung ausblenden, die echte Änderung und die leere Zeile lassen und nach dem Neuladen wieder „beachten“', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Repo W' });
+    await diff.leerraumIst('beachten');
+    await diff.dateiAnsehen('leerraum.txt');
+    await diff.diffZeigt({ pfad: 'leerraum.txt', zeilen: LEERRAUM_BEACHTEN });
+
+    await diff.leerraumUmschalten();
+
+    await diff.diffZeigt({ pfad: 'leerraum.txt', zeilen: LEERRAUM_IGNORIEREN });
+    await diff.dateiGewaehlt('leerraum.txt');
+
+    await diff.ansichtWaehlen('ganze Datei');
+
+    await diff.diffZeigt({ pfad: 'leerraum.txt', zeilen: LEERRAUM_IGNORIEREN.slice(1) });
+
+    await diff.neuLaden();
+
+    await diff.leerraumIst('beachten');
+    await diff.dateiAnsehen('leerraum.txt');
+    await diff.diffZeigt({ pfad: 'leerraum.txt', zeilen: LEERRAUM_BEACHTEN });
+  });
+
+  test('soll die Lücken von weit.txt ankündigen, je Datei einmal lesen und die fremden Zeilen als Text zeigen', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Repo W', verbose: true });
+    await diff.dateiAnsehen('weit.txt');
+    await diff.diffsGelesen('w2', 1);
+
+    await expect.poll(() => diff.luecken()).toEqual([
+      { text: '1 verborgene Zeile', schritt: '1 aufklappen', ganz: 'Ganz aufklappen' },
+      { text: '23 verborgene Zeilen', schritt: '20 aufklappen', ganz: 'Ganz aufklappen' },
+    ]);
+    expect(await diff.hatZeile(9)).toBe(false);
+
+    await diff.lueckeAufklappen(2);
+
+    await expect.poll(() => diff.zeilenzahl()).toBe(38);
+    expect(await diff.zeilentext(9)).toBe('z09');
+    expect(await diff.zeilentext(28)).toBe('z28');
+    await diff.diffsGelesen('w2', 2);
+
+    await diff.lueckeAufklappen(1);
+    await diff.lueckeAufklappen(1);
+    await diff.lueckeAufklappen(1, true);
+
+    expect(await diff.zeilentext(39)).toBe('z39');
+    expect(await diff.zeilentext(60)).toBe('z60');
+    expect(await diff.zeilentext(20)).toBe('<b>z20</b>');
+    expect(await diff.zeilentext(21)).toBe('a⟨U+202E⟩b');
+    await diff.fremderTextBleibtText();
+    await diff.diffsGelesen('w2', 2);
+  });
+
+  test('soll die verzögerte Antwort der ganzen Datei verwerfen, wenn inzwischen eine andere Datei gewählt ist', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Repo W' });
+    const ersatz = await diff.antwortErsetzen({ pfad: 'weit.txt', umfang: 'ganz', patch: ERSATZ_GANZ, verzoegerungMs: 1500 });
+    await diff.dateiAnsehen('weit.txt');
+
+    await diff.lueckeAufklappen(2);
+    await diff.dateiAnsehen('leerraum.txt');
+    await ersatz.eingetroffen();
+
+    await diff.diffZeigt({
+      pfad: 'leerraum.txt',
+      zeilen: [
+        { kopf: '@@ -1,4 +1,5 @@' }, kontext('eins', 1), { minus: 'zwei', alt: 2 }, { minus: 'drei', alt: 3 },
+        { plus: '  zwei', neu: 2 }, { plus: 'drei geaendert', neu: 3 }, kontext('vier', 4), { plus: '', neu: 5 },
+      ],
+    });
+    expect(await diff.hatZeile(9)).toBe(false);
   });
 });

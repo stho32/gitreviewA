@@ -44,6 +44,29 @@ function zeilen(anzahl, text) {
   return Array.from({ length: anzahl }, (_, index) => `${text(index + 1)}\n`).join('');
 }
 
+/** Repo W (R00026): `w1` „Anlegen“ legt `leerraum.txt` und `weit.txt` (60 Zeilen, `<b>z20</b>`, `a`+U+202E+`b`) an;
+    `w2` „Ändern“ stellt in `leerraum.txt` `zwei` auf `  zwei` um, ändert `drei` und fügt eine leere Zeile an, in `weit.txt` ändert es `z05` und `z35`.
+    Gleicher Inhalt wie `DiffRepo.W()` in tests/GitReviewA.Tests/Akzeptanz/DiffRepo.cs. */
+function repoW(ordner) {
+  repoAnlegen(ordner);
+  dateiSchreiben(ordner, 'leerraum.txt', 'eins\nzwei\ndrei\nvier\n');
+  dateiSchreiben(ordner, 'weit.txt', weitDatei());
+  const w1 = commitAnlegen(ordner, { betreff: 'Anlegen' });
+  dateiSchreiben(ordner, 'leerraum.txt', 'eins\n  zwei\ndrei geaendert\nvier\n\n');
+  dateiSchreiben(ordner, 'weit.txt', weitDatei().replace('z05\n', 'Z05\n').replace('z35\n', 'Z35\n'));
+  const w2 = commitAnlegen(ordner, { betreff: 'Ändern' });
+  return { ordner, hashes: { w1, w2 } };
+}
+
+function weitDatei() {
+  const zeilenRumpf = Array.from({ length: 19 }, (_, index) => `z${String(index + 1).padStart(2, '0')}\n`);
+  zeilenRumpf.push('<b>z20</b>\n', 'a\u202Eb\n');
+  for (let nummer = 22; nummer <= 60; nummer += 1) {
+    zeilenRumpf.push(`z${String(nummer).padStart(2, '0')}\n`);
+  }
+  return zeilenRumpf.join('');
+}
+
 /** Repo A, dazu drei Diff-Programme in der Konfiguration, die je eine Markerdatei im Repo anlegen. */
 function repoAMitDiffProgrammen(ordner) {
   const repo = repoA(ordner);
@@ -215,4 +238,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoX, repoK, repoMitBidiPfad, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoX, repoK, repoMitBidiPfad, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoW, markerVorhanden, diffProgrammOhneSchutzStarten };

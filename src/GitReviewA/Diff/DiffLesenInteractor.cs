@@ -71,10 +71,10 @@ internal sealed class DiffLesenInteractor(Commitzeilen commits, GemerkteDateique
             protokoll.Melde(Protokollstufe.Fehler, Fehlerkontext, $"Diff von Commit {hash}, Datei {datei.Pfad} nicht lesbar: {fehler.Message}");
             return Differgebnis.NichtLesbar;
         }
-        return GelesenWennDerPatchZurDateiPasst(hash, datei, antwort);
+        return GelesenWennDerPatchZurDateiPasst(hash, datei, anfrage, antwort);
     }
 
-    private Differgebnis GelesenWennDerPatchZurDateiPasst(string hash, Dateiaenderung datei, DiffAntwort antwort)
+    private Differgebnis GelesenWennDerPatchZurDateiPasst(string hash, Dateiaenderung datei, Diffanfrage anfrage, DiffAntwort antwort)
     {
         var zeigtMehrAlsDieseDatei = !Patcheinheit.ZeigtEineDatei(antwort.Patch);
         if (zeigtMehrAlsDieseDatei)
@@ -82,7 +82,7 @@ internal sealed class DiffLesenInteractor(Commitzeilen commits, GemerkteDateique
             protokoll.Melde(Protokollstufe.Fehler, Fehlerkontext, $"Diff von Commit {hash}, Datei {datei.Pfad} nicht lesbar: der Patch trägt den Kopf einer zweiten Datei");
             return Differgebnis.NichtLesbar;
         }
-        var widersprichtDerZaehlung = antwort.Art == Diffaufbereitung.ArtText && !Patchzaehlung.PasstZurDateiliste(antwort.Patch, datei);
+        var widersprichtDerZaehlung = ZaehlungPruefen(anfrage) && antwort.Art == Diffaufbereitung.ArtText && !Patchzaehlung.PasstZurDateiliste(antwort.Patch, datei);
         if (widersprichtDerZaehlung)
         {
             protokoll.Melde(Protokollstufe.Fehler, Fehlerkontext,
@@ -90,6 +90,16 @@ internal sealed class DiffLesenInteractor(Commitzeilen commits, GemerkteDateique
             return Differgebnis.NichtLesbar;
         }
         return Differgebnis.Gelesen(antwort);
+    }
+
+    /// <summary>
+    /// Die Zeilenzahl der Dateiliste stammt aus dem Vergleich ohne `-w`; mit „Leerraum ignorieren“ verschwinden reine
+    /// Leerraum-Änderungen und der Patch trägt andere Zahlen (R00026), die Prüfung kann dort nicht greifen. Der Schutz
+    /// gegen den Kopf einer zweiten Datei (<see cref="Patcheinheit"/>) gilt in beiden Stellungen.
+    /// </summary>
+    private static bool ZaehlungPruefen(Diffanfrage anfrage)
+    {
+        return anfrage.Leerraum == Leerraum.Beachten;
     }
 
     /// <summary>Die Debug-Zeile nennt nur die Länge des Namens: er kommt aus der Anfrage und ist hier keiner Datei zugeordnet.</summary>

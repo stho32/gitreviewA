@@ -150,6 +150,34 @@ internal sealed class DiffRepo : IDisposable
         return string.Concat(Enumerable.Range(1, anzahl).Select(nummer => $"{praefix}{nummer:D5}\n"));
     }
 
+    /// <summary>
+    /// Repo W (R00026): `w1` „Anlegen“ legt `leerraum.txt` (vier Zeilen) und `weit.txt` (60 Zeilen, darunter `<b>z20</b>` und
+    /// `a`+U+202E+`b`) an; `w2` „Ändern“ stellt in `leerraum.txt` `zwei` auf `  zwei` um, ändert `drei` und fügt eine leere Zeile an,
+    /// in `weit.txt` ändert es `z05` und `z35`. Damit hat `weit.txt` drei Lücken: Zeile 1 vor `@@ -2,7 +2,7 @@`,
+    /// die Zeilen 9–31 zwischen den Abschnitten und die Zeilen 39–60 nach `@@ -32,7 +32,7 @@` (Datei hat 60 Zeilen).
+    /// Gleicher Inhalt wie <c>e2e/treiber/diff-repos.js</c>.
+    /// </summary>
+    public static DiffRepo W()
+    {
+        var w = new DiffRepo(WegwerfRepo.MitCommits());
+        w.Schreibe("leerraum.txt", "eins\nzwei\ndrei\nvier\n");
+        w.Schreibe("weit.txt", WeitDatei());
+        w.Committe("w1", "Anlegen");
+        w.Schreibe("leerraum.txt", "eins\n  zwei\ndrei geaendert\nvier\n\n");
+        w.Schreibe("weit.txt", WeitDatei().Replace("z05\n", "Z05\n").Replace("z35\n", "Z35\n"));
+        w.Committe("w2", "Ändern");
+        return w;
+    }
+
+    private static string WeitDatei()
+    {
+        var zeilen = Enumerable.Range(1, 19).Select(nummer => $"z{nummer:D2}\n").ToList();
+        zeilen.Add("<b>z20</b>\n");
+        zeilen.Add("a\u202Eb\n");
+        zeilen.AddRange(Enumerable.Range(22, 39).Select(nummer => $"z{nummer:D2}\n"));
+        return string.Concat(zeilen);
+    }
+
     /// <summary>Unsichtbare Zeichen in Dateinamen (Befund Security-Review #17): je Zeichen eine Datei `x<Zeichen>y.txt`, dazu `a.txt` als Kontrolle.</summary>
     public static readonly string[] UnsichtbareZeichenInNamen = ["\u202E", "\u2066", "\u061C", "\u200E", "\u200B", "\uFEFF", "\U000E0041"];
 
