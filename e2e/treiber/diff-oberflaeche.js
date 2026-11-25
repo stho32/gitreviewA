@@ -233,6 +233,31 @@ async function pruefeUmbruchStellung(page, stellung) {
   await expect(schalter).not.toBeChecked();
 }
 
+/** R00032: der Umschalter „Umbruch“ ist ein Schalter (`role="switch"`, Entscheidung des product-owners) mit dem sichtbaren
+    Namen „Umbruch“; sein Kontrollzustand ist `checked`. */
+async function pruefeUmschalter(page, stellung) {
+  const schalter = page.locator(BEREICH).getByRole('switch', { name: 'Umbruch' });
+  await expect(schalter, 'genau ein Schalter „Umbruch“').toHaveCount(1);
+  if (stellung === 'an') {
+    await expect(schalter).toBeChecked();
+    return;
+  }
+  await expect(schalter).not.toBeChecked();
+}
+
+/** R00032: der Umschalter ist der nächste Tab-Stopp nach „Leerraum ignorieren“ und damit per Tastatur erreichbar. */
+async function pruefeUmschalterPerTabErreichbar(page) {
+  await page.locator(BEREICH).getByLabel(LEERRAUM_NAME).focus();
+  await page.keyboard.press('Tab');
+  await expect(page.locator(BEREICH).getByRole('switch', { name: 'Umbruch' })).toBeFocused();
+}
+
+/** R00032: der Umschalter lässt sich mit der Leertaste bedienen (Fokus auf dem Schalter). */
+async function umbruchPerTastaturUmschalten(page) {
+  await page.locator(BEREICH).getByLabel('Umbruch').focus();
+  await page.keyboard.press('Space');
+}
+
 /** Stellt den Umschalter der Ansicht auf `name` („nur Änderungen“ oder „ganze Datei“) — per Klick wie der Mensch. */
 async function ansichtWaehlen(page, name) {
   await page.locator(BEREICH).getByRole('radiogroup', { name: 'Ansicht' }).getByRole('radio', { name, exact: true }).click();
@@ -697,7 +722,7 @@ async function sprungAntwortScheitern(page, pfad, status = 500) {
 
 module.exports = {
   pruefeBedienbarNachAlsText, ansichtWaehlen, ansichtPerTastaturWechseln, pruefeAnsicht, zeilenfarbenLesen, pruefeZeilenfarben, pruefeKontextzeileBinnen,
-  pruefeDiff, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, pruefeHerkunft, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, pruefeUmbruchStellung, diffAntwortVerzoegern,
+  pruefeDiff, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, pruefeHerkunft, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, pruefeUmbruchStellung, pruefeUmschalter, pruefeUmschalterPerTabErreichbar, umbruchPerTastaturUmschalten, diffAntwortVerzoegern,
   pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
   pruefeAbschnittZugeklappt, abschnittTrotzdemLaden, pruefeAbschnittZeile, pruefeAbschnittskopf,
   diffAntwortZuGross, ganzDateiErstScheitern, blockKnoten, warteAufFarbe, langeAufgabenBeimScrollen, zugeklapptRechtzeitigNachKlick, zugeklapptRechtzeitigNachAktion,

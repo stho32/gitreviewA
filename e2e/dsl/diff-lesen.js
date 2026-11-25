@@ -122,6 +122,12 @@ function diffSprache(gr, page) {
     umbruchUmschalten: () => diffSeite.umbruchUmschalten(page),
     /** Die Stellung des Umschalters „Umbruch“ (R00032): „an“ (der Start) oder „aus“. */
     umbruchIst: stellung => diffSeite.pruefeUmbruchStellung(page, stellung),
+    /** R00032: der Umschalter ist ein Schalter (`role="switch"`) mit dem Namen „Umbruch“ und diesem Kontrollzustand. */
+    umschalterIst: stellung => diffSeite.pruefeUmschalter(page, stellung),
+    /** R00032: der Umschalter ist per Tab erreichbar. */
+    umschalterPerTabErreichbar: () => diffSeite.pruefeUmschalterPerTabErreichbar(page),
+    /** R00032: den Umschalter mit der Leertaste bedienen. */
+    umbruchPerTastaturUmschalten: () => diffSeite.umbruchPerTastaturUmschalten(page),
     /** Umschalter „Leerraum“ (R00026): klicken, per Tastatur umschalten, die Stellung prüfen. */
     leerraumUmschalten: () => diffSeite.leerraumUmschalten(page),
     leerraumPerTastaturUmschalten: () => diffSeite.leerraumPerTastaturUmschalten(page),

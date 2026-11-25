@@ -26,4 +26,20 @@ test.describe('Startzustand (R00032)', () => {
     await diff.umbruchUmschalten();
     await diff.langeZeileUmbrochen(2, LANGE_ZEILE);
   });
+
+  test('Kriterium 1 (Umschalter): der Umschalter „Umbruch“ ist ein Schalter mit sichtbarem Namen, per Tab erreichbar und mit der Leertaste bedienbar', async ({ diff }) => {
+    await diff.starten();
+
+    await diff.umschalterIst('an');
+
+    await diff.dateiAnsehen('breit.txt');
+    await diff.umschalterPerTabErreichbar();
+    await diff.umbruchPerTastaturUmschalten();
+    await diff.umschalterIst('aus');
+    await diff.langeZeileEinzeilig(2, LANGE_ZEILE);
+
+    await diff.umbruchPerTastaturUmschalten();
+    await diff.umschalterIst('an');
+    await diff.langeZeileUmbrochen(2, LANGE_ZEILE);
+  });
 });
