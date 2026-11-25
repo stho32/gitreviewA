@@ -18,6 +18,8 @@ internal static class ErgebnisFormatierer
     private const string DateienUeberschrift = "## Dateien";
     /** Höchstzahl Zeilen je Bereichszitat (R00031); danach genau eine Zeile mit dem Rest. */
     private const int HoechstzahlZitatzeilen = 20;
+    /** Höchstzahl Zeichen je Zitatzeile (Befund S1): eine fremde Zeile darf beliebig lang sein; danach die Zahl der übrigen. */
+    private const int HoechstzahlZeichenJeZitatzeile = 200;
 
     /// <summary>
     /// `bereichszeilen` trägt je stabiler Nummer einer Bereichsanmerkung die gelesenen Zeilen (B3007); fehlt der Eintrag oder ist
@@ -92,7 +94,7 @@ internal static class ErgebnisFormatierer
         for (var stelle = 0; stelle < gezeigt.Length; stelle++)
         {
             var nummer = (von + stelle).ToString(CultureInfo.InvariantCulture);
-            zeilen.Add($"    {nummer}: {UnsichtbareZeichen.AlsMarken(gezeigt[stelle])}");
+            zeilen.Add($"    {nummer}: {Zitatzeilentext(gezeigt[stelle])}");
         }
         var weitere = lesung.Zeilen.Length - gezeigt.Length;
         if (weitere > 0)
@@ -100,6 +102,38 @@ internal static class ErgebnisFormatierer
             zeilen.Add(string.Create(CultureInfo.InvariantCulture, $"    … ({weitere} weitere Zeilen)"));
         }
         return string.Join(Zeilenende, zeilen);
+    }
+
+    /// <summary>Der Text einer Zitatzeile: Unsichtbares als Marke, danach auf <see cref="HoechstzahlZeichenJeZitatzeile"/> gekürzt.</summary>
+    private static string Zitatzeilentext(string zeile)
+    {
+        return Gekuerzt(UnsichtbareZeichen.AlsMarken(zeile));
+    }
+
+    /// <summary>
+    /// Höchstens <see cref="HoechstzahlZeichenJeZitatzeile"/> Zeichen (Unicode-Codepunkte) und danach „ … (k weitere Zeichen)“; die
+    /// Grenze liegt immer zwischen zwei Codepunkten und zerschneidet so kein Surrogatpaar.
+    /// </summary>
+    private static string Gekuerzt(string text)
+    {
+        var gezaehlt = 0;
+        var endeNachUtf16 = 0;
+        foreach (var zeichen in text.EnumerateRunes())
+        {
+            gezaehlt += 1;
+            var liegtNochImZitat = gezaehlt <= HoechstzahlZeichenJeZitatzeile;
+            if (liegtNochImZitat)
+            {
+                endeNachUtf16 += zeichen.Utf16SequenceLength;
+            }
+        }
+        var weitereZeichen = gezaehlt - HoechstzahlZeichenJeZitatzeile;
+        var textPasstInDieGrenze = weitereZeichen <= 0;
+        if (textPasstInDieGrenze)
+        {
+            return text;
+        }
+        return string.Create(CultureInfo.InvariantCulture, $"{text[..endeNachUtf16]} … ({weitereZeichen} weitere Zeichen)");
     }
 
     /// <summary>

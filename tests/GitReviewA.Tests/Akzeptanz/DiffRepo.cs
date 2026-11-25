@@ -12,6 +12,10 @@ internal sealed class DiffRepo : IDisposable
 {
     private const string Zeitpunkt = "2026-03-04T09:15:00+01:00";
 
+    /// <summary>Die eine fremde Zeile aus <see cref="LangeZeile"/>: 8 MiB, aber mit den Nachbarzeilen unter der Ausgabegrenze
+        /// von 8 MiB, sonst gäbe es gar kein Zitat (Befund S1).</summary>
+    public const int LangeZeileLaenge = (8 * 1024 * 1024) - 100;
+
     private readonly WegwerfRepo repo;
     private readonly Dictionary<string, string> hashNachName = new(StringComparer.Ordinal);
 
@@ -129,6 +133,15 @@ internal sealed class DiffRepo : IDisposable
         r.Schreibe("lang.txt", ZeilenZ01BisZ30().Replace("z05\n", "Z05\n").Replace("z25\n", "Z25\n"));
         r.Committe("r2", "Ändern");
         return r;
+    }
+
+    /// <summary>Repo L (Befund S1): `l1` „Anlegen“ legt `lang.txt` aus drei Zeilen an, die zweite ist 8 MiB lang.</summary>
+    public static DiffRepo LangeZeile()
+    {
+        var l = new DiffRepo(WegwerfRepo.MitCommits());
+        l.Schreibe("lang.txt", "eins\n" + new string('x', LangeZeileLaenge) + "\ndrei\n");
+        l.Committe("l1", "Anlegen");
+        return l;
     }
 
     /// <summary>Repo U: `u` mit `gross.txt` aus 20 000 Zeilen, `v` ändert darin `zeile 10000` zu `geändert 10000`.</summary>

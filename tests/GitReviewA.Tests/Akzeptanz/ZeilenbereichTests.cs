@@ -97,6 +97,22 @@ public class ZeilenbereichTests
     }
 
     [Test]
+    [Description("Befund S1: eine fremde Zeile von 8 MiB wird auf 200 Zeichen gekürzt, stdout bleibt klein")]
+    public void Wenn_eine_markierte_Zeile_8_MiB_lang_ist_dann_gehen_200_Zeichen_und_die_Restzahl_nach_stdout()
+    {
+        const int Laenge = DiffRepo.LangeZeileLaenge;
+        using var repo = DiffRepo.LangeZeile();
+        var gr = ZeileAnnotierenSprache.Aufruf(repo, ["l1"]);
+
+        gr.AnnotiereBereich("l1", "lang.txt", 1, 2, "lang");
+        var ergebnis = gr.Beenden();
+
+        var gekuerzt = new string('x', 200) + $" … ({Laenge - 200} weitere Zeichen)";
+        Assert.That(ergebnis, Does.Contain("    1: eins\n    2: " + gekuerzt + "\n\n> lang\n"));
+        Assert.That(ergebnis.Length, Is.LessThan(10_000), "stdout bleibt klein");
+    }
+
+    [Test]
     [Description("R00031 Kriterium 8: eine Bereichsanmerkung wird über ihre stabile Nummer geändert und gelöscht, die Stelle bleibt")]
     public void Wenn_der_Bereich_geaendert_und_geloescht_wird_dann_bleibt_die_Stelle_und_die_Nummer_verfaellt()
     {

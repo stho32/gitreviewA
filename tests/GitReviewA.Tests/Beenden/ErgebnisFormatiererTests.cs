@@ -292,6 +292,60 @@ public class ErgebnisFormatiererTests
         Assert.That(ergebnis.Split('\n').Count(zeile => zeile.Contains("weitere Zeilen", StringComparison.Ordinal)), Is.EqualTo(1));
     }
 
+    [TestCase(199)]
+    [TestCase(200)]
+    [Description("Befund S1: eine Zitatzeile bis 200 Zeichen steht vollständig, ohne Restzahl")]
+    public void Wenn_eine_markierte_Zeile_bis_200_Zeichen_hat_dann_unveraendert(int laenge)
+    {
+        var anmerkungen = new Anmerkungsliste([new Anmerkung(1, HashA, "lang.txt", null, "lang", 1, 1)]);
+        var zitate = Zitate((1, [new string('x', laenge)]));
+
+        var ergebnis = ErgebnisFormatierer.Formatiere(anmerkungen, KeineDateien, zitate);
+
+        Assert.That(ergebnis, Does.Contain("    1: " + new string('x', laenge) + "\n"));
+        Assert.That(ergebnis, Does.Not.Contain("weitere Zeichen"));
+    }
+
+    [Test]
+    [Description("Befund S1: ab 201 Zeichen stehen 200 Zeichen und die Zahl der übrigen")]
+    public void Wenn_eine_markierte_Zeile_201_Zeichen_hat_dann_200_Zeichen_und_die_Zahl_der_uebrigen()
+    {
+        var anmerkungen = new Anmerkungsliste([new Anmerkung(1, HashA, "lang.txt", null, "lang", 1, 1)]);
+        var zitate = Zitate((1, [new string('x', 201)]));
+
+        var ergebnis = ErgebnisFormatierer.Formatiere(anmerkungen, KeineDateien, zitate);
+
+        Assert.That(ergebnis, Does.Contain("    1: " + new string('x', 200) + " … (1 weitere Zeichen)\n"));
+    }
+
+    [Test]
+    [Description("Befund S1: die Grenze zerschneidet kein Surrogatpaar — das Emoji als 200. Zeichen bleibt ganz, als 201. fällt es weg")]
+    public void Wenn_ein_Surrogatpaar_an_der_Grenze_steht_dann_wird_es_nicht_zerschnitten()
+    {
+        const string Emoji = "\U0001F600";
+        var zweiZeilen = new[] { new string('x', 199) + Emoji, new string('x', 200) + Emoji };
+        var anmerkungen = new Anmerkungsliste([new Anmerkung(1, HashA, "lang.txt", null, "lang", 1, 2)]);
+        var zitate = Zitate((1, zweiZeilen));
+
+        var ergebnis = ErgebnisFormatierer.Formatiere(anmerkungen, KeineDateien, zitate);
+
+        Assert.That(ergebnis, Does.Contain("    1: " + zweiZeilen[0] + "\n    2: " + new string('x', 200) + " … (1 weitere Zeichen)\n"));
+    }
+
+    [Test]
+    [Description("Befund S1: die Marken zählen mit — 300 Richtungszeichen ergeben eine Zitatzeile von 200 Zeichen plus Restzahl")]
+    public void Wenn_eine_markierte_Zeile_300_Richtungszeichen_traegt_dann_bleibt_die_Zitatzeile_kurz()
+    {
+        const string Marke = "⟨U+202E⟩";
+        var markiert = string.Concat(Enumerable.Repeat(Marke, 300));
+        var anmerkungen = new Anmerkungsliste([new Anmerkung(1, HashA, "lang.txt", null, "lang", 1, 1)]);
+        var zitate = Zitate((1, [new string('\u202E', 300)]));
+
+        var ergebnis = ErgebnisFormatierer.Formatiere(anmerkungen, KeineDateien, zitate);
+
+        Assert.That(ergebnis, Does.Contain("    1: " + markiert[..200] + $" … ({markiert.Length - 200} weitere Zeichen)\n"));
+    }
+
     [Test]
     [Description("R00031 Kriterium 11: Zeilen- und Dateianmerkung bleiben Byte für Byte wie R00002, die Bereichsregeln ändern daran nichts")]
     public void Wenn_Bereich_Zeile_und_Datei_zusammen_dann_nur_der_Bereich_mit_Zitat()
