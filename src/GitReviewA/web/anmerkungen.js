@@ -386,25 +386,38 @@
     ladeAnmerkungen(feld.ansicht);
   }
 
-  /** `{nummer}` bei Erfolg; sonst `{meldung}`: der Satz des Servers bei 4xx, bei 5xx und ohne Antwort der allgemeine Satz. */
-  async function anmerkungAnlegen(anmerkung) {
+  /** Sendet einen POST mit JSON-Körper. Bei Antwort `{ok: true, inhalt}`; sonst `{ok: false, meldung}`: der Satz des Servers bei 4xx,
+      bei 5xx und ohne Antwort `fehlermeldung`. */
+  async function sendeAnfrage(pfad, koerper, fehlermeldung) {
     let antwort;
     try {
-      antwort = await fetch('api/anmerkungen', {
+      antwort = await fetch(pfad, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify(anmerkung),
+        body: koerper,
       });
     } catch {
-      return { meldung: SPEICHERN_GESCHEITERT };
+      return { ok: false, meldung: fehlermeldung };
     }
     const inhalt = await antwort.json().catch(() => ({}));
-    if (antwort.ok && Number.isInteger(inhalt.nummer)) {
-      return { nummer: inhalt.nummer };
+    if (antwort.ok) {
+      return { ok: true, inhalt };
     }
     const istSatzDesServers = antwort.status >= 400 && antwort.status < 500 && typeof inhalt.meldung === 'string' && inhalt.meldung !== '';
     if (istSatzDesServers) {
-      return { meldung: inhalt.meldung };
+      return { ok: false, meldung: inhalt.meldung };
+    }
+    return { ok: false, meldung: fehlermeldung };
+  }
+
+  /** `{nummer}` bei Erfolg; sonst `{meldung}`: der Satz des Servers bei 4xx, bei 5xx und ohne Antwort der allgemeine Satz. */
+  async function anmerkungAnlegen(anmerkung) {
+    const ausgang = await sendeAnfrage('api/anmerkungen', JSON.stringify(anmerkung), SPEICHERN_GESCHEITERT);
+    if (!ausgang.ok) {
+      return { meldung: ausgang.meldung };
+    }
+    if (Number.isInteger(ausgang.inhalt.nummer)) {
+      return { nummer: ausgang.inhalt.nummer };
     }
     return { meldung: SPEICHERN_GESCHEITERT };
   }
@@ -486,24 +499,14 @@
 
   /** `{nummer, text}` bei Erfolg; sonst `{meldung}`: der Satz des Servers bei 4xx, bei 5xx und ohne Antwort der allgemeine Satz. */
   async function anmerkungAendern(nummer, text) {
-    let antwort;
-    try {
-      antwort = await fetch(`api/anmerkungen/${nummer}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ text }),
-      });
-    } catch {
-      return { meldung: AENDERN_GESCHEITERT };
+    const ausgang = await sendeAnfrage(`api/anmerkungen/${nummer}`, JSON.stringify({ text }), AENDERN_GESCHEITERT);
+    if (!ausgang.ok) {
+      return { meldung: ausgang.meldung };
     }
-    const inhalt = await antwort.json().catch(() => ({}));
-    const istGeaendert = antwort.ok && Number.isInteger(inhalt.nummer) && typeof inhalt.text === 'string';
+    const inhalt = ausgang.inhalt;
+    const istGeaendert = Number.isInteger(inhalt.nummer) && typeof inhalt.text === 'string';
     if (istGeaendert) {
       return { nummer: inhalt.nummer, text: inhalt.text };
-    }
-    const istSatzDesServers = antwort.status >= 400 && antwort.status < 500 && typeof inhalt.meldung === 'string' && inhalt.meldung !== '';
-    if (istSatzDesServers) {
-      return { meldung: inhalt.meldung };
     }
     return { meldung: AENDERN_GESCHEITERT };
   }
@@ -551,23 +554,12 @@
 
   /** `{nummer}` bei Erfolg; sonst `{meldung}`: der Satz des Servers bei 4xx, bei 5xx und ohne Antwort der allgemeine Satz. */
   async function anmerkungLoeschen(nummer) {
-    let antwort;
-    try {
-      antwort = await fetch(`api/anmerkungen/${nummer}/loeschen`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: '{}',
-      });
-    } catch {
-      return { meldung: LOESCHEN_GESCHEITERT };
+    const ausgang = await sendeAnfrage(`api/anmerkungen/${nummer}/loeschen`, '{}', LOESCHEN_GESCHEITERT);
+    if (!ausgang.ok) {
+      return { meldung: ausgang.meldung };
     }
-    const inhalt = await antwort.json().catch(() => ({}));
-    if (antwort.ok && Number.isInteger(inhalt.nummer)) {
-      return { nummer: inhalt.nummer };
-    }
-    const istSatzDesServers = antwort.status >= 400 && antwort.status < 500 && typeof inhalt.meldung === 'string' && inhalt.meldung !== '';
-    if (istSatzDesServers) {
-      return { meldung: inhalt.meldung };
+    if (Number.isInteger(ausgang.inhalt.nummer)) {
+      return { nummer: ausgang.inhalt.nummer };
     }
     return { meldung: LOESCHEN_GESCHEITERT };
   }
