@@ -104,4 +104,65 @@ test.describe('Anmerkung löschen', () => {
     const { ergebnis } = await anm.beendenUndErgebnisLesen();
     expect(ergebnis).toBe(['# Ergebnis manueller Review', '', 'Keine Anmerkungen.', ''].join('\n'));
   });
+
+  test('Während der Löschung weg und zurück: „Löschen“ ist auch an der neu gezeichneten Anmerkungszeile gesperrt, ein zweiter Klick sendet nicht erneut', async ({ anm }) => {
+    await anm.starten();
+    await anm.dateiAnsehen('lang.txt');
+    await anm.annotieren('lang.txt', 18, ALTER_TEXT);
+    const verzoegert = await anm.loeschenVerzoegern();
+
+    await anm.loeschen(1);
+    await anm.dateiAnsehen('src/b.txt');
+    await anm.dateiAnsehen('lang.txt');
+    await anm.loeschenIstGesperrt(1);
+    await anm.loeschenErneut(1);
+    await verzoegert.eingetroffen();
+
+    await anm.keineAnmerkungszeile(1);
+    await anm.keineAnmerkungUnter(Z19);
+    expect(verzoegert.anzahl(), 'Lösch-Anfragen des Browsers').toBe(1);
+    const { ergebnis } = await anm.beendenUndErgebnisLesen();
+    expect(ergebnis).toBe(['# Ergebnis manueller Review', '', 'Keine Anmerkungen.', ''].join('\n'));
+  });
+
+  test('Fällt die verzögerte Löschung nach dem Neuzeichnen aus, gibt genau eine Anfrage die Meldung aus und „Löschen“ ist wieder frei', async ({ anm }) => {
+    await anm.starten();
+    await anm.dateiAnsehen('lang.txt');
+    await anm.annotieren('lang.txt', 18, ALTER_TEXT);
+    const verzoegert = await anm.serverAntwortetVerzoegertBeimLoeschen({ status: 500, meldung: 'intern' });
+
+    await anm.loeschen(1);
+    await anm.dateiAnsehen('src/b.txt');
+    await anm.dateiAnsehen('lang.txt');
+    await anm.loeschenIstGesperrt(1);
+    await anm.loeschenErneut(1);
+    await verzoegert.eingetroffen();
+
+    await anm.kopfMeldet(1, KONNTE_NICHT);
+    await anm.anmerkungszeileEnthaelt(1, ALTER_TEXT);
+    await anm.loeschenIstFrei(1);
+    expect(verzoegert.anzahl(), 'Lösch-Anfragen des Browsers').toBe(1);
+  });
+
+  test('Zwei Löschungen gleichzeitig: je Anmerkung genau eine Anfrage, die Sperre gilt nur für ihre Anmerkung', async ({ anm }) => {
+    await anm.starten();
+    await anm.dateiAnsehen('lang.txt');
+    await anm.annotieren('lang.txt', 18, 'erste');
+    await anm.annotieren('lang.txt', 18, 'zweite');
+    const verzoegert = await anm.loeschenVerzoegern();
+
+    await anm.loeschen(1);
+    await anm.loeschen(2);
+    await anm.loeschenIstGesperrt(1);
+    await anm.loeschenIstGesperrt(2);
+    await anm.loeschenErneut(1);
+    await anm.loeschenErneut(2);
+    await verzoegert.eingetroffen();
+
+    await anm.keineAnmerkungszeile(1);
+    await anm.keineAnmerkungszeile(2);
+    expect(verzoegert.anzahl(), 'Lösch-Anfragen des Browsers').toBe(2);
+    const { ergebnis } = await anm.beendenUndErgebnisLesen();
+    expect(ergebnis).toBe(['# Ergebnis manueller Review', '', 'Keine Anmerkungen.', ''].join('\n'));
+  });
 });

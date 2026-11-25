@@ -143,10 +143,14 @@ function annotierSprache(gr, page) {
     loeschen: nummer => anmerkungSeite.loeschungOeffnen(page, nummer),
     loeschenPerTastatur: nummer => anmerkungSeite.loeschenPerTastatur(page, nummer),
     zweimalLoeschen: nummer => anmerkungSeite.zweimalLoeschen(page, nummer),
+    /** Weiterer Klick auf „Löschen“ (auch auf einen gesperrten Knopf) — ein gesperrter Knopf sendet dabei nichts. */
+    loeschenErneut: nummer => anmerkungSeite.loeschenErneut(page, nummer),
     keineAnmerkungszeile: nummer => anmerkungSeite.pruefeKeineAnmerkungszeile(page, nummer),
     loeschenIstGesperrt: nummer => anmerkungSeite.pruefeLoeschenGesperrt(page, nummer),
+    loeschenIstFrei: nummer => anmerkungSeite.pruefeLoeschenFrei(page, nummer),
     kopfMeldet: (nummer, meldung) => anmerkungSeite.pruefeKopfmeldung(page, nummer, meldung),
     serverAntwortetBeimLoeschen: antwort => anmerkungSeite.loeschungAntwortetEinmal(page, antwort),
+    serverAntwortetVerzoegertBeimLoeschen: antwort => anmerkungSeite.loeschungVerzoegertAntworten(page, antwort),
     loeschenVerzoegern: () => anmerkungSeite.loeschungVerzoegern(page),
 
     /** Anmerkung über die Schnittstelle löschen; liefert Status und Nummer der Antwort. */

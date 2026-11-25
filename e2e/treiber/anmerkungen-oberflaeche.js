@@ -385,6 +385,38 @@ async function loeschungVerzoegern(page) {
   return { eingetroffen: () => antwort, anzahl: () => anzahl };
 }
 
+/** Die erste Löschung 1,5 s verzögert mit dieser Antwort beantworten (`{ status, meldung }` oder `'netz'`), danach wieder der echte Server. */
+async function loeschungVerzoegertAntworten(page, antwort) {
+  let anzahl = 0;
+  let istBeantwortet = false;
+  await page.route(LOESCHUNG, async route => {
+    const istLoeschung = route.request().method() === 'POST';
+    if (!istLoeschung || istBeantwortet) {
+      await route.fallback();
+      return;
+    }
+    istBeantwortet = true;
+    anzahl += 1;
+    await new Promise(weiter => setTimeout(weiter, VERZOEGERUNG_MS));
+    if (antwort === 'netz') {
+      await route.abort('failed');
+      return;
+    }
+    await route.fulfill({ status: antwort.status, contentType: 'application/json', body: JSON.stringify({ meldung: antwort.meldung }) });
+  });
+  const eingetroffen = page.waitForResponse(response => LOESCHUNG.test(response.url()) && response.request().method() === 'POST');
+  return { eingetroffen: () => eingetroffen, anzahl: () => anzahl };
+}
+
+/** Weiterer Klick auf „Löschen“ ohne Warten auf Bedienbarkeit: ein gesperrter Knopf sendet dabei nichts. */
+async function loeschenErneut(page, nummer) {
+  await anmerkungszeile(page, nummer).getByRole('button', { name: 'Löschen', exact: true }).click({ force: true });
+}
+
+async function pruefeLoeschenFrei(page, nummer) {
+  await expect(anmerkungszeile(page, nummer).getByRole('button', { name: 'Löschen', exact: true })).toBeEnabled();
+}
+
 module.exports = {
   zeileAnklicken, zeileDoppeltAnklicken, pruefeAnzahlFelder, pruefeFeldtext, pruefeFeldOffenMitFokus, textSchreiben, speichern, zweimalSpeichern, pruefeFeldZu, pruefeKeinFeld, pruefeFeldmeldung,
   pruefeAnmerkungenUnter, pruefeAnzahlAnmerkungszeilen, pruefeAnmerkungszeilenSindKeineDiffzeilen,
@@ -395,5 +427,5 @@ module.exports = {
   aenderungAntwortetEinmal, aenderungVerzoegern,
   aenderungsfeldTextSchreiben, pruefeAenderungsfeldText, aenderungsfeldSpeichern, caretPosition, fokusAufKnopf, pruefeKnopfHatFokus,
   loeschungOeffnen, zweimalLoeschen, loeschenPerTastatur, pruefeKeineAnmerkungszeile, pruefeLoeschenGesperrt, pruefeKopfmeldung,
-  loeschungAntwortetEinmal, loeschungVerzoegern,
+  loeschungAntwortetEinmal, loeschungVerzoegern, loeschungVerzoegertAntworten, loeschenErneut, pruefeLoeschenFrei,
 };

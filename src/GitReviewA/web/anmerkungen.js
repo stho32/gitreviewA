@@ -11,8 +11,9 @@
   const DIFFZEILE = 'tr[data-art]';
 
   /** `anmerkungen`: Stand des Servers in Anlegereihenfolge; `ladung`: nur die jüngste Liste zählt; `gezeichnet`: Detail des letzten
-      `diff-gezeichnet`; `fokusZeileElement`: die Diff-Zeile mit dem wandernden tabindex; `aenderungen`: offene Änderungsfelder. */
-  const zustand = { anmerkungen: [], ladung: 0, gezeichnet: null, fokusZeileElement: null, aenderungen: [] };
+      `diff-gezeichnet`; `fokusZeileElement`: die Diff-Zeile mit dem wandernden tabindex; `aenderungen`: offene Änderungsfelder;
+      `loeschungen`: Nummern, deren Löschung gerade läuft (ihr Knopf bleibt auch nach einem Neuzeichnen gesperrt). */
+  const zustand = { anmerkungen: [], ladung: 0, gezeichnet: null, fokusZeileElement: null, aenderungen: [], loeschungen: [] };
 
   function init() {
     const wurzelElement = document.getElementById('diff');
@@ -135,7 +136,7 @@
   }
 
   /** Der Kopf nennt die stabile Nummer der Anmerkung (nicht ihre Position im Ergebnis) und trägt „Ändern“ und „Löschen“; er nimmt nach Speichern und
-      Abbrechen den Fokus wieder auf. Ein Fehler beim Löschen steht als Meldung im Kopf. */
+      Abbrechen den Fokus wieder auf. Ein Fehler beim Löschen steht als Meldung im Kopf; eine laufende Löschung lässt ihren Knopf gesperrt. */
   function anmerkungskopfElement(ansicht, anmerkung) {
     const kopfElement = document.createElement('div');
     kopfElement.className = 'anm-kopf';
@@ -149,9 +150,11 @@
     meldungElement.setAttribute('role', 'alert');
     const rechtsElement = document.createElement('span');
     rechtsElement.className = 'anm-rechts';
+    const loeschenElement = knopfElement('btn', 'Löschen', () => loescheAnmerkung(ansicht, anmerkung));
+    loeschenElement.disabled = loeschtGerade(anmerkung.nummer);
     rechtsElement.append(
       knopfElement('btn', 'Ändern', () => oeffneOderFokussiereAenderung(ansicht, anmerkung)),
-      knopfElement('btn', 'Löschen', () => loescheAnmerkung(ansicht, anmerkung)),
+      loeschenElement,
     );
     kopfElement.append(nummerElement, meldungElement, rechtsElement);
     return kopfElement;
@@ -532,24 +535,38 @@
 
   /* ── Löschen: Knopf am Anmerkungskopf, eine Anfrage je Anmerkung ── */
 
-  /** Genau eine Anfrage je Anmerkung zur Zeit: „Löschen“ ist gesperrt, bis die Antwort da ist. Nach Erfolg verschwindet die Anmerkung an
-      ihrer stabilen Nummer; bei einem Fehler steht die Meldung am Anmerkungskopf und die Anmerkung bleibt sichtbar. */
+  /** Genau eine Anfrage je Anmerkung zur Zeit: die laufende Nummer steht in `zustand.loeschungen`, „Löschen“ ist damit auch an einer neu
+      gezeichneten Anmerkungszeile gesperrt. Nach Erfolg verschwindet die Anmerkung an ihrer stabilen Nummer; bei einem Fehler steht die
+      Meldung am Anmerkungskopf, der Knopf ist wieder frei und die Anmerkung bleibt sichtbar. */
   async function loescheAnmerkung(ansicht, anmerkung) {
-    const loeschenElement = kopfknopf(ansicht, anmerkung.nummer, 'Löschen');
-    if (!loeschenElement || loeschenElement.disabled) {
+    if (loeschtGerade(anmerkung.nummer)) {
       return;
     }
-    loeschenElement.disabled = true;
+    zustand.loeschungen = [...zustand.loeschungen, anmerkung.nummer];
+    setzeLoeschenGesperrt(ansicht, anmerkung.nummer, true);
     setzeKopfmeldung(ansicht, anmerkung.nummer, '');
     const ausgang = await anmerkungLoeschen(anmerkung.nummer);
+    zustand.loeschungen = zustand.loeschungen.filter(nummer => nummer !== anmerkung.nummer);
     if (ausgang.meldung) {
-      loeschenElement.disabled = false;
+      setzeLoeschenGesperrt(ansicht, anmerkung.nummer, false);
       setzeKopfmeldung(ansicht, anmerkung.nummer, ausgang.meldung);
       return;
     }
     zustand.anmerkungen = ohneAnmerkung(zustand.anmerkungen, ausgang.nummer);
     zeigeAnmerkungen(ansicht);
     ladeAnmerkungen(ansicht);
+  }
+
+  function loeschtGerade(nummer) {
+    return zustand.loeschungen.includes(nummer);
+  }
+
+  /** Der „Löschen“-Knopf dieser Nummer, falls die Ansicht sie gerade zeigt. */
+  function setzeLoeschenGesperrt(ansicht, nummer, gesperrt) {
+    const loeschenElement = kopfknopf(ansicht, nummer, 'Löschen');
+    if (loeschenElement) {
+      loeschenElement.disabled = gesperrt;
+    }
   }
 
   /** `{nummer}` bei Erfolg; sonst `{meldung}`: der Satz des Servers bei 4xx, bei 5xx und ohne Antwort der allgemeine Satz. */
