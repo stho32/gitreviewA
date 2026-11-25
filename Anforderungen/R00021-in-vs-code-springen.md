@@ -8,11 +8,11 @@ datum: 2026-11-25
 
 ## Beschreibung
 
-Der prüfende Mensch öffnet jede Stelle des gezeigten Diffs per Klick in VS Code: jede Zeile mit einer Nummer **neu** und jeder Abschnittskopf führt auf `vscode://file/<absoluter Pfad>:<Zeile neu>`, und ein Verweis „In VS Code“ im Diff-Kopf öffnet die gerade gewählte Zeile. Ist die Datei seit dem Commit im Arbeitsbaum geändert, sagt der Diff-Kopf das; fehlt sie dort oder lässt sich ihr Name nicht sicher übergeben, gibt es keinen Link, und der Kopf nennt den Grund.
+Der prüfende Mensch öffnet jede Stelle des gezeigten Diffs per Klick in VS Code: jede Zeile mit einer Nummer **neu** — in „nur Änderungen“ auch jeder Abschnittskopf — führt auf `vscode://file/<absoluter Pfad>:<Zeile neu>`, und ein Verweis „In VS Code“ im Diff-Kopf öffnet die gerade gewählte Zeile. Ist die Datei seit dem Commit im Arbeitsbaum geändert, sagt der Diff-Kopf das; fehlt sie dort oder lässt sich ihr Name nicht sicher übergeben, gibt es keinen Link, und der Kopf nennt den Grund.
 
 Zahlt ein auf: [Vision](R00000-vision.md) — „Sprung in den Editor“ („jede Stelle öffnet sich per Klick in VS Code, mit Hinweis, wenn die Datei sich seit dem Commit geändert hat“).
 
-Baut auf [R00004](R00004-diff-einer-datei-lesen.md) auf (Diff-Bereich, Zeilen mit `data-art`/`data-alt`/`data-neu`, Diff-Kopf, Ansicht „nur Änderungen“) und auf [R00008](R00008-ganze-datei-mit-diff.md) (Ansicht „ganze Datei“); beide Ansichten tragen dieselben Links. Der Vergleichsstand ist der Commit, dessen Stand der Diff zeigt — in „Einzeln“ der gewählte Commit; in „Zusammen“ der zuständige Commit der Datei ([R00015](R00015-zusammen-logik-und-server.md), [R00012](R00012-oberflaeche-liste-detail-zusammen.md)). Die Rohbytes der Namen kommen aus [R00013](R00013-diff-leer-bei-name-mit-ungueltigem-byte.md), die Sperre für Namen, die sich nicht sicher übergeben lassen, folgt derselben Linie wie [R00014](R00014-haken-und-anmerkung-bei-nicht-lesbarem-diff.md).
+Baut auf [R00004](R00004-diff-einer-datei-lesen.md) auf (Diff-Bereich, Zeilen mit `data-art`/`data-alt`/`data-neu`, Diff-Kopf, Ansicht „nur Änderungen“) und auf [R00008](R00008-ganze-datei-mit-diff.md) (Ansicht „ganze Datei“); beide Ansichten tragen dieselben **Zeilen**links; der Abschnittskopf-Link gilt in der Ansicht, die Abschnittsköpfe zeigt. Der Vergleichsstand ist der Commit, dessen Stand der Diff zeigt — in „Einzeln“ der gewählte Commit; in „Zusammen“ der zuständige Commit der Datei ([R00015](R00015-zusammen-logik-und-server.md), [R00012](R00012-oberflaeche-liste-detail-zusammen.md)). Die Rohbytes der Namen kommen aus [R00013](R00013-diff-leer-bei-name-mit-ungueltigem-byte.md), die Sperre für Namen, die sich nicht sicher übergeben lassen, folgt derselben Linie wie [R00014](R00014-haken-und-anmerkung-bei-nicht-lesbarem-diff.md).
 
 **Herkunft:** Wunsch des Betreibers in der Vision („Sprung in den Editor“). Der Entwurf Fassung 2 (`Dokumentation/Wireframes/oberflaeche-fassung-2.html`) zeigt den Verweis „In VS Code“ im Diff-Kopf (`.diff-kopf .rechts`, Symbol `#i-extern`, Taste `o`); die Taste selbst gehört zu I0015. Vorlage im Code: kanbanD `web/review-uebersicht.js` (`vscodeLink`, `teileKodiert`, `sprungZeile`, `linkErlaubt`) — übernommen wird die Rechnung, nicht die HTML-Erzeugung.
 
@@ -22,7 +22,7 @@ Wer eine Stelle prüfen oder weiterlesen will, muss heute den Pfad aus der Datei
 
 ## Funktionale Anforderungen
 
-- **Sprungziel je Stelle**: jede Diff-Zeile mit einer Nummer **neu** trägt einen Link auf `vscode://file/<absoluter Pfad>:<Zeile neu>`; jeder Abschnittskopf (`@@ …`) trägt einen Link auf die erste Zeile der neuen Seite seines Abschnitts. Entfernte Zeilen (keine Nummer neu) und die Hinweiszeile `\ No newline at end of file` tragen keinen Link. Beide Ansichten (R00004, R00008) tragen dieselben Links.
+- **Sprungziel je Stelle**: jede Diff-Zeile mit einer Nummer **neu** trägt einen Link auf `vscode://file/<absoluter Pfad>:<Zeile neu>`; jeder Abschnittskopf (`@@ …`) trägt einen Link auf die erste Zeile der neuen Seite seines Abschnitts. Entfernte Zeilen (keine Nummer neu) und die Hinweiszeile `\ No newline at end of file` tragen keinen Link. Beide Ansichten (R00004, R00008) tragen dieselben **Zeilen**links; der Abschnittskopf-Link gilt in der Ansicht, die Abschnittsköpfe zeigt.
 - **Absoluter Pfad**: der Link nennt den Pfad absolut aus der Repositorywurzel (`git rev-parse --show-toplevel`), je Pfadteil prozent-kodiert (`encodeURIComponent`, die Trenner `/` bleiben unkodiert); das Schema ist immer `vscode://file`. Bei einer Umbenennung gilt der neue Pfad (der Stand nach dem Commit), wie in der Dateiliste.
 - **Verweis im Diff-Kopf**: der Verweis „In VS Code“ öffnet die gewählte Zeile; ist keine Zeile gewählt, die erste Zeile mit Nummer neu der gezeigten Ansicht.
 - **Hinweis**: weicht der Arbeitsbaum vom Commit ab (die Datei ist geändert), steht im Diff-Kopf „Datei seit dem Commit geändert“ als Text; sonst fehlt der Hinweis. Der Link bleibt in beiden Fällen bestehen.
@@ -47,7 +47,7 @@ Vorbereitung (herstellbar mit `git` allein, Wegwerf-Ordner, nie das Projekt-Repo
 
 ### Sprungziel je Stelle
 - [ ] Gegeben `s2` gewählt und `src/a.txt` angezeigt (Kopf `@@ -1,3 +1,4 @@`, Zeilen `a1` (1/1), `−a2` (alt 2), `+A2` (neu 2), `a3` (3/3), `+a4` (neu 4)), wenn man die Zeilen ansieht, dann trägt `a1` den Link `vscode://file/<Wurzel>/src/a.txt:1`, `+A2` `…:2`, `a3` `…:3`, `+a4` `…:4` und der Abschnittskopf `…:1`; `−a2` trägt keinen Link. Rechnung: die Nummer neu der Zeilen ist 1, 2, 3, 4; die entfernte Zeile hat keine. `<Wurzel>` ist der absolute Pfad aus `git rev-parse --show-toplevel`. *Ebene: Integration (Ziel je Stelle) und Playwright (das Attribut `href` im Browser).*
-- [ ] Gegeben `s2` gewählt und `src/a.txt` in der Ansicht „ganze Datei“ (R00008) angezeigt, dann tragen dieselben Zeilen dieselben Links (`a1` `…:1`, `+A2` `…:2`, `a3` `…:3`, `+a4` `…:4`) und der eine Abschnittskopf `…:1`; die Ansicht ändert die Links nicht. *Ebene: Integration und Playwright.*
+- [ ] Gegeben `s2` gewählt und `src/a.txt` in der Ansicht „ganze Datei“ (R00008) angezeigt, dann tragen dieselben Zeilen dieselben Links (`a1` `…:1`, `+A2` `…:2`, `a3` `…:3`, `+a4` `…:4`); die Ansicht zeigt keine Abschnittsköpfe (R00008) und ändert die Links nicht. *Ebene: Integration und Playwright.*
 - [ ] Gegeben `s2` gewählt und `weg.txt` (`w1`, `w2`, `+w3`) angezeigt, dann trägt `+w3` den Link `…/weg.txt:3` und `w2` `…/weg.txt:2`. *Ebene: Integration.*
 - [ ] Gegeben ein Commit, dessen Datei einen Hunk mit einer Hinweiszeile `\ No newline at end of file` zeigt, dann trägt die Hinweiszeile keinen Link, die Zeilen davor und danach tragen ihren. *Ebene: Integration.*
 - [ ] Gegeben `s1` gewählt und `Ordner mit Leerzeichen/datei#1.txt` angezeigt, dann lautet der Link der Zeile 1 `vscode://file/<Wurzel>/Ordner%20mit%20Leerzeichen/datei%231.txt:1` (Leerzeichen `%20`, `#` `%23`, die Trenner `/` bleiben unkodiert); gegeben `prozent%25.txt`, dann lautet er `vscode://file/<Wurzel>/prozent%2525.txt:1` (`%` `%25`). *Ebene: Unit (Kodierung) und Integration (Ziel).*
@@ -110,7 +110,7 @@ Kein eigenes; die Sprunganfrage läuft bei der Auswahl der Datei und kostet höc
 
 Nach `~/.claude/skills/test-pyramide/SKILL.md` und der Vorgabe des Betreibers 2026-11-24 (Interactor je Interaction, Playwright nur für den Hot Path und für Browser-Eigenes).
 
-**Unit (pure Logik):** `Sprungpfad` (gültiger Name, Leerzeichen/`#`/`%`, Rohbyte, U+202E, LF, `..`, Symlink nach außen, Status `D`), `Sprungziel` (Kodierung je Pfadteil, Leerzeichen `%20`, `#` `%23`, `%` `%25`, Umlaut, kein anderes Schema), Zuordnung „Zeile → Link“ (`data-neu`; entfernte Zeile ohne Link; Abschnittskopf auf die erste Zeile der neuen Seite).
+**Unit (pure Logik):** `Sprungpfad` (gültiger Name, Leerzeichen/`#`/`%`, Rohbyte, U+202E, LF, `..`, Symlink nach außen, Status `D`), `Sprungziel` (Kodierung je Pfadteil, Leerzeichen `%20`, `#` `%23`, `%` `%25`, Umlaut, kein anderes Schema), Zuordnung „Zeile → Link“ (`data-neu`; entfernte Zeile ohne Link; Abschnittskopf auf die erste Zeile der neuen Seite (nur Änderungen)).
 **Integration:** `SprungInteractor` und Endpunkt gegen Wegwerf-Repos S, `f` (Rohbyte, U+202E) und `l` (Symlink) mit echtem `git` — die Kriterien der Gruppen „Sprungziel je Stelle“, „Hinweis und fehlende Datei“ und „Fremde Namen, Wurzel und der neue git-Aufruf“; **Marker-Skript-Probe** (`diff.external`, `textconv`, `command` — je Mechanismus vorher rot), Konfigurationsprobe und Start aus einem Unterordner für den neuen `git`-Aufruf; Pfadliste des Endpunkts ohne `git`-Aufruf bei 404; Programm als Prozess (stdout bleibt leer).
 **E2E:** Playwright headless nur für das Attribut `href` und die Darstellung des Verweises und des Hinweises (kein echter Start von VS Code); die Ansicht „ganze Datei“ über den vorhandenen Umschalter.
 
@@ -170,3 +170,9 @@ Gewählt: 1. Der Server entscheidet (dort liegen die Bytes des fremden Namens), 
 - Der Hinweis „seit dem Commit geändert“ als eigene Karte: bleibt als Schnittlinie, falls der Bau zu groß wird (Muster Regeln — erst der Link, dann der Hinweis).
 - Die Zeilennummer aus dem **alten** Stand statt dem neuen: das Ergebnis und die Anmerkung (R00002, R00010) adressieren die Zeile im Stand nach dem Commit; ein zweites Maß täuschte.
 - Einen Link auch für Namen mit Rohbytes oder unsichtbaren Zeichen bauen (prozent-kodierte Bytes): der sichtbare Pfad zeigte dann etwas anderes als das Ziel; verworfen (dieselbe Linie wie `linkErlaubt` in kanbanD).
+
+## Änderungshistorie
+
+| Datum | Änderung | Grund |
+|---|---|---|
+| 2026-11-25 | Kriterium 2 (Ansicht „ganze Datei“) auf die Zeilenlinks eingeengt — die Klausel „und der eine Abschnittskopf `…:1`“ entfällt; Beschreibung, Sprungziel (Z. 15, 25) und Testabschnitt entsprechend nachgezogen; WBS B2007 (Hunk-Kopf nur in „nur Änderungen“) | Entscheidung des product-owner 2026-11-25 (`AI-Team/po-entscheidungen.md`): „ganze Datei“ zeichnet lückenlos, dort gibt es keinen Abschnittskopf (R00008), kein sichtbarer Verlust; der Abschnittskopf-Link bleibt in „nur Änderungen“ (Kriterium 1), der Verweis „In VS Code“ im Diff-Kopf (Kriterium 5) gilt in beiden Ansichten |
