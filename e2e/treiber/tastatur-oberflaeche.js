@@ -239,8 +239,11 @@ async function fokusringAktuell(page) {
     const stil = getComputedStyle(element);
     const breite = parseFloat(stil.outlineWidth) || 0;
     const sichtbar = stil.outlineStyle !== 'none' && breite > 0;
+    // Der Ring liegt bei positivem Versatz außerhalb des Elements: sein Untergrund ist der des Elternteils, nicht der eigene
+    // (ein angekreuzter Schalter trägt den Akzent als Fläche, der Ring läge sonst auf sich selbst — R00030, R00032).
+    const versatz = parseFloat(stil.outlineOffset) || 0;
     let untergrund = null;
-    for (let lauf = element; lauf; lauf = lauf.parentElement) {
+    for (let lauf = versatz > 0 ? element.parentElement : element; lauf; lauf = lauf.parentElement) {
       const farbe = getComputedStyle(lauf).backgroundColor;
       if (farbe && farbe !== 'transparent' && !farbe.startsWith('rgba(0, 0, 0, 0)')) {
         untergrund = farbe;

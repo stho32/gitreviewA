@@ -226,9 +226,9 @@ test.describe('R00030 Diff und Anmerkung — Enter, a, e, s, w, l, o, g', () => 
     await tast.ansicht('aenderungen');
 
     await tast.druecke('w');
-    await tast.umbruch(true);
-    await tast.druecke('w');
     await tast.umbruch(false);
+    await tast.druecke('w');
+    await tast.umbruch(true);
 
     await tast.druecke('l');
     await tast.leerraum(true);

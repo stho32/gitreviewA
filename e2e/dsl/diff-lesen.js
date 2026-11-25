@@ -199,6 +199,21 @@ function diffSprache(gr, page) {
     commitObjektEntfernen: commit => gr.commitObjektEntfernen(repo, hash(commit)),
     fehlerProtokolliertFuer: (commit, pfad) => schnittstelle.pruefeFehlerzeileMit(lauf, hash(commit), pfad),
     ergebnisBleibtLeer: () => beobachtung.pruefeStdoutLeer(lauf),
+    /** Eine Anmerkung über die Schnittstelle — ohne Seite, wie die aufrufende KI (R00032, `--kein-browser`). */
+    anmerkungUeberDieSchnittstelle: anmerkung => gr.anmerkungAnlegen(lauf, anmerkung),
+    /** Beendet das Programm als Prozess und liefert Exit-Code und das Ergebnis auf stdout. */
+    beendenUndErgebnisLesen: async () => {
+      await gr.beendenAnfordern(lauf);
+      const exitCode = await gr.aufEndeWarten(lauf);
+      return { exitCode, ergebnis: gr.ergebnis(lauf) };
+    },
+    /** R00032: der Startwert erzeugt keine stderr-Zeile — dort steht nur die Startzeile. */
+    keineNeueStderrZeile: () => {
+      const uebrig = gr.stderrZeilen(lauf).filter(zeile => !zeile.includes('[Start]'));
+      expect(uebrig, 'stderr ohne die Startzeile').toEqual([]);
+    },
+    /** Zahl der `git`-Aufrufe je Unterbefehl (R00032: der Startwert erzeugt keinen zusätzlichen Aufruf). */
+    gitAufrufe: erwartet => beobachtung.pruefeGitAufrufe(zaehler, erwartet),
 
     keinDiffProgrammGelaufen: () => {
       expect(repos.markerVorhanden(repo.ordner), 'Markerdateien der Diff-Programme').toEqual([]);

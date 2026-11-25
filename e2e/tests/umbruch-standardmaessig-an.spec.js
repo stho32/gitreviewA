@@ -1,13 +1,16 @@
 'use strict';
-// Spezifikation R00032 „Umbruch standardmäßig an“: der Startzustand, „überall und bleibend“ und „unberührt“. Die Leistungsprobe
-// und das Ergebnis auf stdout ohne Browser folgen. Die Werte des Umschalters prüft bausteine/umbruch-werte.spec.js.
-const { test } = require('../dsl/diff-lesen.js');
+// Spezifikation R00032 „Umbruch standardmäßig an“: der Startzustand, „überall und bleibend“, „unberührt“ und das Lastprofil.
+// Browser-Eigenes (Darstellung, Tastatur, Neuladen) und die Leistungsprobe; das Ergebnis auf stdout ohne Browser prüft der
+// Prozess-Teil dieser Datei. Die Werte des Umschalters prüft bausteine/umbruch-werte.spec.js.
+const { test, expect } = require('../dsl/diff-lesen.js');
 
 const LANGE_ZEILE = '0123456789'.repeat(30);
 const NUR_AENDERUNGEN = 'nur Änderungen';
 const GANZE_DATEI = 'ganze Datei';
 const UNTEREINANDER = 'untereinander';
 const NEBENEINANDER = 'nebeneinander';
+const UEBERSCHRIFT = '# Ergebnis manueller Review';
+const RIESIG_ZUGEKLAPPT = 'Sehr lang: 30.000 Zeilen — zugeklappt';
 
 test.describe('Startzustand (R00032)', () => {
   test('Kriterium 1: ohne gewählte Datei steht der Umschalter „an“; die lange Zeile ist umbrochen und der Bereich scrollt nicht waagerecht', async ({ diff }) => {
@@ -151,3 +154,32 @@ test.describe('Unberührt (R00032)', () => {
   });
 });
 
+
+test.describe('Lastprofil (R00032)', () => {
+  test('Kriterium 8: gross.txt (20 000 Zeilen) steht mit Umbruch an spätestens 1 s nach dem Klick (Messwert ≤ 0,7 s), die Zuklappgrenze greift wie ohne Umbruch', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Große Diffs', commits: ['w'] });
+    await diff.umbruchIst('an');
+
+    const dauerMs = await diff.zeileRechtzeitigNachKlick('gross.txt', { kopf: '@@ -0,0 +1,20000 @@', plus: 'zeile 20000', neu: 20000 });
+    test.info().annotations.push({ type: 'Messwert', description: `gross.txt mit Umbruch an nach ${dauerMs} ms (Grenze 1000 ms, Ziel 700 ms)` });
+    expect(dauerMs, 'Messwert ≤ 0,7 s').toBeLessThanOrEqual(700);
+
+    await diff.dateiAnsehen('riesig.txt');
+    await diff.zugeklappt('riesig.txt', RIESIG_ZUGEKLAPPT);
+  });
+});
+
+test.describe('Ergebnis ohne Browser (R00032)', () => {
+  test('Kriterium 7: mit Umbruch an ist das Ergebnis auf stdout Byte für Byte wie bisher; keine neue stderr-Zeile, kein zusätzlicher git-Aufruf', async ({ diff }) => {
+    await diff.starten({ seiteOeffnen: false });
+
+    await diff.anmerkungUeberDieSchnittstelle({ commit: diff.hash('q'), datei: 'breit.txt', zeile: 2, text: 'Zeile prüfen' });
+    const { exitCode, ergebnis } = await diff.beendenUndErgebnisLesen();
+
+    expect(exitCode).toBe(0);
+    expect(ergebnis).toBe(`${UEBERSCHRIFT}\n\nAnmerkungen: 1\n\n## 1. breit.txt:2\n\nCommit: ${diff.hash('q')}\n\n> Zeile prüfen\n`);
+    await diff.keineNeueStderrZeile();
+    // Die Voreinstellung ist keine Ausgabe und kein Weg zu git: kein `git show` (kein Diff gelesen).
+    await diff.gitAufrufe({ show: 0 });
+  });
+});
