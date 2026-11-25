@@ -20,6 +20,14 @@ test.describe('Anschluss an Nächste ungeprüfte und Fokus (B3404)', () => {
     await einklappen.ausgeklappt();
     await einklappen.fokusAufKnopf();
     await einklappen.seitenleisteSichtbar();
+
+    // Derselbe Weg mit der Maus: der Fokus stand in der Liste (die Wahl per Klick setzt ihn auf die Zeile), der Klick auf den
+    // Knopf nimmt ihn mit.
+    await einklappen.dateiAnsehen('lang.txt');
+    await einklappen.fokusAufDateizeile('lang.txt');
+    await einklappen.knopfBetatigen();
+    await einklappen.eingeklappt();
+    await einklappen.fokusAufKnopf();
   });
 
   test('die eingeklappten Listenelemente sind nicht im Tab-Weg; die Reihenfolge bleibt Kopf → Knopf → Diff → Statuszeile (Szenario 3)', async ({ einklappen }) => {
