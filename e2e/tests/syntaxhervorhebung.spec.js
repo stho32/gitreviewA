@@ -83,7 +83,7 @@ test.describe('Farbe', () => {
     await farbe.traegt({ plus: 'fn y() {}' }, 'fn', 'Schlüsselwort');
     await farbe.waehlen('alt.py');
     await farbe.traegt({ minus: 'def alt(): pass' }, 'def', 'Schlüsselwort');
-    await farbe.waehlen('umbenannt.rs');
+    await farbe.waehlen('umbenannt.rs', 'umbenannt.rs ← umbenannt.txt');
     for (const text of ['// eins', '// zwei', '// drei']) {
       await farbe.traegt({ kontext: text }, text, 'Kommentar');
     }

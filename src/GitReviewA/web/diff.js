@@ -250,11 +250,11 @@
   }
 
   function zeichneAntwort(ansicht, antwort, alsText, diffansicht) {
-    setzePfad(ansicht, antwort);
     if (antwort.zuGross) {
       zeigeMeldung(ansicht, antwort.meldung, false);
       return;
     }
+    setzePfad(ansicht, antwort);
     if (zustand.datei && zustand.datei.modus === 'zusammen') {
       zeichneZusammenAntwort(ansicht, antwort, alsText, diffansicht);
       return;

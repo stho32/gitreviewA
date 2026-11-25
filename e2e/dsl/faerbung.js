@@ -52,10 +52,10 @@ function farbSprache(gr, page) {
     await gr.oberflaecheOeffnen(page, lauf);
   }
 
-  async function waehlen(pfad) {
+  async function waehlen(pfad, erwarteterPfad = pfad) {
     await seite.dateiMitPfadWaehlen(page, pfad);
-    gewaehlterPfad = pfad;
-    return farbe.farbeAbwarten(page, pfad);
+    gewaehlterPfad = erwarteterPfad;
+    return farbe.farbeAbwarten(page, erwarteterPfad);
   }
 
   /** Ohne gewählte Datei gibt es nichts zu färben und nichts abzuwarten. */
