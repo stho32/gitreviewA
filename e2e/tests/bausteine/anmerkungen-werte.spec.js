@@ -2,7 +2,7 @@
 // Bausteintests (ohne Browser) der Anmerkungs-Rechnung: welche Diff-Zeile annotierbar ist und welche Anmerkungen eine Ansicht zeigt (R00010)
 // und wie der Stand nach einer geänderten Anmerkung aussieht (R00018).
 const { test, expect } = require('@playwright/test');
-const { zeilenziel, anmerkungsstand, anmerkungsstandJeSicht, hinweisAusserhalb, hinweisAusserhalbMitCommits, mitGeaendertemText, ohneAnmerkung, ENTFERNT_HINWEIS } = require('../../../src/GitReviewA/web/anmerkungen-werte.js');
+const { zeilenziel, anmerkungsstand, anmerkungsstandJeSicht, hinweisAusserhalb, hinweisAusserhalbMitCommits, mitGeaendertemText, ohneAnmerkung, dateianmerkungen, ENTFERNT_HINWEIS } = require('../../../src/GitReviewA/web/anmerkungen-werte.js');
 
 const Q = 'q'.repeat(40);
 const P = 'p'.repeat(40);
@@ -242,5 +242,42 @@ test.describe('Baustein Ohne Anmerkung', () => {
     const ohne = ohneAnmerkung(anmerkungen, 1);
 
     expect(ohne).toEqual([]);
+  });
+});
+
+test.describe('Baustein Dateianmerkungen (R00022)', () => {
+  test('soll ohne Anmerkung leer sein', () => {
+    expect(dateianmerkungen([], Q, 'lang.txt')).toEqual([]);
+  });
+
+  test('soll die eine Dateianmerkung dieser Stelle liefern', () => {
+    const dateiAnmerkung = anmerkung(1, null, 'Abschnitt fehlt');
+
+    expect(dateianmerkungen([dateiAnmerkung], Q, 'lang.txt')).toEqual([dateiAnmerkung]);
+  });
+
+  test('soll drei Dateianmerkungen derselben Datei in Anlegereihenfolge liefern', () => {
+    const anmerkungen = [anmerkung(1, null, 'erste'), anmerkung(2, null, 'zweite'), anmerkung(3, null, 'dritte')];
+
+    expect(dateianmerkungen(anmerkungen, Q, 'lang.txt').map(eintrag => eintrag.text)).toEqual(['erste', 'zweite', 'dritte']);
+  });
+
+  test('soll Zeilenanmerkungen derselben Datei nicht mitnehmen (gemischt)', () => {
+    const anmerkungen = [anmerkung(1, null, 'ganze Datei'), anmerkung(2, 18, 'Zeile'), anmerkung(3, null, 'noch ganze Datei')];
+
+    expect(dateianmerkungen(anmerkungen, Q, 'lang.txt').map(eintrag => eintrag.nummer)).toEqual([1, 3]);
+  });
+
+  test('soll einen anderen Commit und eine andere Datei nicht zeigen', () => {
+    const anmerkungen = [anmerkung(1, null, 'in p', { commit: P }), anmerkung(2, null, 'in b', { datei: 'src/b.txt' })];
+
+    expect(dateianmerkungen(anmerkungen, Q, 'lang.txt')).toEqual([]);
+  });
+
+  test('soll einen Namen mit unsichtbarem Zeichen über seinen rohen Namen finden', () => {
+    const dateiAnmerkung = anmerkung(1, null, 'Name prüfen', { datei: 'a\u202Eb.txt' });
+
+    expect(dateianmerkungen([dateiAnmerkung], Q, 'a\u202Eb.txt')).toEqual([dateiAnmerkung]);
+    expect(dateianmerkungen([dateiAnmerkung], Q, 'a⟨U+202E⟩b.txt')).toEqual([]);
   });
 });

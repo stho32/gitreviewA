@@ -22,6 +22,12 @@
     return { art: 'annotierbar', neu: zeile.neu };
   }
 
+  /** Dateianmerkungen der Stelle (R00022): Anmerkungen des Laufs (Anlegereihenfolge) + Commit + Datei → die Anmerkungen **ohne Zeile**
+      dieser Stelle in Anlegereihenfolge. Der Name wird roh verglichen (die Marke ist nur die Anzeige). */
+  function dateianmerkungen(anmerkungen, commit, datei) {
+    return anmerkungen.filter(anmerkung => anmerkung.commit === commit && anmerkung.datei === datei && anmerkung.zeile === null);
+  }
+
   /** Eine Sicht der gezeigten Datei ist ein Abschnitt: `{ commit, gezeigteNummern }`. Ein Netto-Diff hat eine Sicht, eine Ansicht
       ohne lückenlose Kette je Commit im Abschnitt eine. Anmerkungen des Laufs (Anlegereihenfolge) + Datei + Sichten →
       `jeSicht`: je Sicht eine Map Nummer neu → Anmerkungen in Anlegereihenfolge; `ausserhalb`: Anmerkungen an Zeilen, die keine
@@ -117,5 +123,5 @@
     return anmerkungen.filter(anmerkung => anmerkung.nummer !== nummer);
   }
 
-  Object.assign(ziel, { zeilenziel, anmerkungsstand, anmerkungsstandJeSicht, hinweisAusserhalb, hinweisAusserhalbMitCommits, mitGeaendertemText, ohneAnmerkung, ENTFERNT_HINWEIS });
+  Object.assign(ziel, { zeilenziel, anmerkungsstand, anmerkungsstandJeSicht, hinweisAusserhalb, hinweisAusserhalbMitCommits, mitGeaendertemText, ohneAnmerkung, dateianmerkungen, ENTFERNT_HINWEIS });
 })(typeof module !== 'undefined' ? module.exports : window);
