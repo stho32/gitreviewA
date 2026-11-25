@@ -21,5 +21,27 @@
     return { gueltig: true, grund: null, meldung: '' };
   }
 
-  Object.assign(ziel, { pruefe, ZEICHEN_GRENZE, TREFFER_GRENZE });
+  /** Sucht `begriff` wörtlich (kein Regex, Groß/Klein unterschieden) in jeder der `texte` (der gezeigte Text je Zeile).
+      Liefert `{treffer, gedeckelt}`: `treffer` sind `{zeile, von, bis}` in Reihenfolge (von oben nach unten), höchstens
+      `TREFFER_GRENZE`; `gedeckelt` ist `true`, wenn mindestens ein weiterer Treffer über der Grenze liegt. Die Suche ist
+      linear (`indexOf` ohne Rückverfolgung), damit ein präparierter Begriff den Hauptfaden nicht einfriert. */
+  function finde(texte, begriff) {
+    const treffer = [];
+    if (begriff === '') {
+      return { treffer, gedeckelt: false };
+    }
+    for (let zeile = 0; zeile < texte.length; zeile += 1) {
+      let von = texte[zeile].indexOf(begriff);
+      while (von !== -1) {
+        if (treffer.length === TREFFER_GRENZE) {
+          return { treffer, gedeckelt: true };
+        }
+        treffer.push({ zeile, von, bis: von + begriff.length });
+        von = texte[zeile].indexOf(begriff, von + begriff.length);
+      }
+    }
+    return { treffer, gedeckelt: false };
+  }
+
+  Object.assign(ziel, { pruefe, finde, ZEICHEN_GRENZE, TREFFER_GRENZE });
 })(typeof module !== 'undefined' ? module.exports : window);
