@@ -1,4 +1,5 @@
 using System.Runtime.Versioning;
+using GitReviewA.Git;
 
 namespace GitReviewA.Tests.Akzeptanz;
 
@@ -21,7 +22,18 @@ internal sealed class ZeileAnnotierenSprache
     /// <summary>`gitreviewA <commits…>` im Repo.</summary>
     public static ZeileAnnotierenSprache Aufruf(DiffRepo repo, string[] commits)
     {
-        var treiber = ZeileAnnotierenTreiber.Starten(repo.Ordner, commits.Select(repo.Hash));
+        return Aufruf(repo, commits, Ausgabegrenze.Standard);
+    }
+
+    /// <summary>Wie <see cref="Aufruf"/>, aber der Lesepfad der markierten Zeilen liest gegen eine kleine Ausgabegrenze (R00031).</summary>
+    public static ZeileAnnotierenSprache AufrufMitKleinerAusgabegrenze(DiffRepo repo, string[] commits)
+    {
+        return Aufruf(repo, commits, new Ausgabegrenze(100));
+    }
+
+    private static ZeileAnnotierenSprache Aufruf(DiffRepo repo, string[] commits, Ausgabegrenze grenze)
+    {
+        var treiber = ZeileAnnotierenTreiber.Starten(repo.Ordner, commits.Select(repo.Hash), grenze);
         return new ZeileAnnotierenSprache(repo, treiber);
     }
 
@@ -68,10 +80,29 @@ internal sealed class ZeileAnnotierenSprache
         return treiber.Beenden();
     }
 
+    /// <summary>Den Text der Anmerkung mit dieser stabilen Nummer ändern (R00018/I0023).</summary>
+    public Aenderantwort Aendere(int nummer, string text)
+    {
+        return treiber.Aendere(nummer, text);
+    }
+
+    /// <summary>Die Anmerkung mit dieser stabilen Nummer löschen (R00019/I0024).</summary>
+    public Loeschantwort Loesche(int nummer)
+    {
+        return treiber.Loesche(nummer);
+    }
+
     /// <summary>Der Abschnitt einer Anmerkung im Ergebnis, Format R00002.</summary>
     public string Ergebnisabschnitt(int position, string stelle, string commit, string zitat)
     {
         return $"## {position}. {stelle}\n\nCommit: {repo.Hash(commit)}\n\n{zitat}\n";
+    }
+
+    /// <summary>Der Abschnitt einer Bereichsanmerkung (R00031): Stelle `<Datei>:<von>-<bis>`, Zitat der Zeilen, Textzitat.</summary>
+    public string Bereichsabschnitt(int position, string datei, int von, int bis, string commit, string[] zeilen, string text)
+    {
+        var zitat = string.Join("\n", zeilen.Select((zeile, stelle) => $"    {von + stelle}: {zeile}"));
+        return $"## {position}. {datei}:{von}-{bis}\n\nCommit: {repo.Hash(commit)}\n\n{zitat}\n\n> {text}\n";
     }
 
     public string[] Protokollzeilen()

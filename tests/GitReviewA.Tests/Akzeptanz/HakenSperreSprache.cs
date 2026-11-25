@@ -45,6 +45,12 @@ internal sealed class HakenSperreSprache
         return treiber.LegeAnAlsDatei(repo.Hash(commit), datei, text);
     }
 
+    /// <summary>Eine Bereichsanmerkung anlegen (R00031): derselbe Request mit `von`/`bis`.</summary>
+    public Anlegeantwort AnnotiereBereich(string commit, string datei, int von, int bis)
+    {
+        return treiber.LegeAnBereich(repo.Hash(commit), datei, von, bis, "Prüfen");
+    }
+
     /// <summary>„Nummer. Datei:Zeile“ je Anmerkung.</summary>
     public string[] Anmerkungen()
     {

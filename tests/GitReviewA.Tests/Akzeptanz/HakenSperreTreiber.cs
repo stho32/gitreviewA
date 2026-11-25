@@ -81,9 +81,20 @@ internal sealed class HakenSperreTreiber
         return LegeAn(commit, datei, null, text);
     }
 
+    /// <summary>Eine Bereichsanmerkung anlegen (R00031): derselbe Request mit `von`/`bis`.</summary>
+    public Anlegeantwort LegeAnBereich(string commit, string datei, int von, int bis, string text)
+    {
+        return LegeAn(new NeueAnmerkung(commit, datei, null, text, von, bis));
+    }
+
     private Anlegeantwort LegeAn(string commit, string datei, int? zeile, string text)
     {
-        var ergebnis = annotieren.LegeAn(new NeueAnmerkung(commit, datei, zeile, text));
+        return LegeAn(new NeueAnmerkung(commit, datei, zeile, text));
+    }
+
+    private Anlegeantwort LegeAn(NeueAnmerkung neu)
+    {
+        var ergebnis = annotieren.LegeAn(neu);
         switch (ergebnis.Ausgang)
         {
             case Annotierenausgang.Angelegt:

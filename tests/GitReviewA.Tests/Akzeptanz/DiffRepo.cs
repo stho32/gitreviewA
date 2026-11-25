@@ -115,6 +115,22 @@ internal sealed class DiffRepo : IDisposable
         return r;
     }
 
+    /// <summary>
+    /// Repo R der Karte #35 (R00031): `r1` „Anlegen“ legt `lang.txt` mit 30 Zeilen `z01` … `z30` und `fremd.txt`
+    /// (`<b>z20</b>`, `a`+U+202E+`b`) an; `r2` „Ändern“ stellt `z05` auf `Z05` und `z25` auf `Z25` um — zwei Abschnitte,
+    /// dazwischen die Lücke 9–21. Gleicher Inhalt wie <c>e2e/treiber/diff-repos.js</c>.
+    /// </summary>
+    public static DiffRepo Zeilenbereich()
+    {
+        var r = new DiffRepo(WegwerfRepo.MitCommits());
+        r.Schreibe("lang.txt", ZeilenZ01BisZ30());
+        r.Schreibe("fremd.txt", "<b>z20</b>\na\u202Eb\n");
+        r.Committe("r1", "Anlegen");
+        r.Schreibe("lang.txt", ZeilenZ01BisZ30().Replace("z05\n", "Z05\n").Replace("z25\n", "Z25\n"));
+        r.Committe("r2", "Ändern");
+        return r;
+    }
+
     /// <summary>Repo U: `u` mit `gross.txt` aus 20 000 Zeilen, `v` ändert darin `zeile 10000` zu `geändert 10000`.</summary>
     public static DiffRepo U()
     {
@@ -192,6 +208,11 @@ internal sealed class DiffRepo : IDisposable
         }
         n.Committe("n", "Unsichtbare Namen");
         return n;
+    }
+
+    private static string ZeilenZ01BisZ30()
+    {
+        return string.Concat(Enumerable.Range(1, 30).Select(nummer => $"z{nummer:D2}\n"));
     }
 
     private static string ZeilenZ01BisZ20()

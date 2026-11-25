@@ -42,7 +42,13 @@ internal sealed class Bereichszeilen(GemerkteUebersicht uebersicht, string arbei
     /// <summary>Der Bereich `von..bis` (Nummer neu) einer Datei; prüft das Dateiende und meldet den Ausgang auf stderr.</summary>
     public Bereichszeilenlesung Lies(string commit, string datei, int von, int bis)
     {
-        var bereich = LiesAus(LiesDatei(commit, datei), von, bis);
+        return BereichAus(commit, datei, LiesDatei(commit, datei), von, bis);
+    }
+
+    /// <summary>Schneidet `von..bis` aus einer gelesenen Datei; ein Bereich außerhalb der Datei meldet seinen Grund auf stderr.</summary>
+    public Bereichszeilenlesung BereichAus(string commit, string datei, Bereichsdateilesung dateiinhalt, int von, int bis)
+    {
+        var bereich = SchneideAus(dateiinhalt, von, bis);
         if (bereich.Ausgang == Bereichszeilenausgang.HinterDemDateiende)
         {
             Melde(Protokollstufe.Warnung, commit, datei, HinterDemDateiende);
@@ -74,8 +80,8 @@ internal sealed class Bereichszeilen(GemerkteUebersicht uebersicht, string arbei
         return gelesen;
     }
 
-    /// <summary>Schneidet `von..bis` aus einer gelesenen Datei; rein, ohne git und ohne Protokoll (für den Zitat-Weg).</summary>
-    public static Bereichszeilenlesung LiesAus(Bereichsdateilesung dateiinhalt, int von, int bis)
+    /// <summary>Schneidet `von..bis` aus einer gelesenen Datei; rein, ohne git und ohne Protokoll.</summary>
+    private static Bereichszeilenlesung SchneideAus(Bereichsdateilesung dateiinhalt, int von, int bis)
     {
         if (dateiinhalt.Zeilen is null)
         {

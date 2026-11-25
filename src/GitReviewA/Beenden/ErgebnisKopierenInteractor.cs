@@ -39,7 +39,7 @@ internal sealed class ErgebnisKopierenInteractor(Anmerkungsspeicher anmerkungen,
                 dateiinhalt = bereichszeilen.LiesDatei(anmerkung.Commit, anmerkung.Datei);
                 gelesen[schluessel] = dateiinhalt;
             }
-            zitate[anmerkung.Nummer] = Bereichszeilen.LiesAus(dateiinhalt, von, bis);
+            zitate[anmerkung.Nummer] = bereichszeilen.BereichAus(anmerkung.Commit, anmerkung.Datei, dateiinhalt, von, bis);
         }
         return zitate;
     }
