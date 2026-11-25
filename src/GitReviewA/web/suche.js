@@ -56,17 +56,27 @@
   }
 
   /** Die Färbung (R00007) schreibt den Inhalt der Textzellen neu und nimmt damit die Markierung weg; endet sie
-      (`data-farbe` `ja` oder `nein`), wird sie erneut aufgetragen — die Position bleibt. */
+      (`data-farbe` `ja` oder `nein`), wird sie erneut aufgetragen — die Position bleibt. Beobachtet wird dort, wo die
+      Färbung `data-farbe` setzt: im Einspalten-Verfahren am Rollbereich (`.df-sc`), im Anzeigeverfahren „Zusammen“ mit
+      Abschnitten dagegen je `.diff-abschnitt` — deshalb der ganze Diff-Bereich samt Unterbaum. */
   function beobachteFarbe(ansicht) {
-    const beobachter = new MutationObserver(() => {
-      const wert = ansicht.bereichElement.dataset.farbe;
-      if ((wert === 'ja' || wert === 'nein') && zustand.begriff !== '') {
-        rechnen(ansicht);
-        markiere(ansicht, false);
-        zeigeZaehler(ansicht);
+    const beobachter = new MutationObserver(eintraege => {
+      if (zustand.begriff === '' || !faerbungFertig(eintraege)) {
+        return;
       }
+      rechnen(ansicht);
+      markiere(ansicht, false);
+      zeigeZaehler(ansicht);
     });
-    beobachter.observe(ansicht.bereichElement, { attributes: true, attributeFilter: ['data-farbe'] });
+    beobachter.observe(ansicht.wurzelElement, { attributes: true, attributeFilter: ['data-farbe'], subtree: true });
+  }
+
+  /** Ob unter den Änderungen das Ende einer Färbung steht (`data-farbe` `ja` oder `nein`). */
+  function faerbungFertig(eintraege) {
+    return eintraege.some(eintrag => {
+      const wert = eintrag.target.dataset.farbe;
+      return wert === 'ja' || wert === 'nein';
+    });
   }
 
   /** Enter sucht und springt zum nächsten Treffer, Umschalt+Enter zum vorigen; ein neuer Begriff beginnt bei 1. */

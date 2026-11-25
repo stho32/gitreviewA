@@ -270,6 +270,22 @@ test.describe('Im Diff suchen (R00027) — Anschluss an Färbung, Wechsel und Gr
   });
 });
 
+/** Ein Repo mit drei Commits; ausgewählt werden `y1` (farbig.js) und `y3` (spaet.txt), `mitte.txt` fehlt — im Modus
+    „Zusammen“ zeichnet der Diff darum Abschnitte je Commit (Nicht-Kette). */
+function repoLueckeFarbig(gr) {
+  const ordner = repos.leeresRepoAnlegen();
+  repos.dateiSchreiben(ordner, 'farbig.js', FARBIG_JS);
+  const y1 = repos.commitAnlegen(ordner, { betreff: 'Anlegen' });
+  repos.dateiSchreiben(ordner, 'mitte.txt', 'mitte\n');
+  repos.commitAnlegen(ordner, { betreff: 'Mitte' });
+  repos.dateiSchreiben(ordner, 'spaet.txt', 'spaet\n');
+  const y3 = repos.commitAnlegen(ordner, { betreff: 'Spaet' });
+  return { repo: gr.gemerktesRepo({ ordner, hash: y1 }), y1, y3 };
+}
+
+/** Der `data-farbe`-Wert des ersten „Zusammen“-Abschnitts (die Färbung setzt ihn je Abschnitt, nicht am `.df-sc`). */
+const abschnittFarbe = page => page.locator('#diff .df-sc .diff-abschnitt').first().getAttribute('data-farbe');
+
 const WEIT_1 = Array.from({ length: 12 }, (_, index) => `l${String(index + 1).padStart(2, '0')}`).join('\n') + '\n';
 const WEIT_2 = WEIT_1.replace('l06', 'L06');
 
@@ -318,6 +334,39 @@ test.describe('Im Diff suchen (R00027) — alle Anzeigeverfahren (Lehre #7)', ()
     await expect(page.locator('.anordnung-wahl [data-anordnung="nebeneinander"]')).toHaveAttribute('aria-pressed', 'true');
     await gr.sucheSuchen(page, 'zwei');
     await expect(gr.sucheZaehler(page)).toHaveText('1 von 4');
+  });
+
+  test('soll in „Zusammen“-Abschnitten die Markierung nach dem Ende der Färbung erneut auftragen (Lehre #7)', async ({ gr, page }) => {
+    const { repo, y1, y3 } = repoLueckeFarbig(gr);
+    const lauf = await gr.gitreviewAStarten(repo, [y1, y3]);
+    await gr.oberflaecheOeffnen(page, lauf, 'zusammen');
+
+    await gr.dateiWaehlen(page, 'farbig.js');
+    await expect(page.locator('#diff .df-sc tr[data-art]')).toHaveCount(3);
+    await expect.poll(() => abschnittFarbe(page), { timeout: 15000 }).toBe('ja');
+
+    await gr.sucheSuchen(page, 'return');
+    await expect(gr.sucheMarken(page)).toHaveCount(2);
+    await expect(gr.sucheZaehler(page)).toHaveText('1 von 2');
+
+    // Variante A: dieselbe Datei erneut wählen — Neuzeichnen, danach färbt der Diff neu.
+    await gr.dateiWaehlen(page, 'farbig.js');
+    await expect(page.locator('#diff .df-sc tr[data-art]')).toHaveCount(3);
+    await expect.poll(() => abschnittFarbe(page), { timeout: 15000 }).toBe('ja');
+    await expect(gr.sucheMarken(page)).toHaveCount(2);
+    await expect(gr.sucheZaehler(page)).toHaveText('1 von 2');
+
+    // Variante B: Ansicht „ganze Datei“ umschalten.
+    await diffSeite.ansichtWaehlen(page, 'ganze Datei');
+    await expect.poll(() => abschnittFarbe(page), { timeout: 15000 }).toBe('ja');
+    await expect(gr.sucheMarken(page)).toHaveCount(2);
+    await expect(gr.sucheZaehler(page)).toHaveText('1 von 2');
+
+    // Variante C: Leerraum-Stellung umschalten.
+    await diffSeite.leerraumUmschalten(page);
+    await expect.poll(() => abschnittFarbe(page), { timeout: 15000 }).toBe('ja');
+    await expect(gr.sucheMarken(page)).toHaveCount(2);
+    await expect(gr.sucheZaehler(page)).toHaveText('1 von 2');
   });
 
   test('soll eine aufgeklappte Lücke mitdurchsuchen (R00026)', async ({ gr, page }) => {
