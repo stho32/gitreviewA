@@ -96,8 +96,10 @@ Server-Routen (zwei Endpunkte), `beenden.js` (I0028, Abschnitte), `diff.js` (ein
 
 ## Offene Fragen
 
-1. **Was heißt „angesehen“, und wo wird es gehalten?** Empfehlung: einmal im Diff-Bereich gezeigt (auch „Keine Zeilenänderungen“, Binärdatei, zugeklappte große Datei), gemeldet von der Oberfläche, gehalten im RAM des Servers. Alternativen: (a) nur im Browser — ein Neuladen machte alle Dateien wieder „nicht angesehen“ und der Hinweis würde falsch laut; (b) der Server markiert beim Ausliefern eines Diffs — mehrere Lesewege (nur Änderungen, ganze Datei, Als Text, Netto) müssten alle markieren, ein `GET` bekäme eine Nebenwirkung.
-2. **„Nicht angesehen“ im Ergebnis?** Empfehlung nein — es ist ein Hinweis an den Menschen; im Ergebnis wäre es eine Formatänderung (Vertrag mit der KI), und „ungeprüft“ steht dort schon ab dem ersten Haken.
+Keine offenen. Der product-owner hat beide Fragen am 2026-11-25 entschieden (`AI-Team/po-entscheidungen.md`, Zeile 198); die Antworten sind oben eingearbeitet:
+
+1. **Was heißt „angesehen“, und wo wird es gehalten?** — entschieden (PO Zeile 198): einmal im Diff-Bereich gezeigt (auch „Keine Zeilenänderungen“, Binärdatei, zugeklappte große Datei), gemeldet von der Oberfläche, gehalten im RAM des Servers (überlebt das Neuladen wie die Haken, nie gespeichert). Alternativen verworfen: (a) nur im Browser — ein Neuladen machte alle Dateien wieder „nicht angesehen“ und der Hinweis würde falsch laut; (b) der Server markiert beim Ausliefern eines Diffs — mehrere Lesewege (nur Änderungen, ganze Datei, Als Text, Netto) müssten alle markieren, ein `GET` bekäme eine Nebenwirkung.
+2. **„Nicht angesehen“ im Ergebnis?** — entschieden (PO Zeile 198): nein — es ist ein Hinweis an den Menschen und steht nur im Abschlussdialog („Nicht angesehen“); im Ergebnis wäre es eine Formatänderung (Vertrag mit der KI), und „ungeprüft“ steht dort schon ab dem ersten Haken.
 
 ## Manuelle Vorbereitungstätigkeiten
 
