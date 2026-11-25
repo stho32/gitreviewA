@@ -32,6 +32,8 @@
 <script src="nebeneinander.js" defer></script>
 <script src="bild.js" defer></script>
 <script src="diff.js" defer></script>
+<script src="suche-werte.js" defer></script>
+<script src="suche.js" defer></script>
 <script src="sprung.js" defer></script>
 <script src="anmerkungen-werte.js" defer></script>
 <script src="anmerkungen.js" defer></script>
@@ -131,6 +133,11 @@
           </div>
           <label class="ru-sch"><input type="checkbox" class="leerraum-schalter">Leerraum ignorieren</label>
           <label class="ru-sch"><input type="checkbox" class="umbruch-schalter">Umbruch</label>
+          <label class="suche-feld"><span class="suche-label">Suchen</span>
+            <input type="search" id="diff-suche" class="diff-suche" autocomplete="off" spellcheck="false" aria-describedby="diff-suche-fehler">
+          </label>
+          <span class="diff-suche-zaehler" role="status" aria-live="polite"></span>
+          <span id="diff-suche-fehler" class="diff-suche-fehler gr-status fehler" role="alert"></span>
         </div>
       </div>
       <p class="diff-meldung gr-status muted" role="status"></p>

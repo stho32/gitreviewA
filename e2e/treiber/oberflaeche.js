@@ -296,6 +296,36 @@ function abgehakteHinweis(page) {
   return page.locator(`${DATEILISTE} .abgehakte-hinweis`);
 }
 
+/* ── Suche im Diff (R00027) ── */
+
+function sucheFeld(page) {
+  return page.locator('#diff .diff-schalter #diff-suche');
+}
+
+function sucheZaehler(page) {
+  return page.locator('#diff .diff-schalter .diff-suche-zaehler');
+}
+
+function sucheFehler(page) {
+  return page.locator('#diff .diff-schalter #diff-suche-fehler');
+}
+
+/** Trägt den Begriff ein und bestätigt mit Enter (suchen und zum nächsten Treffer). */
+async function sucheSuchen(page, begriff) {
+  await sucheFeld(page).fill(begriff);
+  await sucheFeld(page).press('Enter');
+}
+
+/** Nächster Treffer (Enter im Feld). */
+async function sucheWeiter(page) {
+  await sucheFeld(page).press('Enter');
+}
+
+/** Voriger Treffer (Umschalt+Enter im Feld). */
+async function sucheZurueck(page) {
+  await sucheFeld(page).press('Shift+Enter');
+}
+
 async function dateiWaehlen(page, name) {
   await page.locator(DATEIZEILE).filter({ has: page.locator('.pfad', { hasText: name, exact: true }) }).click();
 }
@@ -467,6 +497,7 @@ module.exports = {
   dateilisteLesen, dateizeilen, aufDateizeilenWarten, dateiSumme, dateilistenMeldung, darstellungWaehlen, dateiWaehlen, gewaehlteDateien,
   ausblendenZaehler, pruefeAusblendenZaehler, ausblendenEingabe, ausblendenFehler, ausblendenMuster, musterEingeben, musterEntfernen,
   abgehakteSchalter, abgehakteSchalterBetatigen, pruefeAbgehakteSchalter, abgehakteHinweis,
+  sucheFeld, sucheZaehler, sucheFehler, sucheSuchen, sucheWeiter, sucheZurueck,
   dateiwahlenSammeln, gesammelteDateiwahlen, formatierungsElementeZaehlen,
   beendenKnopf, beendenBetaetigen, beendetMeldung, beendenFehler, beendenScheitertMit, modusWaehlen, neuLaden,
   kopfZahlen, fortschrittZaehler, commitZeileZusammenfassung, commitZeileText, pruefeKopfZahlen, pruefeFortschritt, pruefeCommitZeileZusammenfassung,
