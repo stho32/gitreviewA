@@ -34,8 +34,8 @@ internal sealed class SprungInteractor(Commitzeilen commits, GemerkteDateiquelle
         }
         catch (GitFehler fehler)
         {
-            protokoll.Melde(Protokollstufe.Fehler, Fehlerkontext, $"Dateiliste von Commit {hash} für den Sprung nicht lesbar: {fehler.Message}");
-            return Sprungergebnis.NichtLesbar;
+            protokoll.Melde(Protokollstufe.Warnung, Fehlerkontext, $"Dateiliste von Commit {hash} für den Sprung nicht lesbar: {fehler.Message}");
+            return Sprungergebnis.NichtGefunden;
         }
         var treffer = Namenspruefung.Pruefe(dateienDesCommits, anfrage.Pfad);
         if (treffer.Datei is null)

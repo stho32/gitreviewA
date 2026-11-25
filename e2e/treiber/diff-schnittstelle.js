@@ -43,8 +43,10 @@ async function pruefeTextAufrufe(zaehler, anzahl) {
 }
 
 /** Genau eine Fehlerzeile, die Hash und Pfad nennt. */
+/** Genau eine Fehlerzeile des Diff-Pfads zu dieser Stelle. Der Kontext `[Diff]` grenzt sie gegen andere Interaktionen ab, die für
+    dieselbe Stelle ebenfalls eine Fehlerzeile schreiben können (etwa der Sprung nach R00021, wenn dasselbe git-Objekt fehlt). */
 function pruefeFehlerzeileMit(lauf, hash, pfad) {
-  const fehlerzeilen = lauf.stderr.split('\n').filter(zeile => zeile.includes(' FEHLER ') && zeile.includes(hash) && zeile.includes(pfad));
+  const fehlerzeilen = lauf.stderr.split('\n').filter(zeile => zeile.includes(' FEHLER ') && zeile.includes('[Diff]') && zeile.includes(hash) && zeile.includes(pfad));
   expect(fehlerzeilen).toHaveLength(1);
 }
 

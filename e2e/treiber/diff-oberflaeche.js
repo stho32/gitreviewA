@@ -322,8 +322,8 @@ async function pruefeBedienbarNachAlsText(page, dateiWaehlen, datei, andereDatei
 
 /* ── Sprung in VS Code (R00021): Links an Zeilen und Abschnittsköpfen, Verweis und Hinweis im Kopf ── */
 
-const SPRUNG_ZEILE = '#diff .dz tr[data-art] a.sprung-zeile';
-const SPRUNG_KOPF = '#diff .dz tr.hk a.sprung-hunk';
+const SPRUNG_ZEILE = '#diff .dz tr[data-art] td.neu a';
+const SPRUNG_KOPF = '#diff .dz tr.hk td.c a';
 const SPRUNG_VERWEIS = '#diff .diff-kopf .sprung-knopf';
 const SPRUNG_GRUND = '#diff .diff-kopf .sprung-grund';
 const SPRUNG_HINWEIS = '#diff .diff-kopf .sprung-hinweis';
@@ -334,11 +334,11 @@ async function sprungZeilenLinksLesen(page) {
 }
 
 async function pruefeSprungzeile(page, neu, href) {
-  await expect(page.locator(`${ZEILE}[data-neu="${neu}"] a.sprung-zeile`)).toHaveAttribute('href', href);
+  await expect(page.locator(`${ZEILE}[data-neu="${neu}"] a`)).toHaveAttribute('href', href);
 }
 
 async function pruefeSprungzeileOhneLink(page, neu) {
-  await expect(page.locator(`${ZEILE}[data-neu="${neu}"] a.sprung-zeile`)).toHaveCount(0);
+  await expect(page.locator(`${ZEILE}[data-neu="${neu}"] a`)).toHaveCount(0);
 }
 
 /** Der Link des ersten Abschnittskopf-Links. */

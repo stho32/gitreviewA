@@ -91,10 +91,23 @@ public class SprungEndpunktTests
     }
 
     [Test]
-    public async Task Wenn_die_Dateiliste_nicht_lesbar_ist_dann_500()
+    public async Task Wenn_die_Dateiliste_nicht_lesbar_ist_dann_404_ohne_Arbeitsbaumpruefung()
     {
         var dateiquelle = new TestDateiquelle(new Dictionary<string, Dateiaenderungen>(), scheitertFuer: HashP);
-        await using var server = await StarteServer(dateiquelle: dateiquelle);
+        var quelle = new TestSprungquelle(Wurzel);
+        await using var server = await StarteServer(quelle, dateiquelle);
+
+        var antwort = await new HttpClient().GetAsync(new Uri(new Uri(server.Adresse), $"api/commits/{HashP}/sprung?pfad=src%2Fa.txt"));
+
+        Assert.That(antwort.StatusCode, Is.EqualTo(HttpStatusCode.NotFound), "ohne lesbare Dateiliste gibt es keinen Link; den Lesefehler meldet bereits der Diff-Pfad");
+        Assert.That(quelle.Arbeitsbaumpruefungen, Is.Zero);
+    }
+
+    [Test]
+    public async Task Wenn_die_Arbeitsbaumpruefung_scheitert_dann_500()
+    {
+        var quelle = new TestSprungquelle(Wurzel) { ScheitertBeiArbeitsbaumpruefung = true };
+        await using var server = await StarteServer(quelle);
 
         var antwort = await new HttpClient().GetAsync(new Uri(new Uri(server.Adresse), $"api/commits/{HashP}/sprung?pfad=src%2Fa.txt"));
 

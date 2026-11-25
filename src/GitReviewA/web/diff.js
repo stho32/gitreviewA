@@ -275,12 +275,8 @@
     aktualisiereSprungkopf(ansicht);
   }
 
-  /** Merkt die angeklickte Zeile als gewählte für den Verweis im Kopf; ein Klick auf einen Link wählt keine Zeile. */
+  /** Merkt die angeklickte Zeile als gewählte für den Verweis im Kopf. */
   function waehleZeile(ansicht, ereignis) {
-    const klickGiltEinemLink = ereignis.target.closest('a') !== null;
-    if (klickGiltEinemLink) {
-      return;
-    }
     const zeileElement = ereignis.target.closest('tr[data-art]');
     if (!zeileElement) {
       return;
@@ -313,19 +309,20 @@
       }
       const link = sprungLink(ziel, sprungZeile(zeile));
       if (zeile.art === 'kopf') {
-        verlinkeZelle(zeilenElement.querySelector('td.c'), link, 'sprung-hunk');
+        verlinkeZelle(zeilenElement.querySelector('td.c'), link);
         continue;
       }
-      verlinkeZelle(zeilenElement.querySelector('td.neu'), link, 'sprung-zeile');
+      verlinkeZelle(zeilenElement.querySelector('td.neu'), link);
     }
   }
 
-  /** Setzt oder entfernt den Link einer Zelle, ohne ihren Inhalt umzubauen; der sichtbare Text bleibt derselbe. */
-  function verlinkeZelle(zelle, link, klasse) {
+  /** Setzt oder entfernt den Link einer Zelle, ohne ihren Inhalt umzubauen; der sichtbare Text bleibt derselbe. Die Zelle trägt
+      keine eigene Klasse: im Text der Diff-Zeile sind nur die Rollen der Färbung, Lesetext und Marken erlaubt (R00007). */
+  function verlinkeZelle(zelle, link) {
     if (!zelle) {
       return;
     }
-    const vorhandenerAnker = zelle.querySelector(`a.${klasse}`);
+    const vorhandenerAnker = zelle.querySelector(':scope > a');
     if (!link) {
       if (vorhandenerAnker) {
         zelle.replaceChildren(...vorhandenerAnker.childNodes);
@@ -337,7 +334,6 @@
       return;
     }
     const anker = document.createElement('a');
-    anker.className = klasse;
     anker.setAttribute('href', link);
     anker.append(...zelle.childNodes);
     zelle.replaceChildren(anker);

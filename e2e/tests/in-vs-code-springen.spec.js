@@ -37,7 +37,7 @@ test.describe('Sprungziele je Stelle', () => {
     await diffSeite.pruefeSprungzeile(page, 3, sprungZiel(repo.ordner, 'src/a.txt', 3));
     await diffSeite.pruefeSprungzeile(page, 4, sprungZiel(repo.ordner, 'src/a.txt', 4));
     expect(await diffSeite.sprungHunkLink(page)).toBe(sprungZiel(repo.ordner, 'src/a.txt', 1));
-    await expect(page.locator('#diff .dz tr.minus a.sprung-zeile')).toHaveCount(0);
+    await expect(page.locator('#diff .dz tr.minus a')).toHaveCount(0);
   });
 
   test('soll in der Ansicht ganze Datei dieselben Zeilenlinks tragen', async ({ gr, page }) => {
@@ -98,7 +98,7 @@ test.describe('Verweis im Diff-Kopf', () => {
     await seite.dateiWaehlen(page, 'README.md');
 
     await diffSeite.pruefeSprungGrund(page, GRUND_FEHLT);
-    await expect(page.locator('#diff .dz a.sprung-zeile, #diff .dz a.sprung-hunk')).toHaveCount(0);
+    await expect(page.locator('#diff .dz a')).toHaveCount(0);
   });
 });
 

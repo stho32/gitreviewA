@@ -154,6 +154,21 @@ public class SprungInteractorTests
         Assert.That(ergebnis.Ausgang, Is.EqualTo(Sprungausgang.NichtLesbar));
     }
 
+    [Test]
+    public void Wenn_die_Dateiliste_nicht_lesbar_ist_dann_nicht_gefunden_ohne_Arbeitsbaumpruefung()
+    {
+        var commits = new Commitzeilen([new Commitzeile(HashA, "Anna Beispiel", "2026-03-04T09:15:00+01:00", "Start", "")]);
+        var dateiquelle = new TestDateiquelle(new Dictionary<string, Dateiaenderungen>(), scheitertFuer: HashA);
+        var quelle = new TestSprungquelle(Wurzel);
+        var protokoll = new StderrProtokoll(new StringWriter(), TimeProvider.System, Protokollstufe.Debug);
+        var interactor = new SprungInteractor(commits, new GemerkteDateiquelle(dateiquelle), quelle, protokoll);
+
+        var ergebnis = interactor.Lesen(new Sprunganfrage(HashA, "src/a.txt"));
+
+        Assert.That(ergebnis.Ausgang, Is.EqualTo(Sprungausgang.NichtGefunden));
+        Assert.That(quelle.Arbeitsbaumpruefungen, Is.Zero);
+    }
+
     private sealed class Aufbau
     {
         private readonly SprungInteractor interactor;
