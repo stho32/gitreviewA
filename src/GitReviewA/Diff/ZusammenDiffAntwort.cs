@@ -16,5 +16,6 @@ internal sealed record ZusammenDiffAntwort(
     string? Patch,
     Diffabschnitt[] Abschnitte);
 
-/// <summary>Ein Abschnitt ohne lückenlose Kette: sein Commit, seine Art, sein Grund (nur binär) und sein Patch.</summary>
-internal sealed record Diffabschnitt(string Commit, string Art, string? Grund, string Patch);
+/// <summary>Ein Abschnitt ohne lückenlose Kette: sein Commit, die Datei in diesem Commit (Anzeigepfad mit Marken und Status, wie
+/// die Dateiliste dieses Commits sie zeigt — R00024 gilt je Commit), seine Art, sein Grund (nur binär) und sein Patch.</summary>
+internal sealed record Diffabschnitt(string Commit, string Pfad, string Status, string Art, string? Grund, string Patch);

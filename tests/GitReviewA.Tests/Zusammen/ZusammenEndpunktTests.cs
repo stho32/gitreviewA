@@ -89,6 +89,8 @@ public class ZusammenEndpunktTests
             Is.EqualTo((false, "text")));
         var abschnitt = wurzel.GetProperty("abschnitte").EnumerateArray().Single();
         Assert.That((abschnitt.GetProperty("commit").GetString(), abschnitt.GetProperty("patch").GetString()), Is.EqualTo((HashP, Patch)));
+        // S3 (Nacharbeit): jeder Abschnitt trägt die Datei seines Commits — daran hängt das Bild vorher/nachher je Abschnitt.
+        Assert.That((abschnitt.GetProperty("pfad").GetString(), abschnitt.GetProperty("status").GetString()), Is.EqualTo(("src/a.txt", "M")));
         Assert.That(quelle.NettoDiffLesevorgaenge, Is.Zero, "ohne Kette gibt es keinen Netto-Diff");
     }
 

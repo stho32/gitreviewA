@@ -98,8 +98,8 @@ public class DiffaufbereitungTests
     {
         var abschnitte = new[]
         {
-            new Diffabschnitt("z1", Diffaufbereitung.ArtText, null, "@@ -0,0 +1,3 @@\n+eins\n+zwei\n+drei\n"),
-            new Diffabschnitt("z3", Diffaufbereitung.ArtText, null, "@@ -1,3 +1,4 @@\n eins\n drei\n+vier\n"),
+            new Diffabschnitt("z1", "src/a.txt", "A", Diffaufbereitung.ArtText, null, "@@ -0,0 +1,3 @@\n+eins\n+zwei\n+drei\n"),
+            new Diffabschnitt("z3", "src/a.txt", "M", Diffaufbereitung.ArtText, null, "@@ -1,3 +1,4 @@\n eins\n drei\n+vier\n"),
         };
 
         var antwort = Diffaufbereitung.Abschnitte(new Dateiaenderung("M", "src/a.txt", null, 4, 0), abschnitte);
@@ -116,7 +116,7 @@ public class DiffaufbereitungTests
     {
         var antwort = Diffaufbereitung.Abschnitte(
             new Dateiaenderung("A", "logo.bin", null, null, null),
-            [new Diffabschnitt("z1", Diffaufbereitung.ArtBinaer, Diffaufbereitung.GrundNullbytes, "")]);
+            [new Diffabschnitt("z1", "logo.bin", "A", Diffaufbereitung.ArtBinaer, Diffaufbereitung.GrundNullbytes, "")]);
 
         Assert.That((antwort.Art, antwort.Grund), Is.EqualTo((Diffaufbereitung.ArtBinaer, Diffaufbereitung.GrundNullbytes)));
     }

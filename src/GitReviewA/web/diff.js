@@ -319,6 +319,40 @@
     return { commit: datei.commit, pfad: antwort.pfad, status: antwort.status, alterPfad: antwort.alterPfad };
   }
 
+  /** Die Stelle eines Abschnitts ohne Kette: sein Commit und die Datei in diesem Commit (R00024 gilt je Commit, PO 2026-11-25). */
+  function abschnittsdatei(abschnitt) {
+    return { commit: abschnitt.commit, pfad: abschnitt.pfad, status: abschnitt.status, alterPfad: null };
+  }
+
+  /** In „Zusammen“ ohne Kette trägt jeder Abschnitt das Bild seiner Stelle: die Fassungen des Commits dieses Abschnitts; gibt es
+      keine, bleibt der Abschnitt beim „Binärdatei“-Hinweis. Eine späte Antwort einer früheren Wahl wird verworfen. */
+  async function zeigeAbschnittsbild(abschnitt, bereichElement) {
+    const ladung = zustand.letzteLadung;
+    const istAktuell = () => ladung === zustand.letzteLadung;
+    const meldungElement = abschnittHinweis('');
+    const flaecheElement = document.createElement('div');
+    flaecheElement.className = 'bild-flaeche';
+    bereichElement.append(meldungElement, flaecheElement);
+    const uebernommen = await window.gitreviewaBild.zeige({
+      datei: abschnittsdatei(abschnitt),
+      bereichselement: flaecheElement,
+      istAktuell,
+      zeigeMeldung: (text, istFehler) => {
+        meldungElement.textContent = text;
+        meldungElement.classList.toggle('fehler', istFehler);
+      },
+    });
+    if (!istAktuell()) {
+      return;
+    }
+    if (uebernommen) {
+      meldungElement.remove();
+      return;
+    }
+    flaecheElement.remove();
+    meldungElement.textContent = 'Binärdatei';
+  }
+
   /** „nur Änderungen“ zeigt die Lücken vor dem ersten, zwischen zwei und nach dem letzten Abschnitt (R00026);
       „ganze Datei“ zeigt alles — dort gibt es keine Lücken. */
   function zeichneAnsicht(ansicht, antwort, zeilen, diffansicht) {
@@ -385,7 +419,8 @@
   }
 
   /** Ohne Kette: ein Abschnitt je Commit, mit Kurz-Hash und Betreff beschriftet; jede Abschnittsfläche meldet sich für Anmerkungen.
-      Ein Abschnitt über der Zuklappgrenze bleibt zugeklappt, bis der Mensch „Trotzdem laden“ wählt — dieselbe Regel wie netto (R00017). */
+      Eine Binärdatei trägt hier ihr Bild (R00024 gilt je Commit); ein Abschnitt über der Zuklappgrenze bleibt zugeklappt, bis der
+      Mensch „Trotzdem laden“ wählt — dieselbe Regel wie netto (R00017). */
   /** Der Name der Diff-Fläche: der Anzeigename des Pfads, unsichtbare Zeichen als Marke — nie der rohe Pfad (H1, R00014). */
   function bereichsname(antwort) {
     return `Änderungen in ${sichtbarerName(antwort.pfad)}`;
@@ -410,7 +445,7 @@
       kopfElement.textContent = `Commit ${kurzVon(abschnitt.commit)}${betreff ? ` · ${betreff}` : ''}`;
       bereichElement.append(kopfElement);
       if (abschnitt.art === 'binaer' && !alsText) {
-        bereichElement.append(abschnittHinweis('Binärdatei'));
+        zeigeAbschnittsbild(abschnitt, bereichElement);
       } else {
         const zeilen = zeilenDerDiffansicht(abschnitt.patch, diffansicht);
         if (zeilen.length === 0) {

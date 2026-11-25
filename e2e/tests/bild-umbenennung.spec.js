@@ -195,4 +195,40 @@ test.describe('R00024 Anzeige (Browser-Eigenes)', () => {
     await seite.dateiWaehlen(page, 'keinbild.png');
     await expect(page.locator('#diff .bild-paar')).toHaveCount(0);
   });
+
+  // S3 (Nacharbeit): „Zusammen“ ist der Standard des Zielbilds — das Bild steht auch dort: netto über den zuständigen Commit
+  // (lückenlose Kette) und ohne Kette in jedem Abschnitt bei seinem Commit.
+  test('soll das Bild in „Zusammen“ netto zeigen (lückenlose Kette)', async ({ gr, page }) => {
+    const { lauf } = await starte(gr);
+    await page.setViewportSize(FENSTER);
+    await gr.oberflaecheOeffnen(page, lauf, 'zusammen');
+
+    await seite.dateiWaehlen(page, 'logo.png');
+
+    const bilder = await diffSeite.bilderLesen(page);
+    expect(bilder).toHaveLength(2);
+    expect(bilder[0].beschriftung).toContain('vorher');
+    expect(bilder[1].beschriftung).toContain('nachher');
+    await diffSeite.pruefeNurImgImBildbereich(page);
+  });
+
+  test('soll das Bild in „Zusammen“ ohne Kette in jedem Abschnitt bei seinem Commit zeigen', async ({ gr, page }) => {
+    const repo = gr.gemerktesRepo(bildRepo.repoOhneKette());
+    const lauf = await gr.gitreviewAStarten(repo, [repo.hashes.b1, repo.hashes.b3]);
+    await page.setViewportSize(FENSTER);
+    await gr.oberflaecheOeffnen(page, lauf, 'zusammen');
+
+    await seite.dateiWaehlen(page, 'logo.png');
+
+    await expect(page.locator('#diff .diff-abschnitt')).toHaveCount(2);
+    const imAngelegten = await diffSeite.abschnittsbilderLesen(page, repo.hashes.b1);
+    expect(imAngelegten, 'b1: das Bild gibt es nur nachher').toHaveLength(1);
+    expect(imAngelegten[0].beschriftung).toContain('nachher');
+    expect(imAngelegten[0].beschriftung).toContain('neu');
+    const imGeaenderten = await diffSeite.abschnittsbilderLesen(page, repo.hashes.b3);
+    expect(imGeaenderten, 'b3: beide Fassungen').toHaveLength(2);
+    expect(imGeaenderten[0].beschriftung).toContain('vorher');
+    expect(imGeaenderten[1].beschriftung).toContain('nachher');
+    await diffSeite.pruefeNurImgImBildbereich(page);
+  });
 });

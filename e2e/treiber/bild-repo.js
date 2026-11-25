@@ -95,4 +95,30 @@ function repoGrenze() {
   return { ordner, hashes: { q } };
 }
 
-module.exports = { repoV, repoGrenze, PNG1, PNG2 };
+// S3 (Nacharbeit): drei Commits, das Bild in `b1` angelegt und in `b3` geändert; `b2` ändert nur eine Notiz. Wählt der Mensch
+// `b1` und `b3`, ist die Auswahl keine lückenlose Kette — der Diff steht je Commit in einem Abschnitt (R00012, Kriterium 4).
+const SKRIPT_OHNE_KETTE = `
+set -e
+mkdir -p bilder
+bild() { printf '%s' "$2" | base64 -d > "$1"; }
+bild bilder/logo.png '__PNG1__'
+git add -A && git commit -q -m "Bild anlegen"
+printf 'dazwischen\\n' > notiz.txt
+git add -A && git commit -q -m "Notiz ändern"
+bild bilder/logo.png '__PNG2__'
+git add -A && git commit -q -m "Bild ändern"
+`;
+
+/** Repo ohne Kette (R00024, S3): Commits `b1` (Bild angelegt), `b2` (Notiz), `b3` (Bild geändert). */
+function repoOhneKette() {
+  const ordner = fs.mkdtempSync(path.join(os.tmpdir(), 'gitreviewa-e2e-'));
+  const git = (...argumente) => execFileSync('git', ['-C', ordner, ...argumente], { encoding: 'utf8', env: GIT_UMGEBUNG }).trim();
+  git('init', '-q', '-b', 'main');
+  execFileSync('bash', ['-c', SKRIPT_OHNE_KETTE.replaceAll('__PNG1__', PNG1).replaceAll('__PNG2__', PNG2)], { cwd: ordner, env: GIT_UMGEBUNG });
+  const b3 = git('rev-parse', 'HEAD');
+  const b2 = git('rev-parse', 'HEAD~1');
+  const b1 = git('rev-parse', 'HEAD~2');
+  return { ordner, hashes: { b1, b2, b3 } };
+}
+
+module.exports = { repoV, repoGrenze, repoOhneKette, PNG1, PNG2 };

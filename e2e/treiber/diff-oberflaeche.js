@@ -326,7 +326,6 @@ async function diffAnfragenBeobachten(page) {
 /* ── Bild vorher/nachher (R00024): die Selektoren des Bereichs, die Anfragen und ihre Fakes ── */
 
 const BILD_PAAR = '#diff .bild-paar';
-const BILD_SEITE = '#diff .bild-paar .bild-seite';
 
 function istBildAnfrage(url, pfad = null, seite = null) {
   const adresse = url.toString();
@@ -353,16 +352,26 @@ async function bildAnfragenBeobachten(page) {
   return anfragen;
 }
 
-/** Die gezeichneten Bilder des Bereichs: Quelle, natürliche Breite und Beschriftung; wartet, bis alle geladen sind. */
-async function bilderLesen(page) {
-  await page.waitForFunction(() => {
-    const bilder = [...document.querySelectorAll('#diff .bild-paar img')];
+/** Die gezeichneten Bilder des Bereichs `selektor`: Quelle, natürliche Breite und Beschriftung; wartet, bis alle geladen sind. */
+async function bildseitenLesen(page, selektor) {
+  await page.waitForFunction(bereich => {
+    const bilder = [...document.querySelectorAll(`${bereich} img`)];
     return bilder.length > 0 && bilder.every(bild => bild.complete && bild.naturalWidth > 0);
-  }, undefined, { polling: 'raf', timeout: 10000 });
-  return page.locator(BILD_SEITE).evaluateAll(figuren => figuren.map(figur => {
+  }, selektor, { polling: 'raf', timeout: 10000 });
+  return page.locator(`${selektor} .bild-seite`).evaluateAll(figuren => figuren.map(figur => {
     const bild = figur.querySelector('img');
     return { src: bild.getAttribute('src'), naturbreite: bild.naturalWidth, beschriftung: figur.querySelector('figcaption').textContent };
   }));
+}
+
+/** Die gezeichneten Bilder des Bereichs: Quelle, natürliche Breite und Beschriftung; wartet, bis alle geladen sind. */
+async function bilderLesen(page) {
+  return bildseitenLesen(page, BILD_PAAR);
+}
+
+/** Die Bilder des Abschnitts `commit` (Zusammen ohne Kette, R00024): je Stelle ihre beiden Fassungen. */
+async function abschnittsbilderLesen(page, commit) {
+  return bildseitenLesen(page, `${BEREICH} .diff-abschnitt[data-commit="${commit}"]`);
 }
 
 /** Der Titel des Bildpaares (neuer Pfad, bei einer Umbenennung beide Namen). */
@@ -686,5 +695,5 @@ module.exports = {
   pruefeSprungVerweis, pruefeSprungGrund, pruefeSprungHinweis, sprungAntwortVerzoegern, sprungAntwortScheitern,
   leerraumUmschalten, leerraumPerTastaturUmschalten, pruefeLeerraumStellung, diffAnfragenBeobachten, diffAntwortErsetzen,
   lueckenLesen, lueckeAufklappen, lueckeMeldet, pruefeZeilenMitEigenemLink, zeilenZaehlen, zeileVorhanden, zeilentextLesen,
-  bildAnfragenBeobachten, bildAntwortErsetzen, bilderLesen, bildTitel, pruefeNurImgImBildbereich,
+  bildAnfragenBeobachten, bildAntwortErsetzen, bilderLesen, abschnittsbilderLesen, bildTitel, pruefeNurImgImBildbereich,
 };

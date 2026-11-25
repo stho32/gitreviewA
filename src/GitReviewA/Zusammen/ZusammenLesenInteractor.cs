@@ -1,5 +1,6 @@
 using GitReviewA.Aufruf;
 using GitReviewA.Diff;
+using GitReviewA.Fremdtext;
 using GitReviewA.Git;
 using GitReviewA.Haken;
 using GitReviewA.Protokoll;
@@ -165,11 +166,13 @@ internal sealed class ZusammenLesenInteractor : INettoDateiliste
     private Diffabschnitt Abschnitt(NettoStelle stelle, Diffumfang umfang, Leerraum leerraum)
     {
         var art = Diffaufbereitung.ArtVon(stelle.Datei);
+        var pfad = UnsichtbareZeichen.AlsMarken(stelle.Datei.Pfad);
+        var status = stelle.Datei.Status;
         if (art == Diffaufbereitung.ArtBinaer)
         {
-            return new Diffabschnitt(stelle.Commit, art, diffquelle.BinaerGrund(stelle.Commit, stelle.Datei), string.Empty);
+            return new Diffabschnitt(stelle.Commit, pfad, status, art, diffquelle.BinaerGrund(stelle.Commit, stelle.Datei), string.Empty);
         }
-        return new Diffabschnitt(stelle.Commit, art, null, diffquelle.Lesen(stelle.Commit, stelle.Datei, umfang, leerraum));
+        return new Diffabschnitt(stelle.Commit, pfad, status, art, null, diffquelle.Lesen(stelle.Commit, stelle.Datei, umfang, leerraum));
     }
 
     private static CommitHashes HashesDerAuswahl(Commitzeilen commits)
