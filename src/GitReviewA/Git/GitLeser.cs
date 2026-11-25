@@ -742,6 +742,154 @@ internal static class GitLeser
         return ausgabe.ToArray();
     }
 
+    /// <summary>
+    /// Die Bytes eines Blobs aus dem fremden Repo: `git cat-file blob <Revision>:<Pfad>` mit Argumentliste. Ein Name mit Rohbytes
+    /// geht über den stdin-Weg (`git cat-file --batch`, wie #28) — .NET kann ein Byte außerhalb von UTF-8 nicht als Argument
+    /// übergeben, und ein solcher Name darf nie Argument werden. Gelesen wird gegen die <paramref name="grenze"/>; darüber
+    /// <see cref="GitZuGross"/>, ein fehlender Blob als <see cref="GitFehler"/>. Ein Name mit Zeilenende geht nicht über stdin
+    /// (git trennt an LF und schnitte CR ab) und endet als <see cref="GitFehler"/>.
+    /// </summary>
+    public static byte[] BlobLesen(string revision, string pfad, Rohname? rohpfad, string arbeitsordner, Ausgabegrenze grenze)
+    {
+        var gehtUeberStdin = rohpfad is not null;
+        if (gehtUeberStdin)
+        {
+            var nameTraegtZeilenende = rohpfad!.EnthaeltZeilenende;
+            if (nameTraegtZeilenende)
+            {
+                throw new GitFehler("Blob abgewiesen: Name mit Zeilenende geht nicht über stdin an git");
+            }
+            var aufruf = $"git cat-file --batch {revision}:<Name>";
+            var start = GitCatFileBatchStart(arbeitsordner);
+            var ausgabe = AusfuehrenMitEingabeBytes(start, BatchEingabe(revision, rohpfad), aufruf, grenze);
+            return BlobAusBatch(ausgabe, aufruf);
+        }
+        var blobStart = GitCatFileBlobStart(revision, pfad, arbeitsordner);
+        return AusfuehrenBytes(blobStart, $"git cat-file blob {revision}:{UnsichtbareZeichen.AlsMarken(pfad)}", grenze);
+    }
+
+    private static ProcessStartInfo GitCatFileBlobStart(string revision, string pfad, string arbeitsordner)
+    {
+        var start = GitStart.Im(arbeitsordner);
+        start.ArgumentList.Add("cat-file");
+        start.ArgumentList.Add("blob");
+        start.ArgumentList.Add($"{revision}:{pfad}");
+        return start;
+    }
+
+    private static ProcessStartInfo GitCatFileBatchStart(string arbeitsordner)
+    {
+        var start = GitStart.Im(arbeitsordner);
+        start.ArgumentList.Add("cat-file");
+        start.ArgumentList.Add("--batch");
+        return start;
+    }
+
+    /// <summary>Die Zeile für `git cat-file --batch`: `<Revision>:` und der Name als Rohbytes, abgeschlossen mit LF.</summary>
+    private static byte[] BatchEingabe(string revision, Rohname rohpfad)
+    {
+        var eingabe = new List<byte>();
+        eingabe.AddRange(Encoding.ASCII.GetBytes($"{revision}:"));
+        eingabe.AddRange(rohpfad.Bytes.ToArray());
+        eingabe.Add((byte)'\n');
+        return eingabe.ToArray();
+    }
+
+    /// <summary>
+    /// Die Ausgabe von `git cat-file --batch` (`<oid> blob <Größe>\n<Inhalt>\n`) auf den Inhalt verkürzt. Ein fehlender oder
+    /// kein Blob (etwa ein Baum) ist ein <see cref="GitFehler"/> — nie ein fremder oder gekürzter Inhalt.
+    /// </summary>
+    private static byte[] BlobAusBatch(byte[] ausgabe, string aufruf)
+    {
+        var zeilenende = Array.IndexOf(ausgabe, (byte)'\n');
+        if (zeilenende < 0)
+        {
+            throw new GitFehler($"{aufruf} lieferte keine Kopfzeile");
+        }
+        var kopf = Encoding.ASCII.GetString(ausgabe, 0, zeilenende);
+        var felder = kopf.Split(' ');
+        var hatBlobzeile = felder.Length == 3 && felder[1] == "blob";
+        var groesse = -1L;
+        var istBlobzeile = hatBlobzeile && long.TryParse(felder[2], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out groesse);
+        if (!istBlobzeile || groesse < 0)
+        {
+            throw new GitFehler($"{aufruf} lieferte keinen Blob");
+        }
+        var inhaltAnfang = zeilenende + 1;
+        var inhaltEnde = inhaltAnfang + groesse;
+        if (ausgabe.Length < inhaltEnde)
+        {
+            throw new GitFehler($"{aufruf} lieferte den Inhalt unvollständig");
+        }
+        return ausgabe[(int)inhaltAnfang..(int)inhaltEnde];
+    }
+
+    /// <summary>Wie <see cref="Ausfuehren(ProcessStartInfo, string)"/>, aber die Ausgabe sind Bytes (für Binärinhalte wie Bilder).</summary>
+    private static byte[] AusfuehrenBytes(ProcessStartInfo start, string aufruf, Ausgabegrenze grenze)
+    {
+        var lauf = WarteAufEndeMitGrenzeBytes(Starte(start), aufruf, grenze);
+        PruefeErfolgBytes(lauf, aufruf);
+        return lauf.Inhalt;
+    }
+
+    /// <summary>Wie <see cref="AusfuehrenBytes"/> mit Eingabe über stdin (ein Name mit Rohbytes).</summary>
+    private static byte[] AusfuehrenMitEingabeBytes(ProcessStartInfo start, byte[] eingabe, string aufruf, Ausgabegrenze grenze)
+    {
+        start.RedirectStandardInput = true;
+        var gestartet = Starte(start);
+        using (var stdin = gestartet.StandardInput.BaseStream)
+        {
+            stdin.Write(eingabe);
+        }
+        var lauf = WarteAufEndeMitGrenzeBytes(gestartet, aufruf, grenze);
+        PruefeErfolgBytes(lauf, aufruf);
+        return lauf.Inhalt;
+    }
+
+    private static GitBytelauf WarteAufEndeMitGrenzeBytes(Process gestartet, string aufruf, Ausgabegrenze grenze)
+    {
+        using var prozess = gestartet;
+        var fehler = new StringBuilder();
+        prozess.ErrorDataReceived += (_, zeile) => fehler.AppendLine(zeile.Data);
+        prozess.BeginErrorReadLine();
+        var inhalt = LesenBytesMitGrenze(prozess, aufruf, grenze);
+        prozess.WaitForExit();
+        return new GitBytelauf(prozess.ExitCode, inhalt, fehler.ToString().Trim());
+    }
+
+    /// <summary>Liest Stdout als Bytes bis zur Grenze; darüber wird der Prozess beendet und <see cref="GitZuGross"/> geworfen.</summary>
+    private static byte[] LesenBytesMitGrenze(Process prozess, string aufruf, Ausgabegrenze grenze)
+    {
+        using var speicher = new MemoryStream();
+        var puffer = new byte[81920];
+        while (true)
+        {
+            var gelesen = prozess.StandardOutput.BaseStream.Read(puffer, 0, puffer.Length);
+            if (gelesen == 0)
+            {
+                break;
+            }
+            if (speicher.Length + gelesen > grenze.Bytes)
+            {
+                Beende(prozess);
+                throw new GitZuGross(aufruf, grenze.Bytes);
+            }
+            speicher.Write(puffer, 0, gelesen);
+        }
+        return speicher.ToArray();
+    }
+
+    private static void PruefeErfolgBytes(GitBytelauf lauf, string befehl)
+    {
+        var gitIstGescheitert = lauf.ExitCode != 0;
+        if (gitIstGescheitert)
+        {
+            throw new GitFehler($"{befehl} endete mit {lauf.ExitCode}: {lauf.Fehlertext}");
+        }
+    }
+
+    private sealed record GitBytelauf(int ExitCode, byte[] Inhalt, string Fehlertext);
+
     private static void PruefeErfolg(GitLauf lauf, string befehl)
     {
         var gitIstGescheitert = lauf.ExitCode != 0;
