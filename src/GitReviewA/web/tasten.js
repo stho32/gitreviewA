@@ -100,6 +100,9 @@
       case 'abschnittWeiter': return springeAbschnitt(1);
       case 'abschnittZurueck': return springeAbschnitt(-1);
       case 'zeileAnmerken': return merkeZeileAn();
+      case 'zeileAnmerkenMuss': return merkeZeileAn('muss');
+      case 'zeileAnmerkenFrage': return merkeZeileAn('frage');
+      case 'zeileAnmerkenIdee': return merkeZeileAn('idee');
       case 'ansichtWechseln': return wechsleAnsicht();
       case 'anordnungWechseln': return wechsleAnordnung();
       case 'umbruchWechseln': return schalteUmbruch();
@@ -285,11 +288,15 @@
     zeileElement.scrollIntoView({ block: 'nearest' });
   }
 
-  /** `Enter` merkt die fokussierte Diff-Zeile an — derselbe Weg wie ein Klick (Feld öffnet mit Fokus). */
-  function merkeZeileAn() {
+  /** `Enter` merkt die fokussierte Diff-Zeile an — derselbe Weg wie ein Klick (Feld öffnet mit Fokus). `art` (Taste 1–3, R00036)
+      wählt dazu die Art vor; lässt sich das Feld an dieser Zeile nicht öffnen, zeigt der Klick den Grund (etwa die entfernte Zeile). */
+  function merkeZeileAn(art) {
     const aktiv = document.activeElement;
     if (!aktiv || !aktiv.matches(DIFFZEILE) || !rollbereich() || !rollbereich().contains(aktiv)) {
       return false;
+    }
+    if (art && window.gitreviewaAnmerkungen && window.gitreviewaAnmerkungen.merkeMitArt(art)) {
+      return true;
     }
     aktiv.click();
     return true;
@@ -438,18 +445,29 @@
 
   /* ── Hinweise an den Bedienelementen (B2906) ── */
 
-  /** Der Katalog legt an jedes Bedienelement seinen Hinweis (`<kbd aria-hidden>`) und `aria-keyshortcuts`; der Name bleibt. */
+  /** Der Katalog legt an jedes Bedienelement seinen Hinweis (`<kbd aria-hidden>`) und `aria-keyshortcuts`; der Name bleibt.
+      Ein Ziel, dessen Inhalt neu gezeichnet wird (der Diff-Rollbereich), verliert seine `<kbd>`: fehlt eine, wird der Hinweis
+      neu gesetzt, statt sich auf das gemerkte Kennzeichen zu verlassen. */
   function zeichneHinweise() {
     for (const hinweis of werte().hinweise()) {
       for (const element of document.querySelectorAll(hinweis.selektor)) {
-        if (element.dataset.tastenHinweis === hinweis.aria) {
+        const behaelter = element.closest('label') || element;
+        if (element.dataset.tastenHinweis === hinweis.aria && hatAlleHinweistasten(behaelter, hinweis.anzeige)) {
           continue;
         }
         element.dataset.tastenHinweis = hinweis.aria;
         element.setAttribute('aria-keyshortcuts', hinweis.aria);
-        hinweisTasten(hinweis.anzeige).forEach(kbd => (element.closest('label') || element).append(kbd));
+        for (const altesKbd of behaelter.querySelectorAll('kbd.hinweis-taste')) {
+          altesKbd.remove();
+        }
+        hinweisTasten(hinweis.anzeige).forEach(kbd => behaelter.append(kbd));
       }
     }
+  }
+
+  function hatAlleHinweistasten(behaelter, anzeige) {
+    const tasten = [...behaelter.querySelectorAll('kbd.hinweis-taste')].map(kbd => kbd.textContent);
+    return anzeige.every(taste => tasten.includes(taste)) && tasten.length === anzeige.length;
   }
 
   /** Je Taste ein `<kbd>`; für Screenreader verborgen, damit der zugängliche Name des Bedienelements unverändert bleibt. */

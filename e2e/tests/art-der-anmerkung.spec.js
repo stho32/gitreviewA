@@ -69,6 +69,24 @@ test.describe('Art der Anmerkung am Notizfeld', () => {
     ]);
   });
 
+  test('Taste 2 bei gewählter Diff-Zeile öffnet das Feld mit Frage und dem Fokus im Textfeld; Ziffern im Text sind Text', async ({ anm }) => {
+    await anm.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });
+    await anm.dateiAnsehen('src/a.txt');
+
+    await anm.inDenDiffTabben();
+    await anm.pfeilAbBis(2);
+    await anm.taste('2');
+    await anm.feldOffenMitFokus('src/a.txt', 2);
+    await anm.artIstGewaehlt('Frage');
+    await anm.textSchreiben('src/a.txt', 2, 'Warum 22?');
+    await anm.feldEnthaelt('src/a.txt', 2, 'Warum 22?');
+    await anm.speichern('src/a.txt', 2);
+    await anm.feldZu('src/a.txt', 2);
+
+    const stand = await anm.anmerkungenAufDemServer();
+    expect(stand.map(eintrag => [eintrag.zeile, eintrag.text, eintrag.art])).toEqual([[2, 'Warum 22?', 'frage']]);
+  });
+
   test('Gruppe ohne Maus: Umschalt+Tab ins Feld, Pfeiltasten wählen die Art', async ({ anm }) => {
     await anm.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });
     await anm.dateiAnsehen('src/a.txt');

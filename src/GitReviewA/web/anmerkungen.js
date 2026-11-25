@@ -48,6 +48,8 @@
     document.addEventListener('datei-gewaehlt', () => zeigeHinweis(ansicht, ''));
     document.addEventListener('commit-gewaehlt', () => zeigeHinweis(ansicht, ''));
     ladeAnmerkungen(ansicht);
+    // Taste 1–3 (R00036) öffnet das Feld über `tasten.js`; die Rechnung „Zeile → Stelle“ bleibt hier, nicht in der Tastenschicht.
+    window.gitreviewaAnmerkungen = { merkeMitArt: art => merkeMitArt(ansicht, art) };
   }
 
   /* ── Stand vom Server und Anzeige am Diff ── */
@@ -663,7 +665,33 @@
     return null;
   }
 
-  function oeffneFeld(ansicht, zeileElement, gewaehlt) {
+  /** Taste 1–3 außerhalb von Feldern (R00036): öffnet wie `Enter` das Notizfeld an der fokussierten Diff-Zeile, mit vorgewählter
+      Art; `false` heißt, an dieser Zeile lässt sich nichts anmerken (der Aufrufer zeigt dann den Grund). */
+  function merkeMitArt(ansicht, art) {
+    const fokussiert = document.activeElement;
+    const zeileElement = fokussiert && typeof fokussiert.closest === 'function' ? fokussiert.closest(DIFFZEILE) : null;
+    if (!zeileElement || !ansicht.rollElement.contains(zeileElement)) {
+      return false;
+    }
+    const zielStelle = stelleVonElement(zeileElement);
+    if (zielStelle < 0) {
+      return false;
+    }
+    zeigeHinweis(ansicht, '');
+    const ziel = zielDerZeile(zeileElement, null);
+    const zielZeile = { ...zustand.zeilen[zielStelle], art: ziel.art, neu: ziel.neu };
+    const gewaehlt = bereichsziel(zustand.zeilen, null, zielStelle, false, zielZeile);
+    if (gewaehlt.art !== 'zeile') {
+      return false;
+    }
+    zustand.ankerStelle = zielStelle;
+    setzeAuswahl(ansicht, null);
+    setzeZeilenfokus(zeileElement, false);
+    oeffneFeld(ansicht, zeileElement, gewaehlt, art);
+    return true;
+  }
+
+  function oeffneFeld(ansicht, zeileElement, gewaehlt, art = null) {
     const gezeichnet = zustand.gezeichnet;
     const stelle = { commit: gewaehlt.commit, datei: gezeichnet.pfad };
     const ziel = gewaehlt.art === 'bereich'
@@ -677,7 +705,7 @@
       feldname: feldnameDesZiels(ziel),
       zeilenklasse: 'anm-feld',
       vorbelegung: '',
-      art: null,
+      art,
       speichertGerade: false,
     };
     feld.speichern = () => speichere(feld);

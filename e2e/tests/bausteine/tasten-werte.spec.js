@@ -49,7 +49,7 @@ test.describe('Baustein Tasten-Werte — Tastenbelegung und Kontext (B2901)', ()
   });
 
   test('soll in einem Eingabefeld keine einzige Taste abfangen', () => {
-    for (const taste of ['j', 'k', 'n', 'p', 'x', 'm', 's', 'v', 'w', 'h', 'u', '[', ']', 'Enter', 'a', 'e', '?']) {
+    for (const taste of ['j', 'k', 'n', 'p', 'x', 'm', 's', 'v', 'w', 'h', 'u', '[', ']', 'Enter', 'a', 'e', '1', '2', '3', '?']) {
       expect(werte.aktionFuer(taste, lage({ feldImFokus: true, modus: werte.EINZELN })), `Taste ${taste}`).toBeNull();
     }
   });
@@ -178,5 +178,48 @@ test.describe('Baustein Tasten-Werte — Statuszeile und Hinweise (B2904/B2906)'
     expect(hinweis('#hilfe-knopf').aria).toBe('?');
     expect(hinweis('.anordnung-wahl')).toEqual({ selektor: '.anordnung-wahl', anzeige: ['v'], aria: 'v' });
     expect(hinweis('#suche-eingabe').aria).toBe('/');
+  });
+});
+test.describe('Baustein Tasten-Werte — Tasten 1–3 (R00036)', () => {
+  test('soll die Ziffern 1, 2, 3 auf je eine Anmerk-Aktion mit Eigenschaft abbilden', () => {
+    const erwartet = { 1: 'zeileAnmerkenMuss', 2: 'zeileAnmerkenFrage', 3: 'zeileAnmerkenIdee' };
+
+    for (const [taste, aktion] of Object.entries(erwartet)) {
+      expect(werte.aktionFuer(taste, lage({ vorhanden: GEBAUT })), `Taste ${taste}`).toBe(aktion);
+    }
+  });
+
+  test('soll 1–3 je genau einmal im Katalog führen, mit Ziel und dem Text „Zeile anmerken: <Art>“', () => {
+    const erwartet = { 1: 'Zeile anmerken: Muss', 2: 'Zeile anmerken: Frage', 3: 'Zeile anmerken: Idee' };
+
+    for (const [taste, text] of Object.entries(erwartet)) {
+      const eintraege = werte.EINTRAEGE.filter(eintrag => eintrag.taste === taste);
+      expect(eintraege, `Taste ${taste}`).toHaveLength(1);
+      expect(eintraege[0].text).toBe(text);
+      expect(eintraege[0].bereich).toBe('diff');
+      expect(eintraege[0].ziel, `Taste ${taste} trägt ein Ziel`).toBeTruthy();
+    }
+  });
+
+  test('soll Strg, Alt und Meta für 1–3 sperren', () => {
+    for (const taste of ['1', '2', '3']) {
+      expect(werte.aktionFuer(taste, lage({ modifikatoren: { ...OHNE_MODIFIKATOREN, strg: true }, vorhanden: GEBAUT }))).toBeNull();
+      expect(werte.aktionFuer(taste, lage({ modifikatoren: { ...OHNE_MODIFIKATOREN, alt: true }, vorhanden: GEBAUT }))).toBeNull();
+      expect(werte.aktionFuer(taste, lage({ modifikatoren: { ...OHNE_MODIFIKATOREN, meta: true }, vorhanden: GEBAUT }))).toBeNull();
+    }
+  });
+
+  test('soll ohne gebauten Diff-Bereich 1–3 nicht abfangen', () => {
+    expect(werte.aktionFuer('2', lage())).toBeNull();
+  });
+
+  test('soll die drei Ziffern in der Hilfe des Bereichs Diff zeigen, je einmal', () => {
+    const diff = werte.belegung(lage({ vorhanden: GEBAUT })).find(gruppe => gruppe.kennung === 'diff');
+    const ziffern = diff.eintraege.filter(eintrag => ['1', '2', '3'].includes(eintrag.anzeige[0]));
+
+    expect(ziffern.map(eintrag => eintrag.text)).toEqual(['Zeile anmerken: Muss', 'Zeile anmerken: Frage', 'Zeile anmerken: Idee']);
+    for (const eintrag of ziffern) {
+      expect(eintrag.verfuegbar).toBe(true);
+    }
   });
 });
