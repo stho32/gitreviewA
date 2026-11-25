@@ -57,15 +57,26 @@
       return zweispaltig() && zustand.eingeklappt;
     }
 
-    /** Zustand → Layout und Bedienelement; erzeugt bzw. entfernt den Knopf je Aufbau. */
+    /** Zustand → Layout und Bedienelement; erzeugt bzw. entfernt den Knopf je Aufbau. Die eingeklappte Leiste ist `hidden` und
+        `inert`: sie ist weder sichtbar noch im Tab- oder Lese-Weg (kein unsichtbarer Stopp). */
     function anwenden() {
       sichereKnopf();
+      const eingeklapptJetzt = eingeklappt();
       const rahmenElement = rahmen();
       if (rahmenElement) {
-        rahmenElement.classList.toggle(seite.klasse, eingeklappt());
+        rahmenElement.classList.toggle(seite.klasse, eingeklapptJetzt);
+      }
+      const leisteElement = leiste();
+      if (leisteElement) {
+        leisteElement.hidden = eingeklapptJetzt;
+        if (eingeklapptJetzt) {
+          leisteElement.setAttribute('inert', '');
+        } else {
+          leisteElement.removeAttribute('inert');
+        }
       }
       if (knopf) {
-        setzeKnopf(eingeklappt());
+        setzeKnopf(eingeklapptJetzt);
       }
     }
 

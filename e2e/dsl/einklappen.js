@@ -20,6 +20,7 @@ function einklappenSprache(seit, page) {
     tabVomKopf: () => einkl.tabVomKopf(page),
     hilfeOeffnen: () => einkl.hilfeOeffnen(page),
     hilfeEintraege: () => einkl.hilfeEintraege(page),
+    fortschritt: () => page.locator('#kopf-fortschritt .haken-zaehler').textContent(),
     sucheFokussieren: () => page.locator('#diff-suche').focus(),
     suchfeldWert: () => page.locator('#diff-suche').inputValue(),
     fokusAufKnopf: async () => {

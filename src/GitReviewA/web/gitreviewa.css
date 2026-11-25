@@ -340,6 +340,16 @@ kbd{font:11px/1.2 var(--kd-mono);padding:1px 4px;border:1px solid var(--kd-line-
      ragt in die Ränder beider Nachbarn hinein (er deckt keinen Inhalt) und liegt über dem Trennzug, der darunter weiter greift
      (nur der Knopf selbst fängt den Zeiger). Eingeklappt wird aus ihm der sichtbare Streifen mit dem Weg zurück. */
   .gr-streifen{grid-column:2;grid-row:1;display:flex;align-self:start;justify-self:center;inline-size:var(--gr-streifen-breite,24px);margin-block-start:var(--kd-s5);pointer-events:none;z-index:2}
+  /* Eingeklappt (B3403): die Seitenleiste weicht ganz (hidden/inert setzt `einklappen.js`), der Diff nimmt ihre Spalte mit, und
+     aus dem Streifen wird der sichtbare Weg zurück an der Grenze. Der Trenn-Zug ist weg (keine Breite zu ziehen); die gemerkte
+     Breite bleibt in `--gr-leiste-breite` stehen und gilt beim Ausklappen weiter. Alles wirkt über das Layout — der Diff wird
+     nicht neu gezeichnet (Lehre #23). */
+  #seitenleiste[hidden]{display:none}
+  .gr-ansicht.gr-eingeklappt{grid-template-columns:0 var(--gr-streifen-breite,24px) minmax(0,1fr)}
+  .gr-ansicht.gr-eingeklappt .gr-trenner{display:none}
+  .gr-ansicht.gr-eingeklappt .gr-streifen{align-self:stretch;justify-self:stretch;inline-size:auto;margin-block-start:0;background:var(--kd-sunken);border-inline:1px solid var(--kd-line)}
+  .gr-ansicht.gr-eingeklappt .gr-einklappen{inline-size:100%;padding:var(--kd-s2) 0;border:0;border-radius:0;background:none}
+  .gr-ansicht.gr-eingeklappt .gr-einklappen:hover{background:var(--kd-surface)}
   /* Der Knopf am Trenner (B3402): ein schmaler Streifen-Knopf, oben das sichtbare Bild der Wirkung (der Pfeil), darunter der
      Name senkrecht — beide aus `einklappen-werte.js`; der Fokusring kommt aus der einen Regel für alle Bedienelemente (B2907). */
   .gr-einklappen{pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:var(--kd-s1);box-sizing:border-box;inline-size:var(--gr-streifen-breite,24px);margin:0;padding:var(--kd-s2) 0;border:1px solid var(--kd-line);border-radius:var(--kd-s2);background:var(--kd-surface);color:var(--kd-muted);font:inherit;cursor:pointer}
