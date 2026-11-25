@@ -446,3 +446,7 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Befund des dokumentar (#39) beim Aufnehmen der Screenshots: TypeError in `farbe-werte.js`, Färbung nebeneinander brach ab. Fix an der einen Stelle (`farbteile(teile, stuecke = [])`), Unit + 2 E2E rot→grün, Mutant 3/3 rot. Kleiner Fix mit Test: Director-Nachprüfung statt Reviews. 0,36 $.
 - Lehre: Wer die Oberfläche für Leser abbildet, findet, was Tests nicht abdecken — der dokumentar ist auch ein Prüfer.
 - Gate: NUnit 1322/1322, Playwright 805/805 zweimal.
+| 2026-11-25 | #42 | Detailplanung | planer | bestanden | 6 min | opencode: PO-Entscheidungen eingearbeitet (y statt b, cat-file blob) · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 42-planer-2 · 0,16 $ · Karte gesamt 4,88 $ |
+| 2026-11-25 | #42 | Entwicklung | security-reviewer | bestanden | 15 min | Claude Sonnet: Angriffsmatrix 113 Zeilen (4e2ef6c), 20 Lücken, E1–E5 · claude · Lauf 42-security-reviewer-1 · 1,92 $ · Karte gesamt 6,80 $ |
+| 2026-11-25 | #42 | Entwicklung | product-owner | bestanden | 1 min | Claude Sonnet: L1–L20 und E1–E5 einsortiert (cf455b0) · claude · sonnet · Lauf 42-product-owner-2 · 0,28 $ · Karte gesamt 7,08 $ |
+| 2026-11-25 | #42 | Entwicklung | planer | bestanden | 5 min | opencode: Matrix-Lücken als Kriterien (R00043 +10), B4209 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 42-planer-3 · 0,11 $ · Karte gesamt 7,19 $ |
