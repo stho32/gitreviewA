@@ -109,41 +109,42 @@ internal static class GitLeser
     /// Pfade gehen wörtlich an git (kein Pathspec-Muster); bei einer Umbenennung beide Pfade, sonst zeigt git die Datei als neu.
     /// Kontext, Leerzeilen, Farben, Submodul-Darstellung und Pfadbezug setzt der Aufruf selbst — die Konfiguration des fremden Repos
     /// verschiebt sonst die Zeilennummern oder leert den Patch (`diff.submodule=log`, `diff.relative`).
+    /// <paramref name="leerraum"/> setzt `-w` auf denselben Aufruf (R00026).
     /// </summary>
-    public static string DiffLesen(string hash, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner)
+    public static string DiffLesen(string hash, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner, Leerraum leerraum = Leerraum.Beachten)
     {
-        return DiffLesen(hash, datei, umfang, arbeitsordner, Ausgabegrenze.Standard);
+        return DiffLesen(hash, datei, umfang, arbeitsordner, Ausgabegrenze.Standard, leerraum);
     }
 
-    /// <summary>Wie <see cref="DiffLesen(string, Dateiaenderung, Diffumfang, string)"/>, aber über der <paramref name="grenze"/> Bytes kein Rumpf, sondern <see cref="GitZuGross"/>.</summary>
-    public static string DiffLesen(string hash, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner, Ausgabegrenze grenze)
+    /// <summary>Wie <see cref="DiffLesen(string, Dateiaenderung, Diffumfang, string, Leerraum)"/>, aber über der <paramref name="grenze"/> Bytes kein Rumpf, sondern <see cref="GitZuGross"/>.</summary>
+    public static string DiffLesen(string hash, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner, Ausgabegrenze grenze, Leerraum leerraum = Leerraum.Beachten)
     {
         var traegtRohbytes = TraegtRohbytes(datei);
         if (traegtRohbytes)
         {
-            var mitRohbytes = GitLogStdinDiffStart(umfang, arbeitsordner, alsText: false);
+            var mitRohbytes = GitLogStdinDiffStart(umfang, arbeitsordner, alsText: false, leerraum);
             return AusfuehrenMitEingabe(mitRohbytes, DiffEingabe(hash, datei), $"git log --stdin {hash} -- {datei.Pfad}", grenze);
         }
-        var start = GitShowDiffStart(hash, datei, umfang, arbeitsordner, alsText: false);
+        var start = GitShowDiffStart(hash, datei, umfang, arbeitsordner, alsText: false, leerraum);
         return Ausfuehren(start, $"git show {hash} -- {datei.Pfad}", grenze);
     }
 
-    /// <summary>Wie <see cref="DiffLesen"/>, aber mit `--text`: zeigt auch eine als binär eingestufte Datei mit allen Bytes.</summary>
-    public static string DiffAlsTextLesen(string hash, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner)
+    /// <summary>Wie <see cref="DiffAlsTextLesen(string, Dateiaenderung, Diffumfang, string)"/>, aber mit `--text`: zeigt auch eine als binär eingestufte Datei mit allen Bytes.</summary>
+    public static string DiffAlsTextLesen(string hash, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner, Leerraum leerraum = Leerraum.Beachten)
     {
-        return DiffAlsTextLesen(hash, datei, umfang, arbeitsordner, Ausgabegrenze.Standard);
+        return DiffAlsTextLesen(hash, datei, umfang, arbeitsordner, Ausgabegrenze.Standard, leerraum);
     }
 
-    /// <summary>Wie <see cref="DiffAlsTextLesen(string, Dateiaenderung, Diffumfang, string)"/>, aber über der <paramref name="grenze"/> Bytes kein Rumpf, sondern <see cref="GitZuGross"/>.</summary>
-    public static string DiffAlsTextLesen(string hash, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner, Ausgabegrenze grenze)
+    /// <summary>Wie <see cref="DiffAlsTextLesen(string, Dateiaenderung, Diffumfang, string, Leerraum)"/>, aber über der <paramref name="grenze"/> Bytes kein Rumpf, sondern <see cref="GitZuGross"/>.</summary>
+    public static string DiffAlsTextLesen(string hash, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner, Ausgabegrenze grenze, Leerraum leerraum = Leerraum.Beachten)
     {
         var traegtRohbytes = TraegtRohbytes(datei);
         if (traegtRohbytes)
         {
-            var mitRohbytes = GitLogStdinDiffStart(umfang, arbeitsordner, alsText: true);
+            var mitRohbytes = GitLogStdinDiffStart(umfang, arbeitsordner, alsText: true, leerraum);
             return AusfuehrenMitEingabe(mitRohbytes, DiffEingabe(hash, datei), $"git log --stdin --text {hash} -- {datei.Pfad}", grenze);
         }
-        var start = GitShowDiffStart(hash, datei, umfang, arbeitsordner, alsText: true);
+        var start = GitShowDiffStart(hash, datei, umfang, arbeitsordner, alsText: true, leerraum);
         return Ausfuehren(start, $"git show --text {hash} -- {datei.Pfad}", grenze);
     }
 
@@ -155,7 +156,8 @@ internal static class GitLeser
     /// </summary>
     public static string NettoDiffLesen(string basis, string spitze, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner, Ausgabegrenze grenze)
     {
-        var start = GitDiffStdinStart(umfang, arbeitsordner);
+        // Die Netto-Ansicht (I0010) kennt keine Leerraum-Stellung; sie vergleicht unverändert.
+        var start = GitDiffStdinStart(umfang, arbeitsordner, Leerraum.Beachten);
         return AusfuehrenMitEingabe(start, NettoEingabe(basis, spitze, datei), $"git diff --stdin {Kurz(basis)}..{Kurz(spitze)} -- {datei.Pfad}", grenze);
     }
 
@@ -519,7 +521,7 @@ internal static class GitLeser
         return start;
     }
 
-    private static ProcessStartInfo GitShowDiffStart(string hash, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner, bool alsText)
+    private static ProcessStartInfo GitShowDiffStart(string hash, Dateiaenderung datei, Diffumfang umfang, string arbeitsordner, bool alsText, Leerraum leerraum)
     {
         var start = GitStart.Im(arbeitsordner);
         start.ArgumentList.Add("--literal-pathspecs");
@@ -532,6 +534,7 @@ internal static class GitLeser
         start.ArgumentList.Add("--no-textconv");
         start.ArgumentList.Add("--ignore-submodules=none");
         HaengeBasisAn(start);
+        HaengeLeerraumAn(start, leerraum);
         start.ArgumentList.Add("-M");
         start.ArgumentList.Add(KontextFuer(umfang));
         start.ArgumentList.Add("--inter-hunk-context=0");
@@ -562,7 +565,7 @@ internal static class GitLeser
     /// Wie <see cref="GitShowDiffStart"/>, aber Hash und Pfade kommen über stdin (<see cref="DiffEingabe"/>): .NET kann ein Byte außerhalb
     /// von UTF-8 nicht als Argument übergeben. `log.follow` des fremden Repos würde bei einem Pfad einer Umbenennung folgen, die die Dateiliste nicht zeigt.
     /// </summary>
-    private static ProcessStartInfo GitLogStdinDiffStart(Diffumfang umfang, string arbeitsordner, bool alsText)
+    private static ProcessStartInfo GitLogStdinDiffStart(Diffumfang umfang, string arbeitsordner, bool alsText, Leerraum leerraum)
     {
         var start = GitStart.Im(arbeitsordner);
         start.ArgumentList.Add("--literal-pathspecs");
@@ -580,6 +583,7 @@ internal static class GitLeser
         start.ArgumentList.Add("--no-textconv");
         start.ArgumentList.Add("--ignore-submodules=none");
         HaengeBasisAn(start);
+        HaengeLeerraumAn(start, leerraum);
         start.ArgumentList.Add("-M");
         start.ArgumentList.Add(KontextFuer(umfang));
         start.ArgumentList.Add("--inter-hunk-context=0");
@@ -596,7 +600,7 @@ internal static class GitLeser
     /// Wie <see cref="GitShowDiffStart"/>, aber Revisionen und Pfade kommen über stdin (<c>git diff --stdin</c>): .NET kann ein Byte
     /// außerhalb von UTF-8 nicht als Argument übergeben, und ein Pfad aus der Anfrage darf nie Argument werden.
     /// </summary>
-    private static ProcessStartInfo GitDiffStdinStart(Diffumfang umfang, string arbeitsordner)
+    private static ProcessStartInfo GitDiffStdinStart(Diffumfang umfang, string arbeitsordner, Leerraum leerraum)
     {
         var start = GitStart.Im(arbeitsordner);
         start.ArgumentList.Add("--literal-pathspecs");
@@ -608,6 +612,7 @@ internal static class GitLeser
         start.ArgumentList.Add("--no-ext-diff");
         start.ArgumentList.Add("--no-textconv");
         start.ArgumentList.Add("--ignore-submodules=none");
+        HaengeLeerraumAn(start, leerraum);
         start.ArgumentList.Add("-M");
         start.ArgumentList.Add(KontextFuer(umfang));
         start.ArgumentList.Add("--inter-hunk-context=0");
@@ -652,6 +657,18 @@ internal static class GitLeser
         start.ArgumentList.Add("--first-parent");
         start.ArgumentList.Add("--diff-merges=first-parent");
         start.ArgumentList.Add("--root");
+    }
+
+    /// <summary>
+    /// `-w` (`--ignore-all-space`): reine Leerraum-Änderungen innerhalb einer Zeile verschwinden, die Zeilen stehen als Kontext da;
+    /// eine hinzugefügte oder entfernte leere Zeile bleibt sichtbar. Ohne die Stellung vergleicht git unverändert.
+    /// </summary>
+    private static void HaengeLeerraumAn(ProcessStartInfo start, Leerraum leerraum)
+    {
+        if (leerraum == Leerraum.Ignorieren)
+        {
+            start.ArgumentList.Add("--ignore-all-space");
+        }
     }
 
     /// <summary>Die ganze Datei ist ein Abschnitt mit so viel Kontext, wie git zulässt: dieselbe Zeilenrechnung wie für die Änderungen, keine zweite Quelle.</summary>
