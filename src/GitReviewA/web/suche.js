@@ -127,90 +127,108 @@
   }
 
   /** Markiert die Treffer als eigene Elemente um ihren Text (DOM-Bereich, `textContent` — nie `innerHTML`) und hebt den
-      aktuellen hervor. In Häppchen, damit keine Aufgabe des Hauptfadens die 150-ms-Zusage bricht; eine neue Suche bricht
-      einen laufenden Auftrag ab (`zustand.lauf`). Innerhalb einer Zeile von hinten nach vorn, damit die Stellen stimmen. */
+      aktuellen hervor. Je Zelle in **einem** Durchgang: jeder Textknoten wird einmal abgelaufen, geteilt und durch seine
+      Stücke ersetzt (Textknoten, Marke, Textknoten) — die Kosten wachsen so linear mit dem gezeigten Text und der Zahl der
+      Treffer statt quadratisch mit der Zahl der Textknoten der Zelle (Befund B1 des Security-Reviews: viele Treffer in einer
+      Zeile). Gezählt wird über die Zellen in Häppchen, damit keine Aufgabe des Hauptfadens die 150-ms-Zusage bricht; eine neue
+      Suche bricht einen laufenden Auftrag ab (`zustand.lauf`). */
   function markiere(ansicht, scroll) {
     const lauf = (zustand.lauf += 1);
     entferneMarkierungen(ansicht);
-    const zellen = textzellen(ansicht);
-    const arbeit = [];
-    let index = 0;
-    while (index < zustand.treffer.length) {
-      const zellenIndex = zustand.treffer[index].zeile;
-      const gruppe = [];
-      while (index < zustand.treffer.length && zustand.treffer[index].zeile === zellenIndex) {
-        gruppe.push(index);
-        index += 1;
-      }
-      for (const stelle of gruppe.reverse()) {
-        const treffer = zustand.treffer[stelle];
-        arbeit.push({ stelle, zelle: zellen[treffer.zeile], von: treffer.von, bis: treffer.bis });
-      }
-    }
     zustand.elemente = new Array(zustand.treffer.length);
-    verarbeiteAb(ansicht, lauf, arbeit, 0, scroll);
+    verarbeiteAb(ansicht, lauf, trefferJeZelle(textzellen(ansicht)), 0, scroll);
   }
 
-  function verarbeiteAb(ansicht, lauf, arbeit, anfang, scroll) {
+  /** Die Treffer in Zellenreihenfolge zu Gruppen je Zelle gebündelt: `{zelle, treffer:[{von, bis, kennung}]}`; innerhalb
+      einer Zelle aufsteigend nach `von`, wie `finde` sie liefert. `kennung` ist die Stelle des Treffers in `zustand.treffer`. */
+  function trefferJeZelle(zellen) {
+    const gruppen = [];
+    let letzte = null;
+    for (let stelle = 0; stelle < zustand.treffer.length; stelle += 1) {
+      const treffer = zustand.treffer[stelle];
+      const zelle = zellen[treffer.zeile];
+      if (letzte === null || letzte.zelle !== zelle) {
+        letzte = { zelle, treffer: [] };
+        gruppen.push(letzte);
+      }
+      letzte.treffer.push({ von: treffer.von, bis: treffer.bis, kennung: stelle });
+    }
+    return gruppen;
+  }
+
+  function verarbeiteAb(ansicht, lauf, gruppen, anfang, scroll) {
     if (lauf !== zustand.lauf) {
       return;
     }
-    const ende = Math.min(anfang + HAEPPCHEN, arbeit.length);
-    for (let stelle = anfang; stelle < ende; stelle += 1) {
-      const posten = arbeit[stelle];
-      const mark = markiereTreffer(posten.zelle, posten.von, posten.bis);
-      if (mark) {
-        zustand.elemente[posten.stelle] = mark;
+    let index = anfang;
+    let markiert = 0;
+    while (index < gruppen.length && markiert < HAEPPCHEN) {
+      const gruppe = gruppen[index];
+      const marken = markiereZelle(gruppe.zelle, gruppe.treffer);
+      for (let stelle = 0; stelle < marken.length; stelle += 1) {
+        zustand.elemente[gruppe.treffer[stelle].kennung] = marken[stelle];
       }
+      markiert += marken.length;
+      index += 1;
     }
-    if (ende < arbeit.length) {
-      setTimeout(() => verarbeiteAb(ansicht, lauf, arbeit, ende, scroll), 0);
+    if (index < gruppen.length) {
+      setTimeout(() => verarbeiteAb(ansicht, lauf, gruppen, index, scroll), 0);
       return;
     }
     setzeAktuellen(ansicht, scroll);
   }
 
-  /** Legt um die Zeichenspanne `von`..`bis` im gezeigten Text der Zelle ein Markierungselement. Liegt die Spanne in einem
-      einzigen Textknoten, wird der Knoten geteilt (schnell); sonst trägt `extractContents` sie zusammen (z. B. über eine
-      Marke) — in beiden Fällen bleibt der Text unverändert. */
-  function markiereTreffer(zelle, von, bis) {
-    const knoten = textknoten(zelle);
-    const anfang = knotenBei(knoten, von);
-    const ende = knotenBei(knoten, bis);
-    if (!anfang || !ende) {
-      return null;
-    }
-    const mark = document.createElement('span');
-    mark.className = 'suche-treffer';
-    if (anfang.knoten === ende.knoten) {
-      const treffer = anfang.knoten.splitText(anfang.index);
-      treffer.splitText(bis - von);
-      treffer.parentNode.insertBefore(mark, treffer);
-      mark.append(treffer);
-      return mark;
-    }
-    const bereich = document.createRange();
-    bereich.setStart(anfang.knoten, anfang.index);
-    bereich.setEnd(ende.knoten, ende.index);
-    mark.append(bereich.extractContents());
-    bereich.insertNode(mark);
-    return mark;
+  /** Legt um jede Trefferspanne einer Zelle ein Markierungselement, in einem Durchgang über ihre Textknoten (der Lesetext
+      `.vh` zählt nicht mit): jeder Textknoten wird einmal zerlegt und durch seine Stücke ersetzt. Reicht eine Spanne über
+      eine Elementgrenze (über eine Marke hinweg), sammelt die eine Marke ihre Stücke. Liefert die Marken in Trefferreihenfolge. */
+  function markiereZelle(zelle, treffer) {
+    const marken = new Array(treffer.length);
+    teile(zelle, treffer, marken, { index: 0, versatz: 0, offen: null });
+    return marken;
   }
 
-  /** Der Textknoten und die Stelle (0-basiert) zum Zeichenversatz `offset` im gezeigten Text der Zelle. */
-  function knotenBei(knoten, offset) {
-    let rest = offset;
-    for (const textknoten of knoten) {
-      if (rest <= textknoten.nodeValue.length) {
-        return { knoten: textknoten, index: rest };
+  function teile(eltern, treffer, marken, wandern) {
+    for (const knoten of [...eltern.childNodes]) {
+      if (knoten.nodeType === Node.TEXT_NODE) {
+        teileTextknoten(knoten, treffer, marken, wandern);
+      } else if (knoten.nodeType === Node.ELEMENT_NODE && !knoten.classList.contains('vh')) {
+        teile(knoten, treffer, marken, wandern);
       }
-      rest -= textknoten.nodeValue.length;
     }
-    const letzter = knoten[knoten.length - 1];
-    if (!letzter) {
-      return null;
+  }
+
+  /** Zerlegt einen Textknoten an den Treffergrenzen und ersetzt ihn durch seine Stücke; offene Spannen (über eine
+      Elementgrenze) führen ihre Stücke in derselben Marke weiter. `wandern` hält den Stand über Textknoten hinweg. */
+  function teileTextknoten(knoten, treffer, marken, wandern) {
+    const text = knoten.nodeValue;
+    const sammel = document.createDocumentFragment();
+    let lokal = 0;
+    while (wandern.index < treffer.length && treffer[wandern.index].von < wandern.versatz + text.length) {
+      const stelle = treffer[wandern.index];
+      const von = Math.max(stelle.von - wandern.versatz, lokal);
+      const bis = Math.min(stelle.bis - wandern.versatz, text.length);
+      if (von > lokal) {
+        sammel.appendChild(document.createTextNode(text.slice(lokal, von)));
+      }
+      if (wandern.offen === null) {
+        wandern.offen = document.createElement('span');
+        wandern.offen.className = 'suche-treffer';
+        marken[wandern.index] = wandern.offen;
+        sammel.appendChild(wandern.offen);
+      }
+      wandern.offen.appendChild(document.createTextNode(text.slice(von, bis)));
+      lokal = bis;
+      if (stelle.bis > wandern.versatz + text.length) {
+        break;                       // die Spanne läuft in den nächsten Textknoten weiter
+      }
+      wandern.index += 1;
+      wandern.offen = null;
     }
-    return { knoten: letzter, index: letzter.nodeValue.length };
+    if (lokal < text.length) {
+      sammel.appendChild(document.createTextNode(text.slice(lokal)));
+    }
+    knoten.replaceWith(sammel);
+    wandern.versatz += text.length;
   }
 
   /** Nimmt bestehende Markierungen wieder weg, ohne den Text zu verändern; benachbarte Textknoten werden wieder vereint. */
@@ -257,21 +275,6 @@
     const erstes = zelle.firstElementChild;
     const lesetextLaenge = erstes && erstes.classList.contains('vh') ? erstes.textContent.length : 0;
     return zelle.textContent.slice(lesetextLaenge);
-  }
-
-  function textknoten(zelle) {
-    const knoten = [];
-    const besuchen = element => {
-      for (const kind of element.childNodes) {
-        if (kind.nodeType === Node.TEXT_NODE) {
-          knoten.push(kind);
-        } else if (kind.nodeType === Node.ELEMENT_NODE && !kind.classList.contains('vh')) {
-          besuchen(kind);
-        }
-      }
-    };
-    besuchen(zelle);
-    return knoten;
   }
 
   document.addEventListener('DOMContentLoaded', init);

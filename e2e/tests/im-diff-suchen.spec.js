@@ -286,6 +286,42 @@ function repoLueckeFarbig(gr) {
 /** Der `data-farbe`-Wert des ersten „Zusammen“-Abschnitts (die Färbung setzt ihn je Abschnitt, nicht am `.df-sc`). */
 const abschnittFarbe = page => page.locator('#diff .df-sc .diff-abschnitt').first().getAttribute('data-farbe');
 
+/** Eine Zeile aus `anzahl` `x` — der präparierte Fremd-Repo-Inhalt aus dem Security-Review (Verfügbarkeit). */
+const einzeile = anzahl => `${'x'.repeat(anzahl)}\n`;
+
+/** Ereignisgenau: den Begriff suchen, bis der Zähler `zaehlertext` und `marken` Treffer stehen; liefert die Dauer ab Enter
+    und die längste Aufgabe des Hauptfadens im Fenster. Die Zeitspanne ab Enter misst die Seite selbst (kein Poll-Intervall). */
+async function sucheUndMesse(gr, page, begriff, zaehlertext, marken) {
+  await page.evaluate(() => {
+    window.__langeAufgaben = [];
+    window.__beobachter = new PerformanceObserver(liste => {
+      for (const eintrag of liste.getEntries()) {
+        window.__langeAufgaben.push(eintrag.duration);
+      }
+    });
+    window.__beobachter.observe({ entryTypes: ['longtask'] });
+  });
+  await gr.sucheFeld(page).fill(begriff);
+  await page.evaluate(({ erwartetZaehler, erwartetMarken }) => new Promise(fertig => {
+    const feld = document.querySelector('#diff-suche');
+    const zaehler = document.querySelector('.diff-suche-zaehler');
+    window.__suchStart = performance.now();
+    feld.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    const warten = () => {
+      if (zaehler.textContent === erwartetZaehler && document.querySelectorAll('#diff .df-sc .suche-treffer').length === erwartetMarken) {
+        window.__suchDauer = performance.now() - window.__suchStart;
+        return fertig();
+      }
+      requestAnimationFrame(warten);
+    };
+    requestAnimationFrame(warten);
+  }), { erwartetZaehler: zaehlertext, erwartetMarken: marken });
+  return {
+    dauer: await page.evaluate(() => window.__suchDauer),
+    laengste: await page.evaluate(() => Math.max(0, ...window.__langeAufgaben)),
+  };
+}
+
 const WEIT_1 = Array.from({ length: 12 }, (_, index) => `l${String(index + 1).padStart(2, '0')}`).join('\n') + '\n';
 const WEIT_2 = WEIT_1.replace('l06', 'L06');
 
@@ -382,5 +418,40 @@ test.describe('Im Diff suchen (R00027) — alle Anzeigeverfahren (Lehre #7)', ()
     await diffSeite.lueckeAufklappen(page, 0, true);
     await expect(gr.sucheZaehler(page)).toHaveText('1 von 1');
     await expect(gr.sucheMarken(page)).toHaveCount(1);
+  });
+});
+
+// Security-Review B1 (Verfügbarkeit): viele Treffer in einer einzigen Zeile. Der Aufwand je Treffer darf nicht mit der Zahl
+// der Textknoten der Zelle wachsen — markiert wird je Zelle in einem Durchgang. Abnahme: Zähler „1 von 10000+“, Marken ≤ 1 s
+// nach Enter, keine Aufgabe des Hauptfadens über 150 ms (ereignisgenau, Positivkontrolle „alter Algorithmus“ wird rot).
+test.describe('Im Diff suchen (R00027) — viele Treffer in einer Zeile (Verfügbarkeit)', () => {
+  test('soll 10 000 Treffer in einer Zeile ohne lange Aufgabe markieren', async ({ gr, page }) => {
+    test.setTimeout(120000);
+    const repo = gr.repoMitDateien({ 'einzeile.txt': einzeile(20000) });
+    const lauf = await gr.gitreviewAStarten(repo, [repo.hash]);
+    await gr.oberflaecheOeffnen(page, lauf, 'einzeln');
+    await dateiUndWarten(page, gr, 'einzeile.txt', 2);
+
+    const { dauer, laengste } = await sucheUndMesse(gr, page, 'x', '1 von 10000+', 10000);
+    console.log(`Messwert: 20 000 x in einer Zeile — ${dauer} ms (Grenze 1000); längste Aufgabe ${laengste} ms (Grenze 150)`);
+    await expect(gr.sucheZaehler(page)).toHaveText('1 von 10000+');
+    await expect(gr.sucheMarken(page)).toHaveCount(10000);
+    expect(dauer, `${dauer} ms (Grenze 1000)`).toBeLessThanOrEqual(1000);
+    expect(laengste, `längste Aufgabe ${laengste} ms (Grenze 150)`).toBeLessThanOrEqual(150);
+  });
+
+  test('soll die Grenzvariante 2 000 Treffer in einer Zeile ohne lange Aufgabe markieren', async ({ gr, page }) => {
+    test.setTimeout(120000);
+    const repo = gr.repoMitDateien({ 'einzeile.txt': einzeile(2000) });
+    const lauf = await gr.gitreviewAStarten(repo, [repo.hash]);
+    await gr.oberflaecheOeffnen(page, lauf, 'einzeln');
+    await dateiUndWarten(page, gr, 'einzeile.txt', 2);
+
+    const { dauer, laengste } = await sucheUndMesse(gr, page, 'x', '1 von 2000', 2000);
+    console.log(`Messwert: 2 000 x in einer Zeile — ${dauer} ms (Grenze 1000); längste Aufgabe ${laengste} ms (Grenze 150)`);
+    await expect(gr.sucheZaehler(page)).toHaveText('1 von 2000');
+    await expect(gr.sucheMarken(page)).toHaveCount(2000);
+    expect(dauer, `${dauer} ms (Grenze 1000)`).toBeLessThanOrEqual(1000);
+    expect(laengste, `längste Aufgabe ${laengste} ms (Grenze 150)`).toBeLessThanOrEqual(150);
   });
 });
