@@ -9,7 +9,7 @@
   const DIFF = '#diff';
   const MEDIEN = '(min-width:566px)';
   const werte = window.gitreviewaTrennerWerte;
-  const zustand = { breite: werte.START, ziehen: null };
+  const zustand = { wunsch: werte.START, breite: werte.START, ziehen: null };
 
   function rahmen() {
     return document.querySelector(RAHMEN);
@@ -28,13 +28,22 @@
   }
 
   function init() {
+    zustand.breite = gezeigteBreite();
     anwenden();
     sichereTrenner();
     const medien = window.matchMedia(MEDIEN);
     if (typeof medien.addEventListener === 'function') {
-      medien.addEventListener('change', sichereTrenner);
+      medien.addEventListener('change', beiGroesse);
     }
     window.addEventListener('resize', beiGroesse);
+  }
+
+  /** Die gezeigte Breite: der Wunsch, auf die tatsächliche Spanne geklemmt; im einspaltigen Rückfall bleibt der Wunsch. */
+  function gezeigteBreite() {
+    if (!zweispaltig()) {
+      return zustand.wunsch;
+    }
+    return werte.klemme(zustand.wunsch, werte.kleinsteBreite(), hoechste());
   }
 
   /** Die Breite der Seitenleiste als CSS-Variable am Rahmen setzen — das Layout folgt, der Diff zeichnet nicht neu. */
@@ -46,10 +55,11 @@
     aktualisiereAria();
   }
 
-  /** Die ARIA-Angaben des Trennzugs an die aktuelle Breite und die tatsächliche Höchstbreite angleichen. */
+  /** Die ARIA-Angaben des Trennzugs an die aktuelle Breite und die tatsächliche Höchstbreite angleichen. Im einspaltigen
+      Rückfall gibt es keinen Trenner; dann bleibt auch keine verletzte Spanne stehen. */
   function aktualisiereAria() {
     const element = trenner();
-    if (!element) {
+    if (!element || !zweispaltig()) {
       return;
     }
     element.setAttribute('aria-valuenow', String(zustand.breite));
@@ -57,24 +67,23 @@
     element.setAttribute('aria-valuemax', String(hoechste()));
   }
 
-  /** Die Breite setzen (geklemmt auf die Spanne) und `breite-geaendert` melden, wenn sie sich ändert. */
+  /** Die gewählte Breite als Wunsch setzen (auf die feste Spanne geklemmt) und die gezeigte Breite neu klemmen. */
   function setzen(neu) {
-    const begrenzt = werte.klemme(Number(neu), werte.kleinsteBreite(), hoechste());
-    if (!Number.isFinite(begrenzt) || begrenzt === zustand.breite) {
+    const wunsch = werte.klemme(Number(neu), werte.kleinsteBreite(), werte.GROESSTE);
+    if (!Number.isFinite(wunsch) || wunsch === zustand.wunsch) {
       return;
     }
-    zustand.breite = begrenzt;
+    zustand.wunsch = wunsch;
+    zustand.breite = gezeigteBreite();
     anwenden();
-    document.dispatchEvent(new CustomEvent('breite-geaendert', { detail: { breite: begrenzt } }));
+    document.dispatchEvent(new CustomEvent('breite-geaendert', { detail: { breite: zustand.breite } }));
   }
 
-  /** Beim Verkleinern des Fensters nachklemmen: die Breite bleibt, aber nie über der neuen tatsächlichen Höchstbreite. */
+  /** Bei jeder Größenänderung die gezeigte Breite neu klemmen — in beide Richtungen; der Wunsch bleibt erhalten. */
   function beiGroesse() {
-    if (zustand.breite > hoechste()) {
-      setzen(hoechste());
-    }
+    zustand.breite = gezeigteBreite();
+    anwenden();
     sichereTrenner();
-    aktualisiereAria();
   }
 
   /** Der Trenner gehört nur in den zweispaltigen Aufbau; unter 566 px gibt es ihn nicht (R00033, Rückfall auf eine Spalte). */
