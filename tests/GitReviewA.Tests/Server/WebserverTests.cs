@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using GitReviewA.Aufruf;
 using GitReviewA.Git;
 using GitReviewA.Protokoll;
 using GitReviewA.Server;
@@ -119,14 +120,53 @@ public class WebserverTests
         Assert.That(standardZiel.ToString(), Is.Empty);
     }
 
-    private static async Task<Webserver> StarteServer(StringWriter ziel, Protokollstufe mindeststufe)
+    [Test]
+    public async Task Wenn_Muster_gesetzt_dann_Zustand_traegt_sie_in_Aufrufreihenfolge()
+    {
+        await using var server = await StarteServer(new StringWriter(), Protokollstufe.Warnung, new Musterliste(["*.lock", "build/**"]));
+        using var client = new HttpClient();
+
+        var json = await client.GetStringAsync(new Uri(new Uri(server.Adresse), "api/zustand"));
+        using var dokument = JsonDocument.Parse(json);
+        var muster = dokument.RootElement.GetProperty("muster").EnumerateArray().Select(e => e.GetString()).ToList();
+
+        Assert.That(muster, Is.EqualTo(new[] { "*.lock", "build/**" }));
+    }
+
+    [Test]
+    public async Task Wenn_kein_Muster_dann_Zustand_traegt_leere_Liste()
+    {
+        await using var server = await StarteServer(new StringWriter(), Protokollstufe.Warnung);
+        using var client = new HttpClient();
+
+        var json = await client.GetStringAsync(new Uri(new Uri(server.Adresse), "api/zustand"));
+        using var dokument = JsonDocument.Parse(json);
+        var muster = dokument.RootElement.GetProperty("muster").EnumerateArray().ToList();
+
+        Assert.That(muster, Is.Empty);
+    }
+
+    [Test]
+    public async Task Wenn_Muster_gesetzt_dann_Debug_Zeile_nennt_Zahl_und_Laengen_nicht_den_Wortlaut()
+    {
+        var ziel = new StringWriter();
+        await using var server = await StarteServer(ziel, Protokollstufe.Debug, new Musterliste(["*.lock"]));
+
+        var ausgabe = ziel.ToString();
+
+        Assert.That(ausgabe, Does.Contain("1 Muster"));
+        Assert.That(ausgabe, Does.Contain("5"));
+        Assert.That(ausgabe, Does.Not.Contain("*.lock"));
+    }
+
+    private static async Task<Webserver> StarteServer(StringWriter ziel, Protokollstufe mindeststufe, Musterliste? muster = null)
     {
         var commits = new Commitzeilen([
             new Commitzeile(HashC, "<i>Mallory</i>", "2026-03-05T18:30:00+01:00", "<script>alert(1)</script>", "Zeile eins\nZeile zwei"),
             new Commitzeile(HashA, "Anna Beispiel", "2026-03-04T09:15:00+01:00", "Erster Commit", ""),
         ]);
         var protokoll = new StderrProtokoll(ziel, TimeProvider.System, mindeststufe);
-        return await Webserver.StartenAsync(0, commits, TestDateiquelle.Leer(), TestDiffquelle.Leer(), TestUebersichtsquelle.Leer(), TestZusammenquelle.Leer(), Oberflaeche.AusDemProgramm(), protokoll);
+        return await Webserver.StartenAsync(0, commits, TestDateiquelle.Leer(), TestDiffquelle.Leer(), TestUebersichtsquelle.Leer(), TestZusammenquelle.Leer(), Oberflaeche.AusDemProgramm(), protokoll, muster: muster);
     }
 
     private static async Task<HttpStatusCode> AbrufMitHost(HttpClient client, Webserver server, string pfad, string host)

@@ -1,6 +1,8 @@
+using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using GitReviewA.Anmerkungen;
+using GitReviewA.Aufruf;
 using GitReviewA.Beenden;
 using GitReviewA.Dateien;
 using GitReviewA.Diff;
@@ -40,7 +42,7 @@ internal sealed class Webserver : IAsyncDisposable
 
     public DateiAbhakenInteractor DateiAbhaken { get; }
 
-    public static async Task<Webserver> StartenAsync(int port, Commitzeilen commits, IDateiquelle dateiquelle, IDiffquelle diffquelle, IUebersichtsquelle uebersichtsquelle, IZusammenquelle zusammenquelle, Oberflaeche oberflaeche, StderrProtokoll protokoll, ISprungquelle? sprungquelle = null)
+    public static async Task<Webserver> StartenAsync(int port, Commitzeilen commits, IDateiquelle dateiquelle, IDiffquelle diffquelle, IUebersichtsquelle uebersichtsquelle, IZusammenquelle zusammenquelle, Oberflaeche oberflaeche, StderrProtokoll protokoll, ISprungquelle? sprungquelle = null, Musterliste? muster = null)
     {
         var anwendung = BaueAnwendung(port, protokoll);
         var anmerkungen = new Anmerkungsspeicher();
@@ -52,7 +54,8 @@ internal sealed class Webserver : IAsyncDisposable
         anwendung.Use(SchuetzeVorFremdemHost(lauscherPort, protokoll));
         anwendung.Use(SetzeSchutzkoepfe);
         anwendung.Use(ProtokolliereAnfrage(protokoll));
-        BildeEndpunkte(anwendung, commits, oberflaeche);
+        BildeEndpunkte(anwendung, commits, oberflaeche, muster);
+        MeldeMuster(protokoll, muster);
         var dateien = new GemerkteDateiquelle(dateiquelle);
         anwendung.MapGet(DateienEndpunkt.Muster, DateienEndpunkt.Fuer(commits, dateien, protokoll));
         anwendung.MapGet(DiffEndpunkt.Muster, DiffEndpunkt.Fuer(new DiffLesenInteractor(commits, dateien, diffquelle, protokoll)));
@@ -133,14 +136,43 @@ internal sealed class Webserver : IAsyncDisposable
         };
     }
 
-    private static void BildeEndpunkte(WebApplication anwendung, Commitzeilen commits, Oberflaeche oberflaeche)
+    private static void BildeEndpunkte(WebApplication anwendung, Commitzeilen commits, Oberflaeche oberflaeche, Musterliste? muster)
     {
         var commitAntworten = AlsAntworten(commits);
-        var zustand = new ZustandAntwort("laeuft", commits.Anzahl);
+        var zustand = new ZustandAntwort("laeuft", commits.Anzahl, Mustertexte(muster));
         anwendung.MapGet("/api/commits", () => Results.Json(commitAntworten, JsonOptionen));
         anwendung.MapGet("/api/zustand", () => Results.Json(zustand, JsonOptionen));
         anwendung.MapGet("/", () => Oberflaechendatei(oberflaeche, Startseite));
         anwendung.MapGet("/{**pfad}", (string pfad) => Oberflaechendatei(oberflaeche, pfad));
+    }
+
+    private static string[] Mustertexte(Musterliste? muster)
+    {
+        if (muster is null)
+        {
+            return [];
+        }
+        var texte = new string[muster.Anzahl];
+        for (var i = 0; i < muster.Anzahl; i++)
+        {
+            texte[i] = muster[i];
+        }
+        return texte;
+    }
+
+    /** Die Zahl der Muster und ihre Längen, nie der Wortlaut (R00025). */
+    private static void MeldeMuster(StderrProtokoll protokoll, Musterliste? muster)
+    {
+        if (muster is null || muster.Anzahl == 0)
+        {
+            return;
+        }
+        var laengen = new string[muster.Anzahl];
+        for (var i = 0; i < muster.Anzahl; i++)
+        {
+            laengen[i] = muster[i].Length.ToString(CultureInfo.InvariantCulture);
+        }
+        protokoll.Melde(Protokollstufe.Debug, "Ausblenden", $"{muster.Anzahl} Muster (Längen: {string.Join(", ", laengen)})");
     }
 
     private static void BildeRueckkanal(WebApplication anwendung, Commitzeilen commits, Anmerkungsspeicher anmerkungen, Hakenspeicher haken, DateiAbhakenInteractor dateiAbhaken, Stellensperre sperre, StderrProtokoll protokoll)
