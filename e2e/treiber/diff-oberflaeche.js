@@ -386,11 +386,24 @@ async function sprungAntwortVerzoegern(page, pfad, verzoegerungMs = VERZOEGERUNG
   };
 }
 
+/** Beantwortet die Sprunganfrage für `pfad` mit `status` (Vorgabe 500); `eingetroffen` wartet, bis sie beantwortet ist und gezeichnet sein könnte. */
+async function sprungAntwortScheitern(page, pfad, status = 500) {
+  const istSprungVon = url => url.includes('/sprung?') && new URL(url).searchParams.get('pfad') === pfad;
+  await page.route(url => istSprungVon(url.toString()), route => route.fulfill({ status }));
+  const antwort = page.waitForResponse(response => istSprungVon(response.url()));
+  return {
+    eingetroffen: async () => {
+      await antwort;
+      await page.evaluate(() => new Promise(fertig => requestAnimationFrame(() => requestAnimationFrame(fertig))));
+    },
+  };
+}
+
 module.exports = {
   pruefeBedienbarNachAlsText, ansichtWaehlen, ansichtPerTastaturWechseln, pruefeAnsicht, zeilenfarbenLesen, pruefeZeilenfarben, pruefeKontextzeileBinnen,
   pruefeDiff, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, diffAntwortVerzoegern,
   pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
   diffAntwortZuGross, blockKnoten, warteAufFarbe, langeAufgabenBeimScrollen, zugeklapptRechtzeitigNachKlick, zugeklapptRechtzeitigNachAktion,
   pruefeSprungzeile, pruefeSprungzeileName, sprungzeileLiegtImVerborgenen, pruefeSprungkopfName, sprungHunkLink, zeileWaehlen,
-  pruefeSprungVerweis, pruefeSprungGrund, pruefeSprungHinweis, sprungAntwortVerzoegern,
+  pruefeSprungVerweis, pruefeSprungGrund, pruefeSprungHinweis, sprungAntwortVerzoegern, sprungAntwortScheitern,
 };

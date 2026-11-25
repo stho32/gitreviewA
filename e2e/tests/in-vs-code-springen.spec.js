@@ -155,6 +155,17 @@ test.describe('Fremde Namen und Wurzel', () => {
 });
 
 test.describe('Ladeverhalten', () => {
+  test('soll bei fehlgeschlagener Sprunganfrage den Grund nennen statt nichts', async ({ gr, page }) => {
+    await starteS(gr, page);
+    const gescheitert = await diffSeite.sprungAntwortScheitern(page, 'src/a.txt');
+
+    await seite.dateiWaehlen(page, 'src/a.txt');
+    await gescheitert.eingetroffen();
+
+    await diffSeite.pruefeSprungGrund(page, 'Sprungziel konnte nicht gelesen werden');
+    await expect(page.locator('#diff .dz a')).toHaveCount(0);
+  });
+
   test('soll die späte Antwort einer früheren Wahl verwerfen', async ({ gr, page }) => {
     const repo = await starteS(gr, page);
     const verzoegert = await diffSeite.sprungAntwortVerzoegern(page, 'src/a.txt', 1500);

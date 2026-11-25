@@ -1,8 +1,10 @@
 /* gitreviewA — Sprungziel einer Datei (R00021): fragt es bei der Wahl der Datei einmal an, verwirft die späte Antwort einer früheren
-   Wahl und meldet das Ergebnis als Ereignis `sprung-geladen`. Die Entscheidung, ob es einen Link gibt, fällt der Server (dort liegen die
-   Bytes des fremden Namens); hier entsteht nur der Abruf und der Zustand. Die Darstellung führt diff.js. */
+   Wahl und meldet das Ergebnis oder den Grund als Ereignis `sprung-geladen`. Die Entscheidung, ob es einen Link gibt, fällt der Server
+   (dort liegen die Bytes des fremden Namens); hier entsteht nur der Abruf und der Zustand. Die Darstellung führt diff.js. */
 (function () {
   'use strict';
+
+  const NICHT_GELESEN = 'Sprungziel konnte nicht gelesen werden';
 
   const zustand = { ladung: 0 };
 
@@ -26,12 +28,22 @@
     try {
       ergebnis = await sprungAbrufen(datei);
     } catch {
+      meldeFehlgeschlagen(datei, ladung);
       return;
     }
     if (ladung !== zustand.ladung) {
       return;
     }
     melde({ commit: datei.commit, pfad: datei.pfad, ziel: ergebnis.ziel, geaendert: ergebnis.geaendert === true, grund: ergebnis.grund });
+  }
+
+  /** Ohne Antwort gibt es keinen Link — aber einen Grund; sonst bliebe der Diff-Kopf stumm, als hätte die Datei keinen Sprung. */
+  function meldeFehlgeschlagen(datei, ladung) {
+    const istVeraltet = ladung !== zustand.ladung;
+    if (istVeraltet) {
+      return;
+    }
+    melde({ commit: datei.commit, pfad: datei.pfad, ziel: '', geaendert: false, grund: NICHT_GELESEN });
   }
 
   async function sprungAbrufen(datei) {
