@@ -321,6 +321,15 @@
 
   /** Ohne Kette: ein Abschnitt je Commit, mit Kurz-Hash und Betreff beschriftet; jede Abschnittsfläche meldet sich für Anmerkungen.
       Ein Abschnitt über der Zuklappgrenze bleibt zugeklappt, bis der Mensch „Trotzdem laden“ wählt — dieselbe Regel wie netto (R00017). */
+  /** Der Name der Diff-Fläche: der Anzeigename des Pfads, unsichtbare Zeichen als Marke — nie der rohe Pfad (H1, R00014). */
+  function bereichsname(antwort) {
+    return `Änderungen in ${sichtbarerName(antwort.pfad)}`;
+  }
+
+  function sichtbarerName(pfad) {
+    return window.sichtbarerName ? window.sichtbarerName(pfad) : pfad;
+  }
+
   function zeichneAbschnitte(ansicht, antwort, abschnitte, alsText, diffansicht) {
     zeigeMeldung(ansicht, '', false);
     ansicht.herkunftElement.textContent = 'je Commit, nicht netto — Es fehlen Commits der Auswahl';
@@ -348,7 +357,7 @@
       sammel.append(bereichElement);
       bereiche.push({ commit: abschnitt.commit, betreff: betreff, bereichElement });
     }
-    ansicht.rollElement.setAttribute('aria-label', `Änderungen in ${antwort.pfad}`);
+    ansicht.rollElement.setAttribute('aria-label', bereichsname(antwort));
     ansicht.rollElement.replaceChildren(sammel);
     ansicht.rollElement.hidden = false;
     faerbeAbschnitte(ansicht, antwort, abschnitte);
@@ -385,7 +394,7 @@
 
   function zeichneAbschnittszeilen(antwort, zeilen, bereichElement) {
     for (const block of bloecke(zeilen)) {
-      bereichElement.append(blockElement(block, `Änderungen in ${antwort.pfad}`));
+      bereichElement.append(blockElement(block, bereichsname(antwort)));
     }
   }
 
@@ -471,7 +480,7 @@
     if (zustand.gezeichnet) {
       zustand.gezeichnet.zeilen = gezeichneteZeilen;
     }
-    const name = `Änderungen in ${antwort.pfad}`;
+    const name = bereichsname(antwort);
     const sammelElement = document.createDocumentFragment();
     for (const block of blockelemente(teile, name)) {
       sammelElement.append(block);
