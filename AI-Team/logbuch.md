@@ -222,3 +222,5 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Durchlauf: planer + product-owner 7 min, Bau nach dem Merge von #23 (gleicher Anmerkungscode) 17 min, Security ohne Muss, Code-Review B1 (Löschsperre am DOM-Knopf, nach Neuzeichnen frei), Nacharbeit 14 min statt Rückfrage an den PO (Fix kleiner als die Frage), vom Director am Diff geprüft, Entwicklertest 10 von 11 (US-7 nicht herstellbar, Integrationstest belegt). Karte gesamt 0,62 $.
 - Lehre: Bau einer Karte, die denselben Code wie eine laufende ändert, erst nach deren Merge beginnen — kein Codekonflikt beim Merge.
 - Gate NUnit 1005/1005, Playwright 360/360 zweimal.
+| 2026-11-25 | #18 | Detailplanung | planer | bestanden | 6 min | opencode: I0018 bis Bubble, R00022, 4 Fragen an PO; ddf3f53 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 18-planer-1 · 0,14 $ · Karte gesamt 0,14 $ |
+| 2026-11-25 | #18 | Detailplanung | product-owner | bestanden | 2 min | opencode: 4 Empfehlungen bestätigt, Sperre geschärft; 9e7db9d · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 18-product-owner-1 · 0,059 $ · Karte gesamt 0,20 $ |
