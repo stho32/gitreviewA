@@ -60,8 +60,6 @@
     <span class="haken-balken" aria-hidden="true" hidden><span class="haken-anteil"></span></span>
     <span class="haken-ansage vh" aria-live="polite" aria-atomic="true"></span>
     <span class="haken-meldung" role="status"></span>
-    <!-- Höfliche Live-Region der Kürzel-Aktionen (R00030): sagt die Zustandsänderung in Kürze an, ohne zweite Stimme der Statuszeile. -->
-    <span id="tasten-ansage" class="vh" aria-live="polite" aria-atomic="true"></span>
   </div>
   <div class="kz-hilfe">
     <button type="button" id="hilfe-knopf" class="kz-btn">Kürzel</button>
@@ -71,6 +69,9 @@
     <button type="button" id="beenden" class="kz-btn">Beenden</button>
   </div>
 </header>
+<!-- Höfliche Live-Region der Kürzel-Aktionen (R00030): sagt die Zustandsänderung in Kürze an; steht außerhalb des Fortschritts,
+     damit sie auch sichtbar bleibt, wenn der Kopf seine Zeile einblendet. -->
+<p id="tasten-ansage" class="vh" aria-live="polite" aria-atomic="true"></p>
 <main class="gr-inhalt">
   <p id="kopieren-status" class="gr-status" role="status"></p>
   <p id="beenden-status" class="gr-status fehler" role="alert"></p>

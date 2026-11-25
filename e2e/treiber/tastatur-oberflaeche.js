@@ -247,6 +247,26 @@ async function fokusringAktuell(page) {
   });
 }
 
+/** Fügt ein Bedienelement einer späteren Karte ein (etwa den Schalter „Abgehakte ausblenden“, I0026) und zählt seine Änderungen. */
+async function schalterEinbauen(page, kennung) {
+  await page.evaluate(id => {
+    window.__schalterAenderungen = window.__schalterAenderungen || [];
+    const schalter = document.createElement('input');
+    schalter.type = 'checkbox';
+    schalter.id = id;
+    schalter.addEventListener('change', () => window.__schalterAenderungen.push(id));
+    document.body.append(schalter);
+  }, kennung);
+}
+
+async function schalterZustand(page, kennung) {
+  return page.evaluate(id => document.getElementById(id).checked, kennung);
+}
+
+async function schalterAenderungen(page) {
+  return page.evaluate(() => (window.__schalterAenderungen || []).length);
+}
+
 /** Der Wert des offenen Notiz-/Änderungsfelds. */
 async function feldwert(page) {
   return page.locator('#diff tr.anm-feld textarea, #diff tr.anm-aendern textarea').first().inputValue();
@@ -456,6 +476,9 @@ module.exports = {
   ohneWahl,
   pruefeSperrgrund,
   contenteditableFokussieren,
+  schalterEinbauen,
+  schalterZustand,
+  schalterAenderungen,
   ansage,
   pruefeAnsage,
   pruefeAnsageLeer,

@@ -507,3 +507,24 @@ test.describe('R00030 Gesperrte Stelle und kein neuer Weg', () => {
     }
   });
 });
+
+test.describe('R00030 Katalog erweiterbar', () => {
+  test('h tut nichts, bis das Bedienelement da ist, und schaltet es danach ohne Umbau der Tastenschicht', async ({ tast }) => {
+    await tast.starten();
+    await tast.dateiAnsehen('README.md');
+
+    await tast.druecke('h');
+    await tast.baueSchalterEin('ausblenden');
+    await tast.druecke('h');
+    expect(await tast.schalterZustand('ausblenden'), 'Schalter an').toBe(true);
+    await tast.druecke('h');
+    expect(await tast.schalterZustand('ausblenden'), 'Schalter aus').toBe(false);
+    expect(await tast.schalterAenderungen(), 'zwei Änderungen').toBe(2);
+
+    await tast.druecke('?');
+    await tast.hilfeOffen(true);
+    const gruppen = await tast.hilfeGruppen();
+    const eintrag = gruppen.flatMap(gruppe => gruppe.eintraege).find(e => e.text.includes('Abgehakte ausblenden'));
+    expect(eintrag.verfuegbar, 'Hilfe nennt den Schalter verfügbar').toBe(true);
+  });
+});

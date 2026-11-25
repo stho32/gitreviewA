@@ -88,7 +88,10 @@
   /** Die Hilfe aus dem Katalog: je Bereich eine Gruppe mit ihren Einträgen; nicht verfügbare sind als solche markiert. */
   function zeichneInhalt() {
     const inhalt = dialogElement().querySelector('.hilfe-inhalt');
-    const lage = { modus: window.gitreviewaModus ? window.gitreviewaModus.hole() : window.gitreviewaTastenWerte.EINZELN, vorhanden: [] };
+    const lage = {
+      modus: window.gitreviewaModus ? window.gitreviewaModus.hole() : window.gitreviewaTastenWerte.EINZELN,
+      vorhanden: window.gitreviewaTasten ? window.gitreviewaTasten.vorhandeneAktionen() : [],
+    };
     inhalt.replaceChildren(...window.gitreviewaTastenWerte.belegung(lage).map(gruppeElement));
   }
 

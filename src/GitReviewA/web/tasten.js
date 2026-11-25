@@ -504,6 +504,9 @@
     region.textContent = text;
   }
 
+  /* Lesender Zugang für andere Bausteine (Hilfe-Overlay): welche Aktionen dieser Stand gebaut hat — keine zweite Liste. */
+  window.gitreviewaTasten = { vorhandeneAktionen };
+
   function sichtbarerName(pfad) {
     return window.sichtbarerName ? window.sichtbarerName(pfad) : pfad;
   }

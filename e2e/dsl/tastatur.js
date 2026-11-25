@@ -115,6 +115,9 @@ function tastaturSprache(gr, page) {
     ohneWahl: () => tastatur.ohneWahl(page),
     sperrgrund: (pfad, text) => tastatur.pruefeSperrgrund(page, pfad, text),
     contenteditableFokussieren: () => tastatur.contenteditableFokussieren(page),
+    baueSchalterEin: kennung => tastatur.schalterEinbauen(page, kennung),
+    schalterZustand: kennung => tastatur.schalterZustand(page, kennung),
+    schalterAenderungen: () => tastatur.schalterAenderungen(page),
     /** Ein synthetisches Strg-/F5-Ereignis (kein echter Reload) — meldet, ob das Programm es verhindert hat. */
     drueckeMitStrg: taste => page.evaluate(name => {
       const ereignis = new KeyboardEvent('keydown', { key: name, bubbles: true, cancelable: true, ctrlKey: true });
