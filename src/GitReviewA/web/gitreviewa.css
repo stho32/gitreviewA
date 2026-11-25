@@ -290,7 +290,16 @@ kbd{font:11px/1.2 var(--kd-mono);padding:1px 4px;border:1px solid var(--kd-line-
   body{display:flex;flex-direction:column}
   .gr-inhalt{flex:1 1 auto;min-block-size:0;display:flex;flex-direction:column;padding:0}
   .gr-inhalt>.gr-status,.gr-inhalt>.gr-beendet,.gr-inhalt>.gr-beendet-hinweis{margin-inline:var(--kd-s5)}
-  .gr-ansicht{flex:1 1 auto;min-block-size:0;grid-template-columns:minmax(240px,2fr) minmax(320px,3fr);gap:0;align-items:stretch}
+  .gr-ansicht{flex:1 1 auto;min-block-size:0;grid-template-columns:var(--gr-leiste-breite,360px) var(--gr-trenner-breite,6px) minmax(320px,1fr);gap:0;align-items:stretch}
+  /* Spalten fest zuordnen: die Seitenleiste links, der Trenner in der Mitte, der Diff nimmt den Rest (auch wenn der Trenner
+     kurz fehlt, landet der Diff nie in der schmalen Trennspalte). */
+  .gr-links{grid-column:1}
+  .gr-diff{grid-column:3}
+  /* Der Trenner (R00034, I0035): eine schmale Ziehfläche an der Grenze, gezeichnet als 1-px-Linie in der Mitte; die Spalte
+     ist 6 px (--gr-trenner-breite), der Zeiger col-resize. touch-action:none hält das Ziehen vom Scrollen frei. */
+  .gr-trenner{grid-column:2;align-self:stretch;cursor:col-resize;touch-action:none;background:linear-gradient(to right,transparent calc(50% - .5px),var(--kd-line-strong) calc(50% - .5px),var(--kd-line-strong) calc(50% + .5px),transparent calc(50% + .5px))}
+  .gr-trenner:hover,.gr-trenner.aktiv{background:linear-gradient(to right,transparent calc(50% - .5px),var(--kd-accent) calc(50% - .5px),var(--kd-accent) calc(50% + .5px),transparent calc(50% + .5px))}
+  .gr-trenner:focus-visible{outline:2px solid var(--kd-accent);outline-offset:-2px}
   /* Seitenleiste: die Commit-Zeile steht, die Dateiliste scrollt in ihrem eigenen Bereich */
   .gr-links{padding:var(--kd-s5);min-block-size:0;overflow:hidden}
   .gr-links>.gr-leiste{flex:none}
