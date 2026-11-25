@@ -88,5 +88,31 @@
     return Math.min(luecke.zahl, aufgedeckt + SCHRITT);
   }
 
-  Object.assign(ziel, { luecken, rest, naechsterSchritt, spanneAus, SCHRITT });
+  /** Die aufgedeckten Zeilen einer Lücke: die ersten `anzahl` Zeilen ihrer Spanne, geholt aus den Zeilen der ganzen Datei
+      über die Nummer neu — Text und Nummern sind dieselben wie in „ganze Datei“ (R00026), es gibt keine zweite Rechnung. */
+  function aufgedeckt(luecke, anzahl, ganzeZeilen) {
+    const zeilen = [];
+    const bis = luecke.neuVon + anzahl - 1;
+    for (const zeile of ganzeZeilen) {
+      const inDerSpanne = Number.isInteger(zeile.neu) && zeile.neu >= luecke.neuVon && zeile.neu <= bis;
+      if (inDerSpanne) {
+        zeilen.push({ art: zeile.art, alt: zeile.alt, neu: zeile.neu, text: zeile.text });
+      }
+    }
+    return zeilen;
+  }
+
+  /** Die Gesamtzeilenzahl der Datei im Stand nach dem Commit: die größte Nummer neu der Ansicht „ganze Datei“ — die Ansicht
+      trägt auch entfernte Zeilen, ihre Zeilenzahl ist also nicht die der Datei. */
+  function gesamtzeilen(ganzeZeilen) {
+    let groesste = 0;
+    for (const zeile of ganzeZeilen) {
+      if (Number.isInteger(zeile.neu) && zeile.neu > groesste) {
+        groesste = zeile.neu;
+      }
+    }
+    return groesste;
+  }
+
+  Object.assign(ziel, { luecken, rest, naechsterSchritt, aufgedeckt, gesamtzeilen, spanneAus, SCHRITT });
 })(typeof module !== 'undefined' ? module.exports : window);

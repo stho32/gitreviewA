@@ -3,7 +3,8 @@
 // Abschnitt — Zahl der verborgenen Zeilen und Nummernspanne alt/neu; Schrittweite 20.
 const { test, expect } = require('@playwright/test');
 const { patchZeilen } = require('../../../src/GitReviewA/web/diff-werte.js');
-const { luecken, rest, naechsterSchritt, SCHRITT } = require('../../../src/GitReviewA/web/luecken-werte.js');
+const { luecken, rest, naechsterSchritt, aufgedeckt, gesamtzeilen, SCHRITT } = require('../../../src/GitReviewA/web/luecken-werte.js');
+const { ganzeDateiZeilen } = require('../../../src/GitReviewA/web/diff-werte.js');
 
 const kopf = text => ({ art: 'kopf', alt: null, neu: null, text });
 const kontext = (text, nummer) => ({ art: 'kontext', alt: nummer, neu: nummer, text });
@@ -14,6 +15,26 @@ const WEIT_PATCH = [
   ' z02', ' z03', ' z04', '-z05', '+Z05', ' z06', ' z07', ' z08',
   '@@ -32,7 +32,7 @@',
   ' z32', ' z33', ' z34', '-z35', '+Z35', ' z36', ' z37', ' z38',
+].join('\n');
+
+/** Der ganze-Datei-Patch von `weit.txt` (R00026): 60 Zeilen, geändert in Zeile 5 und 35 — dieselbe Datei wie `WEIT_PATCH`. */
+const GANZE_DATEI_PATCH = [
+  '@@ -1,60 +1,60 @@',
+  ...Array.from({ length: 60 }, (_, stelle) => stelle + 1).flatMap(nummer => {
+    if (nummer === 5) {
+      return ['-z05', '+Z05'];
+    }
+    if (nummer === 35) {
+      return ['-z35', '+Z35'];
+    }
+    if (nummer === 20) {
+      return [' <b>z20</b>'];
+    }
+    if (nummer === 21) {
+      return [' a\u202Eb'];
+    }
+    return [` z${String(nummer).padStart(2, '0')}`];
+  }),
 ].join('\n');
 
 test.describe('Lücken rechnen', () => {
@@ -61,6 +82,45 @@ test.describe('Lücken rechnen', () => {
 
 test.describe('Aufklappzustand', () => {
   const dreiundzwanzig = { zahl: 23 };
+
+  test('soll die aufgedeckten Zeilen aus den Zeilen der ganzen Datei holen — Nummer neu n trägt Zeile n', () => {
+    const ganzeZeilen = ganzeDateiZeilen(GANZE_DATEI_PATCH);
+    const gefunden = luecken(patchZeilen(WEIT_PATCH), gesamtzeilen(ganzeZeilen));
+
+    expect(gesamtzeilen(ganzeZeilen)).toBe(60);
+    const erste = gefunden[0];
+    const zweite = gefunden[1];
+    expect(gefunden.map(luecke => luecke.zahl)).toEqual([1, 23, 22]);
+    expect(aufgedeckt(erste, 1, ganzeZeilen)).toEqual([kontext('z01', 1)]);
+    expect(aufgedeckt(erste, 0, ganzeZeilen)).toEqual([]);
+
+    const nachEinemKlick = aufgedeckt(zweite, naechsterSchritt(zweite, 0), ganzeZeilen);
+    expect(nachEinemKlick).toHaveLength(20);
+    expect(nachEinemKlick[0]).toEqual(kontext('z09', 9));
+    expect(nachEinemKlick[19]).toEqual(kontext('z28', 28));
+    expect(rest(zweite, nachEinemKlick.length)).toBe(3);
+
+    const nachZweiKlicks = aufgedeckt(zweite, naechsterSchritt(zweite, 20), ganzeZeilen);
+    expect(nachZweiKlicks.slice(-2)).toEqual([kontext('z30', 30), kontext('z31', 31)]);
+    expect(rest(zweite, nachZweiKlicks.length)).toBe(0);
+
+    const letzte = gefunden[2];
+    expect(aufgedeckt(letzte, naechsterSchritt(letzte, 0), ganzeZeilen).slice(-2)).toEqual([kontext('z57', 57), kontext('z58', 58)]);
+    expect(aufgedeckt(letzte, letzte.zahl, ganzeZeilen).slice(-2)).toEqual([kontext('z59', 59), kontext('z60', 60)]);
+  });
+
+  test('soll die fremden Zeilen der Lücke unverändert als Text weitergeben', () => {
+    const ganzeZeilen = ganzeDateiZeilen(GANZE_DATEI_PATCH);
+    const zweite = luecken(patchZeilen(WEIT_PATCH), gesamtzeilen(ganzeZeilen))[1];
+
+    const aufgedeckteZeilen = aufgedeckt(zweite, zweite.zahl, ganzeZeilen);
+    const zeile20 = aufgedeckteZeilen.find(zeile => zeile.neu === 20);
+    const zeile21 = aufgedeckteZeilen.find(zeile => zeile.neu === 21);
+
+    expect(zeile20.text).toBe('<b>z20</b>');
+    expect(zeile21.text).toBe('a\u202Eb');
+    expect(aufgedeckteZeilen.every(zeile => zeile.art === 'kontext')).toBe(true);
+  });
 
   test('soll schrittweise 20 weitere Zeilen aufdecken und höchstens die ganze Lücke', () => {
     expect(SCHRITT).toBe(20);
