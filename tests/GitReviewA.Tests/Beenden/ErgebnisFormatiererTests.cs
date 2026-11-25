@@ -381,6 +381,88 @@ public class ErgebnisFormatiererTests
         Assert.That(ergebnis, Does.Contain($"\n    1: a{marke}b\n    2: <b>z20</b>\n"));
     }
 
+    [Test]
+    [Description("R00036 Kriterium 1: die Art steht als Präfix am Anfang der Textzeile, Überschrift und Commit-Zeile bleiben")]
+    public void Wenn_Anmerkungen_mit_Art_dann_beginnt_nur_die_Textzeile_mit_dem_Praefix()
+    {
+        var anmerkungen = new Anmerkungsliste(
+        [
+            new Anmerkung(1, HashA, "src/a.txt", 2, "ZWEI groß?", Art: Art.Frage),
+            new Anmerkung(2, HashA, "src/b.txt", null, "Datei fehlt im Index", Art: Art.Muss),
+            new Anmerkung(3, HashA, "README.md", 1, "Titel kürzen"),
+        ]);
+
+        var ergebnis = ErgebnisFormatierer.Formatiere(anmerkungen, KeineDateien);
+
+        Assert.That(ergebnis, Is.EqualTo(
+            "# Ergebnis manueller Review\n\nAnmerkungen: 3\n\n"
+            + "## 1. src/a.txt:2\n\nCommit: " + HashA + "\n\n> [Frage] ZWEI groß?\n\n"
+            + "## 2. src/b.txt (ganze Datei)\n\nCommit: " + HashA + "\n\n> [Muss] Datei fehlt im Index\n\n"
+            + "## 3. README.md:1\n\nCommit: " + HashA + "\n\n> Titel kürzen\n"));
+    }
+
+    [Test]
+    [Description("R00036 Kriterium 2: leere erste Textzeile → `> [Idee]` ohne Leerzeichen, weitere Zeilen unverändert")]
+    public void Wenn_die_erste_Textzeile_leer_ist_dann_steht_das_Praefix_ohne_Leerzeichen_am_Ende()
+    {
+        var anmerkungen = new Anmerkungsliste([new Anmerkung(1, HashA, "a.txt", 1, "\nzweite Zeile", Art: Art.Idee)]);
+
+        var ergebnis = ErgebnisFormatierer.Formatiere(anmerkungen, KeineDateien);
+
+        Assert.That(ergebnis, Does.EndWith("\n\n> [Idee]\n> zweite Zeile\n"));
+    }
+
+    [Test]
+    [Description("R00036 Kriterium 2: das Präfix steht nur in der Textzeile; das Zitat der Bereichszeilen bleibt unverändert")]
+    public void Wenn_ein_Bereich_eine_Art_traegt_dann_bleibt_das_Zitat_der_Zeilen_ohne_Praefix()
+    {
+        var anmerkungen = new Anmerkungsliste([new Anmerkung(1, HashA, "lang.txt", null, "Schleife doppelt", 3, 7, Art.Muss)]);
+        var zitate = Zitate((1, ["z03", "z04", "z05", "z06", "z07"]));
+
+        var ergebnis = ErgebnisFormatierer.Formatiere(anmerkungen, KeineDateien, zitate);
+
+        Assert.That(ergebnis, Does.EndWith("\n    3: z03\n    4: z04\n    5: z05\n    6: z06\n    7: z07\n\n> [Muss] Schleife doppelt\n"));
+        Assert.That(ergebnis, Does.Not.Contain("[Muss] z0"));
+    }
+
+    [Test]
+    [Description("R00036: ohne Art steht kein Präfix — auch ein Text, der selbst mit `[Muss]` beginnt, bleibt unverändert")]
+    public void Wenn_ohne_Art_und_der_Text_beginnt_selbst_mit_einem_Klammerwort_dann_bleibt_die_Zeile()
+    {
+        var anmerkungen = new Anmerkungsliste([new Anmerkung(1, HashA, "a.txt", 1, "[Muss] steht schon im Text")]);
+
+        var ergebnis = ErgebnisFormatierer.Formatiere(anmerkungen, KeineDateien);
+
+        Assert.That(ergebnis, Does.EndWith("\n\n> [Muss] steht schon im Text\n"));
+        Assert.That(ergebnis.Split('\n').Count(zeile => zeile.Contains("[Muss]", StringComparison.Ordinal)), Is.EqualTo(1));
+    }
+
+    [Test]
+    [Description("R00036: das Präfix steht nur an der ersten Zeile, weitere Textzeilen bleiben unverändert")]
+    public void Wenn_mehrzeilig_mit_Art_dann_steht_das_Praefix_nur_an_der_ersten_Zeile()
+    {
+        var anmerkungen = new Anmerkungsliste([new Anmerkung(1, HashA, "a.txt", 1, "erste\nzweite", Art: Art.Frage)]);
+
+        var ergebnis = ErgebnisFormatierer.Formatiere(anmerkungen, KeineDateien);
+
+        Assert.That(ergebnis, Does.EndWith("\n\n> [Frage] erste\n> zweite\n"));
+    }
+
+    [Test]
+    [Description("R00036 NFA Performance: 500 Anmerkungen zu 200 Zeichen, alle mit Art, bleiben unter 1 s")]
+    public void Wenn_500_Anmerkungen_mit_Art_dann_bleibt_das_Formatieren_unter_einer_Sekunde()
+    {
+        var anmerkungen = new Anmerkungsliste(Enumerable.Range(1, 500).Select(nummer => new Anmerkung(nummer, HashA, "a.txt", nummer, new string('x', 200), Art: Art.Muss)));
+        var uhr = System.Diagnostics.Stopwatch.StartNew();
+
+        var ergebnis = ErgebnisFormatierer.Formatiere(anmerkungen, KeineDateien);
+
+        uhr.Stop();
+        TestContext.Out.WriteLine($"500 Anmerkungen mit Art: {uhr.Elapsed.TotalMilliseconds:F1} ms");
+        Assert.That(ergebnis, Does.Contain("> [Muss] " + new string('x', 200) + "\n"));
+        Assert.That(uhr.Elapsed, Is.LessThan(TimeSpan.FromSeconds(1)));
+    }
+
     /// <summary>Die gelesenen Zeilen je stabiler Nummer; `null` steht für „nicht lesbar“ (kein Zitat).</summary>
     private static Dictionary<int, Bereichszeilenlesung> Zitate(params (int Nummer, string[]? Zeilen)[] eintraege)
     {

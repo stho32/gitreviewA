@@ -51,7 +51,7 @@ internal static class ErgebnisFormatierer
             {
                 abschnitte.Add(zitat);
             }
-            abschnitte.Add(AlsZitat(anmerkung.Text));
+            abschnitte.Add(AlsZitat(anmerkung.Text, anmerkung.Art));
         }
         return abschnitte;
     }
@@ -190,23 +190,32 @@ internal static class ErgebnisFormatierer
         return [kopf, string.Join(Zeilenende, zeilen)];
     }
 
-    private static string AlsZitat(string text)
+    /// <summary>Der Text als Zitat; bei einer Anmerkung mit Art trägt die erste Zeile das Präfix (R00036).</summary>
+    private static string AlsZitat(string text, Art? art)
     {
         var zeilen = text.ReplaceLineEndings(Zeilenende).Split(Zeilenende);
+        var praefix = Anmerkungsart.Praefix(art);
         var zitat = new StringBuilder();
-        foreach (var zeile in zeilen)
+        for (var stelle = 0; stelle < zeilen.Length; stelle++)
         {
             if (zitat.Length > 0)
             {
                 zitat.Append(Zeilenende);
             }
-            zitat.Append(Zitatzeile(zeile));
+            zitat.Append(Zitatzeile(zeilen[stelle], stelle == 0 ? praefix : null));
         }
         return zitat.ToString();
     }
 
-    private static string Zitatzeile(string zeile)
+    /// <summary>Eine Zitatzeile; `praefix` steht nur an der ersten Zeile und nur bei vorhandener Art: `> [Muss] Text`, bei leerer
+        /// erster Zeile `> [Muss]` ohne folgendes Leerzeichen (R00036).</summary>
+    private static string Zitatzeile(string zeile, string? praefix)
     {
+        if (praefix is not null)
+        {
+            var kopf = $"> {praefix}";
+            return zeile.Length == 0 ? kopf : $"{kopf} {zeile}";
+        }
         if (zeile.Length == 0)
         {
             return ">";
