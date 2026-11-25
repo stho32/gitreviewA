@@ -287,7 +287,7 @@ public class AufrufInteractorTests
         var ergebnis = Aufrufleser.Lesen(argumente);
         if (ergebnis.IstGueltig)
         {
-            return ergebnis.Startauftrag;
+            return ergebnis.Startauftrag ?? throw new InvalidOperationException("gültig ohne Startauftrag");
         }
         Assert.Fail($"Aufruf nicht lesbar: {ergebnis.Fehlermeldung}");
         throw new InvalidOperationException("nicht erreichbar");

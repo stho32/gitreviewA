@@ -27,7 +27,13 @@ internal static class Program
             NeuesProtokoll(Protokollstufe.Warnung).Melde(Protokollstufe.Fehler, "Aufruf", aufruf.Fehlermeldung);
             return AufruffehlerMeldungen.ExitCode;
         }
-        var startauftrag = aufruf.Startauftrag;
+        if (aufruf.Dateiaufruf is not null)
+        {
+            NeuesProtokoll(Protokollstufe.Warnung).Melde(Protokollstufe.Fehler, "Aufruf", "Die Dateiansicht ist noch nicht angebunden.");
+            return AufruffehlerMeldungen.ExitCode;
+        }
+        var startauftrag = aufruf.Startauftrag
+            ?? throw new InvalidOperationException("gültiger Aufruf ohne Startauftrag");
         var protokoll = NeuesProtokoll(startauftrag.Mindeststufe);
         using var abbruchsignale = Abbruchsignale.Abfangen();
         var anfrage = new Aufrufanfrage(startauftrag, StandardeingabeDesProzesses(), Environment.CurrentDirectory);

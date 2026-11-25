@@ -11,13 +11,25 @@ internal static class Aufrufleser
     private const string StdinArgument = "-";
     private const string Bereichstrenner = "..";
     private const string Aufrufform = "gitreviewA <hash…> | <von>..<bis>… | - [--port <n>] [--kein-browser] [--ignore <muster>] [--verbose] [--quiet]";
+    private const string DateienOption = "--dateien";
+    private const string Doppelstrich = "--";
+    private const string Dateienform = "gitreviewA --dateien <datei> [--port <n>] [--kein-browser] [--verbose] [--quiet]";
+    private const string NichtBeides = "Review oder Dateiansicht, nicht beides: --dateien steht allein, ohne Hash, Bereich, - oder --ignore.";
 
     public static Aufrufergebnis Lesen(string[] argumente)
     {
         var sammlung = new Aufrufsammlung();
+        var nachDoppelstrich = false;
         for (var position = 0; position < argumente.Length; position++)
         {
-            var fehlermeldung = LeseArgument(argumente, ref position, sammlung);
+            if (!nachDoppelstrich && argumente[position] == Doppelstrich)
+            {
+                nachDoppelstrich = true;
+                continue;
+            }
+            var fehlermeldung = nachDoppelstrich
+                ? NimmAngabeNachDoppelstrich(argumente[position], position, sammlung)
+                : LeseArgument(argumente, ref position, sammlung);
             if (fehlermeldung is not null)
             {
                 return Aufrufergebnis.Ungueltig(fehlermeldung);
@@ -45,10 +57,36 @@ internal static class Aufrufleser
             case "--ignore":
                 position++;
                 return LeseMuster(argumente, position, sammlung);
+            case DateienOption:
+                sammlung.IstDateiansicht = true;
+                return null;
             default:
-                sammlung.Auswahlargumente.Add(new Auswahlargument(argumente[position], position + 1));
+                var argument = new Auswahlargument(argumente[position], position + 1);
+                if (sammlung.IstDateiansicht)
+                {
+                    sammlung.Quellen.Add(argument);
+                }
+                else
+                {
+                    sammlung.Auswahlargumente.Add(argument);
+                }
                 return null;
         }
+    }
+
+    /// <summary>Nach <c>--</c> ist jedes Argument eine Angabe; in der Dateiansicht ist sie die gezeigte Datei, im Review eine Auswahl.</summary>
+    private static string? NimmAngabeNachDoppelstrich(string text, int position, Aufrufsammlung sammlung)
+    {
+        var argument = new Auswahlargument(text, position + 1, NachDoppelstrich: true);
+        if (sammlung.IstDateiansicht)
+        {
+            sammlung.Quellen.Add(argument);
+        }
+        else
+        {
+            sammlung.Auswahlargumente.Add(argument);
+        }
+        return null;
     }
 
     private static string? LesePort(string[] argumente, int position, Aufrufsammlung sammlung)
@@ -92,6 +130,59 @@ internal static class Aufrufleser
         {
             return Aufrufergebnis.Ungueltig("--verbose und --quiet schließen sich aus.");
         }
+        if (sammlung.IstDateiansicht)
+        {
+            return StelleDateiaufrufZusammen(sammlung);
+        }
+        return StelleReviewZusammen(sammlung);
+    }
+
+    /// <summary>
+    /// Die Dateiansicht zeigt nur Dateien vom Datenträger: ein Hash, ein Bereich, <c>-</c> oder <c>--ignore</c> daneben wäre
+    /// ein zweiter Lauf. Die Prüfung steht hier einmal; Server, Seite, Ende und Abbruch lesen nur das Ergebnis.
+    /// </summary>
+    private static Aufrufergebnis StelleDateiaufrufZusammen(Aufrufsammlung sammlung)
+    {
+        var nenntReviewAuswahl = sammlung.Auswahlargumente.Count > 0
+            || sammlung.Muster.Count > 0
+            || sammlung.Quellen.Exists(quelle => IstReviewauswahl(quelle));
+        if (nenntReviewAuswahl)
+        {
+            return Aufrufergebnis.Ungueltig(NichtBeides);
+        }
+        var quellen = sammlung.Quellen.Select(quelle => quelle.Text).ToList();
+        if (quellen.Count == 0)
+        {
+            return Aufrufergebnis.Ungueltig($"Die Dateiansicht braucht eine Angabe: {Dateienform}");
+        }
+        if (quellen.Count > 1)
+        {
+            return Aufrufergebnis.Ungueltig("Die Dateiansicht zeigt eine Datei.");
+        }
+        var dateiaufruf = new Dateiaufruf(quellen, sammlung.Port, sammlung.BrowserOeffnen, Mindeststufe(sammlung));
+        return Aufrufergebnis.Gueltig(dateiaufruf);
+    }
+
+    /// <summary>Ein Argument, das nur der Review versteht: stdin, ein Hash oder ein Bereich (R00043, Kriterium 2).
+        /// Ein Pfad mit dem Segment <c>..</c> (<c>unter/../a.sql</c>) ist dagegen eine Angabe und bleibt zeigbar.</summary>
+    private static bool IstReviewauswahl(Auswahlargument argument)
+    {
+        if (argument.Text == StdinArgument || CommitHashForm.IstCommitHash(argument.Text))
+        {
+            return true;
+        }
+        return Bereichspruefer.IstZulaessigerBereich(argument.Text) && !IstPfadMitAufstieg(argument.Text);
+    }
+
+    private static bool IstPfadMitAufstieg(string text)
+    {
+        return text.StartsWith("../", StringComparison.Ordinal)
+            || text.Contains("/../", StringComparison.Ordinal)
+            || text.EndsWith("/..", StringComparison.Ordinal);
+    }
+
+    private static Aufrufergebnis StelleReviewZusammen(Aufrufsammlung sammlung)
+    {
         var keineAuswahlAngegeben = sammlung.Auswahlargumente.Count == 0;
         if (keineAuswahlAngegeben)
         {
@@ -179,7 +270,12 @@ internal static class Aufrufleser
     {
         public List<Auswahlargument> Auswahlargumente { get; } = [];
 
+        /// <summary>Die Angaben der Dateiansicht in Aufrufreihenfolge (die Quellen der Kommandozeile, ohne Optionen).</summary>
+        public List<Auswahlargument> Quellen { get; } = [];
+
         public List<string> Muster { get; } = [];
+
+        public bool IstDateiansicht { get; set; }
 
         public int Port { get; set; } = FreierPort;
 
@@ -190,7 +286,7 @@ internal static class Aufrufleser
         public bool IstQuiet { get; set; }
     }
 
-    private sealed record Auswahlargument(string Text, int Position);
+    private sealed record Auswahlargument(string Text, int Position, bool NachDoppelstrich = false);
 
     private sealed record Auswahlergebnis(Auswahl? Auswahl, string Fehlermeldung)
     {

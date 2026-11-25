@@ -253,7 +253,7 @@ public class AufrufleserTests
     {
         if (ergebnis.IstGueltig)
         {
-            return ergebnis.Startauftrag;
+            return ergebnis.Startauftrag ?? throw new InvalidOperationException("gültig ohne Startauftrag");
         }
         Assert.Fail(ergebnis.Fehlermeldung);
         throw new InvalidOperationException("nicht erreichbar");
