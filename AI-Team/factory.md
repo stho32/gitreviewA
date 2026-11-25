@@ -96,16 +96,16 @@ Angriffsfläche: Aufruf von `git` mit Argumenten aus der Befehlszeile, stdin und
 
 ## Rollen
 
-Treiber `claude` läuft als Subagent des Directors, Treiber `opencode` über `werkzeuge/rolle_opencode.py` im Hintergrund. Seit 2026-11-24 (Betreiber: „alle Rollen bis auf den Director auf opencode / deepseek flash 4.1“) laufen alle Rollen über opencode; ein einzelner Lauf kann mit `beginne --treiber claude` abweichen, Grund im Zugkommentar.
+Treiber `claude` läuft als Subagent des Directors, Treiber `opencode` über `werkzeuge/rolle_opencode.py` im Hintergrund. Seit 2026-11-24 (Betreiber: „alle Rollen bis auf den Director auf opencode / deepseek flash 4.1“) laufen alle Rollen über opencode; Ausnahmen seit 2026-11-25 (Betreiber): product-owner immer, security-reviewer bei Label `sicherheit` über Treiber `claude` mit Sonnet. Ein einzelner Lauf kann mit `beginne --treiber claude` abweichen, Grund im Zugkommentar.
 
 | Rolle | Kürzel | Treiber | Modell | Einsatz |
 |---|---|---|---|---|
 | planer | plan | opencode | openrouter/deepseek/deepseek-v4.1-flash | Interaction bis Bubble verfeinern, Anforderung schreiben, Labels setzen |
 | entwickler | entw | opencode | openrouter/deepseek/deepseek-v4.1-flash | bauen, Test zuerst, im Worktree der Karte (Betreiber 2026-11-24: alle Rollen über opencode/DeepSeek Flash); Entwickler-Pool: bis zu 3 Instanzen gleichzeitig, je eine Karte (WIP 1 je Instanz), damit bis zu 3 Karten tatsächlich bearbeitet werden (Betreiber 2026-11-24: „ich erlaube dir bis zu 3 Karten parallel“); Lastgrenze gilt |
 | code-reviewer | crev | opencode | openrouter/deepseek/deepseek-v4.1-flash | Korrektheit, Tests, Wartbarkeit je Arbeitspaket |
-| security-reviewer | srev | opencode | openrouter/deepseek/deepseek-v4.1-flash | Angriffsfläche nach „Wissen/Sicherheit“, mit Probe; kurz bei Karten ohne neue Grenze |
+| security-reviewer | srev | opencode | openrouter/deepseek/deepseek-v4.1-flash | Angriffsfläche nach „Wissen/Sicherheit“, mit Probe; kurz bei Karten ohne neue Grenze. **Karten mit Label `sicherheit`: Treiber `claude`, Modell `sonnet`** (Betreiber 2026-11-25 — Flash stufte Befunde dort zu niedrig ein) |
 | entwicklertester | etst | opencode | openrouter/deepseek/deepseek-v4.1-flash | User Story wörtlich im echten Programm, in einem Wegwerf-Repo |
-| product-owner | po | opencode | openrouter/deepseek/deepseek-v4.1-flash | Rückfragen der Rollen im Sinne der Vision entscheiden, Protokoll `AI-Team/po-entscheidungen.md` |
+| product-owner | po | claude | sonnet | Rückfragen der Rollen im Sinne der Vision entscheiden, Protokoll `AI-Team/po-entscheidungen.md` (Betreiber 2026-11-25: zurück auf Claude Sonnet — mit Flash wurden alle Empfehlungen des planers ungeprüft bestätigt) |
 | realist-consultant | real | opencode | openrouter/deepseek/deepseek-v4.1-flash | nur als Vorschlag, wenn die Schleifenbremse greift (`realist: vorschlagen`) |
 
 ## Spalten
