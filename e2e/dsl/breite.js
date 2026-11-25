@@ -9,6 +9,12 @@ const anmerkungSeite = require('../treiber/anmerkungen-oberflaeche.js');
 
 function breiteSprache(seit, page) {
   return Object.assign({}, seit, {
+    /* ── Fenstergröße: nach dem Setzen warten, bis der Trennzug die neue Größe trägt (keine feste Zeit) ── */
+    fensterSetzen: async fenster => {
+      await seit.fensterSetzen(fenster);
+      await trenner.warteAufGroesse(page);
+    },
+
     /* ── Breite lesen und setzen ── */
     breite: () => trenner.breiteDerSeitenleiste(page),
     breiteIst: erwartet => trenner.pruefeBreite(page, erwartet),

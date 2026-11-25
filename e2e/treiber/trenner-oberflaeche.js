@@ -49,6 +49,23 @@ function trennerVorhanden(page) {
   return page.locator(TRENNER).count();
 }
 
+/** Wartet, bis der Trennzug die ARIA-Angaben der aktuellen Fenstergröße trägt. Die Größenänderung kommt im Browser asynchron
+    an; statt einer festen Zeit wird gepollt, bis `aria-valuemax` der Höchstbreite entspricht, die das Programm selbst aus dem
+    Fenster rechnet. Im einspaltigen Rückfall gibt es keinen Trenner — dann ist nichts zu warten. */
+async function warteAufGroesse(page) {
+  await expect.poll(
+    async () => {
+      const angaben = await trennerAngaben(page);
+      if (!angaben) {
+        return true;
+      }
+      const hoechste = await page.evaluate(() => window.gitreviewaBreite.hoechste());
+      return Number(angaben.max) === hoechste;
+    },
+    'die ARIA-Angaben des Trennzugs folgen der Fenstergröße'
+  ).toBe(true);
+}
+
 /** Liegt der Fokus auf dem Trenner? */
 function fokusAufTrenner(page) {
   return trennerAngaben(page).then(angaben => angaben && angaben.fokussiert);
@@ -138,7 +155,7 @@ async function pruefeTrennerAria(page, erwarteteBreite) {
 
 module.exports = {
   SEITENLEISTE, TRENNER, DIFF,
-  breiteDerSeitenleiste, pruefeBreite, trennerAngaben, trennerVorhanden, fokusAufTrenner,
+  breiteDerSeitenleiste, pruefeBreite, trennerAngaben, trennerVorhanden, warteAufGroesse, fokusAufTrenner,
   ziehen, doppelklick, fokussiereTrenner, fokusring, zaehleDiffAnfragen, lageSeitenleiste,
   pruefeTrennerVorhanden, pruefeTrennerAnDerGrenze, pruefeTrennerAria,
 };
