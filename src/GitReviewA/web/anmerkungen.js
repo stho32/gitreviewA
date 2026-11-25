@@ -189,6 +189,10 @@
   /* ── Zeile wählen: Klick und Tastatur ── */
 
   function waehleZeilePerKlick(ansicht, ereignis) {
+    const klickGiltEinemLink = ereignis.target.closest('a') !== null;
+    if (klickGiltEinemLink) {
+      return;
+    }
     const zeileElement = ereignis.target.closest(DIFFZEILE);
     if (!zeileElement) {
       return;

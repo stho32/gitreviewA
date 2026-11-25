@@ -53,6 +53,15 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .diff-kopf{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--kd-s2) var(--kd-s4);margin:0 0 var(--kd-s3)}
 .diff-pfad{margin:0;font-size:13px;font-weight:600;overflow-wrap:anywhere;min-width:0}
 .diff-pfad:empty{display:none}
+/* Sprung in den Editor (R00021): Verweis „In VS Code“, Hinweis „seit dem Commit geändert“ und der Grund statt des Verweises */
+.diff-sprung{display:flex;flex-wrap:wrap;align-items:center;gap:var(--kd-s2) var(--kd-s3);min-width:0}
+.sprung-hinweis,.sprung-grund{font-size:12px}
+.sprung-hinweis{color:var(--kd-status-warn-ink)}
+.sprung-hinweis:empty,.sprung-grund:empty{display:none}
+.sprung-knopf{flex:none;text-decoration:none}
+.sprung-knopf[hidden]{display:none}
+.dz .sprung-zeile,.dz .sprung-hunk{color:inherit;text-decoration:underline;text-underline-offset:2px}
+.dz .sprung-zeile:hover,.dz .sprung-hunk:hover{color:var(--kd-accent)}
 .df-sc{overflow-x:auto;min-width:0;border:1px solid var(--kd-line);background:var(--kd-surface)}
 .df-sc[hidden]{display:none}
 .df-sc:focus-visible{outline:2px solid var(--kd-accent);outline-offset:-2px}

@@ -1,6 +1,8 @@
 /* gitreviewA — Diff-Bereich: liest den Diff einer Datei erst bei ihrer Wahl (Ereignis `datei-gewaehlt`) und zeigt ihn mit Nummern
    alt und neu, als „nur Änderungen“ oder „ganze Datei“ (Diffansicht); der Wechsel des Commits (`commit-gewaehlt`) hebt die Wahl auf
-   und fordert zum Wählen auf. Nach jedem Zeichnen meldet das Ereignis `diff-gezeichnet` Commit, Pfad, Ansicht und Bereich. Zeilenaufbau nach kanbanD
+   und fordert zum Wählen auf. Nach jedem Zeichnen meldet das Ereignis `diff-gezeichnet` Commit, Pfad, Ansicht und Bereich. Jede Zeile
+   mit Nummer neu und jeder Abschnittskopf tragen einen Link nach VS Code, der Verweis „In VS Code“ im Kopf zeigt auf die gewählte
+   Zeile (R00021); das Ziel kommt als Attribut aus `sprung-geladen`, nie aus fremdem Text. Zeilenaufbau nach kanbanD
    web/diff.js (zeileHtml), aber als DOM-Knoten mit textContent: Diff-Text, Pfade und Hunk-Titel sind fremder Text.
    Syntaxfarben (R00007) kommen als Auflage nach dem Zeichnen: Prism rechnet im Worker (faerben.js) und liefert nur Zahlen. */
 (function () {
@@ -18,8 +20,11 @@
 
   /** `datei`: die gewählte Datei, `alsText` ihre Wahl „Als Text zeigen“; `diffansicht`: `aenderungen` oder `ganz`, nur im Speicher der Seite
       (nach Neuladen wieder „nur Änderungen“); `zugeklappt`: Zeilen eines langen Textes, die erst „Trotzdem laden“ zeichnet;
-      `anzeige`: zählt jeden neuen Inhalt des Bereichs — eine Färbung gilt nur für die Anzeige, für die sie gestellt wurde. */
-  const zustand = { letzteLadung: 0, datei: null, alsText: false, diffansicht: 'aenderungen', zugeklappt: null, anzeige: 0 };
+      `anzeige`: zählt jeden neuen Inhalt des Bereichs — eine Färbung gilt nur für die Anzeige, für die sie gestellt wurde;
+      `sprung`: das Ziel der gewählten Datei aus `sprung-geladen` (null, solange keine Antwort da ist); `gezeichnet`: Commit, Pfad und
+      Zeilen des zuletzt gezeichneten Diffs (null ohne Wahl) — daran hängt, ob ein Ziel noch gilt; `gewaehlteZeile`: die angeklickte
+      Zeile neu, sonst null. */
+  const zustand = { letzteLadung: 0, datei: null, alsText: false, diffansicht: 'aenderungen', zugeklappt: null, anzeige: 0, sprung: null, gezeichnet: null, gewaehlteZeile: null };
 
   function init() {
     const ansicht = ansichtElemente();
@@ -31,12 +36,15 @@
     }
     ansicht.alsTextElement.addEventListener('click', () => ladeDiff(ansicht, zustand.datei, true));
     ansicht.trotzdemLadenElement.addEventListener('click', () => klappeAuf(ansicht));
+    ansicht.rollElement.addEventListener('click', ereignis => waehleZeile(ansicht, ereignis));
     document.addEventListener('commit-gewaehlt', () => verwerfeWahl(ansicht));
     document.addEventListener('datei-gewaehlt', ereignis => ladeDiff(ansicht, ereignis.detail, false));
+    document.addEventListener('sprung-geladen', ereignis => uebernehmeSprung(ansicht, ereignis.detail));
   }
 
   function ansichtElemente() {
     const wurzelElement = document.getElementById('diff');
+    const kopfElement = wurzelElement.querySelector('.diff-kopf');
     return {
       wurzelElement,
       umbruchElement: wurzelElement.querySelector('.umbruch-schalter'),
@@ -45,6 +53,9 @@
       meldungElement: wurzelElement.querySelector('.diff-meldung'),
       alsTextElement: wurzelElement.querySelector('.als-text'),
       trotzdemLadenElement: wurzelElement.querySelector('.trotzdem-laden'),
+      sprungVerweisElement: kopfElement.querySelector('.sprung-knopf'),
+      sprungGrundElement: kopfElement.querySelector('.sprung-grund'),
+      sprungHinweisElement: kopfElement.querySelector('.sprung-hinweis'),
       rollElement: wurzelElement.querySelector('.df-sc'),
       farbschlange: farbschlange({ workerAnlegen: faerbeWorkerAnlegen }),
     };
@@ -73,11 +84,15 @@
   function verwerfeWahl(ansicht) {
     zustand.letzteLadung += 1;
     zustand.datei = null;
+    zustand.gezeichnet = null;
+    zustand.sprung = null;
+    zustand.gewaehlteZeile = null;
     zeigeAufforderungZurWahl(ansicht);
   }
 
   function zeigeAufforderungZurWahl(ansicht) {
     ansicht.pfadElement.textContent = '';
+    zustand.gezeichnet = null;
     zeigeMeldung(ansicht, HINWEIS_ZUR_WAHL, false);
   }
 
@@ -88,6 +103,13 @@
     zustand.letzteLadung = ladung;
     zustand.datei = datei;
     zustand.alsText = alsText;
+    const vorherGezeichnet = zustand.gezeichnet;
+    zustand.gezeichnet = { commit: datei.commit, pfad: datei.pfad, zeilen: [] };
+    const istDieselbeStelle = vorherGezeichnet !== null && vorherGezeichnet.commit === datei.commit && vorherGezeichnet.pfad === datei.pfad;
+    if (!istDieselbeStelle) {
+      zustand.sprung = null;
+      zustand.gewaehlteZeile = null;
+    }
     const diffansicht = zustand.diffansicht;
     ansicht.pfadElement.replaceChildren(...sichtbarTeile(datei.pfad).map(teilKnoten));
     zeigeMeldung(ansicht, 'Diff wird geladen …', false);
@@ -149,6 +171,10 @@
     ansicht.alsTextElement.hidden = true;
     ansicht.trotzdemLadenElement.hidden = true;
     zustand.zugeklappt = null;
+    if (zustand.gezeichnet) {
+      zustand.gezeichnet.zeilen = [];
+    }
+    aktualisiereSprungkopf(ansicht);
   }
 
   function zeichneAntwort(ansicht, antwort, alsText, diffansicht) {
@@ -211,6 +237,9 @@
   /** `antwort`: Pfad und Patch der gezeigten Ansicht — an ihnen hängen Sprache und Grenze der Färbung. */
   function zeichneZeilen(ansicht, antwort, zeilen) {
     zeigeMeldung(ansicht, '', false);
+    if (zustand.gezeichnet) {
+      zustand.gezeichnet.zeilen = zeilen;
+    }
     const name = `Änderungen in ${antwort.pfad}`;
     const sammelElement = document.createDocumentFragment();
     for (const block of bloecke(zeilen)) {
@@ -219,6 +248,8 @@
     ansicht.rollElement.setAttribute('aria-label', name);
     ansicht.rollElement.replaceChildren(sammelElement);
     ansicht.rollElement.hidden = false;
+    setzeSprunglinks(ansicht);
+    aktualisiereSprungkopf(ansicht);
     faerbeZeilen(ansicht, antwort, zeilen);
     meldeGezeichnet(ansicht, antwort.pfad);
   }
@@ -233,6 +264,110 @@
       ersterBlockElement: ansicht.rollElement.firstElementChild,
     };
     document.dispatchEvent(new CustomEvent('diff-gezeichnet', { detail }));
+  }
+
+  /* ── Sprung in VS Code (R00021): Links an Zeilen und Abschnittsköpfen, Verweis und Hinweis im Kopf ── */
+
+  /** Übernimmt die Antwort aus `sprung.js`; ohne Ziel bleibt der Verweis verborgen und der Kopf zeigt den Grund. */
+  function uebernehmeSprung(ansicht, sprung) {
+    zustand.sprung = sprung;
+    setzeSprunglinks(ansicht);
+    aktualisiereSprungkopf(ansicht);
+  }
+
+  /** Merkt die angeklickte Zeile als gewählte für den Verweis im Kopf; ein Klick auf einen Link wählt keine Zeile. */
+  function waehleZeile(ansicht, ereignis) {
+    const klickGiltEinemLink = ereignis.target.closest('a') !== null;
+    if (klickGiltEinemLink) {
+      return;
+    }
+    const zeileElement = ereignis.target.closest('tr[data-art]');
+    if (!zeileElement) {
+      return;
+    }
+    zustand.gewaehlteZeile = nummerOderNull(zeileElement.dataset.neu);
+    aktualisiereSprungkopf(ansicht);
+  }
+
+  /** Ob das Ziel noch zur gezeichneten Stelle passt: eine späte Antwort einer früheren Wahl wird so verworfen. */
+  function sprungPasst() {
+    const gezeichnet = zustand.gezeichnet;
+    const sprung = zustand.sprung;
+    return gezeichnet !== null && sprung !== null && sprung.commit === gezeichnet.commit && sprung.pfad === gezeichnet.pfad;
+  }
+
+  /** Jede gezeichnete Zeile mit Nummer neu und jeder Abschnittskopf bekommt `href = ziel + ":" + nummer` — aus dem Ziel allein,
+      nie aus fremdem Text; die Zeile kennt nur der Browser. */
+  function setzeSprunglinks(ansicht) {
+    const gezeichnet = zustand.gezeichnet;
+    if (!gezeichnet || gezeichnet.zeilen.length === 0) {
+      return;
+    }
+    const ziel = sprungPasst() ? zustand.sprung.ziel : '';
+    const zeilenElemente = ansicht.rollElement.querySelectorAll('tr[data-art]');
+    for (let index = 0; index < gezeichnet.zeilen.length; index += 1) {
+      const zeile = gezeichnet.zeilen[index];
+      const zeilenElement = zeilenElemente[index];
+      if (!zeilenElement) {
+        continue;
+      }
+      const link = sprungLink(ziel, sprungZeile(zeile));
+      if (zeile.art === 'kopf') {
+        verlinkeZelle(zeilenElement.querySelector('td.c'), link, 'sprung-hunk');
+        continue;
+      }
+      verlinkeZelle(zeilenElement.querySelector('td.neu'), link, 'sprung-zeile');
+    }
+  }
+
+  /** Setzt oder entfernt den Link einer Zelle, ohne ihren Inhalt umzubauen; der sichtbare Text bleibt derselbe. */
+  function verlinkeZelle(zelle, link, klasse) {
+    if (!zelle) {
+      return;
+    }
+    const vorhandenerAnker = zelle.querySelector(`a.${klasse}`);
+    if (!link) {
+      if (vorhandenerAnker) {
+        zelle.replaceChildren(...vorhandenerAnker.childNodes);
+      }
+      return;
+    }
+    if (vorhandenerAnker) {
+      vorhandenerAnker.setAttribute('href', link);
+      return;
+    }
+    const anker = document.createElement('a');
+    anker.className = klasse;
+    anker.setAttribute('href', link);
+    anker.append(...zelle.childNodes);
+    zelle.replaceChildren(anker);
+  }
+
+  /** Entweder der Verweis „In VS Code“ auf die gewählte Zeile (ohne Wahl die erste Zeile mit Nummer neu) oder der Grund als Text;
+      der Hinweis „Datei seit dem Commit geändert“ steht daneben, solange es ein Ziel gibt. */
+  function aktualisiereSprungkopf(ansicht) {
+    const passt = sprungPasst();
+    const ziel = passt ? zustand.sprung.ziel : '';
+    const grund = passt ? zustand.sprung.grund : '';
+    const zeilen = zustand.gezeichnet ? zustand.gezeichnet.zeilen : [];
+    const nummer = zustand.gewaehlteZeile === null ? ersteSprungzeile(zeilen) : zustand.gewaehlteZeile;
+    const link = sprungLink(ziel, nummer);
+    ansicht.sprungVerweisElement.hidden = link === null;
+    if (link === null) {
+      ansicht.sprungVerweisElement.removeAttribute('href');
+    } else {
+      ansicht.sprungVerweisElement.setAttribute('href', link);
+    }
+    ansicht.sprungGrundElement.textContent = link === null ? grund : '';
+    const zeigtHinweis = link !== null && passt && zustand.sprung.geaendert;
+    ansicht.sprungHinweisElement.textContent = zeigtHinweis ? 'Datei seit dem Commit geändert' : '';
+  }
+
+  function nummerOderNull(text) {
+    if (text === undefined || text === '') {
+      return null;
+    }
+    return Number(text);
   }
 
   /** Ohne Sprache oder über den Grenzen geht kein Auftrag an den Worker; ein Ausfall unterwegs lässt die Datei still ungefärbt. */

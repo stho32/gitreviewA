@@ -320,9 +320,72 @@ async function pruefeBedienbarNachAlsText(page, dateiWaehlen, datei, andereDatei
   return dauerMs;
 }
 
+/* ── Sprung in VS Code (R00021): Links an Zeilen und Abschnittsköpfen, Verweis und Hinweis im Kopf ── */
+
+const SPRUNG_ZEILE = '#diff .dz tr[data-art] a.sprung-zeile';
+const SPRUNG_KOPF = '#diff .dz tr.hk a.sprung-hunk';
+const SPRUNG_VERWEIS = '#diff .diff-kopf .sprung-knopf';
+const SPRUNG_GRUND = '#diff .diff-kopf .sprung-grund';
+const SPRUNG_HINWEIS = '#diff .diff-kopf .sprung-hinweis';
+
+/** Die Zeilen-Links in Dokumentreihenfolge als `{neu, href}` — nur gezeichnete Zeilen mit Nummer neu tragen einen. */
+async function sprungZeilenLinksLesen(page) {
+  return page.locator(SPRUNG_ZEILE).evaluateAll(anker => anker.map(a => ({ neu: a.closest('tr').dataset.neu, href: a.getAttribute('href') })));
+}
+
+async function pruefeSprungzeile(page, neu, href) {
+  await expect(page.locator(`${ZEILE}[data-neu="${neu}"] a.sprung-zeile`)).toHaveAttribute('href', href);
+}
+
+async function pruefeSprungzeileOhneLink(page, neu) {
+  await expect(page.locator(`${ZEILE}[data-neu="${neu}"] a.sprung-zeile`)).toHaveCount(0);
+}
+
+/** Der Link des ersten Abschnittskopf-Links. */
+function sprungHunkLink(page) {
+  return page.locator(SPRUNG_KOPF).first().getAttribute('href');
+}
+
+/** Wählt die Zeile mit Nummer neu `neu` per Klick auf ihren Text — so wie der Mensch eine Zeile wählt. */
+async function zeileWaehlen(page, neu) {
+  await page.locator(`${ZEILE}[data-neu="${neu}"] .c`).click();
+}
+
+async function pruefeSprungVerweis(page, href) {
+  await expect(page.locator(SPRUNG_VERWEIS)).toBeVisible();
+  await expect(page.locator(SPRUNG_VERWEIS)).toHaveAttribute('href', href);
+}
+
+async function pruefeSprungGrund(page, text) {
+  await expect(page.locator(SPRUNG_VERWEIS)).toBeHidden();
+  await expect(page.locator(SPRUNG_GRUND)).toHaveText(text);
+}
+
+async function pruefeSprungHinweis(page, text) {
+  await expect(page.locator(SPRUNG_HINWEIS)).toHaveText(text);
+}
+
+/** Hält die Antwort auf die Sprunganfrage für `pfad` `verzoegerungMs` zurück; `eingetroffen` wartet, bis sie da ist und gezeichnet sein könnte. */
+async function sprungAntwortVerzoegern(page, pfad, verzoegerungMs = VERZOEGERUNG_MS) {
+  const istSprungVon = url => url.includes('/sprung?') && new URL(url).searchParams.get('pfad') === pfad;
+  await page.route(url => istSprungVon(url.toString()), async route => {
+    await new Promise(weiter => setTimeout(weiter, verzoegerungMs));
+    await route.continue();
+  });
+  const antwort = page.waitForResponse(response => istSprungVon(response.url()));
+  return {
+    eingetroffen: async () => {
+      await antwort;
+      await page.evaluate(() => new Promise(fertig => requestAnimationFrame(() => requestAnimationFrame(fertig))));
+    },
+  };
+}
+
 module.exports = {
   pruefeBedienbarNachAlsText, ansichtWaehlen, ansichtPerTastaturWechseln, pruefeAnsicht, zeilenfarbenLesen, pruefeZeilenfarben, pruefeKontextzeileBinnen,
   pruefeDiff, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, diffAntwortVerzoegern,
   pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
   diffAntwortZuGross, blockKnoten, warteAufFarbe, langeAufgabenBeimScrollen, zugeklapptRechtzeitigNachKlick, zugeklapptRechtzeitigNachAktion,
+  sprungZeilenLinksLesen, pruefeSprungzeile, pruefeSprungzeileOhneLink, sprungHunkLink, zeileWaehlen, pruefeSprungVerweis, pruefeSprungGrund,
+  pruefeSprungHinweis, sprungAntwortVerzoegern,
 };

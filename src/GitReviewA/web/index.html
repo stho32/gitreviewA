@@ -12,10 +12,12 @@
 <script src="dateiliste.js" defer></script>
 <script src="haken-werte.js" defer></script>
 <script src="haken.js" defer></script>
+<script src="sprung-werte.js" defer></script>
 <script src="diff-werte.js" defer></script>
 <script src="farbe-werte.js" defer></script>
 <script src="farbschlange.js" defer></script>
 <script src="diff.js" defer></script>
+<script src="sprung.js" defer></script>
 <script src="anmerkungen-werte.js" defer></script>
 <script src="anmerkungen.js" defer></script>
 <script src="commits.js" defer></script>
@@ -59,6 +61,11 @@
   <section id="diff" class="gr-diff" aria-label="Diff der gewählten Datei">
     <div class="diff-kopf">
       <h2 class="diff-pfad mono"></h2>
+      <div class="diff-sprung">
+        <span class="sprung-hinweis gr-status muted" role="status"></span>
+        <span class="sprung-grund gr-status muted" role="status"></span>
+        <a class="sprung-knopf btn" href="#" hidden>In VS Code</a>
+      </div>
       <div class="diff-schalter">
         <div class="seg diffansicht-wahl" role="radiogroup" aria-label="Ansicht">
           <label><input type="radio" name="diffansicht" value="aenderungen" autocomplete="off" checked>nur Änderungen</label>
