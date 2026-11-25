@@ -67,6 +67,19 @@ internal sealed class SprungRepo : IDisposable
 
     public static readonly string[] Markerdateien = ["marker-extern", "marker-textconv", "marker-command"];
 
+    /// <summary>
+    /// Repo F der Story: ein Commit `f` fügt `g.txt`, `f&lt;0xFF&gt;.txt` (Rohbyte) und `u&lt;U+202E&gt;.txt` hinzu; die beiden fremden
+    /// Namen verlassen den Arbeitsordner danach wieder, damit er sich löschen lässt. Angelegt über bash (<see cref="FremdeNamenRepo"/>).
+    /// </summary>
+    public const string SkriptFremdeNamen = """
+        set -e
+        printf 'eins\n' > g.txt
+        printf 'roh\n' > $'f\xff.txt'
+        printf 'richtung\n' > $'u\xe2\x80\xae.txt'
+        git add -A && git commit -q -m "FremdeNamen"
+        rm -f -- $'f\xff.txt'
+        """;
+
     /// <summary>Repo S mit `core.fsmonitor` auf ein Marker-Skript (liest der neue Lesepfad den Index, startet es).</summary>
     public static SprungRepo SMitFsmonitor()
     {
