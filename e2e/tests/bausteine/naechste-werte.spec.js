@@ -121,6 +121,12 @@ test.describe('Baustein Nächste-Werte — Einträge der gezeigten Sicht mit Zus
     expect(zustaende(eintraege('zusammen', liste, null, standAus(['v paar.txt'], ['n paar.txt'])))).toEqual(['gesperrt']);
   });
 
+  test('soll in „Zusammen“ eine Datei mit Sperrgrund als gesperrt führen, auch wenn keine ihrer Stellen einzeln gesperrt ist', () => {
+    const liste = [{ pfad: 'f.txt', sperrgrund: 'Diff nicht lesbar: Name nicht eindeutig', stellen: [{ commit: 'n', pfad: 'f.txt' }] }];
+
+    expect(zustaende(eintraege('zusammen', liste, null, standAus()))).toEqual(['gesperrt']);
+  });
+
   test('soll in „Einzeln“ je Stelle (Commit und Datei) einen Eintrag bilden', () => {
     const liste = [{ pfad: 'README.md' }, { pfad: 'src/a.txt' }];
 

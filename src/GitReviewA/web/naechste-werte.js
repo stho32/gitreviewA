@@ -54,14 +54,17 @@
   }
 
   /**
-   * Zustand einer Datei in „Zusammen“: sie ist abgehakt, wenn alle ihre Stellen abgehakt sind; gesperrt, wenn keine lesbare Stelle
-   * mehr offen ist (ihre offenen Stellen sind alle gesperrt, R00028); sonst ungeprüft — auch dann, wenn nur ein Teil abgehakt oder
-   * eine Stelle gesperrt ist.
+   * Zustand einer Datei in „Zusammen“: sie ist abgehakt, wenn alle ihre Stellen abgehakt sind; gesperrt, wenn der Name nicht
+   * eindeutig ist (der Sperrgrund der Datei, R00014) oder keine lesbare Stelle mehr offen ist (ihre offenen Stellen sind alle
+   * gesperrt, R00028); sonst ungeprüft — auch dann, wenn nur ein Teil abgehakt oder eine Stelle gesperrt ist.
    */
-  function dateiZustand(stellen, stand) {
+  function dateiZustand(datei, stand) {
+    if (datei.sperrgrund) {
+      return GESPERRT;
+    }
     let offen = 0;
     let gesperrt = 0;
-    for (const stelle of stellen) {
+    for (const stelle of datei.stellen) {
       if (stand.istAbgehakt(stelle.commit, stelle.pfad)) {
         continue;
       }
@@ -84,7 +87,7 @@
    */
   function eintraege(modus, dateien, commit, stand) {
     if (modus === ZUSAMMEN) {
-      return dateien.map(datei => ({ art: 'datei', pfad: datei.pfad, zustand: dateiZustand(datei.stellen, stand) }));
+      return dateien.map(datei => ({ art: 'datei', pfad: datei.pfad, zustand: dateiZustand(datei, stand) }));
     }
     return dateien.map(datei => ({
       art: 'stelle',
