@@ -371,6 +371,21 @@ async function pruefeLeerraum(page, an) {
   await pruefeSchalter(page, '#diff .leerraum-schalter', an);
 }
 
+/** Die Anordnung (R00023): `body[data-anordnung]` und der gedrückte Knopf der Gruppe stimmen überein. */
+async function anordnung(page) {
+  return page.evaluate(() => {
+    const gedrueckt = document.querySelector('.anordnung-wahl [data-anordnung][aria-pressed="true"]');
+    return {
+      anordnung: document.body.dataset.anordnung || null,
+      gedrueckt: gedrueckt ? gedrueckt.dataset.anordnung : null,
+    };
+  });
+}
+
+async function pruefeAnordnung(page, wert) {
+  await expect.poll(() => anordnung(page), { message: `Anordnung ${wert}`, timeout: 5000 }).toEqual({ anordnung: wert, gedrueckt: wert });
+}
+
 /** Die gewählte Diff-Ansicht (`aenderungen` oder `ganz`). */
 async function ansichtWert(page) {
   return page.evaluate(() => {
@@ -498,6 +513,7 @@ module.exports = {
   pruefeSchalter,
   pruefeUmbruch,
   pruefeLeerraum,
+  pruefeAnordnung,
   pruefeAnsicht,
   pruefeCommit,
   keineDateiGewaehlt,

@@ -213,7 +213,7 @@ test.describe('R00030 Diff und Anmerkung — Enter, a, e, s, w, l, o, g', () => 
     await tast.leerraum(false);
   });
 
-  test('o betätigt den Verweis „In VS Code“ mit demselben Ziel; v und / tun nichts, solange ihre Bedienelemente fehlen', async ({ tast }) => {
+  test('o betätigt den Verweis „In VS Code“ mit demselben Ziel; / tut nichts, solange sein Bedienelement fehlt', async ({ tast }) => {
     await tast.starten();
     await tast.dateiAnsehen('src/a.txt');
     const ziel = await tast.inVsCodeHref();
@@ -223,9 +223,29 @@ test.describe('R00030 Diff und Anmerkung — Enter, a, e, s, w, l, o, g', () => 
     await tast.druecke('o');
     expect(await tast.vsCodeKlicks()).toEqual([ziel]);
 
-    await tast.druecke('v');
     await tast.druecke('/');
     await tast.gewaehlt('src/a.txt');
+  });
+
+  test('v schaltet die Anordnung wie der Umschalter aus I0007 um; die Hilfe nennt sie verfügbar', async ({ tast }) => {
+    await tast.starten();
+    await tast.dateiAnsehen('src/a.txt');
+    await tast.anordnung('untereinander');
+
+    await tast.druecke('v');
+    await tast.anordnung('nebeneinander');
+
+    await tast.druecke('v');
+    await tast.anordnung('untereinander');
+
+    // Die Hilfe liest aus demselben Katalog und markiert die gebaute Anordnung als verfügbar.
+    await tast.druecke('?');
+    await tast.hilfeOffen(true);
+    const gruppen = await tast.hilfeGruppen();
+    const eintrag = gruppen.flatMap(gruppe => gruppe.eintraege).find(e => e.text.includes('nebeneinander'));
+    expect(eintrag, 'Hilfe-Zeile der Anordnung').toBeTruthy();
+    expect(eintrag.verfuegbar, 'Hilfe nennt die Anordnung verfügbar').toBe(true);
+    await tast.druecke('Escape');
   });
 
   test('g springt zur nächsten Lücke und setzt den Fokus auf ihren Aufklapp-Knopf', async ({ tast }) => {
@@ -316,7 +336,6 @@ test.describe('R00030 Hilfe-Overlay', () => {
     expect(eintraege.some(eintrag => eintrag.text.includes('Anmerkung speichern'))).toBe(true);
 
     await tast.hilfeNichtVerfuegbar('nächster Commit');
-    await tast.hilfeNichtVerfuegbar('nebeneinander');
     await tast.hilfeNichtVerfuegbar('Suche im Diff');
 
     expect(await tast.fokusImDialog(), 'Fokus im Dialog').toBe(true);

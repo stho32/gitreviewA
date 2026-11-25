@@ -299,14 +299,14 @@
     return true;
   }
 
-  /** `v` schaltet die Anordnung wie die Gruppe „Anordnung“ aus I0007, sobald sie gebaut ist. */
+  /** `v` schaltet die Anordnung wie die Gruppe „Anordnung“ aus I0007 (`anordnung.js`, `.anordnung-wahl`). */
   function wechsleAnordnung() {
-    const gruppe = document.querySelector('[data-gruppe="anordnung"]');
+    const gruppe = document.querySelector('.anordnung-wahl');
     if (!gruppe) {
       return false;
     }
-    const nichtGedrueckt = gruppe.querySelector('button[aria-pressed="false"]');
-    const knopf = nichtGedrueckt || gruppe.querySelector('button');
+    const nichtGedrueckt = gruppe.querySelector('[data-anordnung][aria-pressed="false"]');
+    const knopf = nichtGedrueckt || gruppe.querySelector('[data-anordnung]');
     if (!knopf) {
       return false;
     }

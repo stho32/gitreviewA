@@ -42,7 +42,7 @@
     { taste: 'ArrowUp', aktion: 'zeileZurueck', bereich: DIFF, text: 'Zeile im Diff wählen', anzeige: ['↑'] },
     { taste: 'Enter', aktion: 'zeileAnmerken', bereich: DIFF, text: 'Zeile anmerken', anzeige: ['Enter'], kurz: 'anmerken' },
     { taste: 's', aktion: 'ansichtWechseln', bereich: DIFF, text: 'nur Änderungen / ganze Datei', anzeige: ['s'] },
-    { taste: 'v', aktion: 'anordnungWechseln', bereich: DIFF, text: 'untereinander / nebeneinander', anzeige: ['v'], ziel: '[data-gruppe="anordnung"] button' },
+    { taste: 'v', aktion: 'anordnungWechseln', bereich: DIFF, text: 'untereinander / nebeneinander', anzeige: ['v'], ziel: '.anordnung-wahl [data-anordnung]' },
     { taste: 'w', aktion: 'umbruchWechseln', bereich: DIFF, text: 'Umbruch', anzeige: ['w'] },
     { taste: 'l', aktion: 'leerraumWechseln', bereich: DIFF, text: 'Leerraum', anzeige: ['l'] },
     { taste: 'g', aktion: 'naechsteLuecke', bereich: DIFF, text: 'nächste Lücke', anzeige: ['g'] },

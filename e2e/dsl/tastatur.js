@@ -108,6 +108,7 @@ function tastaturSprache(gr, page) {
     ansicht: wert => tastatur.pruefeAnsicht(page, wert),
     umbruch: an => tastatur.pruefeUmbruch(page, an),
     leerraum: an => tastatur.pruefeLeerraum(page, an),
+    anordnung: wert => tastatur.pruefeAnordnung(page, wert),
     tippe: text => page.keyboard.type(text),
     fokussiere: selektor => page.locator(selektor).focus(),
     feldwert: () => tastatur.feldwert(page),
