@@ -163,7 +163,7 @@ public class ZeileAnnotierenTests
         gr.Annotiere("q", "lang.txt", 18, Regex.Unescape(@"GEHEIMWORT \u001B zwei"));
 
         var zeilen = gr.Protokollzeilen();
-        Assert.That(zeilen, Has.Exactly(1).Contains("Nummer 1 angelegt (Textlänge 15)"));
+        Assert.That(zeilen, Has.Exactly(1).Contains("Nummer 1 angelegt (Textlänge 15, art=ohne)"));
         Assert.That(zeilen, Has.Exactly(1).Contains($"abgelehnt: {SteuerOderRichtung}"));
         Assert.That(gr.Protokoll(), Does.Not.Contain("GEHEIMWORT"));
     }
@@ -180,7 +180,7 @@ public class ZeileAnnotierenTests
         Assert.That(antwort, Is.EqualTo(new Anlegeantwort("angelegt", 1, "")));
         Assert.That(gr.Anmerkungen(), Is.EqualTo(new[] { gr.Bereich(1, "q", "lang.txt", 3, 7, "GEHEIMWORT eins") }));
         var zeilen = gr.Protokollzeilen();
-        Assert.That(zeilen, Has.Exactly(1).Contains("Nummer 1 angelegt (Bereich 3–7, Textlänge 15)"));
+        Assert.That(zeilen, Has.Exactly(1).Contains("Nummer 1 angelegt (Bereich 3–7, Textlänge 15, art=ohne)"));
         Assert.That(gr.Protokoll(), Does.Not.Contain("GEHEIMWORT"));
     }
 

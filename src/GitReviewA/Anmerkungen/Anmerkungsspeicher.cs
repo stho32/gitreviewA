@@ -35,7 +35,7 @@ internal class Anmerkungsspeicher
                 return false;
             }
             letzteNummer += 1;
-            angelegt = new Anmerkung(letzteNummer, inhalt.Commit, inhalt.Datei, inhalt.Zeile, inhalt.Text, inhalt.Von, inhalt.Bis);
+            angelegt = new Anmerkung(letzteNummer, inhalt.Commit, inhalt.Datei, inhalt.Zeile, inhalt.Text, inhalt.Von, inhalt.Bis, inhalt.Art);
             anmerkungen.Add(angelegt);
             return true;
         }

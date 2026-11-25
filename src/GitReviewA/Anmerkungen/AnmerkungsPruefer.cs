@@ -38,7 +38,12 @@ internal static class AnmerkungsPruefer
         {
             return Pruefergebnis.Abgelehnt(textGrund);
         }
-        return Pruefergebnis.Gueltig(new GepruefteAnmerkung(neu.Commit, neu.Datei, neu.Zeile, neu.Text, neu.Von, neu.Bis));
+        var art = Anmerkungsart.Lies(neu.Art);
+        if (!art.IstGueltig)
+        {
+            return Pruefergebnis.Abgelehnt(art.Grund);
+        }
+        return Pruefergebnis.Gueltig(new GepruefteAnmerkung(neu.Commit, neu.Datei, neu.Zeile, neu.Text, neu.Von, neu.Bis, art.Angabe.Wert));
     }
 
     private static bool IstGueltigerCommit([NotNullWhen(true)] string? commit, CommitAuswahl auswahl, out string grund)

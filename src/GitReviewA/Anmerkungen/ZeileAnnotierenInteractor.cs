@@ -34,7 +34,8 @@ internal sealed class ZeileAnnotierenInteractor(Anmerkungsspeicher speicher, Com
         }
         var nummer = angelegt.Nummer.ToString(CultureInfo.InvariantCulture);
         var textlaenge = angelegt.Text.Length.ToString(CultureInfo.InvariantCulture);
-        protokoll.Melde(Protokollstufe.Debug, Kontext, $"Nummer {nummer} angelegt ({Stellentext(angelegt)}Textlänge {textlaenge})");
+        var art = Anmerkungsart.Protokollwert(angelegt.Art);
+        protokoll.Melde(Protokollstufe.Debug, Kontext, $"Nummer {nummer} angelegt ({Stellentext(angelegt)}Textlänge {textlaenge}, art={art})");
         return new AnnotierenErgebnis(Annotierenausgang.Angelegt, angelegt, string.Empty);
     }
 

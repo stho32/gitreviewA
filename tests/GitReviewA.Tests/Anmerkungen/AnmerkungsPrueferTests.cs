@@ -1,3 +1,4 @@
+using System.Text.Json;
 using GitReviewA.Anmerkungen;
 using GitReviewA.Git;
 
@@ -123,6 +124,50 @@ public class AnmerkungsPrueferTests
 
         Assert.That(ergebnis.IstGueltig, Is.False);
         Assert.That(ergebnis.Ablehnungsgrund, Does.Contain(grundEnthaelt));
+    }
+
+    [TestCase("muss")]
+    [TestCase("frage")]
+    [TestCase("idee")]
+    [Description("R00036 Kriterium 4: die drei Werte kommen geprüft bis in die Anmerkung")]
+    public void Wenn_eine_Art_der_drei_mitkommt_dann_gueltig_und_die_Anmerkung_traegt_sie(string wert)
+    {
+        var ergebnis = AnmerkungsPruefer.Pruefe(new NeueAnmerkung(HashA, "a.txt", 1, "Text", Art: JsonSerializer.SerializeToElement(wert)), Auswahl());
+
+        Assert.That(ergebnis.IstGueltig, Is.True);
+        Assert.That(Anmerkungsart.Wert(ergebnis.Anmerkung!.Art), Is.EqualTo(wert));
+    }
+
+    [Test]
+    public void Wenn_ohne_art_dann_gueltig_und_die_Anmerkung_traegt_keine()
+    {
+        var ergebnis = AnmerkungsPruefer.Pruefe(new NeueAnmerkung(HashA, "a.txt", 1, "Text"), Auswahl());
+
+        Assert.That((ergebnis.IstGueltig, ergebnis.Anmerkung!.Art), Is.EqualTo((true, (Art?)null)));
+    }
+
+    [TestCase("\"MUSS\"")]
+    [TestCase("\"muss \"")]
+    [TestCase("\"\"")]
+    [TestCase("7")]
+    [Description("R00036 Kriterium 4: andere Schreibung, leer, Zahl und langer Text sind „Art unbekannt“")]
+    public void Wenn_die_Art_unbekannt_dann_abgelehnt_mit_Art_unbekannt(string art)
+    {
+        using var dokument = JsonDocument.Parse(art);
+
+        var ergebnis = AnmerkungsPruefer.Pruefe(new NeueAnmerkung(HashA, "a.txt", 1, "Text", Art: dokument.RootElement), Auswahl());
+
+        Assert.That(ergebnis.IstGueltig, Is.False);
+        Assert.That(ergebnis.Ablehnungsgrund, Is.EqualTo("Art unbekannt"));
+    }
+
+    [Test]
+    [Description("R00036 NFA Grenzen: ein Text von 10 000 Zeichen als Art ist „Art unbekannt“")]
+    public void Wenn_10000_Zeichen_als_Art_dann_abgelehnt_mit_Art_unbekannt()
+    {
+        var ergebnis = AnmerkungsPruefer.Pruefe(new NeueAnmerkung(HashA, "a.txt", 1, "Text", Art: JsonSerializer.SerializeToElement(new string('x', 10_000))), Auswahl());
+
+        Assert.That((ergebnis.IstGueltig, ergebnis.Ablehnungsgrund), Is.EqualTo((false, "Art unbekannt")));
     }
 
     [Test]

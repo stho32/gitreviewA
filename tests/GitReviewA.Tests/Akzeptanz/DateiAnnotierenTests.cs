@@ -160,7 +160,7 @@ public class DateiAnnotierenTests
         gr.Annotiere("q", "lang.txt", Regex.Unescape(@"GEHEIMWORT \u001B zwei"));
 
         var zeilen = gr.Protokollzeilen();
-        Assert.That(zeilen, Has.Exactly(1).Contains("Nummer 1 angelegt (Textlänge 15)"));
+        Assert.That(zeilen, Has.Exactly(1).Contains("Nummer 1 angelegt (Textlänge 15, art=ohne)"));
         Assert.That(zeilen, Has.Exactly(1).Contains($"abgelehnt: {SteuerOderRichtung}"));
         Assert.That(gr.Protokoll(), Does.Not.Contain("GEHEIMWORT"));
     }

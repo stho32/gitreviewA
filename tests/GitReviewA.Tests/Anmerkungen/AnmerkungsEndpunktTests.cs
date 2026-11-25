@@ -205,9 +205,60 @@ public class AnmerkungsEndpunktTests
         var eintraege = antwort.Json.EnumerateArray().Select(eintrag => eintrag.GetRawText()).ToArray();
         Assert.That(eintraege, Is.EqualTo(new[]
         {
-            "{\"nummer\":1,\"commit\":\"" + HashA + "\",\"datei\":\"src/Foo.cs\",\"zeile\":42,\"text\":\"Null-Pr\\u00FCfung fehlt\",\"von\":null,\"bis\":null}",
-            "{\"nummer\":2,\"commit\":\"" + HashA + "\",\"datei\":\"lang.txt\",\"zeile\":18,\"text\":\"Klammer fehlt\",\"von\":null,\"bis\":null}",
+            "{\"nummer\":1,\"commit\":\"" + HashA + "\",\"datei\":\"src/Foo.cs\",\"zeile\":42,\"text\":\"Null-Pr\\u00FCfung fehlt\",\"von\":null,\"bis\":null,\"art\":null}",
+            "{\"nummer\":2,\"commit\":\"" + HashA + "\",\"datei\":\"lang.txt\",\"zeile\":18,\"text\":\"Klammer fehlt\",\"von\":null,\"bis\":null,\"art\":null}",
         }));
+    }
+
+    [Test]
+    [Description("R00036 Kriterium 4: POST trägt art, GET nennt sie; ohne art bleibt null")]
+    public async Task Wenn_mit_art_muss_angelegt_dann_201_und_die_Liste_nennt_art_muss()
+    {
+        await using var server = await StarteServer();
+        using var client = new HttpClient();
+
+        var angelegt = await Sende(client, server, "api/anmerkungen", "{\"commit\":\"" + HashA + "\",\"datei\":\"src/Foo.cs\",\"zeile\":42,\"text\":\"Null-Prüfung fehlt\",\"art\":\"muss\"}");
+        var ohne = await Sende(client, server, "api/anmerkungen", "{\"commit\":\"" + HashA + "\",\"datei\":\"lang.txt\",\"zeile\":18,\"text\":\"Klammer fehlt\"}");
+        var liste = await Hole(client, server, host: null);
+
+        Assert.That((angelegt.Status, ohne.Status), Is.EqualTo((HttpStatusCode.Created, HttpStatusCode.Created)));
+        var eintraege = liste.Json.EnumerateArray().ToArray();
+        Assert.That(eintraege.Select(eintrag => eintrag.GetProperty("art").ValueKind == JsonValueKind.Null ? null : eintrag.GetProperty("art").GetString()), Is.EqualTo(new[] { "muss", null }));
+    }
+
+    [TestCase("\"MUSS\"")]
+    [TestCase("\"muss \"")]
+    [TestCase("\"\"")]
+    [TestCase("7")]
+    [TestCase("true")]
+    [TestCase("{}")]
+    [Description("R00036 Kriterium 4: unbekannte Art → 400 „Art unbekannt“, nichts gespeichert, keine Nummer verbraucht")]
+    public async Task Wenn_die_Art_unbekannt_dann_400_mit_Art_unbekannt_und_die_naechste_bekommt_Nummer_1(string art)
+    {
+        await using var server = await StarteServer();
+        using var client = new HttpClient();
+        var koerper = "{\"commit\":\"" + HashA + "\",\"datei\":\"a.txt\",\"zeile\":1,\"text\":\"t\",\"art\":" + art + "}";
+
+        var abgelehnt = await Sende(client, server, "api/anmerkungen", koerper);
+        var gueltig = await Sende(client, server, "api/anmerkungen", "{\"commit\":\"" + HashA + "\",\"datei\":\"a.txt\",\"zeile\":1,\"text\":\"t\"}");
+
+        Assert.That((abgelehnt.Status, abgelehnt.Json.GetProperty("meldung").GetString()), Is.EqualTo((HttpStatusCode.BadRequest, "Art unbekannt")));
+        Assert.That((gueltig.Status, gueltig.Json.GetProperty("nummer").GetInt32()), Is.EqualTo((HttpStatusCode.Created, 1)), "keine Nummer verbraucht");
+        Assert.That(server.Anmerkungen.Schnappschuss().Anzahl, Is.EqualTo(1));
+    }
+
+    [Test]
+    [Description("R00036 NFA Grenzen: ein Text von 10 000 Zeichen als Art ist „Art unbekannt“")]
+    public async Task Wenn_10000_Zeichen_als_Art_dann_400_mit_Art_unbekannt()
+    {
+        await using var server = await StarteServer();
+        using var client = new HttpClient();
+        var koerper = "{\"commit\":\"" + HashA + "\",\"datei\":\"a.txt\",\"zeile\":1,\"text\":\"t\",\"art\":\"" + new string('x', 10_000) + "\"}";
+
+        var antwort = await Sende(client, server, "api/anmerkungen", koerper);
+
+        Assert.That((antwort.Status, antwort.Json.GetProperty("meldung").GetString()), Is.EqualTo((HttpStatusCode.BadRequest, "Art unbekannt")));
+        Assert.That(server.Anmerkungen.Schnappschuss().Anzahl, Is.Zero);
     }
 
     [Test]
