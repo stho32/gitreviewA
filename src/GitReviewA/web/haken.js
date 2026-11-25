@@ -1,7 +1,8 @@
 /* gitreviewA — Abhaken je Modus (R00011, R00012): „Einzeln“ führt das Kästchen je Stelle (Commit und Datei), „Zusammen“ je Datei
    (alle ihre Stellen auf einmal). Der Kopf zeigt „n von m Stellen abgehakt“ bzw. „n von m Dateien abgehakt“; der Diff-Kopf trägt
    dasselbe Kästchen wie die gewählte Zeile. Ein Klick wünscht den Zielzustand; gezeichnet wird erst der vom Server bestätigte Zustand.
-   Je Stelle bzw. Datei ist höchstens eine Anfrage unterwegs; weitere Klicks ändern nur den Wunsch. */
+   Je Stelle bzw. Datei ist höchstens eine Anfrage unterwegs; weitere Klicks ändern nur den Wunsch. Nach jeder bestätigten Änderung
+   meldet sie `haken-geaendert`; die Zähler je Commit (R00012, Kriterium 8) gibt sie über `window.gitreviewaHaken` heraus. */
 (function () {
   'use strict';
 
@@ -344,6 +345,7 @@
         const ziel = zustand.wunsch.get(schluessel);
         const antwort = await hakenSenden({ ...rumpf, abgehakt: ziel });
         bestaetigeAntwort(schluessel, rumpf, ziel, antwort);
+        document.dispatchEvent(new CustomEvent('haken-geaendert'));
         if (zustand.wunsch.get(schluessel) === ziel) {
           zustand.wunsch.delete(schluessel);
         }
@@ -397,6 +399,16 @@
       }
     }
   }
+
+  /** Zähler je Commit aus dem bestätigten Stand — dieselbe Quelle wie der Fortschritt im Kopf; ohne gelesenen Stand leer. */
+  function zaehlerJeCommit() {
+    if (!zustand.stand) {
+      return new Map();
+    }
+    return commitZaehler(zustand.stand.stellen, zustand.bestaetigtRoh);
+  }
+
+  window.gitreviewaHaken = { zaehlerJeCommit };
 
   document.addEventListener('DOMContentLoaded', init);
 }());

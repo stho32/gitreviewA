@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  const zustand = { commits: [], gewaehlt: null, zusammen: null, zusammenFehler: false, haken: null };
+  const zustand = { commits: [], gewaehlt: null, zusammen: null, zusammenFehler: false };
 
   async function init() {
     const statusElement = document.getElementById('commit-status');
@@ -25,10 +25,8 @@
       zustand.zusammenFehler = true;
       zeichneZusammenfassung();
     });
-    document.addEventListener('haken-stand-geladen', ereignis => {
-      zustand.haken = ereignis.detail;
-      zeichneWaehler();
-    });
+    document.addEventListener('haken-stand-geladen', zeichneWaehler);
+    document.addEventListener('haken-geaendert', zeichneWaehler);
     document.addEventListener('dateiliste-gezeichnet', ereignis => {
       zustand.dateienAnzahl = ereignis.detail.anzahl;
       zeichneKopfZahlen();
@@ -224,17 +222,17 @@
     }
   }
 
-  /** Zähler je Commit aus dem Stand der Haken: „abgehakt von gesamt“; ohne Stand bleibt der Zusatz weg. */
-  function hakenZusatz(commit) {
-    if (!zustand.haken) {
-      return '';
+  /** Zähler je Commit aus dem Stand des Hakens, den haken.js führt (R00012, Kriterium 8) — keine zweite Kopie des Stands. */
+  function zaehlerStand() {
+    if (!window.gitreviewaHaken) {
+      return new Map();
     }
-    const stellen = zustand.haken.stellen.filter(stelle => stelle.commit === commit);
-    if (stellen.length === 0) {
-      return '';
-    }
-    const abgehakt = stellen.filter(stelle => stelle.abgehakt).length;
-    return ` · ${abgehakt} von ${stellen.length}`;
+    return window.gitreviewaHaken.zaehlerJeCommit();
+  }
+
+  /** Der Zusatz am Menüeintrag: „abgehakt von gesamt“; Commits ohne Stelle in der Auswahl bleiben ohne Zusatz. */
+  function hakenZusatz(zaehler, commit) {
+    return zaehlerZusatz(zaehler.get(commit));
   }
 
   function zeichneWaehler() {
@@ -255,11 +253,12 @@
       stand.textContent = werte ? `${stelle + 1}/${zustand.commits.length} · ${werte.kurz} · ${werte.betreff} · ${werte.autor} · ${werte.datum}` : '—/—';
     }
     if (wahl) {
+      const zaehler = zaehlerStand();
       wahl.replaceChildren(...zustand.commits.map((commit, index) => {
         const werte = zeilenwerte(commit);
         const option = document.createElement('option');
         option.value = commit.hash;
-        option.textContent = `${index + 1}/${zustand.commits.length} · ${werte.kurz} · ${werte.betreff}${hakenZusatz(commit.hash)}`;
+        option.textContent = `${index + 1}/${zustand.commits.length} · ${werte.kurz} · ${werte.betreff}${hakenZusatz(zaehler, commit.hash)}`;
         option.selected = commit.hash === zustand.gewaehlt;
         return option;
       }));

@@ -84,6 +84,32 @@
     return { abgehakt, gesamt: stellen.length };
   }
 
+  /**
+   * Zähler je Commit (R00012, Kriterium 8): seine abgehakten Stellen von seinen Stellen gesamt, als Zuordnung Commit → Zähler.
+   * `stellen` sind die Stellen des Stands (`commit` und `datei`), `stand` ordnet den Stellen-Schlüssel den bestätigten Zustand zu;
+   * ein Commit ohne Stelle fehlt in der Zuordnung.
+   */
+  function commitZaehler(stellen, stand) {
+    const zaehler = new Map();
+    for (const stelle of stellen) {
+      const zaehlerDesCommits = zaehler.get(stelle.commit) || { abgehakt: 0, gesamt: 0 };
+      zaehlerDesCommits.gesamt += 1;
+      if (stand.get(stellenSchluessel(stelle.commit, stelle.datei)) === true) {
+        zaehlerDesCommits.abgehakt += 1;
+      }
+      zaehler.set(stelle.commit, zaehlerDesCommits);
+    }
+    return zaehler;
+  }
+
+  /** Der Zusatz am Menüeintrag des Wählers und an der Commit-Zeile: „ · k von n“; ohne Zähler bleibt er leer. */
+  function zaehlerZusatz(zaehler) {
+    if (!zaehler) {
+      return '';
+    }
+    return ` · ${zaehler.abgehakt} von ${zaehler.gesamt}`;
+  }
+
   /** Zähler in „Zusammen“: Dateien abgehakt (nur vollständig), Dateien gesamt, Dateien mit einer gesperrten Stelle. */
   function fortschrittZusammen(dateien, stand, gesperrt) {
     let abgehakt = 0;
@@ -112,6 +138,6 @@
 
   Object.assign(ziel, {
     DATEIEN, STELLEN, fortschrittText, balkenAnteil, stellenSchluessel, naechsterZielzustand, kaestchenBezeichnung,
-    dateiZustand, dateiZaehler, fortschrittZusammen, fortschrittEinzeln,
+    dateiZustand, dateiZaehler, commitZaehler, zaehlerZusatz, fortschrittZusammen, fortschrittEinzeln,
   });
 })(typeof module !== 'undefined' ? module.exports : window);
