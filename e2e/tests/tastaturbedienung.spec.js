@@ -378,3 +378,132 @@ test.describe('R00030 Fokus sichtbar', () => {
     expect(zeile.kontrast, 'Kontrast an der Diff-Zeile').toBeGreaterThanOrEqual(3);
   });
 });
+
+test.describe('R00030 Nur außerhalb von Textfeldern, keine Browser- und Screenreader-Kürzel', () => {
+  test('im offenen Notizfeld wirkt kein Kürzel — die Liste bleibt, der Text bleibt; Strg+Enter und Esc wirken im Feld', async ({ tast }) => {
+    await tast.starten();
+    await tast.dateiAnsehen('src/a.txt');
+    await tast.inDenDiffTabben();
+    await tast.pfeilAbBis(2);
+    await tast.druecke('Enter');
+    await tast.tippe('Prüfung');
+    await tast.fokussiereAusserhalb();
+
+    const vorher = await tast.diffZeilen();
+    for (const taste of ['j', 'k', 'n', 'p', 'x', 'm', 's', 'v', 'w', 'h']) {
+      await tast.druecke(taste);
+    }
+    await tast.gewaehlt('src/a.txt');
+    expect(await tast.diffZeilen(), 'Diff unverändert').toEqual(vorher);
+    expect(await tast.feldwert(), 'Text im Feld unverändert').toBe('Prüfung');
+
+    await tast.fokussiereFeld();
+    await tast.druecke('Escape');
+    await tast.keinFeld();
+    await tast.anmerkungenUnter({ neu: 2 }, []);
+  });
+
+  test('Strg+F, Strg+R und F5 fängt das Programm nicht ab; kein Kürzel löst aus', async ({ tast }) => {
+    await tast.starten();
+    await tast.dateiAnsehen('src/a.txt');
+    await tast.tastenBeobachten();
+
+    await tast.druecke('Control+f');
+    const beobachtet = await tast.beobachteteTasten();
+    const strgF = beobachtet.find(eintrag => eintrag.taste === 'f');
+    expect(strgF, 'Strg+F kommt an').toBeTruthy();
+    expect(strgF.verhindert, 'Strg+F nicht abgefangen').toBe(false);
+
+    expect(await tast.drueckeMitStrg('r'), 'Strg+R nicht abgefangen').toBe(false);
+    expect(await tast.drueckeMitStrg('F5'), 'F5 nicht abgefangen').toBe(false);
+    await tast.gewaehlt('src/a.txt');
+    await tast.statuszeile('Datei', 'j k');
+  });
+
+  test('in input, select und contenteditable wirken die Kürzel nicht', async ({ tast }) => {
+    await tast.starten();
+
+    await tast.fokussiere('#ausblenden-eingabe');
+    await tast.druecke('x');
+    await tast.druecke('n');
+    expect(await tast.ohneWahl(), 'Eingabefeld: keine Wahl').toBe(true);
+
+    await tast.contenteditableFokussieren();
+    await tast.druecke('x');
+    expect(await tast.ohneWahl(), 'contenteditable: keine Wahl').toBe(true);
+
+    await tast.fokussiereAusserhalb();
+    await tast.druecke('m');
+    await tast.modus('einzeln');
+    await tast.commit('z1');
+    await tast.fokussiere('#waehler-auswahl');
+    await tast.druecke(']');
+    await tast.commit('z1');
+    await tast.druecke('x');
+    await tast.haken('src/a.txt', 'false');
+  });
+
+  test('AltGr wechselt [ und ] den Commit, Strg+Alt nicht (deutsche Tastatur)', async ({ tast }) => {
+    await tast.starten({ modus: 'einzeln' });
+    await tast.commit('z1');
+
+    expect(await tast.drueckeMitAltGr(']'), 'AltGr+] wirkt').toBe(true);
+    await tast.commit('z2');
+    expect(await tast.drueckeMitAltGr('['), 'AltGr+[ wirkt').toBe(true);
+    await tast.commit('z1');
+
+    expect(await tast.drueckeMitStrgAlt(']'), 'Strg+Alt+] wirkt nicht').toBe(false);
+    await tast.commit('z1');
+  });
+});
+
+test.describe('R00030 Gesperrte Stelle und kein neuer Weg', () => {
+  test('an einer gesperrten Stelle ändern x und a nichts; der Sperrgrund steht weiter da', async ({ tast }) => {
+    await tast.starten({
+      hakenStand: hash => ({
+        stellen: [{ commit: hash('z1'), datei: 'README.md', abgehakt: false, sperrgrund: 'Name nicht eindeutig' }],
+        abgehakt: 0,
+        gesamt: 6,
+      }),
+    });
+    await tast.dateiAnsehen('README.md');
+    await tast.sperrgrund('README.md', 'Name nicht eindeutig');
+
+    await tast.druecke('x');
+    await tast.haken('README.md', 'false');
+    await tast.sperrgrund('README.md', 'Name nicht eindeutig');
+
+    await tast.druecke('a');
+    await tast.keinFeld();
+    await tast.sperrgrund('README.md', 'Name nicht eindeutig');
+  });
+
+  test('Hot Path per Tastatur: Datei wählen, Zeile anmerken, Beenden — stdout trägt nur das Ergebnis, kein neuer Endpunkt', async ({ tast }) => {
+    const anfragen = tast.anfragenBeobachten();
+    await tast.starten();
+    await tast.inDieDateiliste();
+
+    await tast.druecke('j');
+    await tast.gewaehlt('src/a.txt');
+    await tast.wartenAufDiff('src/a.txt');
+    await tast.inDenDiffTabben();
+    await tast.pfeilAbBis(2);
+    await tast.druecke('Enter');
+    await tast.tippe('Tastaturpfad');
+    await tast.druecke('Control+Enter');
+    await tast.anmerkungenUnter({ neu: 2 }, ['Tastaturpfad']);
+    expect(tast.stdoutBisher(), 'stdout bis Beenden leer').toBe('');
+
+    const { exitCode, ergebnis } = await tast.beendenUndErgebnisLesen();
+    expect(exitCode).toBe(0);
+    expect(ergebnis).toContain('## 1. src/a.txt:2');
+    expect(ergebnis).toContain('> Tastaturpfad');
+
+    const bekannt = [/^\/api\/zustand$/, /^\/api\/commits$/, /^\/api\/commits\/[^/]+\/dateien$/, /^\/api\/commits\/[^/]+\/diff$/,
+      /^\/api\/zusammen$/, /^\/api\/zusammen\/diff$/, /^\/api\/zusammen\/[^/]+\/diff$/, /^\/api\/haken$/, /^\/api\/anmerkungen$/, /^\/api\/anmerkungen\/\d+$/,
+      /^\/api\/sprung$/, /^\/api\/commits\/[^/]+\/sprung$/, /^\/api\/beenden$/];
+    for (const pfad of anfragen()) {
+      expect(bekannt.some(muster => muster.test(pfad)), `bekannter Endpunkt: ${pfad}`).toBe(true);
+    }
+  });
+});

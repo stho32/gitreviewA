@@ -58,10 +58,15 @@
         meta: ereignis.metaKey,
         altGraph: typeof ereignis.getModifierState === 'function' && ereignis.getModifierState('AltGraph'),
       },
-      offenerDialog: Boolean(window.gitreviewaHilfe && window.gitreviewaHilfe.istOffen()),
+      offenerDialog: Boolean(window.gitreviewaHilfe && window.gitreviewaHilfe.istOffen()) || offenesNotizfeld(),
       modus: window.gitreviewaModus ? window.gitreviewaModus.hole() : werte().EINZELN,
       vorhanden: vorhandeneAktionen(),
     };
+  }
+
+  /** Ein offenes Notiz- oder Änderungsfeld ist eine eigene Ebene: solange es offen ist, wirken nur Esc und ? (R00030). */
+  function offenesNotizfeld() {
+    return document.querySelector('#diff tr.anm-feld textarea, #diff tr.anm-aendern textarea') !== null;
   }
 
   /** Kürzel wirken nur außerhalb von Textfeldern und Eingaben (R00030); offene Muster- und Suchfelder sind Eingaben. */

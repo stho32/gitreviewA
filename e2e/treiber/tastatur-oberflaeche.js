@@ -247,6 +247,42 @@ async function fokusringAktuell(page) {
   });
 }
 
+/** Der Wert des offenen Notiz-/Änderungsfelds. */
+async function feldwert(page) {
+  return page.locator('#diff tr.anm-feld textarea, #diff tr.anm-aendern textarea').first().inputValue();
+}
+
+/** Fokussiert das offene Notiz-/Änderungsfeld. */
+async function fokussiereFeld(page) {
+  await page.locator('#diff tr.anm-feld textarea, #diff tr.anm-aendern textarea').first().focus();
+}
+
+/** Ist keine Dateizeile gewählt? */
+async function ohneWahl(page) {
+  return page.locator(`${DATEIZEILE}[aria-current="true"]`).count().then(anzahl => anzahl === 0);
+}
+
+/** Der Sperrgrund, den die Dateizeile anzeigt. */
+async function sperrgrund(page, pfad) {
+  return page.locator(`${DATEIZEILE}[data-pfad="${pfad}"] .haken-grund`).textContent();
+}
+
+async function pruefeSperrgrund(page, pfad, text) {
+  await expect.poll(() => sperrgrund(page, pfad), { message: `Sperrgrund ${pfad}`, timeout: 5000 }).toBe(text);
+}
+
+/** Legt ein `contenteditable`-Element in die Seite und gibt ihm den Fokus. */
+async function contenteditableFokussieren(page) {
+  await page.evaluate(() => {
+    const feld = document.createElement('div');
+    feld.id = 'probe-contenteditable';
+    feld.setAttribute('contenteditable', 'true');
+    feld.textContent = 'Text';
+    document.getElementById('diff').append(feld);
+    feld.focus();
+  });
+}
+
 /** Fokussiert das Element per Tab und liefert seinen Fokusring (der Weg, den ein Mensch nimmt). */
 async function fokusringPerTab(page, selektor) {
   await page.locator('body').click({ position: { x: 4, y: 4 } });
@@ -415,6 +451,11 @@ module.exports = {
   hinweis,
   fokusringAktuell,
   fokusringPerTab,
+  feldwert,
+  fokussiereFeld,
+  ohneWahl,
+  pruefeSperrgrund,
+  contenteditableFokussieren,
   ansage,
   pruefeAnsage,
   pruefeAnsageLeer,

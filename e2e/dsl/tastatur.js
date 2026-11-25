@@ -22,11 +22,20 @@ function tastaturSprache(gr, page) {
   let lauf;
   const hash = name => repo.hashes[name];
 
-  async function starten({ vorbereitung = 'Repo Z', commits, modus = 'zusammen' } = {}) {
+  async function starten({ vorbereitung = 'Repo Z', commits, modus = 'zusammen', hakenStand = null } = {}) {
     const art = VORBEREITUNGEN[vorbereitung];
     repo = art.anlegen(path.join(gr.eigenerOrdner(), 'repo'));
     const auswahl = commits || art.commits;
     lauf = await gr.gitreviewAStarten(repo, auswahl.map(hash));
+    if (hakenStand) {
+      await page.route('**/api/haken', async route => {
+        if (route.request().method() !== 'GET') {
+          await route.continue();
+          return;
+        }
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(hakenStand(hash)) });
+      });
+    }
     await page.setViewportSize(FENSTER);
     await gr.oberflaecheOeffnen(page, lauf, modus);
     // Bereit, wenn Liste und Haken-Stand stehen (vorher ist „Nächste ungeprüfte“ gesperrt).
@@ -43,6 +52,8 @@ function tastaturSprache(gr, page) {
   return {
     starten,
     dateiAnsehen,
+    /** Wartet, bis der Diff dieser Datei gezeichnet steht (nach einer Wahl per Kürzel). */
+    wartenAufDiff: pfad => tastatur.aufDiffWarten(page, pfad),
     hash,
     lauf: () => lauf,
     druecke: name => tastatur.taste(page, name),
@@ -99,6 +110,18 @@ function tastaturSprache(gr, page) {
     leerraum: an => tastatur.pruefeLeerraum(page, an),
     tippe: text => page.keyboard.type(text),
     fokussiere: selektor => page.locator(selektor).focus(),
+    feldwert: () => tastatur.feldwert(page),
+    fokussiereFeld: () => tastatur.fokussiereFeld(page),
+    ohneWahl: () => tastatur.ohneWahl(page),
+    sperrgrund: (pfad, text) => tastatur.pruefeSperrgrund(page, pfad, text),
+    contenteditableFokussieren: () => tastatur.contenteditableFokussieren(page),
+    /** Ein synthetisches Strg-/F5-Ereignis (kein echter Reload) — meldet, ob das Programm es verhindert hat. */
+    drueckeMitStrg: taste => page.evaluate(name => {
+      const ereignis = new KeyboardEvent('keydown', { key: name, bubbles: true, cancelable: true, ctrlKey: true });
+      document.body.dispatchEvent(ereignis);
+      return ereignis.defaultPrevented;
+    }, taste),
+    ladeSeiteNeu: () => page.reload(),
     klickeHilfeKnopf: () => page.locator('#hilfe-knopf').click(),
     klickeHilfeZu: () => page.locator('#hilfe-zu').click(),
     inVsCodeHref: () => page.locator('#diff .sprung-knopf').getAttribute('href'),
@@ -137,10 +160,23 @@ function tastaturSprache(gr, page) {
     }, taste),
     luecken: () => diffSeite.lueckenLesen(page),
     beendenUndErgebnisLesen: async () => {
-      const { exitCode, ergebnis } = await gr.beendenUndErgebnisLesen(lauf);
-      return { exitCode, ergebnis };
+      await gr.beendenBetaetigen(page);
+      const exitCode = await gr.aufEndeWarten(lauf);
+      return { exitCode, ergebnis: gr.ergebnis(lauf) };
     },
     stdoutBisher: () => gr.ergebnis(lauf),
+    /** Zählt ab jetzt die Anfragen an `/api/` — für „kein neuer Serverweg“. */
+    anfragenBeobachten: () => {
+      const gesehen = [];
+      page.on('request', anfrage => {
+        const pfad = new URL(anfrage.url()).pathname;
+        if (pfad.startsWith('/api/')) {
+          gesehen.push(pfad);
+        }
+      });
+      return () => gesehen.slice();
+    },
+    seite: () => page,
   };
 }
 
