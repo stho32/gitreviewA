@@ -25,6 +25,8 @@
 <script src="sprung-werte.js" defer></script>
 <script src="trenner-werte.js" defer></script>
 <script src="trenner.js" defer></script>
+<script src="einklappen-werte.js" defer></script>
+<script src="einklappen.js" defer></script>
 <script src="tasten-werte.js" defer></script>
 <script src="diff-werte.js" defer></script>
 <script src="bild-werte.js" defer></script>
@@ -124,6 +126,9 @@
         <ul id="datei-zeilen" class="gr-dateien" aria-label="Dateien"></ul>
       </section>
     </div>
+    <!-- Der Streifen an der Grenze (R00035): ausgeklappt der Ort des Ausklapp-Knopfes, eingeklappt der sichtbare Weg zurück.
+         Der Knopf entsteht in `einklappen.js` — unter 566 px gibt es weder Trenner noch Einklappen. -->
+    <div class="gr-streifen"></div>
     <section id="diff" class="gr-diff" aria-label="Diff der gewählten Datei">
       <div class="diff-kopf">
         <h2 class="diff-pfad mono"></h2>
