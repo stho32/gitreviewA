@@ -326,6 +326,19 @@ async function sucheZurueck(page) {
   await sucheFeld(page).press('Shift+Enter');
 }
 
+/** Alle Treffermarken im Diff in Dokumentreihenfolge, je mit Text und ob sie der aktuelle Treffer sind. */
+async function sucheMarkenLesen(page) {
+  return page.locator('#diff .df-sc .suche-treffer').evaluateAll(marks => marks.map(mark => ({
+    text: mark.textContent,
+    aktuell: mark.classList.contains('suche-treffer-aktuell'),
+  })));
+}
+
+/** Die Anzahl der Treffermarken (kurz für Prüfungen). */
+function sucheMarken(page) {
+  return page.locator('#diff .df-sc .suche-treffer');
+}
+
 async function dateiWaehlen(page, name) {
   await page.locator(DATEIZEILE).filter({ has: page.locator('.pfad', { hasText: name, exact: true }) }).click();
 }
@@ -497,7 +510,7 @@ module.exports = {
   dateilisteLesen, dateizeilen, aufDateizeilenWarten, dateiSumme, dateilistenMeldung, darstellungWaehlen, dateiWaehlen, gewaehlteDateien,
   ausblendenZaehler, pruefeAusblendenZaehler, ausblendenEingabe, ausblendenFehler, ausblendenMuster, musterEingeben, musterEntfernen,
   abgehakteSchalter, abgehakteSchalterBetatigen, pruefeAbgehakteSchalter, abgehakteHinweis,
-  sucheFeld, sucheZaehler, sucheFehler, sucheSuchen, sucheWeiter, sucheZurueck,
+  sucheFeld, sucheZaehler, sucheFehler, sucheSuchen, sucheWeiter, sucheZurueck, sucheMarken, sucheMarkenLesen,
   dateiwahlenSammeln, gesammelteDateiwahlen, formatierungsElementeZaehlen,
   beendenKnopf, beendenBetaetigen, beendetMeldung, beendenFehler, beendenScheitertMit, modusWaehlen, neuLaden,
   kopfZahlen, fortschrittZaehler, commitZeileZusammenfassung, commitZeileText, pruefeKopfZahlen, pruefeFortschritt, pruefeCommitZeileZusammenfassung,
