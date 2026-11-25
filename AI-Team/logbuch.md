@@ -430,3 +430,10 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Ursache gemessen: die Probe verglich die Reihenfolge zweier paralleler git-Aufrufe (3 von 20 rot); jetzt Ruhe abwarten (alle `/api/`-Anfragen beantwortet) und Menge vergleichen. Mutant mit zusätzlichem Aufruf 5/5 rot. 0,10 $.
 - Lehre: Eine Prozessprobe sichert zu, *was* aufgerufen wird, nicht in welcher Reihenfolge parallele Wege enden.
 - Gate: NUnit 1322/1322, Playwright 774/774 zweimal — erstes Gate des Tages ohne Wackler.
+| 2026-11-25 | #41 | Detailplanung | planer | bestanden | 18 min | Claude Opus: Vision fortgeschrieben, I0037–I0043 (35 Bubbles), R00036–R00042, 9 Fragen · claude · Lauf 41-planer-1 · 7,35 $ · Karte gesamt 7,35 $ |
+| 2026-11-25 | #41 | Detailplanung | product-owner | bestanden | 2 min | Claude Sonnet: 9 Fragen entschieden, 9a abweichend (Dateien auch außerhalb von git) · claude · sonnet · Lauf 41-product-owner-1 · 0,51 $ · Karte gesamt 7,86 $ |
+
+## Retrospektive #37 I0035 Breite der Seitenleiste ziehen (2026-11-25)
+- Durchlauf: Bau 32 min (7 Bubbles), Security kurz bestanden, Code-Review 1 Muss (unter 566 px schrumpft die Breite auf 174 und erholt sich nicht) + Sollte (566 dreifach), Nacharbeit (Wunschbreite + beidseitig klemmen, eine Quelle für 566), eigener Testwackler behoben (60/60), Director-Nachprüfung, Entwicklertest ohne Befund. Zweimal Zeitgrenze, je per Fortsetzung abgeschlossen. Karte gesamt 0,85 $.
+- Lehre: Eine geklemmte Größe braucht Wunsch und Anzeige getrennt — sonst überschreibt das Fenster die Wahl des Nutzers.
+- Gate: NUnit 1322/1322, Playwright 802/802 zweimal.
