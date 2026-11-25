@@ -437,3 +437,12 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Durchlauf: Bau 32 min (7 Bubbles), Security kurz bestanden, Code-Review 1 Muss (unter 566 px schrumpft die Breite auf 174 und erholt sich nicht) + Sollte (566 dreifach), Nacharbeit (Wunschbreite + beidseitig klemmen, eine Quelle für 566), eigener Testwackler behoben (60/60), Director-Nachprüfung, Entwicklertest ohne Befund. Zweimal Zeitgrenze, je per Fortsetzung abgeschlossen. Karte gesamt 0,85 $.
 - Lehre: Eine geklemmte Größe braucht Wunsch und Anzeige getrennt — sonst überschreibt das Fenster die Wahl des Nutzers.
 - Gate: NUnit 1322/1322, Playwright 802/802 zweimal.
+| 2026-11-25 | #41 | Detailplanung | planer | bestanden | 7 min | opencode: PO-Entscheidungen eingearbeitet · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 41-planer-2 · 0,067 $ · Karte gesamt 7,93 $ |
+| 2026-11-25 | #43 | Entwicklung | entwickler | bestanden | 25 min | opencode: farbteile mit leerem Vorgabewert, Mutant 3/3 rot · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 43-entwickler-1 · 0,36 $ · Karte gesamt 0,36 $ |
+| 2026-11-25 | #42 | Detailplanung | planer | bestanden | 43 min | Claude Opus: D0005, I0044–I0047 (21 Bubbles), R00043–R00046, 8 Fragen · claude · Lauf 42-planer-1 · 4,24 $ · Karte gesamt 4,24 $ |
+| 2026-11-25 | #42 | Detailplanung | product-owner | bestanden | 2 min | Claude Sonnet: 8 Fragen entschieden, Taste y statt b, UTF-16 später (gemessen: 22/22 SQL-Dateien UTF-8) · claude · sonnet · Lauf 42-product-owner-1 · 0,48 $ · Karte gesamt 4,72 $ |
+
+## Retrospektive #43 Syntaxfarben nebeneinander (2026-11-25)
+- Befund des dokumentar (#39) beim Aufnehmen der Screenshots: TypeError in `farbe-werte.js`, Färbung nebeneinander brach ab. Fix an der einen Stelle (`farbteile(teile, stuecke = [])`), Unit + 2 E2E rot→grün, Mutant 3/3 rot. Kleiner Fix mit Test: Director-Nachprüfung statt Reviews. 0,36 $.
+- Lehre: Wer die Oberfläche für Leser abbildet, findet, was Tests nicht abdecken — der dokumentar ist auch ein Prüfer.
+- Gate: NUnit 1322/1322, Playwright 805/805 zweimal.
