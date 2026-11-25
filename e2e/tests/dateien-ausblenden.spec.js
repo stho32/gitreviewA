@@ -4,6 +4,7 @@
 const { test, expect } = require('../dsl/gitreviewa.js');
 const repos = require('../treiber/wegwerf-repo.js');
 const beobachtung = require('../treiber/beobachtung.js');
+const hakenSeite = require('../treiber/haken-oberflaeche.js');
 
 const REPO_Q = {
   'README.md': 'a\nb\n',
@@ -35,6 +36,9 @@ test.describe('Dateien ausblenden (R00025)', () => {
     await expect(gr.ausblendenZaehler(page)).toHaveText('2 ausgeblendet, davon 2 Muster');
     await expect.poll(async () => (await dateinamen(page, gr)).sort()).toEqual([...SICHTBAR_MIT_ZWEI_MUSTERN].sort());
     await expect(gr.fortschrittZaehler(page)).toContainText('von 7 Dateien');
+
+    await hakenSeite.kaestchenMitPfadBetaetigen(page, 'README.md');
+    await expect(gr.fortschrittZaehler(page)).toHaveText('1 von 7 Dateien abgehakt');
 
     await gr.modusWaehlen(page, 'einzeln');
     await expect(gr.ausblendenZaehler(page)).toHaveText('2 ausgeblendet, davon 2 Muster');

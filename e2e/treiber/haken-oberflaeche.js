@@ -30,6 +30,15 @@ async function kaestchenBetaetigen(page, name) {
   await kaestchen(page, name).click();
 }
 
+/** Das Kästchen der Dateizeile mit genau diesem vollen Pfad (ein Name kann Teil eines anderen sein: `README.md` in `docs/README.md`). */
+function kaestchenMitPfad(page, pfad) {
+  return page.locator(`${DATEIZEILE}[data-pfad="${pfad}"] input.haken`);
+}
+
+async function kaestchenMitPfadBetaetigen(page, pfad) {
+  await kaestchenMitPfad(page, pfad).click();
+}
+
 /** Drückt Tab, bis das Kästchen von `name` den Fokus hat (höchstens TAB_HOECHSTENS-mal), dann die Leertaste. */
 async function perTastaturAbhaken(page, name) {
   const ziel = kaestchen(page, name);
@@ -196,7 +205,7 @@ async function zeitBisFortschritt(page, text, startMs) {
 }
 
 module.exports = {
-  kaestchen, kaestchenBetaetigen, perTastaturAbhaken, hakenSetzenScheitert, hakenSetzenVerzoegern, standLesenScheitert,
+  kaestchen, kaestchenBetaetigen, kaestchenMitPfad, kaestchenMitPfadBetaetigen, perTastaturAbhaken, hakenSetzenScheitert, hakenSetzenVerzoegern, standLesenScheitert,
   pruefeFortschritt, pruefeBalkenanteil, pruefeAbgehakt, pruefeKaestchenName, pruefeFokusAufKaestchen, pruefeHakenMeldung, pruefeKaestchenGesperrt,
   pruefeKaestchenflaeche, zeitBisFortschritt, gesperrtesKaestchenBetaetigen, hakenAnfragenZaehlen, pruefeGesperrt, pruefeBedienbar,
 };
