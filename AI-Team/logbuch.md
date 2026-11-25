@@ -321,3 +321,9 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-25 | #7 | Reviews | code-reviewer | befund | 11 min | opencode: B1 colgroup fehlt, B2 Link in aria-hidden · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 7-code-reviewer-1 · 0,20 $ · Karte gesamt 0,98 $ |
 | 2026-11-25 | #7 | Reviews | security-reviewer | bestanden | 11 min | opencode: kein Muss · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 7-security-reviewer-1 · 0,13 $ · Karte gesamt 1,11 $ |
 | 2026-11-25 | #35 | Detailplanung | planer | bestanden | 22 min | opencode: I0032 angelegt und verfeinert, R00031, 5 Fragen an PO · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 35-planer-1 · 0,26 $ · Karte gesamt 0,26 $ |
+| 2026-11-25 | #25 | Entwicklertest | entwickler | bestanden | 29 min | opencode: Rebase auf main mit #18 gelöst (haken.js beide Seiten) · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 25-entwickler-3 · 0,052 $ · Karte gesamt 3,17 $ |
+
+## Retrospektive #25 I0025 Nächste ungeprüfte Datei (2026-11-25)
+- Durchlauf: Detailplanung 7 min, Bau parallel zu #13 70 min, Code-Review ohne Muss mit 2× kriterium_fehlt (NFA stderr unerfüllbar; AK zu f⟨0xFF⟩ falsch angenommen → PO streicht/engt ein, 1. PO-Lauf entgleist), Entwicklertest 10/11 — S6 „ausgeblendete überspringen“ nicht beobachtbar, weil #13 beim Bau noch nicht auf main war; nach Rebase S6 rot (Verdrahtung fehlte), Nacharbeit, Nachtest grün; Rebase-Konflikt `haken.js` mit #18 vom entwickler gelöst. Karte gesamt 3,17 $ (Entwicklertest 1,69 $ allein, Zeitgrenze).
+- Lehre: Zwei parallel gebaute Karten mit gegenseitiger Abhängigkeit (I0025 überspringt, was I0013 ausblendet) brauchen die Integrationsprobe nach dem Merge der ersten — die Planung nannte die Abhängigkeit nicht im `Braucht`.
+- Gate: NUnit 1209/1209, Playwright 539/539 in Lauf 1 und 3; Lauf 2 zwei Wackler unter Last.
