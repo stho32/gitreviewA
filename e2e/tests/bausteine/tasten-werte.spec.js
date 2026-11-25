@@ -21,10 +21,13 @@ function lage(zusatz = {}) {
 /** Alle Tasten, die die Schicht abfängt (die Feld-Tasten und das reine Esc gehören nicht dazu). */
 const GLOBALE_TASTEN = werte.EINTRAEGE.filter(eintrag => !eintrag.imFeld && !eintrag.nurEbene);
 
+/** Die Aktionen, deren Bedienelement der Katalog nennt — in diesen Rechnungen „gebaut“. */
+const GEBAUT = werte.EINTRAEGE.filter(eintrag => eintrag.ziel).map(eintrag => eintrag.aktion);
+
 test.describe('Baustein Tasten-Werte — Tastenbelegung und Kontext (B2901)', () => {
   test('soll jede Taste der Tabelle auf genau eine Aktion abbilden', () => {
     for (const eintrag of GLOBALE_TASTEN) {
-      const anlage = lage({ modus: werte.EINZELN, vorhanden: ['anordnungWechseln', 'abgehakteAusblenden', 'suche'] });
+      const anlage = lage({ modus: werte.EINZELN, vorhanden: GEBAUT });
 
       expect(werte.aktionFuer(eintrag.taste, anlage), `Taste ${eintrag.taste}`).toBe(eintrag.aktion);
     }
@@ -57,12 +60,12 @@ test.describe('Baustein Tasten-Werte — Tastenbelegung und Kontext (B2901)', ()
       expect(werte.aktionFuer(taste, lage({ modifikatoren: { ...OHNE_MODIFIKATOREN, alt: true } })), `Alt+${taste}`).toBeNull();
       expect(werte.aktionFuer(taste, lage({ modifikatoren: { ...OHNE_MODIFIKATOREN, meta: true } })), `Meta+${taste}`).toBeNull();
     }
-    expect(werte.aktionFuer('?', lage())).toBe('hilfe');
+    expect(werte.aktionFuer('?', lage({ vorhanden: ['hilfe'] }))).toBe('hilfe');
     expect(werte.aktionFuer('/', lage({ vorhanden: ['suche'] }))).toBe('suche');
   });
 
   test('soll AltGr für [ und ] von Strg+Alt unterscheiden', () => {
-    const einzeln = { modus: werte.EINZELN };
+    const einzeln = { modus: werte.EINZELN, vorhanden: GEBAUT };
     expect(werte.aktionFuer(']', lage({ ...einzeln, modifikatoren: { ...OHNE_MODIFIKATOREN, alt: true, altGraph: true } }))).toBe('commitWeiter');
     expect(werte.aktionFuer('[', lage({ ...einzeln, modifikatoren: { ...OHNE_MODIFIKATOREN, alt: true, altGraph: true } }))).toBe('commitZurueck');
     expect(werte.aktionFuer(']', lage({ ...einzeln, modifikatoren: { ...OHNE_MODIFIKATOREN, strg: true, alt: true } }))).toBeNull();
@@ -84,8 +87,8 @@ test.describe('Baustein Tasten-Werte — Tastenbelegung und Kontext (B2901)', ()
   test('soll [ und ] nur in „Einzeln“ verfügbar machen', () => {
     expect(werte.aktionFuer(']', lage({ modus: werte.ZUSAMMEN }))).toBeNull();
     expect(werte.aktionFuer('[', lage({ modus: werte.ZUSAMMEN }))).toBeNull();
-    expect(werte.aktionFuer(']', lage({ modus: werte.EINZELN }))).toBe('commitWeiter');
-    expect(werte.aktionFuer('[', lage({ modus: werte.EINZELN }))).toBe('commitZurueck');
+    expect(werte.aktionFuer(']', lage({ modus: werte.EINZELN, vorhanden: GEBAUT }))).toBe('commitWeiter');
+    expect(werte.aktionFuer('[', lage({ modus: werte.EINZELN, vorhanden: GEBAUT }))).toBe('commitZurueck');
   });
 });
 
@@ -104,8 +107,8 @@ test.describe('Baustein Tasten-Werte — Hilfe aus dem Katalog (B2901)', () => {
   });
 
   test('soll im Modus nicht verfügbare Aktionen markieren', () => {
-    const zusammen = werte.belegung(lage({ modus: werte.ZUSAMMEN }));
-    const einzeln = werte.belegung(lage({ modus: werte.EINZELN }));
+    const zusammen = werte.belegung(lage({ modus: werte.ZUSAMMEN, vorhanden: ['commitWeiter', 'abhaken'] }));
+    const einzeln = werte.belegung(lage({ modus: werte.EINZELN, vorhanden: ['commitWeiter', 'abhaken'] }));
 
     const eintrag = (gruppen, aktion) => gruppen.flatMap(gruppe => gruppe.eintraege).find(e => e.aktion === aktion);
     expect(eintrag(zusammen, 'commitWeiter').verfuegbar).toBe(false);
@@ -152,8 +155,8 @@ test.describe('Baustein Tasten-Werte — Abschnittswechsel (B2903)', () => {
 
 test.describe('Baustein Tasten-Werte — Statuszeile und Hinweise (B2904/B2906)', () => {
   test('soll die wichtigsten Kürzel des Bereichs nennen und in „Einzeln“ zusätzlich den Commit', () => {
-    const zusammen = werte.statuszeile(lage({ modus: werte.ZUSAMMEN }));
-    const einzeln = werte.statuszeile(lage({ modus: werte.EINZELN }));
+    const zusammen = werte.statuszeile(lage({ modus: werte.ZUSAMMEN, vorhanden: GEBAUT }));
+    const einzeln = werte.statuszeile(lage({ modus: werte.EINZELN, vorhanden: GEBAUT }));
     const texte = zeilen => zeilen.map(zeile => zeile.text);
 
     expect(texte(zusammen)).toEqual(['Datei', 'Abschnitt', 'Zeile', 'anmerken', 'abhaken', 'nächste ungeprüfte', 'alle Kürzel']);
@@ -173,5 +176,7 @@ test.describe('Baustein Tasten-Werte — Statuszeile und Hinweise (B2904/B2906)'
     expect(hinweis('#diff .sprung-knopf').aria).toBe('o');
     expect(hinweis('#commit-waehler').anzeige).toEqual(['[', ']']);
     expect(hinweis('#hilfe-knopf').aria).toBe('?');
+    expect(hinweis('.anordnung-wahl')).toEqual({ selektor: '.anordnung-wahl', anzeige: ['v'], aria: 'v' });
+    expect(hinweis('#suche-eingabe').aria).toBe('/');
   });
 });

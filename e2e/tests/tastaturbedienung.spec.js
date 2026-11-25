@@ -342,6 +342,28 @@ test.describe('R00030 Kürzel an den Bedienelementen', () => {
     expect((await tast.hinweis('#diff .umbruch-schalter')).aria).toBe('w');
     expect((await tast.hinweis('#diff .leerraum-schalter')).aria).toBe('l');
   });
+
+  test('jeder Katalogeintrag mit vorhandenem Ziel trägt seinen Hinweis am Element — auch die Anordnung (v)', async ({ tast }) => {
+    await tast.starten();
+    await tast.dateiAnsehen('README.md');
+
+    // Abnahme-Probe: der Umschalter aus I0007 trägt den Hinweis seines Katalogeintrags.
+    const anordnung = await tast.hinweis('.anordnung-wahl');
+    expect(anordnung).toEqual({ aria: 'v', kbd: 'v', kbdVerborgen: true, name: 'Anordnung' });
+
+    // Variante: die Hilfe nennt die Anordnung verfügbar.
+    await tast.druecke('?');
+    await tast.hilfeOffen(true);
+    const gruppen = await tast.hilfeGruppen();
+    const zeile = gruppen.flatMap(gruppe => gruppe.eintraege).find(eintrag => eintrag.text.includes('nebeneinander'));
+    expect(zeile, 'Hilfe-Zeile der Anordnung').toBeTruthy();
+    expect(zeile.verfuegbar, 'Hilfe nennt die Anordnung verfügbar').toBe(true);
+    await tast.druecke('Escape');
+
+    // Die Klasse: jedes Ziel im Katalog trägt `aria-keyshortcuts` und ein verborgenes `<kbd>`.
+    const fehlend = await tast.fehlendeHinweiseAusKatalog();
+    expect(fehlend, 'Katalogeinträge ohne Hinweis am Ziel').toEqual([]);
+  });
 });
 
 test.describe('R00030 Hilfe-Overlay', () => {

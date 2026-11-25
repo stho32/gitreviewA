@@ -19,6 +19,8 @@
     zeichneStatuszeile();
     zeichneHinweise();
     document.addEventListener('modus-gewechselt', zeichneStatuszeile);
+    // Die Statuszeile hängt an den gebauten Bedienelementen (etwa dem Kästchen der Dateiliste); sie folgt der Liste.
+    document.addEventListener('dateiliste-gezeichnet', zeichneStatuszeile);
     for (const ereignis of ['dateiliste-gezeichnet', 'diff-gezeichnet', 'haken-stand-geladen']) {
       document.addEventListener(ereignis, zeichneHinweise);
     }

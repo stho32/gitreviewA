@@ -79,6 +79,7 @@ function tastaturSprache(gr, page) {
     fokusAuf: selektor => tastatur.pruefeFokusAuf(page, selektor),
     hintergrundInert: () => tastatur.hintergrundInert(page),
     hinweis: selektor => tastatur.hinweis(page, selektor),
+    fehlendeHinweiseAusKatalog: () => tastatur.fehlendeHinweise(page),
     fokusringPerTab: selektor => tastatur.fokusringPerTab(page, selektor),
     fokusringAktuell: () => tastatur.fokusringAktuell(page),
     ansage: text => tastatur.pruefeAnsage(page, text),

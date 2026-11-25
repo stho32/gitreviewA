@@ -21,34 +21,35 @@
   /**
    * Der Katalog: `taste` ist der Wert von `KeyboardEvent.key`, `anzeige` steht so in Hilfe und Statuszeile, `text` ist die
    * Beschreibung der Aktion. `nurEinzeln` gilt nur im Modus „Einzeln“; `ziel` nennt das Bedienelement, dessen Vorhandensein die
-   * Aktion verfügbar macht (die Karte des Bedienelements setzt es, ohne diese Schicht umzubauen); `imFeld` heißt: die Taste wirkt
-   * nur im Feld selbst und wird hier nie abgefangen. `kurz` ist der Text der Statuszeile. Eine Karte, die ein Bedienelement mit
-   * Kürzel baut, ergänzt ihren Eintrag hier.
+   * Aktion verfügbar macht und das den Hinweis (`<kbd>` und `aria-keyshortcuts`) trägt (die Karte des Bedienelements setzt es,
+   * ohne diese Schicht umzubauen); `imFeld` heißt: die Taste wirkt nur im Feld selbst und wird hier nie abgefangen. `kurz` ist
+   * der Text der Statuszeile. Eine Karte, die ein Bedienelement mit Kürzel baut, ergänzt ihren Eintrag hier — Hinweis und
+   * Verfügbarkeit folgen aus demselben `ziel`.
    */
   const EINTRAEGE = [
-    { taste: '?', aktion: 'hilfe', bereich: ALLGEMEIN, text: 'diese Übersicht', anzeige: ['?'], kurz: 'alle Kürzel' },
+    { taste: '?', aktion: 'hilfe', bereich: ALLGEMEIN, text: 'diese Übersicht', anzeige: ['?'], kurz: 'alle Kürzel', ziel: '#hilfe-knopf' },
     { taste: 'Escape', aktion: 'schliessen', bereich: ALLGEMEIN, text: 'Notizfeld verwerfen, Ebene schließen', anzeige: ['Esc'], nurEbene: true },
     { taste: 'j', aktion: 'dateiWeiter', bereich: LISTE, text: 'nächste Datei', anzeige: ['j'], kurz: 'Datei' },
     { taste: 'k', aktion: 'dateiZurueck', bereich: LISTE, text: 'vorige Datei', anzeige: ['k'] },
-    { taste: 'u', aktion: 'naechsteUngepruefte', bereich: LISTE, text: 'nächste ungeprüfte Datei', anzeige: ['u'], kurz: 'nächste ungeprüfte' },
-    { taste: 'x', aktion: 'abhaken', bereich: LISTE, text: 'gewählte Datei abhaken / Haken entnehmen', anzeige: ['x'], kurz: 'abhaken' },
-    { taste: 'm', aktion: 'modusWechseln', bereich: LISTE, text: 'Zusammen / Einzeln', anzeige: ['m'], kurz: 'einzeln durchgehen' },
-    { taste: ']', aktion: 'commitWeiter', bereich: LISTE, text: 'nächster Commit (nur Einzeln)', anzeige: [']'], nurEinzeln: true, kurz: 'Commit' },
-    { taste: '[', aktion: 'commitZurueck', bereich: LISTE, text: 'voriger Commit (nur Einzeln)', anzeige: ['['], nurEinzeln: true },
+    { taste: 'u', aktion: 'naechsteUngepruefte', bereich: LISTE, text: 'nächste ungeprüfte Datei', anzeige: ['u'], kurz: 'nächste ungeprüfte', ziel: '#naechste-ungepruefte' },
+    { taste: 'x', aktion: 'abhaken', bereich: LISTE, text: 'gewählte Datei abhaken / Haken entnehmen', anzeige: ['x'], kurz: 'abhaken', ziel: '#datei-zeilen input.haken' },
+    { taste: 'm', aktion: 'modusWechseln', bereich: LISTE, text: 'Zusammen / Einzeln', anzeige: ['m'], kurz: 'einzeln durchgehen', ziel: '.kz-modus' },
+    { taste: '[', aktion: 'commitZurueck', bereich: LISTE, text: 'voriger Commit (nur Einzeln)', anzeige: ['['], nurEinzeln: true, ziel: '#commit-waehler' },
+    { taste: ']', aktion: 'commitWeiter', bereich: LISTE, text: 'nächster Commit (nur Einzeln)', anzeige: [']'], nurEinzeln: true, kurz: 'Commit', ziel: '#commit-waehler' },
     { taste: 'h', aktion: 'abgehakteAusblenden', bereich: LISTE, text: 'Abgehakte ausblenden', anzeige: ['h'], ziel: '#ausblenden' },
     { taste: 'n', aktion: 'abschnittWeiter', bereich: DIFF, text: 'nächster Abschnitt', anzeige: ['n'], kurz: 'Abschnitt' },
     { taste: 'p', aktion: 'abschnittZurueck', bereich: DIFF, text: 'voriger Abschnitt', anzeige: ['p'] },
     { taste: 'ArrowDown', aktion: 'zeileWeiter', bereich: DIFF, text: 'Zeile im Diff wählen', anzeige: ['↓'], kurz: 'Zeile' },
     { taste: 'ArrowUp', aktion: 'zeileZurueck', bereich: DIFF, text: 'Zeile im Diff wählen', anzeige: ['↑'] },
     { taste: 'Enter', aktion: 'zeileAnmerken', bereich: DIFF, text: 'Zeile anmerken', anzeige: ['Enter'], kurz: 'anmerken' },
-    { taste: 's', aktion: 'ansichtWechseln', bereich: DIFF, text: 'nur Änderungen / ganze Datei', anzeige: ['s'] },
-    { taste: 'v', aktion: 'anordnungWechseln', bereich: DIFF, text: 'untereinander / nebeneinander', anzeige: ['v'], ziel: '.anordnung-wahl [data-anordnung]' },
-    { taste: 'w', aktion: 'umbruchWechseln', bereich: DIFF, text: 'Umbruch', anzeige: ['w'] },
-    { taste: 'l', aktion: 'leerraumWechseln', bereich: DIFF, text: 'Leerraum', anzeige: ['l'] },
+    { taste: 's', aktion: 'ansichtWechseln', bereich: DIFF, text: 'nur Änderungen / ganze Datei', anzeige: ['s'], ziel: '#diff .diffansicht-wahl' },
+    { taste: 'v', aktion: 'anordnungWechseln', bereich: DIFF, text: 'untereinander / nebeneinander', anzeige: ['v'], ziel: '.anordnung-wahl' },
+    { taste: 'w', aktion: 'umbruchWechseln', bereich: DIFF, text: 'Umbruch', anzeige: ['w'], ziel: '#diff .umbruch-schalter' },
+    { taste: 'l', aktion: 'leerraumWechseln', bereich: DIFF, text: 'Leerraum', anzeige: ['l'], ziel: '#diff .leerraum-schalter' },
     { taste: 'g', aktion: 'naechsteLuecke', bereich: DIFF, text: 'nächste Lücke', anzeige: ['g'] },
-    { taste: 'o', aktion: 'inVsCode', bereich: DIFF, text: 'Stelle in VS Code öffnen', anzeige: ['o'] },
+    { taste: 'o', aktion: 'inVsCode', bereich: DIFF, text: 'Stelle in VS Code öffnen', anzeige: ['o'], ziel: '#diff .sprung-knopf' },
     { taste: '/', aktion: 'suche', bereich: DIFF, text: 'Suche im Diff', anzeige: ['/'], ziel: '#suche-eingabe' },
-    { taste: 'a', aktion: 'dateiAnmerken', bereich: ANMERKUNG, text: 'Datei anmerken', anzeige: ['a'] },
+    { taste: 'a', aktion: 'dateiAnmerken', bereich: ANMERKUNG, text: 'Datei anmerken', anzeige: ['a'], ziel: '#diff .datei-anmerken' },
     { taste: 'e', aktion: 'anmerkungAendern', bereich: ANMERKUNG, text: 'Anmerkung ändern', anzeige: ['e'] },
     { taste: 'Enter', aktion: 'anmerkungSpeichern', bereich: ANMERKUNG, text: 'Anmerkung speichern (im Feld)', anzeige: ['Strg', 'Enter'], imFeld: true },
   ];
@@ -63,21 +64,6 @@
     ['naechsteUngepruefte'],
     ['commitZurueck', 'commitWeiter'],
     ['hilfe'],
-  ];
-
-  /** Welches Bedienelement welchen Hinweis trägt (`<kbd>` und `aria-keyshortcuts`); der Katalog liefert die Tasten. */
-  const HINWEISE = [
-    { aktionen: ['abhaken'], selektor: '#datei-zeilen input.haken' },
-    { aktionen: ['modusWechseln'], selektor: '.kz-modus' },
-    { aktionen: ['naechsteUngepruefte'], selektor: '#naechste-ungepruefte' },
-    { aktionen: ['abgehakteAusblenden'], selektor: '#ausblenden' },
-    { aktionen: ['inVsCode'], selektor: '#diff .sprung-knopf' },
-    { aktionen: ['dateiAnmerken'], selektor: '#diff .datei-anmerken' },
-    { aktionen: ['ansichtWechseln'], selektor: '#diff .diffansicht-wahl' },
-    { aktionen: ['umbruchWechseln'], selektor: '#diff .umbruch-schalter' },
-    { aktionen: ['leerraumWechseln'], selektor: '#diff .leerraum-schalter' },
-    { aktionen: ['commitZurueck', 'commitWeiter'], selektor: '#commit-waehler' },
-    { aktionen: ['hilfe'], selektor: '#hilfe-knopf' },
   ];
 
   const ZUSAMMEN = 'zusammen';
@@ -181,16 +167,27 @@
     return zeilen;
   }
 
-  /** Hinweis und `aria-keyshortcuts` je Bedienelement: die Tasten des Katalogs als Anzeige und in ARIA-Schreibweise. */
+  /**
+   * Hinweis und `aria-keyshortcuts` je Bedienelement: der Katalog nennt im `ziel` das Element; mehrere Einträge mit demselben
+   * Ziel teilen sich einen Hinweis. Ein später gebautes Bedienelement braucht nur seinen Katalogeintrag mit `ziel` — der
+   * Hinweis erscheint ohne zweite Liste.
+   */
   function hinweise() {
-    return HINWEISE.map(hinweis => {
-      const eintraege = hinweis.aktionen.map(eintragFuerAktion).filter(eintrag => eintrag !== null);
-      return {
-        selektor: hinweis.selektor,
-        anzeige: eintraege.flatMap(eintrag => eintrag.anzeige),
-        aria: eintraege.map(eintrag => ariaTaste(eintrag.taste)).join(' '),
-      };
-    });
+    const nachZiel = new Map();
+    for (const eintrag of EINTRAEGE) {
+      if (!eintrag.ziel) {
+        continue;
+      }
+      if (!nachZiel.has(eintrag.ziel)) {
+        nachZiel.set(eintrag.ziel, []);
+      }
+      nachZiel.get(eintrag.ziel).push(eintrag);
+    }
+    return [...nachZiel].map(([ziel, eintraege]) => ({
+      selektor: ziel,
+      anzeige: eintraege.flatMap(eintrag => eintrag.anzeige),
+      aria: eintraege.map(eintrag => ariaTaste(eintrag.taste)).join(' '),
+    }));
   }
 
   /** `KeyboardEvent.key` in der Schreibweise von `aria-keyshortcuts` (R00030: `Enter`, `ArrowUp`, sonst das Zeichen selbst). */

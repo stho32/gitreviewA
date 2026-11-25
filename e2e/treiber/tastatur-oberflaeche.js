@@ -198,6 +198,40 @@ async function hinweis(page, selektor) {
   });
 }
 
+/** Jeder Katalogeintrag mit vorhandenem Ziel muss seinen Hinweis am Element tragen: `aria-keyshortcuts` und ein verborgenes `<kbd>`. */
+async function fehlendeHinweise(page) {
+  return page.evaluate(() => {
+    const werte = window.gitreviewaTastenWerte;
+    const hinweise = werte.hinweise();
+    const fehlend = [];
+    for (const eintrag of werte.EINTRAEGE) {
+      if (!eintrag.ziel) continue;
+      const elemente = [...document.querySelectorAll(eintrag.ziel)];
+      if (elemente.length === 0) continue;
+      const hinweis = hinweise.find(kandidat => kandidat.selektor === eintrag.ziel);
+      if (!hinweis) {
+        fehlend.push({ ziel: eintrag.ziel, taste: eintrag.taste, grund: 'kein Hinweis im Katalog' });
+        continue;
+      }
+      for (const element of elemente) {
+        let behaelter = element;
+        const beschriftung = element.closest('label');
+        if (element.matches('input') && beschriftung) {
+          behaelter = beschriftung;
+        }
+        const aria = element.getAttribute('aria-keyshortcuts');
+        const tasten = [...behaelter.querySelectorAll('kbd')].map(kbd => ({ text: kbd.textContent, verborgen: kbd.getAttribute('aria-hidden') === 'true' }));
+        if (aria !== hinweis.aria) {
+          fehlend.push({ ziel: eintrag.ziel, taste: eintrag.taste, grund: `aria-keyshortcuts „${aria}“ statt „${hinweis.aria}“` });
+        } else if (!tasten.some(kbd => kbd.text === eintrag.anzeige[0] && kbd.verborgen)) {
+          fehlend.push({ ziel: eintrag.ziel, taste: eintrag.taste, grund: `kein verborgenes <kbd>${eintrag.anzeige[0]}</kbd>` });
+        }
+      }
+    }
+    return fehlend;
+  });
+}
+
 /** Berechneter Fokusring des Elements mit dem Fokus: Breite, Stil und Kontrast zum Untergrund (≥ 3 : 1, geprüft im Browser). */
 async function fokusringAktuell(page) {
   return page.evaluate(() => {
@@ -503,6 +537,7 @@ module.exports = {
   hintergrundInert,
   pruefeFokusAuf,
   hinweis,
+  fehlendeHinweise,
   fokusringAktuell,
   fokusringPerTab,
   feldwert,
