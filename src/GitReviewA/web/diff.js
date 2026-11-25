@@ -19,17 +19,19 @@
   const VORZEICHEN = { plus: '+', minus: '−', kontext: '' };
 
   /** `datei`: die gewählte Datei, `alsText` ihre Wahl „Als Text zeigen“; `diffansicht`: `aenderungen` oder `ganz`, nur im Speicher der Seite
-      (nach Neuladen wieder „nur Änderungen“); `zugeklappt`: Zeilen eines langen Textes, die erst „Trotzdem laden“ zeichnet;
+      (nach Neuladen wieder „nur Änderungen“); `leerraum`: „beachten“ (Start) oder „ignorieren“, ebenfalls nur im Speicher der Seite;
+      `zugeklappt`: Zeilen eines langen Textes, die erst „Trotzdem laden“ zeichnet;
       `anzeige`: zählt jeden neuen Inhalt des Bereichs — eine Färbung gilt nur für die Anzeige, für die sie gestellt wurde;
       `sprung`: das Ziel der gewählten Datei aus `sprung-geladen` (null, solange keine Antwort da ist); `gezeichnet`: Commit, Pfad und
       Zeilen des zuletzt gezeichneten Diffs (null ohne Wahl) — daran hängt, ob ein Ziel noch gilt; `gewaehlteZeile`: die angeklickte
       Zeile neu, sonst null. */
-  const zustand = { letzteLadung: 0, datei: null, alsText: false, diffansicht: 'aenderungen', zugeklappt: null, anzeige: 0, sprung: null, gezeichnet: null, gewaehlteZeile: null };
+  const zustand = { letzteLadung: 0, datei: null, alsText: false, diffansicht: 'aenderungen', leerraum: 'beachten', zugeklappt: null, anzeige: 0, sprung: null, gezeichnet: null, gewaehlteZeile: null };
 
   function init() {
     const ansicht = ansichtElemente();
     zeigeAufforderungZurWahl(ansicht);
     ansicht.umbruchElement.addEventListener('change', () => schalteUmbruch(ansicht));
+    ansicht.leerraumElement.addEventListener('change', () => schalteLeerraum(ansicht));
     for (const diffansichtElement of ansicht.diffansichtElemente) {
       diffansichtElement.checked = diffansichtElement.value === zustand.diffansicht;
       diffansichtElement.addEventListener('change', () => schalteDiffansicht(ansicht, diffansichtElement.value));
@@ -48,6 +50,7 @@
     return {
       wurzelElement,
       umbruchElement: wurzelElement.querySelector('.umbruch-schalter'),
+      leerraumElement: wurzelElement.querySelector('.leerraum-schalter'),
       diffansichtElemente: wurzelElement.querySelectorAll('input[name="diffansicht"]'),
       pfadElement: wurzelElement.querySelector('.diff-pfad'),
       meldungElement: wurzelElement.querySelector('.diff-meldung'),
@@ -69,6 +72,12 @@
   /** Die Wahl liegt am Bereich, nicht am Diff: sie bleibt beim Wechsel von Datei und Commit. */
   function schalteUmbruch(ansicht) {
     ansicht.wurzelElement.classList.toggle('umbr', ansicht.umbruchElement.checked);
+  }
+
+  /** Wie Umbruch und Ansicht liegt die Leerraum-Stellung am Bereich: sie gilt für jede weitere Datei und jeden weiteren Commit,
+      auch wenn noch keine Datei gewählt ist (R00026). */
+  function schalteLeerraum(ansicht) {
+    zustand.leerraum = ansicht.leerraumElement.checked ? 'ignorieren' : 'beachten';
   }
 
   /** Wie der Umbruch liegt die Diffansicht am Bereich: sie gilt für jede weitere Datei, auch wenn noch keine gewählt ist. */

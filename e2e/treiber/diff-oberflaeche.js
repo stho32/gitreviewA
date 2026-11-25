@@ -126,6 +126,28 @@ async function umbruchUmschalten(page) {
   await page.locator(BEREICH).getByLabel('Umbruch').click();
 }
 
+/** Der Umschalter „Leerraum“ trägt seinen sichtbaren Text als Namen (R00026). */
+const LEERRAUM_NAME = 'Leerraum ignorieren';
+
+async function leerraumUmschalten(page) {
+  await page.locator(BEREICH).getByRole('checkbox', { name: LEERRAUM_NAME }).click();
+}
+
+async function leerraumPerTastaturUmschalten(page) {
+  await page.locator(BEREICH).getByRole('checkbox', { name: LEERRAUM_NAME }).focus();
+  await page.keyboard.press('Space');
+}
+
+/** Die Stellung des Leerraum-Umschalters: „beachten“ (nicht angekreuzt, Start) oder „ignorieren“. */
+async function pruefeLeerraumStellung(page, stellung) {
+  const schalter = page.locator(BEREICH).getByRole('checkbox', { name: LEERRAUM_NAME });
+  if (stellung === 'ignorieren') {
+    await expect(schalter).toBeChecked();
+    return;
+  }
+  await expect(schalter).not.toBeChecked();
+}
+
 /** Höhe der Zeile mit Nummer neu `neu` im Verhältnis zur Zeile 1, und ob der Bereich waagerecht scrollen kann. */
 async function zeilenmass(page, neu) {
   return page.evaluate(([rollSelektor, zeilenSelektor, nummer]) => {
@@ -406,4 +428,5 @@ module.exports = {
   diffAntwortZuGross, blockKnoten, warteAufFarbe, langeAufgabenBeimScrollen, zugeklapptRechtzeitigNachKlick, zugeklapptRechtzeitigNachAktion,
   pruefeSprungzeile, pruefeSprungzeileName, sprungzeileLiegtImVerborgenen, pruefeSprungkopfName, sprungHunkLink, zeileWaehlen,
   pruefeSprungVerweis, pruefeSprungGrund, pruefeSprungHinweis, sprungAntwortVerzoegern, sprungAntwortScheitern,
+  leerraumUmschalten, leerraumPerTastaturUmschalten, pruefeLeerraumStellung,
 };

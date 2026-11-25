@@ -102,6 +102,10 @@ function diffSprache(gr, page) {
     diffMeldetFehler: (pfad, text) => diffSeite.pruefeMeldung(page, pfad, text, true),
     fordertZurWahlAuf: () => diffSeite.pruefeAufforderungZurWahl(page),
     umbruchUmschalten: () => diffSeite.umbruchUmschalten(page),
+    /** Umschalter „Leerraum“ (R00026): klicken, per Tastatur umschalten, die Stellung prüfen. */
+    leerraumUmschalten: () => diffSeite.leerraumUmschalten(page),
+    leerraumPerTastaturUmschalten: () => diffSeite.leerraumPerTastaturUmschalten(page),
+    leerraumIst: stellung => diffSeite.pruefeLeerraumStellung(page, stellung),
     langeZeileEinzeilig: (neu, text) => diffSeite.pruefeEinzeilig(page, neu, text),
     langeZeileUmbrochen: (neu, text) => diffSeite.pruefeUmbrochen(page, neu, text),
     fremderTextBleibtText: async () => {
