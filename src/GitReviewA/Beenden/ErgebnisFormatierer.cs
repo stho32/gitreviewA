@@ -16,16 +16,22 @@ internal static class ErgebnisFormatierer
     private const string Ueberschrift = "# Ergebnis manueller Review";
     private const string OhneAnmerkungen = "Keine Anmerkungen.";
     private const string DateienUeberschrift = "## Dateien";
+    /** Höchstzahl Zeilen je Bereichszitat (R00031); danach genau eine Zeile mit dem Rest. */
+    private const int HoechstzahlZitatzeilen = 20;
 
-    public static string Formatiere(Anmerkungsliste anmerkungen, Dateienstand dateien)
+    /// <summary>
+    /// `bereichszeilen` trägt je stabiler Nummer einer Bereichsanmerkung die gelesenen Zeilen (B3007); fehlt der Eintrag oder ist
+    /// der Bereich nicht lesbar, bleibt der Abschnitt bei Stelle und Text — nichts wird still behauptet (R00031).
+    /// </summary>
+    public static string Formatiere(Anmerkungsliste anmerkungen, Dateienstand dateien, IReadOnlyDictionary<int, Bereichszeilenlesung>? bereichszeilen = null)
     {
         var abschnitte = new List<string> { Ueberschrift };
-        abschnitte.AddRange(AnmerkungsAbschnitte(anmerkungen));
+        abschnitte.AddRange(AnmerkungsAbschnitte(anmerkungen, bereichszeilen));
         abschnitte.AddRange(DateiAbschnitte(dateien));
         return VerbindeAbschnitte(abschnitte);
     }
 
-    private static List<string> AnmerkungsAbschnitte(Anmerkungsliste anmerkungen)
+    private static List<string> AnmerkungsAbschnitte(Anmerkungsliste anmerkungen, IReadOnlyDictionary<int, Bereichszeilenlesung>? bereichszeilen)
     {
         if (anmerkungen.Anzahl == 0)
         {
@@ -38,6 +44,11 @@ internal static class ErgebnisFormatierer
             position += 1;
             abschnitte.Add(Stellenueberschrift(position, anmerkung));
             abschnitte.Add($"Commit: {anmerkung.Commit}");
+            var zitat = ZitatDerMarkiertenZeilen(anmerkung, bereichszeilen);
+            if (zitat is not null)
+            {
+                abschnitte.Add(zitat);
+            }
             abschnitte.Add(AlsZitat(anmerkung.Text));
         }
         return abschnitte;
@@ -48,16 +59,47 @@ internal static class ErgebnisFormatierer
         return string.Join(Zeilenende + Zeilenende, abschnitte) + Zeilenende;
     }
 
-    /// <summary>`## n.` ist die Position im Ergebnis (R00002), nicht die stabile Nummer der Anmerkung.</summary>
+    /// <summary>`## n.` ist die Position im Ergebnis (R00002), nicht die stabile Nummer der Anmerkung. Ein Bereich beginnt mit
+        /// derselben Form wie eine Zeile (`<Datei>:<von>`) und trägt die zweite Nummer als Anhang (R00031).</summary>
     private static string Stellenueberschrift(int position, Anmerkung anmerkung)
     {
         var nummer = position.ToString(CultureInfo.InvariantCulture);
         var datei = UnsichtbareZeichen.AlsMarken(anmerkung.Datei);
+        if (anmerkung.Von is { } von && anmerkung.Bis is { } bis)
+        {
+            return string.Create(CultureInfo.InvariantCulture, $"## {nummer}. {datei}:{von}-{bis}");
+        }
         if (anmerkung.Zeile is not { } zeile)
         {
             return $"## {nummer}. {datei} (ganze Datei)";
         }
         return $"## {nummer}. {datei}:{zeile.ToString(CultureInfo.InvariantCulture)}";
+    }
+
+    /// <summary>
+    /// Das Zitat der markierten Zeilen (R00031): je Zeile `    <Nummer neu>: <Text>` (vier Leerzeichen, damit Markdown einen
+    /// Codeblock liest), höchstens <see cref="HoechstzahlZitatzeilen"/> Zeilen, danach genau eine Zeile mit dem Rest. Unsichtbares
+    /// und Richtungsänderndes des fremden Textes steht als Marke — dieselbe eine Zeichenliste wie überall (`UnsichtbareZeichen`).
+    /// </summary>
+    private static string? ZitatDerMarkiertenZeilen(Anmerkung anmerkung, IReadOnlyDictionary<int, Bereichszeilenlesung>? bereichszeilen)
+    {
+        if (anmerkung.Von is not { } von || anmerkung.Bis is null || bereichszeilen is null || !bereichszeilen.TryGetValue(anmerkung.Nummer, out var lesung) || !lesung.IstLesbar)
+        {
+            return null;
+        }
+        var gezeigt = lesung.Zeilen.Length > HoechstzahlZitatzeilen ? lesung.Zeilen[..HoechstzahlZitatzeilen] : lesung.Zeilen;
+        var zeilen = new List<string>(gezeigt.Length + 1);
+        for (var stelle = 0; stelle < gezeigt.Length; stelle++)
+        {
+            var nummer = (von + stelle).ToString(CultureInfo.InvariantCulture);
+            zeilen.Add($"    {nummer}: {UnsichtbareZeichen.AlsMarken(gezeigt[stelle])}");
+        }
+        var weitere = lesung.Zeilen.Length - gezeigt.Length;
+        if (weitere > 0)
+        {
+            zeilen.Add(string.Create(CultureInfo.InvariantCulture, $"    … ({weitere} weitere Zeilen)"));
+        }
+        return string.Join(Zeilenende, zeilen);
     }
 
     /// <summary>

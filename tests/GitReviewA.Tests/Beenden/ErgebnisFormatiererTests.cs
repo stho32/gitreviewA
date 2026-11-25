@@ -248,6 +248,95 @@ public class ErgebnisFormatiererTests
         Assert.That(ergebnis, Is.EqualTo(OhneAnmerkungen));
     }
 
+    [Test]
+    [Description("R00031 Kriterium 11: Bereichsstelle, Commit, Zitat der markierten Zeilen, Textzitat")]
+    public void Wenn_Bereich_3_bis_7_mit_gelesenen_Zeilen_dann_Stelle_Commit_Zitat_und_Text()
+    {
+        var anmerkungen = new Anmerkungsliste([new Anmerkung(1, HashA, "lang.txt", null, "Klammer fehlt", 3, 7)]);
+        var zitate = Zitate((1, ["z03", "z04", "Z05", "z06", "z07"]));
+
+        var ergebnis = ErgebnisFormatierer.Formatiere(anmerkungen, KeineDateien, zitate);
+
+        Assert.That(ergebnis, Is.EqualTo(
+            "# Ergebnis manueller Review\n\nAnmerkungen: 1\n\n"
+            + "## 1. lang.txt:3-7\n\nCommit: " + HashA + "\n\n"
+            + "    3: z03\n    4: z04\n    5: Z05\n    6: z06\n    7: z07\n\n"
+            + "> Klammer fehlt\n"));
+    }
+
+    [Test]
+    [Description("R00031 Kriterium 11: ohne lesbare Zeilen bleibt der Abschnitt bei Stelle und Text — nichts wird still behauptet")]
+    public void Wenn_der_Bereich_nicht_gelesen_werden_konnte_dann_ohne_Zitat()
+    {
+        var anmerkungen = new Anmerkungsliste([new Anmerkung(1, HashA, "lang.txt", null, "Klammer fehlt", 3, 7)]);
+        var zitate = Zitate((1, null));
+
+        var ergebnis = ErgebnisFormatierer.Formatiere(anmerkungen, KeineDateien, zitate);
+
+        Assert.That(ergebnis, Is.EqualTo(
+            "# Ergebnis manueller Review\n\nAnmerkungen: 1\n\n"
+            + "## 1. lang.txt:3-7\n\nCommit: " + HashA + "\n\n> Klammer fehlt\n"));
+    }
+
+    [Test]
+    [Description("R00031 Kriterium 12: höchstens 20 Zeilen, danach genau eine Zeile „… (k weitere Zeilen)“")]
+    public void Wenn_der_Bereich_23_Zeilen_umfasst_dann_20_Zeilen_und_eine_Restzeile()
+    {
+        var anmerkungen = new Anmerkungsliste([new Anmerkung(1, HashA, "lang.txt", null, "lang", 1, 23)]);
+        var zitate = Zitate((1, Enumerable.Range(1, 23).Select(nummer => $"z{nummer:D2}").ToArray()));
+
+        var ergebnis = ErgebnisFormatierer.Formatiere(anmerkungen, KeineDateien, zitate);
+
+        var erwarteteZeilen = Enumerable.Range(1, 20).Select(nummer => $"    {nummer}: z{nummer:D2}").Append("    … (3 weitere Zeilen)");
+        Assert.That(ergebnis, Does.Contain("\n\n" + string.Join("\n", erwarteteZeilen) + "\n\n> lang\n"));
+        Assert.That(ergebnis.Split('\n').Count(zeile => zeile.Contains("weitere Zeilen", StringComparison.Ordinal)), Is.EqualTo(1));
+    }
+
+    [Test]
+    [Description("R00031 Kriterium 11: Zeilen- und Dateianmerkung bleiben Byte für Byte wie R00002, die Bereichsregeln ändern daran nichts")]
+    public void Wenn_Bereich_Zeile_und_Datei_zusammen_dann_nur_der_Bereich_mit_Zitat()
+    {
+        var anmerkungen = new Anmerkungsliste(
+        [
+            new Anmerkung(1, HashA, "lang.txt", null, "Bereich", 3, 7),
+            new Anmerkung(2, HashA, "lang.txt", 20, "Zeile"),
+            new Anmerkung(3, HashA, "lang.txt", null, "Datei"),
+        ]);
+        var zitate = Zitate((1, ["z03", "z04", "Z05", "z06", "z07"]));
+
+        var ergebnis = ErgebnisFormatierer.Formatiere(anmerkungen, KeineDateien, zitate);
+
+        Assert.That(ergebnis, Is.EqualTo(
+            "# Ergebnis manueller Review\n\nAnmerkungen: 3\n\n"
+            + "## 1. lang.txt:3-7\n\nCommit: " + HashA + "\n\n    3: z03\n    4: z04\n    5: Z05\n    6: z06\n    7: z07\n\n> Bereich\n\n"
+            + "## 2. lang.txt:20\n\nCommit: " + HashA + "\n\n> Zeile\n\n"
+            + "## 3. lang.txt (ganze Datei)\n\nCommit: " + HashA + "\n\n> Datei\n"));
+    }
+
+    [TestCase("\u202E", "⟨U+202E⟩")]
+    [TestCase("\u200B", "⟨U+200B⟩")]
+    [TestCase("\U000E0041", "⟨U+E0041⟩")]
+    [Description("R00031 Kriterium 13: unsichtbare und richtungsändernde Zeichen der markierten Zeilen stehen als Marke im Zitat")]
+    public void Wenn_eine_markierte_Zeile_Unsichtbares_traegt_dann_steht_die_Marke_im_Zitat(string zeichen, string marke)
+    {
+        var anmerkungen = new Anmerkungsliste([new Anmerkung(1, HashA, "fremd.txt", null, "Text", 1, 2)]);
+        var zitate = Zitate((1, ["a" + zeichen + "b", "<b>z20</b>"]));
+
+        var ergebnis = ErgebnisFormatierer.Formatiere(anmerkungen, KeineDateien, zitate);
+
+        Assert.That(ergebnis, Does.Contain($"\n    1: a{marke}b\n    2: <b>z20</b>\n"));
+    }
+
+    /// <summary>Die gelesenen Zeilen je stabiler Nummer; `null` steht für „nicht lesbar“ (kein Zitat).</summary>
+    private static Dictionary<int, Bereichszeilenlesung> Zitate(params (int Nummer, string[]? Zeilen)[] eintraege)
+    {
+        return eintraege.ToDictionary(
+            eintrag => eintrag.Nummer,
+            eintrag => eintrag.Zeilen is null
+                ? new Bereichszeilenlesung(Bereichszeilenausgang.UeberDerGrenze, [], "Diff nicht lesbar: über der Ausgabegrenze")
+                : new Bereichszeilenlesung(Bereichszeilenausgang.Gelesen, eintrag.Zeilen, string.Empty));
+    }
+
     /// <summary>Die acht Stellen aus R00003 in Auswahlreihenfolge; abgehakt sind die genannten (Commitname, Pfad).</summary>
     private static Dateienstand VorbereitungPqr(params (string Commit, string Datei)[] abgehakt)
     {

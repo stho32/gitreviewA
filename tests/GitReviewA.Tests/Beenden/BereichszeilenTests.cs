@@ -119,15 +119,15 @@ public class BereichszeilenTests
     }
 
     [Test]
-    [Description("R00031: unsichtbare und richtungsändernde Zeichen des fremden Textes erscheinen als Marke ⟨U+…⟩")]
-    public void Wenn_eine_Zeile_ein_Richtungszeichen_traegt_dann_steht_die_Marke_darin()
+    [Description("R00031: der Lesepfad liefert den fremden Text roh — die Marke setzt der Ausgaberand (ErgebnisFormatierer)")]
+    public void Wenn_eine_Zeile_ein_Richtungszeichen_traegt_dann_kommt_sie_roh_aus_dem_Lesepfad()
     {
         using var repo = DiffRepo.A();
         var leser = Leser(repo, "q", Ausgabegrenze.Standard);
 
         var lesung = leser.Lies(repo.Hash("q"), "fremd.txt", 3, 3);
 
-        Assert.That((lesung.Ausgang, lesung.Zeilen), Is.EqualTo((Bereichszeilenausgang.Gelesen, new[] { "a⟨U+202E⟩b" })));
+        Assert.That((lesung.Ausgang, lesung.Zeilen), Is.EqualTo((Bereichszeilenausgang.Gelesen, new[] { "a\u202Eb" })));
     }
 
     [Test]
