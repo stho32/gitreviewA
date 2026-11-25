@@ -264,3 +264,11 @@ kbd{font:11px/1.2 var(--kd-mono);padding:1px 4px;border:1px solid var(--kd-line-
 .hilfe-gruppe li[data-verfuegbar="false"]{color:var(--kd-muted)}
 .hilfe-tasten{display:inline-flex;gap:3px;flex:none;min-inline-size:72px}
 .hilfe-vermerk{font-size:11px;color:var(--kd-muted);font-style:italic}
+/* Fokus sichtbar (R00030, B2907): jedes Bedienelement trägt einen Ring von mindestens 2 px und mindestens 3 : 1 Kontrast zum
+   Untergrund. Der Ring ist eine Form (Breite und Abstand), nicht nur eine Farbe — er bleibt ohne Farbwahrnehmung lesbar. Die
+   spezifischeren Regeln oben (etwa -2px Versatz im Kopf) behalten ihre Zeichnung. */
+:root{--gr-fokus:var(--kd-accent);--gr-fokus-breite:2px}
+:where(button,a[href],summary,input,select,textarea,[tabindex]):focus-visible{outline:var(--gr-fokus-breite) solid var(--gr-fokus);outline-offset:2px}
+/* Im dunklen Kopf hält ein heller Ring den Kontrast (der Akzent käme dort nur auf 2,3 : 1); das Token gilt für den ganzen Kopf. */
+.kz{--gr-fokus:var(--kd-head-text)}
+.kz :focus-visible{outline-color:var(--gr-fokus)}

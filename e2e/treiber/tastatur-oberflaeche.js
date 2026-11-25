@@ -198,18 +198,67 @@ async function hinweis(page, selektor) {
   });
 }
 
-/** Berechneter Fokusring: Breite, Stil und Farbe von `outline` bzw. `box-shadow`. */
-async function fokusring(page, selektor) {
-  return page.locator(selektor).first().evaluate(element => {
+/** Berechneter Fokusring des Elements mit dem Fokus: Breite, Stil und Kontrast zum Untergrund (≥ 3 : 1, geprüft im Browser). */
+async function fokusringAktuell(page) {
+  return page.evaluate(() => {
+    const element = document.activeElement;
     const stil = getComputedStyle(element);
+    const breite = parseFloat(stil.outlineWidth) || 0;
+    const sichtbar = stil.outlineStyle !== 'none' && breite > 0;
+    let untergrund = null;
+    for (let lauf = element; lauf; lauf = lauf.parentElement) {
+      const farbe = getComputedStyle(lauf).backgroundColor;
+      if (farbe && farbe !== 'transparent' && !farbe.startsWith('rgba(0, 0, 0, 0)')) {
+        untergrund = farbe;
+        break;
+      }
+    }
+    const malerei = document.createElement('canvas');
+    malerei.width = 1;
+    malerei.height = 1;
+    const pinsel = malerei.getContext('2d', { willReadFrequently: true });
+    const alsRgb = css => {
+      pinsel.clearRect(0, 0, 1, 1);
+      pinsel.fillStyle = css;
+      pinsel.fillRect(0, 0, 1, 1);
+      const [r, g, b, a] = pinsel.getImageData(0, 0, 1, 1).data;
+      return [r, g, b, a / 255];
+    };
+    const leuchtkraft = ([r, g, b]) => {
+      const kanal = wert => {
+        const anteil = wert / 255;
+        return anteil <= 0.03928 ? anteil / 12.92 : Math.pow((anteil + 0.055) / 1.055, 2.4);
+      };
+      return (0.2126 * kanal(r)) + (0.7152 * kanal(g)) + (0.0722 * kanal(b));
+    };
+    const kontrast = (eins, zwei) => {
+      const [hell, dunkel] = [leuchtkraft(eins), leuchtkraft(zwei)].sort((a, b) => b - a);
+      return (hell + 0.05) / (dunkel + 0.05);
+    };
     return {
-      outlineBreite: parseFloat(stil.outlineWidth) || 0,
-      outlineStil: stil.outlineStyle,
-      outlineFarbe: stil.outlineColor,
-      schatten: stil.boxShadow,
-      hintergrund: stil.backgroundColor,
+      breite,
+      stil: stil.outlineStyle,
+      sichtbar,
+      farbe: stil.outlineColor,
+      untergrund,
+      kontrast: sichtbar ? kontrast(alsRgb(stil.outlineColor), alsRgb(untergrund || 'white')) : 0,
+      element: element.tagName.toLowerCase(),
     };
   });
+}
+
+/** Fokussiert das Element per Tab und liefert seinen Fokusring (der Weg, den ein Mensch nimmt). */
+async function fokusringPerTab(page, selektor) {
+  await page.locator('body').click({ position: { x: 4, y: 4 } });
+  await page.evaluate(() => document.activeElement.blur());
+  for (let schritt = 0; schritt < 80; schritt += 1) {
+    await page.keyboard.press('Tab');
+    const passt = await page.evaluate(gesucht => Boolean(document.activeElement && document.activeElement.matches(gesucht)), selektor);
+    if (passt) {
+      return fokusringAktuell(page);
+    }
+  }
+  throw new Error(`Fokus kam per Tab nicht bei ${selektor} an`);
 }
 
 /** Der Text der höflichen Live-Region der Kürzel-Aktionen. */
@@ -364,7 +413,8 @@ module.exports = {
   hintergrundInert,
   pruefeFokusAuf,
   hinweis,
-  fokusring,
+  fokusringAktuell,
+  fokusringPerTab,
   ansage,
   pruefeAnsage,
   pruefeAnsageLeer,

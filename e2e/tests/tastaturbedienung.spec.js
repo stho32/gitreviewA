@@ -356,3 +356,25 @@ test.describe('R00030 Hilfe-Overlay', () => {
 async function pageFokus(tast, selektor) {
   await tast.fokussiere(selektor);
 }
+
+test.describe('R00030 Fokus sichtbar', () => {
+  test('jedes Bedienelement und die gewählte Diff-Zeile tragen einen Fokusring von mindestens 2 px mit mindestens 3 : 1 Kontrast', async ({ tast }) => {
+    await tast.starten();
+    await tast.dateiAnsehen('src/a.txt');
+
+    for (const selektor of ['#hilfe-knopf', '.kz-modus-knopf', '#naechste-ungepruefte', '#datei-zeilen input.haken', '#diff .umbruch-schalter', '#diff .sprung-knopf']) {
+      const ring = await tast.fokusringPerTab(selektor);
+      expect(ring.sichtbar, `${selektor}: Ring sichtbar`).toBe(true);
+      expect(ring.breite, `${selektor}: Breite`).toBeGreaterThanOrEqual(2);
+      expect(ring.kontrast, `${selektor}: Kontrast`).toBeGreaterThanOrEqual(3);
+    }
+
+    await tast.inDenDiffTabben();
+    await tast.pfeilAbBis(2);
+    const zeile = await tast.fokusringAktuell();
+    expect(zeile.element).toBe('tr');
+    expect(zeile.sichtbar, 'Ring an der Diff-Zeile').toBe(true);
+    expect(zeile.breite, 'Breite an der Diff-Zeile').toBeGreaterThanOrEqual(2);
+    expect(zeile.kontrast, 'Kontrast an der Diff-Zeile').toBeGreaterThanOrEqual(3);
+  });
+});
