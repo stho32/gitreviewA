@@ -6,6 +6,7 @@ const { test, expect } = require('../dsl/datei-abhaken.js');
 
 const PAAR = 'f⟨0xFF⟩.txt';
 const MIT_ZEILENUMBRUCH = 'z\n⟨0xFF⟩.txt';
+const MIT_ZEILENUMBRUCH_ANGEZEIGT = 'z⟨U+000A⟩⟨0xFF⟩.txt';
 const NICHT_EINDEUTIG = 'Diff nicht lesbar: Name nicht eindeutig';
 const NICHT_UEBERGEBBAR = 'Diff nicht lesbar: Name nicht übergebbar';
 const NAME_NICHT_LESBAR = 'Diff dieser Datei nicht lesbar (Name mit ungültigem Byte)';
@@ -55,6 +56,17 @@ test.describe('Haken bei nicht lesbarem Diff gesperrt', () => {
     await abhaken.istGesperrt(PAAR, 1, NICHT_EINDEUTIG);
     await abhaken.istGesperrt(MIT_ZEILENUMBRUCH, 0, NICHT_UEBERGEBBAR);
     await abhaken.istAbgehakt('g.txt');
+  });
+
+  test('soll in „Zusammen“ den Sperrgrund als Text neben dem Kästchen zeigen (R00014 Kriterium 8, Befund B3)', async ({ abhaken }) => {
+    await abhaken.starten({ vorbereitung: 'Repo N mit v', commits: ['n', 'v'], modus: 'zusammen' });
+    await abhaken.dateienWarten(9);
+
+    await abhaken.fortschritt('0 von 9 Dateien abgehakt (3 nicht lesbar)');
+    await abhaken.istGesperrt(PAAR, 0, NICHT_EINDEUTIG);
+    await abhaken.istGesperrt(PAAR, 1, NICHT_EINDEUTIG);
+    await abhaken.istGesperrt(MIT_ZEILENUMBRUCH_ANGEZEIGT, 0, NICHT_UEBERGEBBAR);
+    await abhaken.istBedienbar('g.txt');
   });
 
   test('soll ohne gesperrte Stelle den Zähler ohne Zusatz zeigen (Kriterium 8, `gitreviewA $b`)', async ({ abhaken }) => {

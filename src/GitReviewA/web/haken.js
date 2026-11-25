@@ -213,7 +213,7 @@
       kaestchenElement.removeAttribute('aria-checked');
     }
     zeileElement.dataset.haken = art;
-    zeileElement.querySelector('.haken-grund').textContent = '';
+    zeileElement.querySelector('.haken-grund').textContent = grund;
   }
 
   /** Der erste Sperrgrund der Datei; leer, wenn keine ihrer Stellen gesperrt ist. */

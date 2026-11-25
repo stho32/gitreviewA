@@ -82,7 +82,7 @@ function abhakenSprache(gr, page) {
   const hash = name => repo.hashes[name];
   const kurz = name => hash(name).slice(0, 7);
 
-  async function starten({ vorbereitung = 'vorbereitung', commits, verbose = false, ohneSeite = false } = {}) {
+  async function starten({ vorbereitung = 'vorbereitung', commits, verbose = false, ohneSeite = false, modus = 'einzeln' } = {}) {
     repo = repoAnlegen(gr, vorbereitung);
     zaehlerGit = beobachtung.gitZaehlerAnlegen(gr.eigenerOrdner());
     const zusatz = verbose ? ['--verbose'] : [];
@@ -93,7 +93,7 @@ function abhakenSprache(gr, page) {
     }
     lauf = await gr.gitreviewAStarten(startrepo, commits.map(hash), { zusatz, pfadVorne: zaehlerGit.ordner });
     if (!ohneSeite) {
-      await gr.oberflaecheOeffnen(page, lauf);
+      await gr.oberflaecheOeffnen(page, lauf, modus);
     }
     return lauf;
   }
