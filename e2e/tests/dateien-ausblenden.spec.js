@@ -2,6 +2,8 @@
 // Spezifikation R00025 „Dateien ausblenden“ — Browser-Eigenes (Musterfeld, Fokus, Neuladen, Zähler, Sicht) am echten Programm.
 // Ausblenden liegt nicht auf dem Hot Path (AI-Team/factory.md); die Unit-Regeln des Abgleichs prüfen die Bausteintests.
 const { test, expect } = require('../dsl/gitreviewa.js');
+const repos = require('../treiber/wegwerf-repo.js');
+const beobachtung = require('../treiber/beobachtung.js');
 
 const REPO_Q = {
   'README.md': 'a\nb\n',
@@ -111,5 +113,41 @@ test.describe('Dateien ausblenden (R00025)', () => {
 
     await expect(gr.ausblendenZaehler(page)).toHaveText('1 ausgeblendet, davon 1 Muster');
     await expect.poll(async () => (await dateinamen(page, gr)).includes('app.lock')).toBe(false);
+  });
+
+  test('soll 2 000 Dateien spätestens 1 s nach dem Laden filtern, zählen und ohne git-Aufruf (Kriterium 7)', async ({ gr, page }) => {
+    const ordner = repos.leeresRepoAnlegen();
+    gr.gemerktesRepo({ ordner });
+    for (let nummer = 1; nummer <= 1000; nummer += 1) {
+      repos.dateiSchreiben(ordner, `viele/a-${nummer}.txt`, `x${nummer}\n`);
+    }
+    for (let nummer = 1; nummer <= 1000; nummer += 1) {
+      repos.dateiSchreiben(ordner, `viele/b-${nummer}.lock`, `y${nummer}\n`);
+    }
+    const hash = repos.commitAnlegen(ordner, { betreff: '2000 Dateien' });
+    const zaehler = beobachtung.gitZaehlerAnlegen(gr.eigenerOrdner());
+
+    const startUmMs = Date.now();
+    const lauf = await gr.gitreviewAStarten({ ordner, hash }, [hash], { pfadVorne: zaehler.ordner });
+    await gr.oberflaecheOeffnen(page, lauf, 'zusammen');
+    await gr.aufDateizeilenWarten(page, 2000);
+    const listeGeladenUmMs = Date.now();
+
+    // Gemessen ab der Betätigung des Musters (Ziel ≤ 700 ms, Grenze 1 s): die Filterung wirkt auf die bereits geladene Liste, ohne git-Aufruf.
+    const gefiltertUmMs = Date.now();
+    await gr.musterEingeben(page, '*.lock');
+
+    await expect(gr.ausblendenZaehler(page)).toHaveText('1000 ausgeblendet, davon 1000 Muster');
+    const dauerMs = Date.now() - gefiltertUmMs;
+    test.info().annotations.push({ type: 'Messwert', description: `2000 Dateien nach ${listeGeladenUmMs - startUmMs} ms geladen, gefiltert ${dauerMs} ms nach der Betätigung (Ziel ≤ 700 ms, Grenze 1000 ms)` });
+    console.log(`Messwert: 2000 Dateien nach ${listeGeladenUmMs - startUmMs} ms geladen, gefiltert ${dauerMs} ms (Grenze 1000 ms)`);
+    expect(dauerMs).toBeLessThanOrEqual(1000);
+    await gr.aufDateizeilenWarten(page, 1000);
+
+    const gitAufrufeVorher = zaehler.aufrufe().length;
+    await gr.musterEingeben(page, 'viele/a-1.txt');
+
+    await expect(gr.ausblendenZaehler(page)).toHaveText('1001 ausgeblendet, davon 1001 Muster');
+    expect(zaehler.aufrufe().length).toBe(gitAufrufeVorher);
   });
 });
