@@ -331,3 +331,8 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-25 | #7 | Nacharbeit | entwickler | bestanden | 34 min | opencode: B1 colgroup, B2 Link außerhalb aria-hidden, je rot→grün · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 7-entwickler-2 · 0,099 $ · Karte gesamt 1,21 $ |
 | 2026-11-25 | #7 | Reviews | code-reviewer | bestanden | 5 min | opencode: B1/B2 nachgeprüft mit Negativkontrolle · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 7-code-reviewer-2 · 0,093 $ · Karte gesamt 1,30 $ |
 | 2026-11-25 | #26 | Entwicklertest | entwickler | bestanden | 22 min | opencode: Rebase auf main mit #18/#25 gelöst, Zusammenspiel geprobt · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 26-entwickler-2 · 0,055 $ · Karte gesamt 1,72 $ |
+| 2026-11-25 | #7 | Entwicklertest | entwicklertester | bestanden | 14 min | opencode: alle Szenarien bestanden; Anmerkung: Lücken fehlen nebeneinander · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 7-entwicklertester-1 · 0,12 $ · Karte gesamt 1,42 $ |
+
+## Retrospektive #26 I0026 Abgehakte ausblenden (2026-11-25)
+- Durchlauf: Detailplanung mit Angleich an R00025 (Zähler im Kopf), Bau 21 min, Code-Review ohne Muss (1,19 $, 1 h), Entwicklertest ohne Befund, Rebase-Konflikt `haken.js` mit #18/#25 vom entwickler gelöst (zwei Rebases). Karte gesamt 1,72 $.
+- Gate: NUnit 1209/1209, Playwright 564/564 in Lauf 1; Lauf 2 und 3 nur der bekannte Wackler `grosse-diffs.spec.js:23` — als grün gewertet, weil seit #11 unabhängig von der Karte und die Härtung (b6f6a64) mit #7 kommt. Lehre: eine bekannte Test-Härtung früh als eigene kleine Merge-Wache auf main bringen, statt sie an einer Karte hängen zu lassen.
