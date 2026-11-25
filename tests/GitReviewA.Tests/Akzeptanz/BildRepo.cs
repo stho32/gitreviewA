@@ -61,6 +61,7 @@ internal sealed class BildRepo : IDisposable
         git mv bilder/alt.png bilder/umbenannt.png
         git mv notizen.txt notizen2.txt && printf 'eins\nZWEI\ndrei\nvier\nfuenf\nsechs\n' > notizen2.txt
         bild bilder/gross.png __PNGGROSS__
+        printf 'RIFF\0' > bilder/roh.bin
         bild $'bilder/b\xff.png' __PNG1__
         git add -A && git commit -q -m "Bilder ändern"
         rm -f -- $'bilder/b\xff.png'

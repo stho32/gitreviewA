@@ -43,6 +43,47 @@ internal sealed class BildbestimmungTests
     }
 
     [Test]
+    public void Wenn_Webp_mit_genau_zwoelf_Bytes_dann_Webp()
+    {
+        var webp = Anhaengen(Encoding.ASCII.GetBytes("RIFF"), [0x1A, 0x00, 0x00, 0x00], Encoding.ASCII.GetBytes("WEBP"));
+
+        Assert.That(webp, Has.Length.EqualTo(12));
+        Assert.That(Bildbestimmung.Art(webp), Is.EqualTo(Bildart.Webp));
+    }
+
+    /// <summary>B1: ein Kopf, der mit `RIFF` beginnt, aber vor der Webp-Stelle endet — die Stelle selbst darf nie gezogen werden.</summary>
+    [Test]
+    public void Wenn_Riff_vor_der_Webp_Stelle_endet_dann_kein_Bild_ohne_Ausnahme()
+    {
+        Assert.That(Bildbestimmung.Art(Encoding.ASCII.GetBytes("RIFF")), Is.Null);
+        Assert.That(Bildbestimmung.Art([0x52, 0x49, 0x46, 0x46, 0x00]), Is.Null);
+        Assert.That(Bildbestimmung.Art([0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00]), Is.Null);
+        Assert.That(Bildbestimmung.Art([0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00]), Is.Null);
+        Assert.That(Bildbestimmung.Art(Anhaengen(Encoding.ASCII.GetBytes("RIFF"), [0x1A, 0x00, 0x00])), Is.Null);
+    }
+
+    /// <summary>B1: je Bildart 0, 1 und n−1 Byte der Kennung — zu kurze oder kaputte Kopfbytes sind kein Bild, nie eine Ausnahme.</summary>
+    [Test]
+    public void Wenn_ein_Kopf_kuerzer_als_die_Kennung_dann_kein_Bild_ohne_Ausnahme()
+    {
+        var kennungen = new byte[][]
+        {
+            [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A],
+            [0xFF, 0xD8, 0xFF],
+            [0x47, 0x49, 0x46, 0x38],
+            Anhaengen(Encoding.ASCII.GetBytes("RIFF"), [0x1A, 0x00, 0x00, 0x00], Encoding.ASCII.GetBytes("WEBP")),
+        };
+        foreach (var kennung in kennungen)
+        {
+            foreach (var laenge in new[] { 0, 1, kennung.Length - 1 })
+            {
+                var gekuerzt = kennung[..laenge];
+                Assert.That(Bildbestimmung.Art(gekuerzt), Is.Null, $"{laenge} Byte von {kennung.Length}");
+            }
+        }
+    }
+
+    [Test]
     public void Wenn_Svg_Text_dann_kein_Bild()
     {
         var svg = Encoding.UTF8.GetBytes("<svg xmlns=\"http://www.w3.org/2000/svg\"><script>alert(1)</script></svg>\n");

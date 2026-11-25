@@ -2,7 +2,8 @@ namespace GitReviewA.Bild;
 
 /// <summary>
 /// Erkennt am Anfang des Inhalts (Magic Bytes) einen der vier festen Bildtypen; die Endung ist nur ein Hinweis.
-/// Kein Treffer heißt kein Bild — SVG und eine Textdatei mit `.png`-Endung sind keine. Gelesen wird nur der Anfang,
+/// Kein Treffer heißt kein Bild — SVG und eine Textdatei mit `.png`-Endung sind keine; ein zu kurzer oder abgeschnittener
+/// Anfang (etwa `RIFF` ohne die Webp-Stelle) ist ebenfalls kein Bild und nie ein Fehler. Gelesen wird nur der Anfang,
 /// nie die ganze Datei.
 /// </summary>
 internal static class Bildbestimmung
@@ -28,7 +29,8 @@ internal static class Bildbestimmung
         {
             return Bildart.Gif;
         }
-        var istWebp = BeginntMit(anfang, RiffKennung) && BeginntMit(anfang[WebpKennungStelle..], WebpKennung);
+        var hatWebpStelle = anfang.Length >= WebpKennungStelle + WebpKennung.Length;
+        var istWebp = hatWebpStelle && BeginntMit(anfang, RiffKennung) && BeginntMit(anfang[WebpKennungStelle..], WebpKennung);
         if (istWebp)
         {
             return Bildart.Webp;

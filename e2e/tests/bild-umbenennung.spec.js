@@ -70,6 +70,25 @@ test.describe('R00024 Endpunkt und fremdes Repo', () => {
     expect(fremderHost.status).toBe(403);
   });
 
+  // B1 (Nacharbeit): eine Binärdatei, deren Kopf mit `RIFF` beginnt und vor der Webp-Stelle endet — die Art kommt aus den
+  // ersten Bytes und ist kein Bild; der Endpunkt antwortet 404, die Oberfläche bleibt bei „Binärdatei“ statt einer Ausnahme.
+  test('soll eine kurze kaputte Binärdatei als Binärdatei abweisen — 404 statt 500', async ({ gr, page }) => {
+    const { repo, lauf } = await starte(gr);
+    const q = repo.hashes.q;
+
+    const kurz = await anfrage(lauf.adresse, bildAdresse(lauf, q, 'bilder/roh.bin', '&seite=nachher'));
+
+    expect(kurz.status).toBe(404);
+
+    await page.setViewportSize(FENSTER);
+    await gr.oberflaecheOeffnen(page, lauf, 'einzeln');
+    await seite.dateiWaehlen(page, 'roh.bin');
+
+    await expect(page.locator('#diff .diff-meldung')).toHaveText('Binärdatei — enthält Null-Bytes');
+    await expect(page.locator('#diff .bild-paar')).toHaveCount(0);
+    await expect(page.locator('#diff').getByRole('button', { name: 'Als Text zeigen' })).toBeVisible();
+  });
+
   test('soll die vier festen Typen mit ihrem Content-Type liefern und karte.svg/keinbild.png nicht als Bild', async ({ gr }) => {
     const { repo, lauf } = await starte(gr);
     const q = repo.hashes.q;

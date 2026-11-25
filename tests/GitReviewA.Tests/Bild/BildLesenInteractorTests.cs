@@ -57,6 +57,17 @@ internal sealed class BildLesenInteractorTests
         Assert.That(interactor.Lesen(new Bildanfrage(repo.Hash("q"), "bilder/keinbild.png", Bildseite.Nachher)).Ausgang, Is.EqualTo(Bildausgang.KeinBild));
     }
 
+    /// <summary>B1: eine Binärdatei, deren Kopf mit `RIFF` beginnt und vor der Webp-Stelle endet — kein Bild, keine Ausnahme.</summary>
+    [Test]
+    public void Wenn_kurze_kaputte_Kopfbytes_dann_kein_Bild_statt_einer_Ausnahme()
+    {
+        using var repo = BildRepo.V();
+
+        var ergebnis = Interactor(repo).Lesen(new Bildanfrage(repo.Hash("q"), "bilder/roh.bin", Bildseite.Nachher));
+
+        Assert.That(ergebnis.Ausgang, Is.EqualTo(Bildausgang.KeinBild));
+    }
+
     [Test]
     public void Wenn_Name_mit_Rohbyte_dann_Png()
     {
