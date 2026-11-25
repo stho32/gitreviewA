@@ -224,3 +224,7 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Gate NUnit 1005/1005, Playwright 360/360 zweimal.
 | 2026-11-25 | #18 | Detailplanung | planer | bestanden | 6 min | opencode: I0018 bis Bubble, R00022, 4 Fragen an PO; ddf3f53 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 18-planer-1 · 0,14 $ · Karte gesamt 0,14 $ |
 | 2026-11-25 | #18 | Detailplanung | product-owner | bestanden | 2 min | opencode: 4 Empfehlungen bestätigt, Sperre geschärft; 9e7db9d · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 18-product-owner-1 · 0,059 $ · Karte gesamt 0,20 $ |
+| 2026-11-25 | #11 | Nacharbeit | entwickler | bestanden | 31 min | opencode: M1 Eltern-Symlink, M2 Codepunkte, B1 aria behoben; S1/S3 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 11-entwickler-2 · 0,53 $ · Karte gesamt 1,34 $ |
+| 2026-11-25 | #11 | Nacharbeit | product-owner | bestanden | 31 min | opencode: Kriterium 2 in ganzer Datei eingeengt; 507f5c4 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 11-product-owner-2 · 0,020 $ · Karte gesamt 1,36 $ |
+| 2026-11-25 | #11 | Nacharbeit | planer | bestanden | 2 min | opencode: R00021/WBS eingeengt, decd519 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 11-planer-2 · 0,033 $ · Karte gesamt 1,39 $ |
+| 2026-11-25 | #7 | Detailplanung | planer | bestanden | 6 min | opencode: I0007 bis Bubble, R00023, 6 Fragen an PO; 45adea1 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 7-planer-1 · 0,12 $ · Karte gesamt 0,12 $ |
