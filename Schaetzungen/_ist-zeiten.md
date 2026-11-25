@@ -72,3 +72,4 @@ Nie vom User erfragen.
 | 2026-11-25 | R00031 Zeilenbereich annotieren | B3003 Notizfeld fuer den Bereich | unklar | 2-4h | 0,3h | 0,3h | autonom |
 | 2026-11-25 | R00031 Zeilenbereich annotieren | B3004 Bereich am Diff zeigen | unklar | 2-4h | 0,3h | 0,3h | autonom |
 | 2026-11-25 | R00031 Zeilenbereich annotieren | B3008 Tests und Wegwerf-Repos | unklar | 2-4h | 0,4h | 0,4h | autonom |
+| 2026-11-25 | R00002 Sicherheit (Karte #55) | Fremde Herkunft auf lesenden `/api/`-Anfragen, Pfadvarianten (L6/L15) | unklar | – | 1,2h | – | autonom |
