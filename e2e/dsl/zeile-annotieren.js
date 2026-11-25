@@ -18,6 +18,7 @@ const VORBEREITUNGEN = {
   'Repo X': { anlegen: repos.repoX, commits: ['x'] },
   'Repo B': { anlegen: repos.repoMitBidiPfad, commits: ['b'] },
   'Repo Z': { anlegen: repos.repoZ, commits: ['z1', 'z2', 'z3'] },
+  'Repo mit Rumpf': { anlegen: repos.repoMitRumpf, commits: ['p', 'q', 'r'] },
 };
 
 function annotierSprache(gr, page) {
@@ -186,6 +187,19 @@ function annotierSprache(gr, page) {
     commitZeileEnthaeltNicht: text => seite.pruefeCommitZeileEnthaeltNicht(page, text),
     zusammenVerzoegern: ms => seite.zusammenAntwortVerzoegern(page, ms),
     zusammenScheitert: status => seite.zusammenAntwortScheitert(page, status),
+    commitZeileAufklappen: () => seite.commitZeileAufklappen(page),
+    commitZeileZuklappen: () => seite.commitZeileZuklappen(page),
+    /** Die Commit-Zeile über der Dateiliste; liefert ihre Höhe in px. */
+    commitZeileUeberDerListe: () => seite.pruefeCommitZeileUeberDerListe(page),
+    commitZeilen: () => seite.commitZeilenLesen(page),
+    /** Die gewählten Dateizeilen tragen genau diese Namen. */
+    dateiGewaehlt: name => seite.pruefeGewaehlteDateien(page, [name]),
+    /** Ohne Kette: die Zeile mit der Nummer neu `neu` im Abschnitt des Commits `name`. */
+    abschnittZeileZeigt: (name, neu, text) => diffSeite.pruefeAbschnittZeile(page, hash(name), neu, text),
+    abschnittskopfZeigt: (name, erwartet, rohzeichen) => diffSeite.pruefeAbschnittskopf(page, hash(name), erwartet, rohzeichen),
+    messageVerborgen: name => seite.pruefeMessageVerborgen(page, hash(name).slice(0, 7)),
+    messageUmschalten: name => seite.messageUmschalten(page, hash(name).slice(0, 7)),
+    messageZeigt: (name, text) => seite.pruefeMessage(page, hash(name).slice(0, 7), text),
     diffAufforderung: () => diffSeite.pruefeAufforderungZurWahl(page),
     diffHerkunft: text => diffSeite.pruefeHerkunft(page, text),
     anmerkungenRechtzeitigNachKlick: (datei, erwartet) => anmerkungSeite.pruefeAnmerkungenBinnen(page, () => seite.dateiWaehlen(page, datei), erwartet, LADEFRIST_MS),

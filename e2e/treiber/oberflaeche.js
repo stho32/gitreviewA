@@ -95,6 +95,32 @@ async function zusammenAntwortVerzoegern(page, ms) {
   });
 }
 
+/** Klappt die zugeklappte Commit-Zeile auf und wartet, bis der Zustand steht. */
+async function commitZeileAufklappen(page) {
+  await commitZeileZusammenfassung(page).click();
+  await expect(page.locator('#commit-zeile')).toHaveJSProperty('open', true);
+}
+
+/** Klappt die aufgeklappte Commit-Zeile zu und wartet, bis der Zustand steht. */
+async function commitZeileZuklappen(page) {
+  await commitZeileZusammenfassung(page).click();
+  await expect(page.locator('#commit-zeile')).toHaveJSProperty('open', false);
+}
+
+/** Die Commit-Zeile steht im Dokument vor der Dateiliste und auf dem Bildschirm über ihr; liefert ihre Höhe in px (R00012, Kriterium 2). */
+async function pruefeCommitZeileUeberDerListe(page) {
+  const imDokumentDavor = await page.evaluate(() => {
+    const zeile = document.getElementById('commit-zeile');
+    const liste = document.getElementById('dateiliste');
+    return Boolean(zeile.compareDocumentPosition(liste) & Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+  const zeile = await page.locator('#commit-zeile').boundingBox();
+  const liste = await page.locator('#dateiliste').boundingBox();
+  expect(imDokumentDavor, 'im Dokument vor der Dateiliste').toBe(true);
+  expect(zeile.y + zeile.height, 'auf dem Bildschirm über der Dateiliste').toBeLessThanOrEqual(liste.y + 1);
+  return zeile.height;
+}
+
 /** Beantwortet die Zusammen-Ansicht mit `status` und leerem Rumpf — die Kette bleibt unbekannt. */
 async function zusammenAntwortScheitert(page, status) {
   await page.route('**/api/zusammen', async route => {
@@ -382,5 +408,6 @@ module.exports = {
   beendenKnopf, beendenBetaetigen, beendetMeldung, beendenFehler, beendenScheitertMit, modusWaehlen, neuLaden,
   kopfZahlen, fortschrittZaehler, commitZeileZusammenfassung, commitZeileText, pruefeKopfZahlen, pruefeFortschritt, pruefeCommitZeileZusammenfassung,
   pruefeCommitZeileEnthaelt, pruefeCommitZeileEnthaeltNicht, zusammenAntwortVerzoegern, zusammenAntwortScheitert,
+  commitZeileAufklappen, commitZeileZuklappen, pruefeCommitZeileUeberDerListe,
   ergebnisKopierenKnopf, ergebnisKopierenBetaetigen, kopierenStatus, ergebnisAntwortZurueckhalten,
 };

@@ -260,6 +260,17 @@ function repoMitBidiBetreff(ordner) {
   return { ordner, hashes: { b1, b2, b3 } };
 }
 
+/** Repo mit drei Commits, deren mittlerer einen Rumpf trägt (R00012, Kriterium 2: Message aus- und einklappen). */
+function repoMitRumpf(ordner) {
+  repoAnlegen(ordner);
+  dateiSchreiben(ordner, 'a.txt', 'eins\n');
+  const p = commitAnlegen(ordner, { betreff: 'Start' });
+  dateiSchreiben(ordner, 'a.txt', 'eins\nzwei\n');
+  const q = commitAnlegen(ordner, { betreff: 'a ändern', rumpf: 'Zeile eins\nZeile zwei' });
+  const r = commitAnlegen(ordner, { betreff: 'Nichts' });
+  return { ordner, hashes: { p, q, r } };
+}
+
 /** Repo Z (R00012): `z1` „Start“ legt `README.md` (`Lager`, `Beispiel`) und `src/a.txt` (`eins`, `zwei`, `drei`) an; `z2` „a ändern, b neu“
     ändert in `src/a.txt` `zwei` zu `ZWEI` und legt `src/b.txt` (`x`, `y`) an; `z3` „a und b ändern“ hängt in `src/a.txt` `vier` an und
     ändert in `src/b.txt` `y` zu `Y`. `z1 z2 z3` ist eine lückenlose Kette, `z1 z3` nicht. Netto über alle drei: `README.md` +2 −0,
@@ -306,4 +317,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoX, repoK, repoZ, repoMitBidiPfad, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoX, repoK, repoZ, repoMitRumpf, repoMitBidiPfad, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };
