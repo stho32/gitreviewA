@@ -11,6 +11,23 @@ namespace GitReviewA.Fremdtext;
 /// </summary>
 internal static class UnsichtbareZeichen
 {
+    /// <summary>Ob der Text ein Zeichen trägt, das man nicht sieht oder das die Anzeige verdreht (dieselbe Klasse wie <see cref="AlsMarken"/>).</summary>
+    public static bool EnthaeltUnsichtbares(string text)
+    {
+        var rest = text.AsSpan();
+        while (!rest.IsEmpty)
+        {
+            var status = Rune.DecodeFromUtf16(rest, out var zeichen, out var laenge);
+            var istEinzelnesSurrogat = status != OperationStatus.Done;
+            if (istEinzelnesSurrogat || IstUnsichtbar(zeichen))
+            {
+                return true;
+            }
+            rest = rest[laenge..];
+        }
+        return false;
+    }
+
     public static string AlsMarken(string text)
     {
         var ergebnis = new StringBuilder(text.Length);
