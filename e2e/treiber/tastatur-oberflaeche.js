@@ -163,6 +163,25 @@ async function pruefeHilfeNichtVerfuegbar(page, text) {
   expect(eintrag.verfuegbar, `${text} nicht verfügbar`).toBe(false);
 }
 
+/** Der Fokus steht auf dem Element, das der Selektor meint. */
+async function pruefeFokusAuf(page, selektor) {
+  await expect(page.locator(selektor).first()).toBeFocused();
+}
+
+/** Steht der Fokus im Hilfe-Dialog? */
+async function fokusImDialog(page) {
+  return page.evaluate(selektor => {
+    const dialog = document.querySelector(selektor);
+    return Boolean(dialog && dialog.contains(document.activeElement));
+  }, HILFE);
+}
+
+/** Ist der Hintergrund der Seite inert (Kopf, Inhalt und Fußzeile)? */
+async function hintergrundInert(page) {
+  return page.evaluate(() => ['header.kz', 'main.gr-inhalt', 'footer.statuszeile']
+    .every(selektor => document.querySelector(selektor).hasAttribute('inert')));
+}
+
 /** `aria-keyshortcuts`, der sichtbare Hinweis und der zugängliche Name eines Bedienelements. */
 async function hinweis(page, selektor) {
   return page.locator(selektor).first().evaluate(element => {
@@ -341,6 +360,9 @@ module.exports = {
   pruefeHilfeOffen,
   hilfeGruppen,
   pruefeHilfeNichtVerfuegbar,
+  fokusImDialog,
+  hintergrundInert,
+  pruefeFokusAuf,
   hinweis,
   fokusring,
   ansage,

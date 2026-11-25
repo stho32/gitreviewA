@@ -251,3 +251,16 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .statuszeile .rechts{margin-inline-start:auto}
 kbd{font:11px/1.2 var(--kd-mono);padding:1px 4px;border:1px solid var(--kd-line-strong);background:var(--kd-sunken);color:var(--kd-text)}
 .hinweis-taste{margin-inline-start:2px;pointer-events:none}
+/* Hilfe-Overlay (R00030, B2905) nach Entwurf Fassung 2 (.hilfe) und Material 3 (Dialog): Scrim über der ganzen Seite, Panel unter dem
+   Kopf, Schließen-Knopf; nicht verfügbare Aktionen tragen einen sichtbaren Vermerk, nicht nur eine Farbe. */
+.hilfe-scrim{position:fixed;inset:0;z-index:9;background:color-mix(in oklch,var(--kd-text) 40%,transparent)}
+.hilfe{position:fixed;right:16px;top:56px;z-index:10;width:min(440px,calc(100vw - 32px));max-block-size:calc(100vh - 80px);padding:14px 16px;overflow:auto;background:var(--kd-surface);border:1px solid var(--kd-line-strong);box-shadow:var(--kd-shadow-mod,0 8px 24px rgb(0 0 0 / 25%))}
+.hilfe[hidden],.hilfe-scrim[hidden]{display:none}
+.hilfe h2{margin:0 0 8px;font-size:14px}
+.hilfe .zu{position:absolute;right:8px;top:8px}
+.hilfe-gruppe h3{margin:10px 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--kd-muted)}
+.hilfe-gruppe ul{list-style:none;margin:0;padding:0;font-size:12.5px}
+.hilfe-gruppe li{display:flex;align-items:baseline;gap:6px;padding:2px 0}
+.hilfe-gruppe li[data-verfuegbar="false"]{color:var(--kd-muted)}
+.hilfe-tasten{display:inline-flex;gap:3px;flex:none;min-inline-size:72px}
+.hilfe-vermerk{font-size:11px;color:var(--kd-muted);font-style:italic}

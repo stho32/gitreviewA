@@ -64,6 +64,9 @@ function tastaturSprache(gr, page) {
     hilfeOffen: offen => tastatur.pruefeHilfeOffen(page, offen),
     hilfeGruppen: () => tastatur.hilfeGruppen(page),
     hilfeNichtVerfuegbar: text => tastatur.pruefeHilfeNichtVerfuegbar(page, text),
+    fokusImDialog: () => tastatur.fokusImDialog(page),
+    fokusAuf: selektor => tastatur.pruefeFokusAuf(page, selektor),
+    hintergrundInert: () => tastatur.hintergrundInert(page),
     hinweis: selektor => tastatur.hinweis(page, selektor),
     fokusring: selektor => tastatur.fokusring(page, selektor),
     ansage: text => tastatur.pruefeAnsage(page, text),
@@ -94,6 +97,9 @@ function tastaturSprache(gr, page) {
     umbruch: an => tastatur.pruefeUmbruch(page, an),
     leerraum: an => tastatur.pruefeLeerraum(page, an),
     tippe: text => page.keyboard.type(text),
+    fokussiere: selektor => page.locator(selektor).focus(),
+    klickeHilfeKnopf: () => page.locator('#hilfe-knopf').click(),
+    klickeHilfeZu: () => page.locator('#hilfe-zu').click(),
     inVsCodeHref: () => page.locator('#diff .sprung-knopf').getAttribute('href'),
     /** Installiert einen Zähler für Klicks auf VS-Code-Verweise — kein Test startet VS Code. */
     vsCodeKlickZaehlen: () => page.evaluate(() => {

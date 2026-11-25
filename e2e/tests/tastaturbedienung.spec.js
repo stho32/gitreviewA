@@ -295,3 +295,64 @@ test.describe('R00030 Kürzel an den Bedienelementen', () => {
     expect((await tast.hinweis('#diff .leerraum-schalter')).aria).toBe('l');
   });
 });
+
+test.describe('R00030 Hilfe-Overlay', () => {
+  test('? öffnet den Dialog mit allen Kürzeln, gruppiert, Fokus gefangen; nicht verfügbare Aktionen sind markiert', async ({ tast }) => {
+    await tast.starten();
+    await pageFokus(tast, '#diff .umbruch-schalter');
+    await tast.druecke('?');
+
+    await tast.hilfeOffen(true);
+    const gruppen = await tast.hilfeGruppen();
+    expect(gruppen.map(gruppe => gruppe.titel)).toEqual(['Allgemein', 'Liste', 'Diff', 'Anmerkung']);
+    const eintraege = gruppen.flatMap(gruppe => gruppe.eintraege);
+    expect(eintraege.length, 'alle Kürzel').toBeGreaterThanOrEqual(20);
+    expect(eintraege.some(eintrag => eintrag.text.includes('nächste ungeprüfte'))).toBe(true);
+    expect(eintraege.some(eintrag => eintrag.text.includes('Anmerkung speichern'))).toBe(true);
+
+    await tast.hilfeNichtVerfuegbar('nächster Commit');
+    await tast.hilfeNichtVerfuegbar('nebeneinander');
+    await tast.hilfeNichtVerfuegbar('Suche im Diff');
+
+    expect(await tast.fokusImDialog(), 'Fokus im Dialog').toBe(true);
+    expect(await tast.hintergrundInert(), 'Hintergrund inert').toBe(true);
+    for (let schritt = 0; schritt < 6; schritt += 1) {
+      await tast.druecke('Tab');
+      expect(await tast.fokusImDialog(), `Tab ${schritt + 1} bleibt im Dialog`).toBe(true);
+    }
+    await tast.druecke('Shift+Tab');
+    expect(await tast.fokusImDialog()).toBe(true);
+
+    await tast.druecke('Escape');
+    await tast.hilfeOffen(false);
+    expect(await tast.hintergrundInert(), 'Hintergrund wieder bedienbar').toBe(false);
+    await tast.fokusAuf('#diff .umbruch-schalter');
+  });
+
+  test('im offenen Dialog wirkt kein Kürzel außer Esc; der Knopf „Kürzel“ öffnet und schließt mit Fokus zurück', async ({ tast }) => {
+    await tast.starten();
+    await tast.dateiAnsehen('src/a.txt');
+    await tast.druecke('?');
+    await tast.hilfeOffen(true);
+
+    await tast.druecke('j');
+    await tast.druecke('x');
+    await tast.gewaehlt('src/a.txt');
+    await tast.haken('src/a.txt', 'false');
+
+    await tast.druecke('Escape');
+    await tast.hilfeOffen(false);
+    await tast.druecke('j');
+    await tast.gewaehlt('src/b.txt');
+
+    await tast.klickeHilfeKnopf();
+    await tast.hilfeOffen(true);
+    await tast.klickeHilfeZu();
+    await tast.hilfeOffen(false);
+  });
+});
+
+/** Fokussiert ein Bedienelement der Seite (Vorbereitung: der Auslöser, zu dem der Fokus zurückkehrt). */
+async function pageFokus(tast, selektor) {
+  await tast.fokussiere(selektor);
+}
