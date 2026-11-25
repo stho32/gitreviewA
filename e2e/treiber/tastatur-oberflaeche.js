@@ -277,6 +277,16 @@ async function fokussiereFeld(page) {
   await page.locator('#diff tr.anm-feld textarea, #diff tr.anm-aendern textarea').first().focus();
 }
 
+/** Eine Dateizeile ist (nicht) in der Liste — die Sicht des Ausblendens (R00029). */
+async function pruefeZeile(page, pfad, vorhanden) {
+  await expect(page.locator(`${DATEIZEILE}[data-pfad="${pfad}"]`)).toHaveCount(vorhanden ? 1 : 0);
+}
+
+/** Der Ausblenden-Zähler im Kopf. */
+async function pruefeAusblendenZaehler(page, text) {
+  await expect(page.locator('#kopf-fortschritt .ausblenden-zaehler')).toHaveText(text);
+}
+
 /** Ist keine Dateizeile gewählt? */
 async function ohneWahl(page) {
   return page.locator(`${DATEIZEILE}[aria-current="true"]`).count().then(anzahl => anzahl === 0);
@@ -474,6 +484,8 @@ module.exports = {
   feldwert,
   fokussiereFeld,
   ohneWahl,
+  pruefeZeile,
+  pruefeAusblendenZaehler,
   pruefeSperrgrund,
   contenteditableFokussieren,
   schalterEinbauen,

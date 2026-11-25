@@ -70,6 +70,7 @@
     { aktionen: ['abhaken'], selektor: '#datei-zeilen input.haken' },
     { aktionen: ['modusWechseln'], selektor: '.kz-modus' },
     { aktionen: ['naechsteUngepruefte'], selektor: '#naechste-ungepruefte' },
+    { aktionen: ['abgehakteAusblenden'], selektor: '#ausblenden' },
     { aktionen: ['inVsCode'], selektor: '#diff .sprung-knopf' },
     { aktionen: ['dateiAnmerken'], selektor: '#diff .datei-anmerken' },
     { aktionen: ['ansichtWechseln'], selektor: '#diff .diffansicht-wahl' },

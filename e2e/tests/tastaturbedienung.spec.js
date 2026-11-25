@@ -122,14 +122,19 @@ test.describe('R00030 Dateiliste und Haken — j, k, x, m, u, [, ]', () => {
     await tast.fokusAufDateizeile('README.md');
   });
 
-  test('h tut nichts, solange der Schalter „Abgehakte ausblenden“ nicht gebaut ist', async ({ tast }) => {
+  test('h blendet Abgehakte aus wie der Schalter aus R00029 und wieder ein', async ({ tast }) => {
     await tast.starten();
     await tast.dateiAnsehen('README.md');
-    const vorher = await tast.fokus();
+    await tast.druecke('x');
+    await tast.haken('README.md', 'true');
 
     await tast.druecke('h');
-    await tast.gewaehlt('README.md');
-    expect(await tast.fokus()).toEqual(vorher);
+    await tast.zeileFehlt('README.md');
+    await tast.ausblendenZaehler('1 ausgeblendet, davon 1 abgehakt');
+
+    await tast.druecke('h');
+    await tast.zeileDa('README.md');
+    await tast.ausblendenZaehler('');
   });
 });
 
@@ -509,22 +514,23 @@ test.describe('R00030 Gesperrte Stelle und kein neuer Weg', () => {
 });
 
 test.describe('R00030 Katalog erweiterbar', () => {
-  test('h tut nichts, bis das Bedienelement da ist, und schaltet es danach ohne Umbau der Tastenschicht', async ({ tast }) => {
+  test('der mit I0026 gebaute Schalter steht im Katalog, sein Hinweis am Element und seine Zeile in der Hilfe — ohne Umbau der Tastenschicht', async ({ tast }) => {
     await tast.starten();
-    await tast.dateiAnsehen('README.md');
 
-    await tast.druecke('h');
-    await tast.baueSchalterEin('ausblenden');
-    await tast.druecke('h');
-    expect(await tast.schalterZustand('ausblenden'), 'Schalter an').toBe(true);
-    await tast.druecke('h');
-    expect(await tast.schalterZustand('ausblenden'), 'Schalter aus').toBe(false);
-    expect(await tast.schalterAenderungen(), 'zwei Änderungen').toBe(2);
-
+    // Der Katalog kennt die Taste, weil ihr Bedienelement da ist; die Hilfe markiert sie als verfügbar.
     await tast.druecke('?');
     await tast.hilfeOffen(true);
     const gruppen = await tast.hilfeGruppen();
     const eintrag = gruppen.flatMap(gruppe => gruppe.eintraege).find(e => e.text.includes('Abgehakte ausblenden'));
+    expect(eintrag, 'Hilfe-Zeile des Schalters').toBeTruthy();
     expect(eintrag.verfuegbar, 'Hilfe nennt den Schalter verfügbar').toBe(true);
+    await tast.druecke('Escape');
+
+    // Hinweis und aria-keyshortcuts am gebauten Schalter; der zugängliche Name bleibt „Abgehakte ausblenden“.
+    const schalter = await tast.hinweis('#ausblenden');
+    expect(schalter.aria).toBe('h');
+    expect(schalter.kbd).toBe('h');
+    expect(schalter.kbdVerborgen).toBe(true);
+    expect(schalter.name).toBe('Abgehakte ausblenden');
   });
 });
