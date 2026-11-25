@@ -3,9 +3,11 @@
 // die Höchstbreite aus der Fensterbreite, das Klemmen an beiden Grenzen, die Taste je Richtung und Pos1/Ende und der
 // ungültige Zug (unverändert). Lehre „Wert aus einer Einstellung als Spanne prüfen“: die Mutanten „nur Obergrenze“,
 // „nur Untergrenze“ und „fest/ignoriert“ stehen als eigene Zeilen.
+const fs = require('fs');
+const path = require('path');
 const { test, expect } = require('@playwright/test');
 const {
-  kleinsteBreite, hoechsteBreite, klemme, breiteNachZug, breiteNachTaste, passtZweiSpaltig,
+  kleinsteBreite, hoechsteBreite, klemme, breiteNachZug, breiteNachTaste, passtZweiSpaltig, mindestFensterBreite,
   KLEINSTE, GROESSTE, START, DIFF_MINDEST, TRENNER, SCHRITT,
 } = require('../../../src/GitReviewA/web/trenner-werte.js');
 
@@ -35,6 +37,20 @@ test.describe('Baustein Trenner-Werte — Höchstbreite aus der Fensterbreite (R
     expect(passtZweiSpaltig(566)).toBe(true);
     expect(passtZweiSpaltig(565)).toBe(false);
     expect(passtZweiSpaltig(560)).toBe(false);
+  });
+});
+
+test.describe('Baustein Trenner-Werte — eine Quelle für die 566-Grenze (R00034)', () => {
+  test('soll die Mindestfensterbreite als Summe der Mindestbreiten rechnen und mit der CSS-Mediengrenze übereinstimmen', () => {
+    expect(mindestFensterBreite()).toBe(566);
+    expect(mindestFensterBreite()).toBe(KLEINSTE + DIFF_MINDEST + TRENNER);
+
+    const css = fs.readFileSync(path.join(__dirname, '../../../src/GitReviewA/web/gitreviewa.css'), 'utf8');
+    const stelle = css.indexOf('--gr-leiste-breite');
+    const davor = css.slice(0, stelle);
+    const treffer = [...davor.matchAll(/@media\s*\(min-width:(\d+)px\)/g)].pop();
+    expect(treffer, 'Mediengrenze vor der Rahmen-Regel gefunden').toBeTruthy();
+    expect(Number(treffer[1]), 'CSS-Mediengrenze stimmt mit mindestFensterBreite() überein').toBe(mindestFensterBreite());
   });
 });
 

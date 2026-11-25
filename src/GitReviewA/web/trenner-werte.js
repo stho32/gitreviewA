@@ -2,7 +2,8 @@
    in Node, ohne DOM und ohne Zustand (testbarer Entwurf: entscheiden getrennt vom Handeln). Die Entscheidung des PO (2026-11-25)
    liegt in den festen Werten: Seitenleiste 240–640 px, Start 360 px, Diff mindestens 320 px, Trennerbreite 6 px, Tastenschritt 16 px;
    die tatsächliche Höchstbreite ist `min(640, Fenster − Diff-Mindest − Trenner)`. Unter der Summe der Mindestbreiten (566 px) gibt es
-   keinen Trenner — dann passt der zweispaltige Aufbau nicht und es gilt der Rückfall auf eine Spalte (R00033). */
+   keinen Trenner — dann passt der zweispaltige Aufbau nicht und es gilt der Rückfall auf eine Spalte (R00033). Die Summe ist
+   `mindestFensterBreite()`; die CSS-Mediengrenze muss dazu passen (Test `trenner-werte.spec.js`). */
 (function (ziel) {
   'use strict';
 
@@ -24,6 +25,11 @@
   /** Die tatsächliche Höchstbreite: die feste Obergrenze, verkleinert durch ein enges Fenster, damit der Diff seine Mindestbreite behält. */
   function hoechsteBreite(fensterBreite, diffMindest = DIFF_MINDEST, trenner = TRENNER) {
     return Math.min(GROESSTE, fensterBreite - diffMindest - trenner);
+  }
+
+  /** Die Mindestfensterbreite für zwei Spalten: Seitenleiste + Diff + Trenner (240 + 320 + 6 = 566 px). */
+  function mindestFensterBreite() {
+    return KLEINSTE + DIFF_MINDEST + TRENNER;
   }
 
   /** Passt der zweispaltige Aufbau? Genau dann, wenn dem Diff nach der Mindestbreite der Seitenleiste noch seine Mindestbreite bleibt. */
@@ -64,7 +70,7 @@
 
   const api = {
     KLEINSTE, GROESSTE, START, DIFF_MINDEST, TRENNER, SCHRITT,
-    kleinsteBreite, hoechsteBreite, passtZweiSpaltig, klemme, breiteNachZug, breiteNachTaste,
+    kleinsteBreite, hoechsteBreite, mindestFensterBreite, passtZweiSpaltig, klemme, breiteNachZug, breiteNachTaste,
   };
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;

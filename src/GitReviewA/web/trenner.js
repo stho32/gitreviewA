@@ -7,8 +7,8 @@
 
   const RAHMEN = '.gr-ansicht';
   const DIFF = '#diff';
-  const MEDIEN = '(min-width:566px)';
   const werte = window.gitreviewaTrennerWerte;
+  const MEDIEN = `(min-width:${werte.mindestFensterBreite()}px)`;
   const zustand = { wunsch: werte.START, breite: werte.START, ziehen: null };
 
   function rahmen() {
@@ -19,8 +19,9 @@
     return document.querySelector(`${RAHMEN} .gr-trenner`);
   }
 
+  /** Die Entscheidung kommt aus der einen Quelle in `trenner-werte.js`; `MEDIEN` dient nur dem Grenzübertritt. */
   function zweispaltig() {
-    return window.matchMedia(MEDIEN).matches;
+    return werte.passtZweiSpaltig(window.innerWidth);
   }
 
   function hoechste() {
