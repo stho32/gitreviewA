@@ -81,9 +81,14 @@ async function meldungLesen(page) {
   return meldungselement(page).textContent();
 }
 
-/** Der Name des Knopfes beginnt mit seinem sichtbaren Text (R00028, Bedienung). */
+/** Der Name des Knopfes beginnt mit seinem sichtbaren Text (R00028, Bedienung). Der Kürzel-Hinweis (`<kbd aria-hidden>`,
+    R00030) zählt nicht zum sichtbaren Text des Bedienelements — er ist für Vorlesewerkzeuge verborgen und ändert den Namen nicht. */
 async function pruefeKnopfname(page) {
-  const angaben = await page.locator(KNOPF).evaluate(element => ({ text: element.textContent.trim(), name: element.getAttribute('aria-label') }));
+  const angaben = await page.locator(KNOPF).evaluate(element => {
+    const kopie = element.cloneNode(true);
+    kopie.querySelectorAll('[aria-hidden="true"]').forEach(teil => teil.remove());
+    return { text: kopie.textContent.trim(), name: element.getAttribute('aria-label') };
+  });
   expect(angaben.text, 'sichtbarer Text des Knopfes').toBe('Nächste ungeprüfte');
   expect(angaben.name === null || angaben.name.startsWith(angaben.text), `Name »${angaben.name}« beginnt mit »${angaben.text}«`).toBe(true);
 }
