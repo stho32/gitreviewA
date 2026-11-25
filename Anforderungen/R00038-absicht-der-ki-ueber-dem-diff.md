@@ -89,8 +89,10 @@ Grenz- und Leerfälle bedacht: keine Datei gewählt (kein Block, Funktionale Anf
 
 ## Offene Fragen
 
-1. **Wie viele Zeilen sichtbar**: Empfehlung 5, darüber „k weitere“ — eine Datei mit vielen Commits soll den Diff nicht unter den Bildrand schieben; Alternative: alle zeigen (bei 200 Commits stünde der Diff 200 Zeilen tiefer). Grenzwert innerhalb der Leitplanken, Entscheidung des product-owner.
-2. **Rumpf zu oder offen beim Start**: Empfehlung zu — der Betreff trägt die Absicht meist allein; offen hieße, jede Datei beginnt mit Text statt Diff.
+Keine offenen. Der product-owner hat beide Fragen am 2026-11-25 entschieden (`AI-Team/po-entscheidungen.md`, Zeile 195); die Antworten sind oben eingearbeitet:
+
+1. **Wie viele Zeilen sichtbar** — entschieden (PO Zeile 195): 5, darüber „k weitere“ — eine Datei mit vielen Commits soll den Diff nicht unter den Bildrand schieben; Alternative „alle zeigen“ verworfen (bei 200 Commits stünde der Diff 200 Zeilen tiefer).
+2. **Rumpf zu oder offen beim Start** — entschieden (PO Zeile 195): zu — der Betreff trägt die Absicht meist allein; offen hieße, jede Datei beginnt mit Text statt Diff.
 
 ## Manuelle Vorbereitungstätigkeiten
 
