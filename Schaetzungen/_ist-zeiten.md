@@ -66,3 +66,4 @@ Nie vom User erfragen.
 | 2026-11-25 | R00030 Tastaturbedienung der Review-Oberfläche | Nacharbeit Entwicklertest US-18: Hinweis am Ziel aus dem Katalog abgeleitet (Test zuerst) | Bug-Fix | – | 0,25h | – | autonom |
 | 2026-11-25 | R00031 Zeilenbereich annotieren | B3001 Bereichsregeln (Ziel und Stand) | klar | 2h | 0,3h | 0,3h | autonom |
 | 2026-11-25 | R00031 Zeilenbereich annotieren | B3005 Serverweg Bereich | unklar | 2-4h | 0,5h | 0,5h | autonom |
+| 2026-11-25 | R00031 Zeilenbereich annotieren | B3007 Markierte Zeilen lesen | unklar | 2-4h | 0,6h | 0,6h | autonom |
