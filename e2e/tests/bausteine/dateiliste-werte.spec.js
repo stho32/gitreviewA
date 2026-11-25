@@ -1,7 +1,7 @@
 'use strict';
 // Bausteintests (ohne Browser) der reinen Funktionen der Dateiliste: Summe, Zahlen, Balken, flache und Baum-Zeilen.
 const { test, expect } = require('@playwright/test');
-const { summeText, zahlenText, groessteAenderung, balkenTeile, flacheZeilen, baumZeilen, sichtbareZeilen } = require('../../../src/GitReviewA/web/dateiliste-werte.js');
+const { summeText, zahlenText, groessteAenderung, balkenTeile, flacheZeilen, baumZeilen, sichtbareZeilen, umbenennungsText } = require('../../../src/GitReviewA/web/dateiliste-werte.js');
 
 const datei = (pfad, plus = 1, minus = 0, status = 'A') => ({ status, pfad, alterPfad: null, plus, minus });
 const binaer = pfad => ({ status: 'A', pfad, alterPfad: null, plus: null, minus: null });
@@ -108,6 +108,29 @@ test.describe('Baustein Dateiliste-Werte', () => {
     expect(flach.map(zeile => zeile.name)).toEqual(['o⟨U+202E⟩r/a⟨U+2066⟩b⟨U+200F⟩c⟨U+200E⟩⟨U+061C⟩.txt', 'ä ö.txt']);
     expect(flach[0].datei.pfad).toBe(roh);
     expect(baum).toEqual(['ordner:o⟨U+202E⟩r', 'datei:  a⟨U+2066⟩b⟨U+200F⟩c⟨U+200E⟩⟨U+061C⟩.txt', 'datei:ä ö.txt']);
+  });
+
+  test('soll bei einer Umbenennung den neuen und den alten Namen als `neu ← alt` zeigen (PO 2026-11-25)', () => {
+    const umbenannt = { status: 'R', pfad: 'LIESMICH.md', alterPfad: 'README.md', plus: 0, minus: 0 };
+
+    expect(umbenennungsText(umbenannt)).toBe('LIESMICH.md ← README.md');
+  });
+
+  test('soll bei einer Umbenennung in einem Ordner beide Namen ohne Ordner zeigen', () => {
+    const umbenannt = { status: 'R', pfad: 'bilder/umbenannt.png', alterPfad: 'bilder/alt.png', plus: 0, minus: 0 };
+
+    expect(umbenennungsText(umbenannt)).toBe('umbenannt.png ← alt.png');
+  });
+
+  test('soll bei einer Umbenennung Marken für Unsichtbares und Rohbytes in beiden Namen zeigen', () => {
+    const bidi = { status: 'R', pfad: 't⟨0xFE⟩.txt', alterPfad: 's\u202E⟨0xFE⟩.txt', plus: 1, minus: 1 };
+
+    expect(umbenennungsText(bidi)).toBe('t⟨0xFE⟩.txt ← s⟨U+202E⟩⟨0xFE⟩.txt');
+  });
+
+  test('soll ohne Umbenennung nichts zeigen (Status ≠ R oder kein alter Pfad)', () => {
+    expect(umbenennungsText(datei('src/b.txt', 1, 0, 'M'))).toBeNull();
+    expect(umbenennungsText({ status: 'R', pfad: 'neu.txt', alterPfad: null, plus: 0, minus: 0 })).toBeNull();
   });
 
   test('soll jedes unsichtbare Zeichen markieren und kein sichtbares', () => {

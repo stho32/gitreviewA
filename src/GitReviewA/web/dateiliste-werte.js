@@ -98,6 +98,21 @@
     }
   }
 
+  /** Der letzte Namensabschnitt eines Pfads: eine Umbenennung nennt beide Namen ohne ihren Ordner (PO 2026-11-25). */
+  function letzterNamensabschnitt(pfad) {
+    const teile = pfad.split('/');
+    return teile[teile.length - 1];
+  }
+
+  /** Beschriftung einer Umbenennung (Status `R` mit altem Pfad): der neue Name führt, der alte steht als `← alter Name`
+      daneben; beide mit Marken für Unsichtbares. Ohne Umbenennung `null` — dieselbe Form in Dateiliste und Diff-Kopf. */
+  function umbenennungsText(datei) {
+    if (datei.status !== 'R' || !datei.alterPfad) {
+      return null;
+    }
+    return `${sichtbarerName(letzterNamensabschnitt(datei.pfad))} ← ${sichtbarerName(letzterNamensabschnitt(datei.alterPfad))}`;
+  }
+
   /** Gleiche Namen ohne Schreibweise (`A` und `a`) bleiben in fester Reihenfolge. */
   function alphabetischOhneSchreibweise(a, b) {
     const ohneSchreibweise = a.toLowerCase().localeCompare(b.toLowerCase(), 'de');
@@ -120,5 +135,5 @@
     return flacheZeilen(dateien);
   }
 
-  Object.assign(ziel, { summeText, zahlenText, groessteAenderung, balkenTeile, sichtbarerName, flacheZeilen, baumZeilen, sichtbareZeilen });
+  Object.assign(ziel, { summeText, zahlenText, groessteAenderung, balkenTeile, sichtbarerName, flacheZeilen, baumZeilen, sichtbareZeilen, umbenennungsText });
 })(typeof module !== 'undefined' ? module.exports : window);
