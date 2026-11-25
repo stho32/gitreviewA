@@ -54,6 +54,9 @@ internal sealed class BildRepo : IDisposable
         git add -A && git commit -q -m "Start"
         bild bilder/logo.png __PNG2__
         bild bilder/neu.png __PNGNEU__
+        chmod +x bilder/foto.jpg bilder/bunt.gif bilder/klein.webp
+        printf '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>\n<!-- q -->\n' > bilder/karte.svg
+        printf 'nur Text geaendert\n' > bilder/keinbild.png
         git rm -q bilder/weg.png
         git mv bilder/alt.png bilder/umbenannt.png
         git mv notizen.txt notizen2.txt && printf 'eins\nZWEI\ndrei\nvier\nfuenf\nsechs\n' > notizen2.txt
@@ -112,6 +115,13 @@ internal sealed class BildRepo : IDisposable
     public string[] VorhandeneMarker()
     {
         return Markerdateien.Where(marker => File.Exists(Path.Combine(Ordner, marker))).ToArray();
+    }
+
+    /// <summary>Entfernt die lose Objektdatei eines Blobs (das Repo ist frisch, also nicht gepackt) — für den Ausgang „nicht lesbar“.</summary>
+    public void BlobObjektEntfernen(string commit, string pfad)
+    {
+        var oid = Bash($"git rev-parse '{commit}:{pfad}'");
+        File.Delete(Path.Combine(Ordner, ".git", "objects", oid[..2], oid[2..]));
     }
 
     public string Git(params string[] argumente)
