@@ -267,14 +267,18 @@ test.describe('Kein neuer Weg, späte Antwort, beide Modi', () => {
   });
 
   test('soll nicht mehr git-Aufrufe als die Wahl derselben Stelle starten (Kriterium 12, Prozessprobe)', async ({ naechste }) => {
-    // Von Hand gewählt: README.md (die erste ungeprüfte) ohne vorherige Wahl.
+    // Von Hand gewählt: README.md (die erste ungeprüfte) ohne vorherige Wahl. Vor jeder Messung wartet die Probe, bis
+    // keine Anfrage mehr läuft (`ruhe`): die Wahl startet Diff-Ladung und Sprungziel-Prüfung als zwei unabhängige
+    // Anfragen, und erst nach ihrer aller Antwort steht jeder ihrer git-Aufrufe im Zähler.
     await naechste.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });
     await naechste.dateienWarten(3);
     await naechste.standGeladen();
+    await naechste.ruhe();
     const vorherHand = await naechste.gitAufrufeJetzt();
     const anfragenVorherHand = naechste.anfragenJetzt();
     await naechste.dateiWaehlen('README.md');
     await naechste.stelle('README.md');
+    await naechste.ruhe();
     const vonHand = await naechste.neueGitAufrufe(vorherHand);
     const anfragenVonHand = naechste.neueAnfragen(anfragenVorherHand);
 
@@ -282,14 +286,19 @@ test.describe('Kein neuer Weg, späte Antwort, beide Modi', () => {
     await naechste.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });
     await naechste.dateienWarten(3);
     await naechste.standGeladen();
+    await naechste.ruhe();
     const vorherSprung = await naechste.gitAufrufeJetzt();
     const anfragenVorher = naechste.anfragenJetzt();
     await naechste.springen();
     await naechste.stelle('README.md');
+    await naechste.ruhe();
     const ueberDenSprung = await naechste.neueGitAufrufe(vorherSprung);
 
     expect(vonHand, 'die Wahl liest den Diff der Stelle').not.toHaveLength(0);
-    expect(ueberDenSprung, `Sprung: ${ueberDenSprung.join(' | ')}`).toEqual(vonHand);
+    // Kriterium 12 zählt die Zahl der git-Aufrufe. Diff-Ladung (`diff --stdin`) und Sprungziel-Prüfung (`diff --quiet`)
+    // sind zwei unabhängige Anfragen derselben Wahl — ihre Reihenfolge im Zähler ist ein Wettlauf und keine Zusage.
+    // Verglichen wird deshalb die Menge der Aufrufe; ein zusätzlicher Aufruf bleibt rot.
+    expect([...ueberDenSprung].sort(), `Sprung: ${ueberDenSprung.join(' | ')}`).toEqual([...vonHand].sort());
     expect(naechste.neueAnfragen(anfragenVorher), 'kein neuer Serverweg: dieselben Anfragen wie die Wahl')
       .toEqual(anfragenVonHand);
   });

@@ -32,13 +32,29 @@ function naechsteSprache(gr, page) {
   let lauf;
   let zaehlerGit;
   const anfragen = [];
+  const offeneAnfragen = new Set();
   page.on('request', anfrage => {
     const pfad = new URL(anfrage.url()).pathname;
     if (pfad.startsWith('/api/')) {
       anfragen.push(pfad);
+      offeneAnfragen.add(anfrage);
     }
   });
+  page.on('response', antwort => offeneAnfragen.delete(antwort.request()));
+  page.on('requestfailed', anfrage => offeneAnfragen.delete(anfrage));
   const hash = name => repo.hashes[name];
+
+  /**
+   * Wartet, bis jede Anfrage der Seite beantwortet ist — kein fester Zeitwert. Gezählt wird die Antwort (Kopfzeilen), nicht
+   * das Ende des Körpers: der Server antwortet erst, wenn der git-Prozess der Anfrage beendet ist, und danach steht sein
+   * Aufruf im Zähler. Eine Anfrage ohne Antwort nennt die Meldung mit ihrem Pfad.
+   */
+  async function warteAufRuhe() {
+    await expect.poll(
+      () => [...offeneAnfragen].map(anfrage => new URL(anfrage.url()).pathname).join(' | '),
+      { message: 'offene Anfragen der Seite', timeout: 15000 },
+    ).toBe('');
+  }
 
   async function starten({ vorbereitung = 'Repo Z', commits, modus = 'zusammen', zusatz = [], ohneSeite = false } = {}) {
     const art = VORBEREITUNGEN[vorbereitung];
@@ -116,6 +132,8 @@ function naechsteSprache(gr, page) {
     gitAufrufe: erwartet => beobachtung.pruefeGitAufrufe(zaehlerGit, erwartet),
     gitAufrufeJetzt: () => zaehlerGit.aufrufe().length,
     standGeladen: () => naechsteSeite.warteAufStand(page),
+    /** Die Ladung ist durch: keine Anfrage der Seite läuft mehr (siehe `warteAufRuhe`). */
+    ruhe: warteAufRuhe,
     /** Der Serverweg der Seite: die Anfragen seit `vorher` (nur der Pfad) — die Suche selbst darf keine erzeugen. */
     anfragenJetzt: () => anfragen.length,
     neueAnfragen: vorher => naechsteSeite.ohneHashes(anfragen.slice(vorher)),
