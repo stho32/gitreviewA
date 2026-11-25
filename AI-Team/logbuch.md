@@ -358,3 +358,10 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-25 | #12 | Reviews | code-reviewer | bestanden | 9 min | opencode: B1/B2/S3 nachgeprüft mit Mutanten · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 12-code-reviewer-2 · 0,17 $ · Karte gesamt 1,21 $ |
 | 2026-11-25 | #30 | Nacharbeit | entwickler | bestanden | 23 min | opencode: B1 Markierung nach Färbung, Suche linear (20 000 x: 57 s → 0,1 s), Mutant rot · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 30-entwickler-2 · 0,34 $ · Karte gesamt 1,15 $ |
 | 2026-11-25 | #12 | Entwicklertest | entwicklertester | bestanden | 12 min | opencode: alle Szenarien + 3 Chartas, kein Befund · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 12-entwicklertester-1 · 0,18 $ · Karte gesamt 1,39 $ |
+| 2026-11-25 | #30 | Reviews | code-reviewer | bestanden | 7 min | opencode: Nachprüfung bestanden · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 30-code-reviewer-2 · 0,12 $ · Karte gesamt 1,27 $ |
+| 2026-11-25 | #30 | Reviews | security-reviewer | bestanden | 7 min | opencode: Nachprüfung bestanden · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 30-security-reviewer-2 · 0,027 $ · Karte gesamt 1,30 $ |
+
+## Retrospektive #12 I0012 Umbenennung, Bild, Binärdatei (2026-11-25)
+- Durchlauf: Detailplanung mit 6 PO-Fragen, Bau 45 min, Rebase mit #7/#26 + 2 eigene rote Tests (B2302) vom entwickler behoben, Security ohne Muss (52 HTTP-Proben, SVG/Polyglott abgewiesen), Code-Review 2 Muss (kurze RIFF → 500; Binärdatei > 8 MiB als „Bild zu groß“) + vom Director hochgestuft S3 (kein Bild in „Zusammen“, dem Standardmodus), Nacharbeit, enge Nachprüfung mit Mutanten, Entwicklertest ohne Befund. Karte gesamt 1,39 $.
+- Lehre: Reviewer stufen Lücken im **Standardmodus** gern als Sollte ein, weil das Kriterium den Modus nicht nennt — der Director prüft Sollte auf „Nutzer bemerkt es im Standard“.
+- Gate: NUnit 1264/1264, Playwright 619/619 zweimal.
