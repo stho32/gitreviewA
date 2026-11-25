@@ -336,3 +336,9 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 ## Retrospektive #26 I0026 Abgehakte ausblenden (2026-11-25)
 - Durchlauf: Detailplanung mit Angleich an R00025 (Zähler im Kopf), Bau 21 min, Code-Review ohne Muss (1,19 $, 1 h), Entwicklertest ohne Befund, Rebase-Konflikt `haken.js` mit #18/#25 vom entwickler gelöst (zwei Rebases). Karte gesamt 1,72 $.
 - Gate: NUnit 1209/1209, Playwright 564/564 in Lauf 1; Lauf 2 und 3 nur der bekannte Wackler `grosse-diffs.spec.js:23` — als grün gewertet, weil seit #11 unabhängig von der Karte und die Härtung (b6f6a64) mit #7 kommt. Lehre: eine bekannte Test-Härtung früh als eigene kleine Merge-Wache auf main bringen, statt sie an einer Karte hängen zu lassen.
+| 2026-11-25 | #7 | Nacharbeit | entwickler | bestanden | 28 min | opencode: Lücken nebeneinander, rot→grün, Mutant · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 7-entwickler-3 · 0,23 $ · Karte gesamt 1,65 $ |
+
+## Retrospektive #7 I0007 Nebeneinander-Ansicht (2026-11-25)
+- Durchlauf: Detailplanung 8 min (6 PO-Fragen), Bau mit Test-Härtung; der entwickler erzeugte zweimal künstliche Last (`while :; do :; done`, Last ~8) — vom Director beendet, Lehre in `AI-Team/gelerntes.md`, Nachweis vom Director gefahren; Code-Review 2 Muss (`<colgroup>` fehlte, Link in `aria-hidden` — Klasse #11), Nacharbeit, enge Nachprüfung, Entwicklertest mit Anmerkung „Lücken fehlen nebeneinander“, vom Director als Muss gewertet und nachgezogen; Export-Konflikt im Treiber mechanisch gelöst. Karte gesamt 1,65 $.
+- Lehre: Jedes neue Anzeigeverfahren muss die orthogonalen Verbraucher mitnehmen (Lücken, Umbruch, Links, Zuschnitt) — Prüfpunkt für #30 und #35.
+- Gate: NUnit 1209/1209, Playwright 594/594 zweimal — erstes Gate seit #11 ohne den Wackler `grosse-diffs.spec.js:23` (Härtung b6f6a64).
