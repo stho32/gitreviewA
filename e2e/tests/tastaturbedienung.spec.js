@@ -262,3 +262,36 @@ test.describe('R00030 Statuszeile', () => {
     expect(einzeln.texte.some(text => text.trim().endsWith('Commit')), 'Commit-Zeile').toBe(true);
   });
 });
+
+test.describe('R00030 Kürzel an den Bedienelementen', () => {
+  test('jedes Bedienelement mit Kürzel trägt Hinweis und aria-keyshortcuts; der zugängliche Name bleibt ohne Kürzel', async ({ tast }) => {
+    await tast.starten();
+
+    const kaestchen = await tast.hinweis('#datei-zeilen .datei-zeile input.haken');
+    expect(kaestchen).toEqual({ aria: 'x', kbd: 'x', kbdVerborgen: true, name: 'Abgehakt: README.md' });
+
+    const modus = await tast.hinweis('.kz-modus');
+    expect(modus.aria).toBe('m');
+    expect(modus.kbd).toBe('m');
+    expect(modus.kbdVerborgen).toBe(true);
+    expect(modus.name).toBe('Modus');
+
+    const naechste = await tast.hinweis('#naechste-ungepruefte');
+    expect(naechste.aria).toBe('u');
+    expect(naechste.name).toBe('Nächste ungeprüfte');
+
+    await tast.dateiAnsehen('src/a.txt');
+    const vscode = await tast.hinweis('#diff .sprung-knopf');
+    expect(vscode.aria).toBe('o');
+    expect(vscode.kbd).toBe('o');
+    expect(vscode.name).toBe('In VS Code');
+
+    const dateiAnmerken = await tast.hinweis('#diff .datei-anmerken');
+    expect(dateiAnmerken.aria).toBe('a');
+    expect(dateiAnmerken.name).toBe('Datei anmerken');
+
+    expect((await tast.hinweis('#diff .diffansicht-wahl')).aria).toBe('s');
+    expect((await tast.hinweis('#diff .umbruch-schalter')).aria).toBe('w');
+    expect((await tast.hinweis('#diff .leerraum-schalter')).aria).toBe('l');
+  });
+});

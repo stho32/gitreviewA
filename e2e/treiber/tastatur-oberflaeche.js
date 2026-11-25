@@ -166,12 +166,15 @@ async function pruefeHilfeNichtVerfuegbar(page, text) {
 /** `aria-keyshortcuts`, der sichtbare Hinweis und der zugängliche Name eines Bedienelements. */
 async function hinweis(page, selektor) {
   return page.locator(selektor).first().evaluate(element => {
-    const kbd = element.querySelector('kbd');
+    const behaelter = element.matches('input') && element.closest('label') ? element.closest('label') : element;
+    const kbd = behaelter.querySelector('kbd');
+    const kopie = behaelter.cloneNode(true);
+    kopie.querySelectorAll('[aria-hidden="true"]').forEach(teil => teil.remove());
     return {
       aria: element.getAttribute('aria-keyshortcuts'),
       kbd: kbd ? kbd.textContent : null,
       kbdVerborgen: kbd ? kbd.getAttribute('aria-hidden') === 'true' : null,
-      name: element.getAttribute('aria-label') || element.textContent.trim(),
+      name: element.getAttribute('aria-label') || kopie.textContent.replace(/\s+/g, ' ').trim(),
     };
   });
 }

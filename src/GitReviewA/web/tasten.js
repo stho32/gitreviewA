@@ -17,7 +17,11 @@
   function init() {
     document.addEventListener('keydown', beiTaste);
     zeichneStatuszeile();
+    zeichneHinweise();
     document.addEventListener('modus-gewechselt', zeichneStatuszeile);
+    for (const ereignis of ['dateiliste-gezeichnet', 'diff-gezeichnet', 'haken-stand-geladen']) {
+      document.addEventListener(ereignis, zeichneHinweise);
+    }
     document.addEventListener('datei-gewaehlt', () => {
       if (zustand.fokusNachSprung) {
         zustand.fokusNachSprung = false;
@@ -418,6 +422,33 @@
     }
     window.gitreviewaHilfe.schliessen();
     return true;
+  }
+
+  /* ── Hinweise an den Bedienelementen (B2906) ── */
+
+  /** Der Katalog legt an jedes Bedienelement seinen Hinweis (`<kbd aria-hidden>`) und `aria-keyshortcuts`; der Name bleibt. */
+  function zeichneHinweise() {
+    for (const hinweis of werte().hinweise()) {
+      for (const element of document.querySelectorAll(hinweis.selektor)) {
+        if (element.dataset.tastenHinweis === hinweis.aria) {
+          continue;
+        }
+        element.dataset.tastenHinweis = hinweis.aria;
+        element.setAttribute('aria-keyshortcuts', hinweis.aria);
+        hinweisTasten(hinweis.anzeige).forEach(kbd => (element.closest('label') || element).append(kbd));
+      }
+    }
+  }
+
+  /** Je Taste ein `<kbd>`; für Screenreader verborgen, damit der zugängliche Name des Bedienelements unverändert bleibt. */
+  function hinweisTasten(anzeige) {
+    return anzeige.map(taste => {
+      const kbd = document.createElement('kbd');
+      kbd.className = 'hinweis-taste';
+      kbd.setAttribute('aria-hidden', 'true');
+      kbd.textContent = taste;
+      return kbd;
+    });
   }
 
   /* ── Statuszeile (B2904) ── */
