@@ -495,3 +495,21 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Ursachen gemessen: (1) Fokus in `datei-annotieren` war ein **Produktfehler** (Datei-Feld verlor beim Neuzeichnen den Fokus) — behoben; (2) Lastprofil Umbruch kein Rückschritt, Messung jetzt ereignisgenau, Ziel 0,7 s bleibt aber zu knapp → Karte #57; (3) NUnit prüfte die Ziffer 5 im Zeitstempel statt des Feldes. Je Mutant rot. Zeitgrenze, per Fortsetzung abgeschlossen. 0,27 $.
 - Lehre: Ein Wackler ist erst nach der Messung ein Testproblem — einer von dreien war ein echter Fehler im Produkt.
 - Gate: NUnit 1648/1648 zweimal, Playwright 870–871/872 (zwei seltene Lastwackler, je 8/8 einzeln; umbruch:159 → #57).
+| 2026-11-26 | #44 | Detailplanung | product-owner | bestanden | 1 min | Claude Sonnet: entschieden (226417a) · claude · sonnet · Lauf 44-product-owner-1 · 0,26 $ · Karte gesamt 0,26 $ |
+| 2026-11-26 | #57 | Detailplanung | product-owner | bestanden | 1 min | Claude Sonnet: entschieden (226417a) · claude · sonnet · Lauf 57-product-owner-1 |
+| 2026-11-26 | #46 | Entwicklung | entwickler | bestanden | 1 h 3 min | opencode: B3601–B3606, NUnit 1648, E2E 898 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 46-entwickler-1 · 0,87 $ · Karte gesamt 0,87 $ |
+| 2026-11-26 | #46 | Reviews | security-reviewer | bestanden | 2 min | Claude Sonnet: XSS/Anfrageschutz/Spoofing geprobt (4,69 MB cmp-gleich stdout), kein Muss; Pflichtlektüre unvollständig (vermerkt) · claude · Lauf 46-security-reviewer-1 · 0,42 $ · Karte gesamt 1,29 $ |
+| 2026-11-26 | #46 | Reviews | code-reviewer | bestanden | 5 min | opencode: kein Muss (nur gelesen) · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 46-code-reviewer-1 · 0,046 $ · Karte gesamt 1,34 $ |
+| 2026-11-26 | #49 | Entwicklung | entwickler | bestanden | 1 h 2 min | opencode: B3901–B3905, NUnit 1648, E2E 905 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 49-entwickler-1 · 0,66 $ · Karte gesamt 0,66 $ |
+| 2026-11-26 | #44 | Entwicklung | entwickler | bestanden | 44 min | opencode: Lücken in Zusammen (Logik aus Einzeln wiederverwendet), rot→grün, E2E 876 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 44-entwickler-1 · 0,58 $ · Karte gesamt 0,84 $ |
+| 2026-11-26 | #49 | Reviews | code-reviewer | befund | 7 min | opencode: B1 j/k ohne Umlauf an den Enden · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 49-code-reviewer-1 · 0,081 $ · Karte gesamt 0,74 $ |
+| 2026-11-26 | #49 | Reviews | security-reviewer | bestanden | 7 min | opencode: reine Darstellung · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 49-security-reviewer-1 · 0,026 $ · Karte gesamt 0,77 $ |
+| 2026-11-26 | #44 | Reviews | code-reviewer | bestanden | 9 min | opencode: kein Muss, kein Rückschritt in Einzeln · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 44-code-reviewer-1 · 0,096 $ · Karte gesamt 0,94 $ |
+| 2026-11-26 | #49 | Nacharbeit | entwickler | bestanden | 11 min | opencode: j/k mit Umlauf über gezeigte Zeilen, rot→grün · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 49-entwickler-2 · 0,26 $ · Karte gesamt 1,03 $ |
+| 2026-11-26 | #46 | Entwicklertest | entwicklertester | bestanden | 28 min | opencode: alle Szenarien, Spalte gleich stdout, kein Befund · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 46-entwicklertester-1 · 0,79 $ · Karte gesamt 2,13 $ |
+| 2026-11-26 | #49 | Entwicklertest | entwicklertester | bestanden | 5 min | opencode: alle Szenarien, kein Befund · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 49-entwicklertester-1 · 0,12 $ · Karte gesamt 1,15 $ |
+
+## Retrospektive #44 Lücken in „Zusammen“ (2026-11-26)
+- Befund des dokumentar (#39); PO (Sonnet) entschied: Lücken auch in „Zusammen“ (netto und je Abschnitt). Bau 44 min — Lücken-Logik aus „Einzeln“ geteilt statt doppelt (diff.js 126+/68−), Code-Review ohne Befund, Entwicklertest nach Risiko entfallen. Karte gesamt 0,94 $.
+- Lehre (Factory-Ebene): Mit drei Karten, die jeweils eigene volle Suiten fahren, wackelt im Gate fast jedes Mal ein anderer Zeit- oder Fokustest (je 8/8 einzeln grün). Gate und volle Suiten der Rollen sollten sich nicht überlappen — Vorschlag: volle Suite der Rollen nur, wenn kein Gate läuft, sonst nur betroffene Specs.
+- Gate: NUnit 1648/1648 zweimal, Playwright 875/876 bzw. 874/876 (Lastwackler).
