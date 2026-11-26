@@ -21,6 +21,7 @@ test.describe('Absicht der KI: DOM-Sicherheit', () => {
     expect(await absicht.rumpf('m4')).toBe('<b>fett</b> <img src=x onerror=alert(1)>\na⟨U+202E⟩b⟨U+200B⟩c⟨U+E0041⟩d');
     expect(await absicht.fremdElementeImBlock(), 'kein Element aus fremdem Text').toBe(0);
     await absicht.keineDialoge();
+    await absicht.keineSeitenfehler();
   });
 
   test('Kriterium 5: der Betreff von m2 (400 Zeichen) steht in einer Zeile mit „…“ und ganz in `title`', async ({ absicht }) => {
@@ -37,6 +38,7 @@ test.describe('Absicht der KI: DOM-Sicherheit', () => {
     expect(lang.hoehe, 'eine Zeile hoch wie der kurze Betreff').toBeLessThanOrEqual(kurz.hoehe * 1.5);
     expect(await absicht.betreffTitel('m2')).toBe(LANGER_BETREFF);
     expect(await absicht.betreffTitel('m2')).toHaveLength(400);
+    await absicht.keineSeitenfehler();
   });
 
   test('ohne Rumpf gibt es keinen Knopf „Nachricht“', async ({ absicht }) => {
@@ -82,6 +84,7 @@ test.describe('Absicht der KI: Stehenbleiben beim Umschalten', () => {
 
     await absicht.bildlaufSetzen(0);
     await absicht.blockStehtUeberDerErstenZeile();
+    await absicht.keineSeitenfehler();
   });
 
   test('Kriterium 6: in „Einzeln“ bleibt der Block beim Aufklappen der Lücke; nach Dateiwechsel und zurück ist die Nachricht zu', async ({ absicht }) => {
@@ -104,6 +107,7 @@ test.describe('Absicht der KI: Stehenbleiben beim Umschalten', () => {
 
     await absicht.blockZeigt(['m6']);
     await absicht.nachrichtIst('m6', false);
+    await absicht.keineSeitenfehler();
   });
 });
 
@@ -131,5 +135,6 @@ test.describe('Absicht der KI: schmaler Diff (590 × 800)', () => {
     expect(nachher.kopfHoehe, 'Höhe des Diff-Kopfs').toBe(vorher.kopfHoehe);
     expect(nachher.rollHoehe, 'Höhe des Rollbereichs').toBe(vorher.rollHoehe);
     expect(nachher.blockHoehe, 'der Block wächst').toBeGreaterThan(vorher.blockHoehe);
+    await absicht.keineSeitenfehler();
   });
 });

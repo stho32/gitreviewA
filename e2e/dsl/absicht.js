@@ -24,6 +24,7 @@ function absichtSprache(gr, page) {
   let repo;
   let lauf;
   let dialogePruefen;
+  const seitenfehler = [];
 
   const hash = name => repo.hashes[name];
   const kurz = name => hash(name).slice(0, 7);
@@ -37,6 +38,7 @@ function absichtSprache(gr, page) {
     if (seiteOeffnen) {
       await page.setViewportSize(fenster);
       dialogePruefen = seite.dialogeZaehlen(page);
+      page.on('pageerror', fehler => seitenfehler.push(fehler.message));
       await gr.oberflaecheOeffnen(page, lauf, modus);
     }
     return lauf;
@@ -80,6 +82,8 @@ function absichtSprache(gr, page) {
     zustand: () => blockSeite.zustandLesen(page),
     /** Der Browser hat keinen Dialog geöffnet (DOM-Sicherheit, R00038 Kriterium 5). */
     keineDialoge: () => dialogePruefen(),
+    /** Die Konsole der Seite hat keinen Fehler gemeldet (`pageerror`, Auftrag). */
+    keineSeitenfehler: () => expect(seitenfehler, 'Seitenfehler der Konsole').toEqual([]),
 
     /** Die Herkunft im Diff-Kopf (R00012): „netto aus …“ bzw. „je Commit, nicht netto — …“. */
     herkunft: text => diffSeite.pruefeHerkunft(page, text),
