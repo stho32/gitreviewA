@@ -710,3 +710,12 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - **Teuer war der erste Bau** (2,08 $ von 4,81 $): 90 min bis zur Zeitgrenze, darin lange Wartezeiten bei Last > 6 durch zwei parallele Karten. Die Fortsetzung brauchte 17 min für Commit und Gate.
 - **Gate auf main**: NUnit 1880 zweimal grün; Playwright 1257 + 1 rot, dann 1258 und 1258. Der rote Test ist nicht ermittelt, weil das Gate-Skript nur die Zusammenfassung behielt — ab jetzt schreibt das Gate das volle Protokoll (`gate-e2e-log.sh`). Angenommen nach zwei weiteren grünen Läufen; offen als Wackler-Verdacht ohne Namen.
 - **Bericht ohne Gelesen-Zeile** (Code-Review Flash): angenommen, weil die Proben in der Ablage belegt sind.
+
+## Retrospektive #63 I0052 Suchfeld, I0053 Anmerkungsfeld, R00043 Abbruchzeile (2026-11-27)
+
+- **Breite am Behälter statt am Viewport** war der Kern beider Felder. Bei breitem Fenster unsichtbar, darum Messproben mit `getBoundingClientRect` und `elementFromPoint`.
+- **Zwei Nacharbeiten derselben Klasse**: erst die Knopfzeile, dann der Anmerkungskopf. Beide Male erzwang eine flex-Gruppe ohne Umbruch in einer `table-layout:auto`-Zelle eine Mindestbreite. Die Tests der Entwicklung waren grün, weil sie nur kurze Zeilen und nach dem Neuladen die zugeklappte Spalte gemessen haben. Lehre: Eine Geometrieprobe misst mit dem längsten Inhalt und mit vorhandenem Zustand (gespeicherte Anmerkung), nicht nur im leeren Fall. Muster-Kandidat beim Trainer: „flex-Gruppe ohne Umbruch in Tabellenzelle“.
+- **Rolle über der Lastgrenze**: Die zweite Nacharbeit fuhr ihr Gate bei Last 6,8–7,0 (mit `nice`, `--workers=1`). Das ist ein Regelverstoß, der im Auftrag schon stand.
+- **Rebase-Konflikte mit #61** nur in angehängten Dokumentzeilen (WBS, Ist-Zeiten), vom Director mechanisch je Zeilen-ID vereint. Passt zum offenen Factory-Vorschlag e50e08d.
+- **Gate auf main**: NUnit 1881 zweimal, Playwright 1287 zweimal grün, mit vollem Protokoll.
+- Neue Backlog-Karte #66 (Dateinamen brechen in schmaler Seitenleiste zeichenweise um, Bestand).

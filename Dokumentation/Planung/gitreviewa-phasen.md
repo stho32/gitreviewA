@@ -1,7 +1,7 @@
 ---
 application: gitreviewA
 wbs: Dokumentation/Planung/gitreviewa.md
-zuletzt: 2026-11-26
+zuletzt: 2026-11-27
 ---
 
 # Phasen — gitreviewA
@@ -70,3 +70,5 @@ zuletzt: 2026-11-26
 | I0028 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester + Director, Auftrag Stefan Hoffmann) | 12 Szenarien R00050, US-8 (zweiter Tab) nach Nacharbeit vom Director nachgeprüft, Karte #32 |
 | I0042 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | 8 Szenarien R00041 und Betreiberfall (Muster, Suche, Abgehakte), Anmerkungen nach PO-Zeilen 271–273 nachgearbeitet, Karte #50 |
 | I0051 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | 7 Szenarien R00051 (Kürzung, Grenze, Schnittkante, gleiche Zahl wie Streifen, Betreff und Autor nach PO-Zeile 274), Karte #61 |
+| I0052 | Entwicklertest | 2026-11-27 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | Szenarien R00052: Suchfeld bei 240/360/640 px nicht unter dem Einklapp-Knopf, ganz klickbar, Einzeln und Baum, Karte #63 |
+| I0053 | Entwicklertest | 2026-11-27 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | Szenarien R00053: alle Anmerkungsarten inkl. „Ändern“ bei 1280/812 px, Ergebnis-Spalte offen und zu, nach zwei Nacharbeiten, Karte #63 |
