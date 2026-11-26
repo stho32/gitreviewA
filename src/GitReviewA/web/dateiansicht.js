@@ -96,6 +96,7 @@
     const ladung = (zustand.ladung += 1);
     zustand.gewaehlt = nummer;
     markiereGewaehlt();
+    loescheBereich();
     try {
       const inhalt = await holeJson(`api/dateiansicht/${nummer}`);
       if (ladung !== zustand.ladung) {
@@ -395,6 +396,16 @@
   /** Setzt den markierten Bereich und zeichnet Markierung, Werkzeugleiste und Knopf nach. */
   function setzeBereich(neu) {
     zustand.bereich = neu;
+    markiere();
+  }
+
+  /** Die Markierung gehört der Datei (R00045, Kriterium 5): beim Wechsel fallen Bereich, Anker und Werkzeugleiste weg.
+      Die Suchtreffer der neuen Datei rechnet die Suche über `da-gezeichnet` selbst neu. */
+  function loescheBereich() {
+    zustand.bereich = null;
+    zustand.anker = null;
+    zustand.ziehen = null;
+    zustand.ziehenBehandelt = false;
     markiere();
   }
 

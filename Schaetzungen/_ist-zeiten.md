@@ -105,3 +105,4 @@ Nie vom User erfragen.
 | 2026-11-26 | R00045 Mehrere Dateien in der Seitenleiste | I0046 B4242 Dateiliste in der Seitenleiste | unklar | 2-4h | 1,0h | 1,0h | autonom |
 | 2026-11-26 | R00045 Mehrere Dateien in der Seitenleiste | I0046 B4243 Datei wechseln | Standard | 2h | 0,5h | 0,5h | autonom |
 | 2026-11-26 | R00045 Mehrere Dateien in der Seitenleiste | I0046 B4244 Tests (Grenzen, viele Dateien, Wechsel) | unklar | 2-4h | 0,7h | 0,7h | autonom |
+| 2026-11-26 | R00045 Mehrere Dateien in der Seitenleiste | Karte #53: Rebase auf main (#52) und Kriterium 5 (Markierung gehört der Datei) | Bug-Fix | – | 0,5h | – | autonom |
