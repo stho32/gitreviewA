@@ -3,7 +3,7 @@ id: R00000
 titel: Vision — gitreviewA
 status: Lebend
 angelegt: 2026-11-24
-zuletzt-ergaenzt: 2026-11-25
+zuletzt-ergaenzt: 2026-11-26
 ---
 
 # R00000: Vision — gitreviewA
@@ -112,8 +112,11 @@ an die KI zurückzugeben.
   Kontext (Commit, Datei, Endpunkt); keine Logdatei, keine Rotation.
 - **Lastprofil**: ein Mensch je Lauf. Flüssig bis 200 Commits, 2 000 geänderte Dateien,
   20 000 Diff-Zeilen je Datei (darüber zugeklappt, Laden auf Wunsch) und 500
-  Annotationen. Ziele: Oberfläche ≤ 2 s nach Aufruf, Dateiwechsel ≤ 200 ms typisch und
-  ≤ 1 s an der Obergrenze, „Beenden“ bis Ausgabe ≤ 1 s. Diffs werden je Datei bei Bedarf
+  Annotationen. Zeitverhalten nur noch als **grobe Schranken**: das Ergebnis steht
+  spätestens 5 s nach der auslösenden Handlung (auch „Beenden“ bis Ausgabe), und keine
+  einzelne Aufgabe friert länger als 2 s ein. Die engen Zeitziele (≤ 2 s nach Aufruf,
+  ≤ 200 ms typisch, ≤ 1 s an der Obergrenze, Long Task ≤ 150 ms) entfallen;
+  Leistungsarbeit nur auf Meldung des Betreibers. Diffs werden je Datei bei Bedarf
   geladen.
 - **Öffentlich unter MIT-Lizenz**; Repositories auf GitNAS (`origin`) und GitHub (`github`).
 
@@ -145,3 +148,4 @@ an die KI zurückzugeben.
 | 2026-11-24 | Zielbild ergänzt um „Zusammen ist der Standard, die Dateien führen“ und „Beenden und Abbrechen im Kopf“ (Betreiber: „Die Dateien bitte über den Commits (sind wichtiger) und die Default-Anzeige ist ‚alle Änderungen zusammen‘.“, „Ja, Fassung 2 bitte einplanen.“; Entscheidungen des product-owner zu #27) |
 | 2026-11-25 | Zielbild ergänzt um „Arbeitsplatz mit entkoppelten Bereichen“ (Richtung A), „Abschlussschritt vor ‚Beenden‘“, „Art der Anmerkung“ (Muss/Frage/Idee als vorangestelltes `[Muss]` in der Textzeile, Format sonst unverändert, kein Gesamturteil) und den neuen Anwendungsfall „Einzelne Dateien ansehen und kopieren“; Kurzfassung, Nutzer und Nutzen, „Kein Editor“ ergänzt; zwei Richtungsfragen zur Dateiansicht offen (Betreiber: „Variante A, aber die Sidebars müssen vom Inhalt entkoppelt sein, ähnlich wie ein Texteditor.“ und „Außerdem brauch ich noch irgendwas um nur einzelne Dateien anzusehen. Zum Beispiel habe ich öfter das Problem, dass man eine oder mehrere SQL Dateien ausführen soll. Die könnte man mit dem Review Tool anzeigen. Man müsste natürlich den Inhalt ganz oder teilweise kopieren können.“; Abschlussschritt nach Empfehlung des Directors; Karten #41, #42) |
 | 2026-11-25 | Richtungsfragen „Dateiansicht: Quelle der Dateien“ und „Dateiansicht: Ergebnis“ entschieden (product-owner, `AI-Team/po-entscheidungen.md` Zeilen 200/201): das Zielbild nennt als Quellen Dateien vom Datenträger (auch außerhalb von git, nur die beim Start genannten) und `<commit>:<pfad>`; die Leitplanke „Git über die `git`-Kommandozeile“ gilt für Diffs und `<commit>:<pfad>`, genannte Dateien liest die Dateiansicht vom Datenträger; Ergebnis der Dateiansicht: stdout leer, Exit 0 beim Schließen, Exit 130 beim Abbruch (Strg+C oder Signal) |
+| 2026-11-26 | Leitplanke „Lastprofil“ von engen Zeitzielen auf grobe Schranken umgestellt (ersetzt: „Oberfläche ≤ 2 s nach Aufruf, Dateiwechsel ≤ 200 ms typisch und ≤ 1 s an der Obergrenze, ‚Beenden‘ bis Ausgabe ≤ 1 s“): das Ergebnis steht spätestens 5 s nach der auslösenden Handlung (auch „Beenden“), keine einzelne Aufgabe friert länger als 2 s ein; enge Zeitziele entfallen, Leistungsarbeit nur auf Meldung des Betreibers (Betreiber 2026-11-26 wörtlich: „Wir brauchen so harte Performance-Bedingungen nicht. Bisher gesehen war die Performance für die real-Nutzung vollkommen in Ordnung. Wenn es Probleme gibt melde ich mich.“; Entscheidung des product-owner, `AI-Team/po-entscheidungen.md` letzte Zeile, eingearbeitet über `/vision fortschreiben`; Umfang: R00047) |
