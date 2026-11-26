@@ -107,3 +107,10 @@ Nie vom User erfragen.
 | 2026-11-26 | R00045 Mehrere Dateien in der Seitenleiste | I0046 B4244 Tests (Grenzen, viele Dateien, Wechsel) | unklar | 2-4h | 0,7h | 0,7h | autonom |
 | 2026-11-26 | R00045 Mehrere Dateien in der Seitenleiste | Karte #53: Rebase auf main (#52) und Kriterium 5 (Markierung gehört der Datei) | Bug-Fix | – | 0,5h | – | autonom |
 | 2026-11-26 | R00045 Mehrere Dateien in der Seitenleiste | B4245 Nacharbeit Entwicklertest: keine Konsolenfehler (Laden, Wechseln, Schließen) | Bug-Fix | – | 0,3h | – | autonom |
+
+| 2026-11-26 | R00042 Ergebnis-Spalte ziehen | B4101 Breitenregel für drei Bereiche | unklar | 2-4h | 0,1h | – | autonom |
+| 2026-11-26 | R00042 Ergebnis-Spalte ziehen | B4102 Trenner je Seite (Mechanik verallgemeinern) | klar | 2h | 0,2h | – | autonom |
+| 2026-11-26 | R00042 Ergebnis-Spalte ziehen | B4103 Rechter Trenner ziehen und per Tastatur | unklar | 2-4h | 0,1h | – | autonom |
+| 2026-11-26 | R00042 Ergebnis-Spalte ziehen | B4104 Schrumpfen, Wachsen und Ausklappen | unklar | 2-4h | 0,1h | – | autonom |
+| 2026-11-26 | R00042 Ergebnis-Spalte ziehen | B4105 Drei Rollbereiche, ohne Neuzeichnen, Diff-Kopf bei schmalem Diff | unklar | 2-4h | 0,2h | – | autonom |
+| 2026-11-26 | R00042 Ergebnis-Spalte ziehen | B4106 Akzeptanz-Szenarien der User Story | unklar | 2-4h | 0,1h | – | autonom |
