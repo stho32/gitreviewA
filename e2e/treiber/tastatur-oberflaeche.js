@@ -390,9 +390,10 @@ async function diffZeilen(page) {
   }, DIFFZEILE);
 }
 
-/** Wartet, bis der Diff der Datei gezeichnet ist (Pfad im Kopf, mindestens eine Zeile). */
+/** Wartet, bis der Diff der Datei gezeichnet ist (Pfad im zugänglichen Namen, mindestens eine Zeile; R00039: die Anzeige
+    darf gekürzt sein). */
 async function aufDiffWarten(page, pfad) {
-  await expect(page.locator('#diff .diff-pfad')).toHaveText(pfad, { timeout: 5000 });
+  await expect(page.locator('#diff .diff-pfad')).toHaveAttribute('aria-label', pfad, { timeout: 5000 });
   await expect(page.locator(DIFFZEILE).first()).toBeVisible({ timeout: 5000 });
 }
 

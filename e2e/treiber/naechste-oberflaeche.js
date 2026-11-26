@@ -40,9 +40,10 @@ async function gewaehlteZeilen(page) {
   return page.locator(`${ZEILE}[aria-current="true"]`).evaluateAll(zeilen => zeilen.map(zeile => zeile.dataset.pfad));
 }
 
-/** Der Diff-Bereich zeigt diese Datei mit Zeilen (der Sprung lädt ihn, I0027). */
+/** Der Diff-Bereich zeigt diese Datei mit Zeilen (der Sprung lädt ihn, I0027). Der Pfad steht ganz im zugänglichen Namen
+    (R00039): die Anzeige darf gekürzt sein. */
 async function pruefeDiffGeladen(page, pfad) {
-  await expect(page.locator('#diff .diff-pfad'), `Diff-Pfad von ${pfad}`).toHaveText(pfad);
+  await expect(page.locator('#diff .diff-pfad'), `Diff-Pfad von ${pfad}`).toHaveAttribute('aria-label', pfad);
   await expect(page.locator('#diff .df-sc tr').first(), `Diff-Zeilen von ${pfad}`).toBeVisible();
 }
 

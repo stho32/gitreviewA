@@ -158,15 +158,21 @@ function nummerText(nummer) {
   return String(nummer);
 }
 
+/** Der Diff-Kopf nennt den gewählten Pfad im zugänglichen Namen (R00039): die Anzeige darf bei Platzmangel in der Mitte
+    gekürzt sein („anfang…ende“), der Name trägt ihn ganz. Die Prüfung „welche Datei zeigt der Diff“ hängt darum am Namen. */
+async function pruefePfad(page, pfad) {
+  await expect(page.locator(PFAD), `Diff-Pfad von ${pfad}`).toHaveAttribute('aria-label', pfad);
+}
+
 async function pruefeDiff(page, { pfad, zeilen }) {
-  await expect(page.locator(PFAD)).toHaveText(pfad);
+  await pruefePfad(page, pfad);
   await pruefeKeinSchalter(page);
   await expect.poll(() => diffZeilenLesen(page), `Diff von ${pfad}`).toEqual(zeilen.map(alsGeleseneZeile));
   await expect(page.locator(MELDUNG)).toHaveText('');
 }
 
 async function pruefeMeldung(page, pfad, text, istFehler) {
-  await expect(page.locator(PFAD)).toHaveText(pfad);
+  await pruefePfad(page, pfad);
   await expect(page.locator(MELDUNG)).toHaveText(text);
   await expect(page.locator(ZEILE)).toHaveCount(0);
   if (istFehler) {
@@ -769,7 +775,7 @@ async function zugeklapptRechtzeitigNachAktion(page, aktion, pfad, meldung, fris
   await page.waitForFunction(([selektor, text]) => document.querySelector(selektor).textContent === text, [MELDUNG, meldung], { polling: 'raf', timeout: 10000 });
   const dauerMs = Date.now() - startUmMs;
   expect(dauerMs, `Zuklappzustand nach ${dauerMs} ms`).toBeLessThanOrEqual(fristMs);
-  await expect(page.locator(PFAD)).toHaveText(pfad);
+  await pruefePfad(page, pfad);
   await expect(page.locator(BEREICH).getByRole('button', { name: TROTZDEM_LADEN })).toBeVisible();
   return dauerMs;
 }
@@ -915,7 +921,7 @@ module.exports = {
   pruefeBedienbarNachAlsText, ansichtWaehlen, ansichtPerTastaturWechseln, pruefeAnsicht, zeilenfarbenLesen, pruefeZeilenfarben, pruefeKontextzeileBinnen,
   menueOeffnen, menueSchliessen, menueEintrag, menueWaehlen, pruefeMenueZustand, umbruchStellung,
   setzeDiffBreite, leistenmass, pfadmass,
-  pruefeDiff, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, pruefeHerkunft, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, pruefeUmbruchStellung, pruefeUmschalter, pruefeUmschalterPerTabErreichbar, umbruchPerTastaturUmschalten, pruefeZeileUmbrochen, pruefeAbschnittZeileUmbrochen, diffAntwortVerzoegern,
+  pruefeDiff, pruefePfad, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, pruefeHerkunft, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, pruefeUmbruchStellung, pruefeUmschalter, pruefeUmschalterPerTabErreichbar, umbruchPerTastaturUmschalten, pruefeZeileUmbrochen, pruefeAbschnittZeileUmbrochen, diffAntwortVerzoegern,
   pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
   pruefeAbschnittZugeklappt, abschnittTrotzdemLaden, pruefeAbschnittZeile, pruefeAbschnittskopf,
   diffAntwortZuGross, ganzDateiErstScheitern, blockKnoten, warteAufFarbe, langeAufgabenBeimScrollen, zugeklapptRechtzeitigNachKlick, zugeklapptRechtzeitigNachAktion,
