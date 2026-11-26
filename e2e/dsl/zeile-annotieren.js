@@ -280,6 +280,10 @@ function annotierSprache(gr, page) {
     ergebnisSpalteUmschalten: () => trennerSeite.spaltenKnopfBetatigen(page),
     /** Feld, Diff-Bereich und Rollbereich in einem Zug: rechte Kanten, waagerechter Bildlauf, Treffer an der rechten Kante. */
     lageDesFeldes: name => anmerkungSeite.lageDesFeldes(page, name),
+    /** Dieselbe Lage des „Ändern“-Felds über die Nummer der Anmerkung (zwei Felder an einer Zeile tragen denselben Namen). */
+    lageDesAenderungsfeldes: nummer => anmerkungSeite.lageDesAenderungsfeldes(page, nummer),
+    /** Dieselbe Lage des neuen Felds, wenn an derselben Zeile schon das „Ändern“-Feld offen ist. */
+    lageDesNeuenFeldes: () => anmerkungSeite.lageDesNeuenFeldes(page),
 
     /* ── Datei anmerken (R00022) ── */
     dateiAnmerken: () => anmerkungSeite.dateiAnmerken(page),

@@ -10,6 +10,8 @@ const ANMERKUNGSBEREICH = '#diff';
 const DIFFZEILE = '#diff .dz tr[data-art]';
 const ANMERKUNGSZEILE = '#diff .dz tr.anm';
 const FELDZEILE = '#diff .dz tr.anm-feld, #diff .dz tr.anm-aendern';
+/** Nur das neue Feld (nicht „Ändern“): an einer Zeile können beide zugleich offen sein (R00053, Karte #63). */
+const NEUES_FELDZEILE = '#diff .dz tr.anm-feld';
 const DATEI_ANMERKUNGSZEILE = '#diff .anm-datei tr.anm';
 const DATEI_KNOPF = '#diff .diff-datei-anmerken';
 const DATEI_KNOPF_BUTTON = '#diff .datei-anmerken';
@@ -758,17 +760,31 @@ async function trefferAnDerKante(page, box) {
   }, { x: box.x + box.width - 1, y: box.y + box.height / 2 });
 }
 
-/** Die Messung der Abnahme-Probe (R00053, Kriterien 1–5): das offene Notizfeld `name` und seine Knopfzeile („Abbrechen“)
-    gegen den Diff-Bereich und seinen Rollbereich (`#diff`, `.df-sc`), dazu der waagerechte Bildlauf des Rollbereichs und was
-    `elementFromPoint` an den rechten Kanten trifft. Eine Kante ist sichtbar, wenn dort das Element selbst liegt und nicht der
-    abgeschnittene Nachbar. */
+/** Die Messung der Abnahme-Probe (R00053, Kriterien 1–5) für das offene Notizfeld `name`: Feld und Knopfzeile („Abbrechen“)
+    gegen den Diff-Bereich und seinen Rollbereich (`#diff`, `.df-sc`), dazu der waagerechte Bildlauf und was `elementFromPoint`
+    an den rechten Kanten trifft. Eine Kante ist sichtbar, wenn dort das Element selbst liegt und nicht der abgeschnittene Nachbar. */
 async function lageDesFeldes(page, name) {
-  const feld = page.getByRole('textbox', { name, exact: true });
-  const box = await feld.boundingBox();
+  return lageDerFeldzeile(page, feld(page, name));
+}
+
+/** Das offene „Ändern“-Feld über die stabile Nummer der Anmerkung: an einer Zeile können „Ändern“-Feld und neues Feld denselben
+    Namen tragen — dann ist der Name kein eindeutiger Zugang mehr (R00053, Karte #63). */
+async function lageDesAenderungsfeldes(page, nummer) {
+  return lageDerFeldzeile(page, aenderungsfeld(page, nummer));
+}
+
+/** Das neue Notizfeld an der Zeile, wenn dort schon ein „Ändern“-Feld offen ist (zweites Feld an derselben Zeile). */
+async function lageDesNeuenFeldes(page) {
+  return lageDerFeldzeile(page, page.locator(`${NEUES_FELDZEILE} textarea`).last());
+}
+
+/** Lage einer Feldzeile: dieselbe Messung für jeden Zugang zum Feld (Name, Nummer, Zeilenklasse). */
+async function lageDerFeldzeile(page, eingabe) {
+  const box = await eingabe.boundingBox();
   if (!box) {
     return null;
   }
-  const knopf = feld.locator('xpath=..').getByRole('button', { name: 'Abbrechen', exact: true });
+  const knopf = eingabe.locator('xpath=..').getByRole('button', { name: 'Abbrechen', exact: true });
   const knopfBox = await knopf.boundingBox();
   const rahmen = await page.evaluate(([diffSel, rollSel]) => {
     const diff = document.querySelector(diffSel).getBoundingClientRect();
@@ -813,7 +829,7 @@ module.exports = {
   dateiAnmerkenAmHinweis, pruefeHinweisAnmerkenSichtbar, pruefeHinweisAnmerkenVerborgen,
   pruefeHinweisEntfernt, pruefeKeinHinweisEntfernt, pruefeHinweisAusserhalb, pruefeKeinHinweisAusserhalb,
   inDenDiffTabben, pfeilAbBis, taste, pruefeFokusAufZeile, anlegenAntwortetEinmal, anlegenVerzoegern, pruefeAnmerkungenBinnen,
-  pruefeAnmerkungOhneHtml, sichtbarerAnmerkungstext, lageDesFeldes,
+  pruefeAnmerkungOhneHtml, sichtbarerAnmerkungstext, lageDesFeldes, lageDesAenderungsfeldes, lageDesNeuenFeldes,
   aenderungOeffnen, pruefeKopfNenntNummer, pruefeFokusAufKopf, pruefeAnzahlAenderungsfelder, pruefeAnmerkungszeileEnthaelt, abbrechen, pruefeSpeichernGesperrt,
   aenderungAntwortetEinmal, aenderungVerzoegern,
   aenderungsfeldTextSchreiben, pruefeAenderungsfeldText, aenderungsfeldSpeichern, aenderungsfeldSpeichernUndWarten, caretPosition, fokusAufKnopf, pruefeKnopfHatFokus,

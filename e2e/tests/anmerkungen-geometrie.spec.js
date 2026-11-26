@@ -1,7 +1,8 @@
 'use strict';
-// Spezifikation R00053 „Anmerkungsfeld ragt über den rechten Diff-Rand“, B4901–B4903: das Notizfeld jeder Anmerkung liegt ganz
+// Spezifikation R00053 „Anmerkungsfeld ragt über den rechten Diff-Rand“, B4901–B4905: das Notizfeld jeder Anmerkung liegt ganz
 // im Diff-Bereich (rechte Kante sichtbar, Knopfzeile „Abbrechen“ unbesehen, kein waagerechter Bildlauf), bei 1280 und 812 px, mit
-// offener und zugeklappter Ergebnis-Spalte, für Zeilen-, Bereichs-, Dateianmerkung und „Ändern“, und es hält beim Neuzeichnen.
+// offener und zugeklappter Ergebnis-Spalte, für Zeilen-, Bereichs-, Dateianmerkung, „Ändern“ und ein zweites Feld an derselben
+// Zeile mit vorhandener Anmerkung (Befund 2 der Karte #63), und es hält beim Neuzeichnen.
 // Browser-Eigenes (Geometrie). Zwei Stellen: Repo A `src/b.txt` (kurze Zeile) und Repo P `src/app.js` (lange Zeile, R00049/R00053).
 const { test, expect } = require('../dsl/zeile-annotieren.js');
 
@@ -39,6 +40,13 @@ async function messung(anm, name) {
   const lage = await anm.lageDesFeldes(name);
   expect(lage, `Notizfeld ${name} im DOM`).not.toBeNull();
   return lage;
+}
+
+/** Wie `messung`, aber für ein Feld, dessen Zugang schon feststeht (Nummer der Anmerkung, Zeilenklasse) statt über den Namen. */
+async function messungDerLage(lage) {
+  const ergebnis = await lage;
+  expect(ergebnis, 'Notizfeld im DOM').not.toBeNull();
+  return ergebnis;
 }
 
 /** Kriterium 1: die rechte Kante von Feld und Knopfzeile liegen im Diff-Bereich und in seinem Rollbereich, und sie sind
@@ -80,8 +88,8 @@ test.describe('Abnahme-Probe des Entwicklertesters (B4903: Kriterien 1–3)', ()
 
 test.describe('Alle Anmerkungsarten (B4902: Kriterium 4)', () => {
   for (const [stelle, ort] of STELLEN) {
-    for (const [name, fenster, spalteOffen] of [FENSTERSZENARIEN[0], FENSTERSZENARIEN[2]]) {
-      test(`soll bei ${name}, ${stelle}, für Zeilen-, Bereichs- und Dateianmerkung und „Ändern“ dieselbe Lage halten`, async ({ anm }) => {
+    for (const [name, fenster, spalteOffen] of FENSTERSZENARIEN) {
+      test(`soll bei ${name}, ${stelle}, für Zeilen-, Bereichs- und Dateianmerkung, „Ändern“ und ein zweites Feld dieselbe Lage halten`, async ({ anm }) => {
         await anm.starten({ vorbereitung: ort.vorbereitung, modus: 'zusammen' });
         await spaltenzustand(anm, fenster, spalteOffen);
         await anm.dateiAnsehen(ort.datei);
@@ -102,11 +110,19 @@ test.describe('Alle Anmerkungsarten (B4902: Kriterium 4)', () => {
         expect(dateilage.kanteAmFeld, 'rechte Kante der Dateianmerkung sichtbar').toBe(true);
         await anm.dateiAbbrechen(ort.datei);
 
+        // Mit vorhandener Anmerkung an der Stelle (Befund 2 der Karte #63): ihr Kopf kann die Zelle verbreitern, wenn er nicht umbricht.
         const angelegt = await anm.ueberDieSchnittstelleAnlegen(ort.commit, ort.datei, ort.zeile, 'Text zum Ändern');
         await anm.neuLaden();
+        // Der Reload baut die Ansicht neu auf: 812 px startet zugeklappt — der Spaltenzustand der Abnahme gilt danach wieder.
+        await spaltenzustand(anm, fenster, spalteOffen);
         await anm.dateiAnsehen(ort.datei);
+
         await anm.aendern(angelegt.nummer);
-        erwarteImDiff(await messung(anm, anm.feldname(ort.datei, ort.zeile)), 'Ändern-Feld');
+        erwarteImDiff(await messungDerLage(anm.lageDesAenderungsfeldes(angelegt.nummer)), 'Ändern-Feld');
+
+        // Zweites Feld an derselben Zeile: der Klick öffnet neben dem „Ändern“-Feld ein neues Notizfeld.
+        await anm.zeileAnklicken({ neu: ort.zeile });
+        erwarteImDiff(await messungDerLage(anm.lageDesNeuenFeldes()), 'zweites Feld an derselben Zeile');
       });
     }
   }
