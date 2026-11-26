@@ -56,5 +56,51 @@
     return DOKUANFAENGE.some(anfang => dateiname.startsWith(anfang));
   }
 
-  Object.assign(ziel, { GRUPPEN, gruppeDes });
+  /**
+   * Die Einträge nach Gruppen in der Reihenfolge Code, Tests, Doku; innerhalb einer Gruppe bleibt die übergebene Reihenfolge.
+   * Eine leere Gruppe fehlt. Jeder Eintrag trägt seinen Anzeigenamen in `anzeigename` (die Regel arbeitet auf ihm).
+   */
+  function nachGruppen(eintraege) {
+    const jeSchluessel = new Map(GRUPPEN.map(gruppe => [gruppe.schluessel, []]));
+    for (const eintrag of eintraege) {
+      jeSchluessel.get(gruppeDes(eintrag.anzeigename)).push(eintrag);
+    }
+    return GRUPPEN
+      .map(gruppe => ({ schluessel: gruppe.schluessel, name: gruppe.name, eintraege: jeSchluessel.get(gruppe.schluessel) }))
+      .filter(gruppe => gruppe.eintraege.length > 0);
+  }
+
+  /**
+   * Zähler je Gruppe über **alle** übergebenen Einträge (auch die ausgeblendeten, R00040): `abgehakt` (in „Zusammen“ die
+   * vollständig abgehakten Dateien, in „Einzeln“ die abgehakten Stellen), `gesamt` und `nichtLesbar`; dazu der Text des Kopfes.
+   */
+  function zaehlerJeGruppe(eintraege) {
+    return nachGruppen(eintraege).map(gruppe => {
+      const zaehler = summe(gruppe.eintraege);
+      return { schluessel: gruppe.schluessel, name: gruppe.name, ...zaehler, text: zaehlerText(zaehler) };
+    });
+  }
+
+  /** Die Summe über eine Liste von Einträgen oder von Zählern — das ist der Fortschritt im Kopf (R00012). */
+  function summe(eintraege) {
+    let abgehakt = 0;
+    let nichtLesbar = 0;
+    for (const eintrag of eintraege) {
+      if (eintrag.abgehakt) {
+        abgehakt += 1;
+      }
+      if (eintrag.gesperrt) {
+        nichtLesbar += 1;
+      }
+    }
+    return { abgehakt, gesamt: eintraege.length, nichtLesbar };
+  }
+
+  /** Der Text eines Gruppenkopfs: „a von b abgehakt“, bei k ≥ 1 „ (k nicht lesbar)“ (R00014, R00040). */
+  function zaehlerText({ abgehakt, gesamt, nichtLesbar }) {
+    const text = `${abgehakt} von ${gesamt} abgehakt`;
+    return nichtLesbar > 0 ? `${text} (${nichtLesbar} nicht lesbar)` : text;
+  }
+
+  Object.assign(ziel, { GRUPPEN, gruppeDes, nachGruppen, zaehlerJeGruppe, summe, zaehlerText });
 })(typeof module !== 'undefined' ? module.exports : window);
