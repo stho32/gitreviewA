@@ -1,6 +1,7 @@
 /* gitreviewA — Tastenbelegung und Kontext (R00030): **die eine** Tabelle Taste → Aktion mit Bereich und Verfügbarkeit.
    Hilfe-Overlay, Statuszeile und die Hinweise an den Bedienelementen lesen daraus; es gibt keine zweite Liste. Dazu die reine
-   Kontextentscheidung (kein Eingabefeld, kein Strg/Alt/Meta außer AltGr, offener Dialog nur für Esc und ?) und der Abschnittswechsel
+   Kontextentscheidung (kein Eingabefeld, kein Strg/Alt/Meta außer AltGr, offener Dialog für Esc und ?, der modale
+   Beenden-Dialog nur für Esc) und der Abschnittswechsel
    der Diff-Zeilen. Reine Funktionen, im Browser und in Node; ohne DOM und ohne Zustand. */
 (function (ziel) {
   'use strict';
@@ -138,7 +139,8 @@
   /**
    * Die Aktion zu einem Tastendruck oder `null`. Regeln (R00030): im Eingabefeld wirkt nur das Feld selbst; Strg, Alt und Meta
    * sperren (Shift ist erlaubt, AltGr zählt nicht als Alt); ein offener Dialog lässt nur Esc und `?` durch; eine nicht verfügbare
-   * Aktion und eine unbekannte Taste ergeben `null`, dann bleibt die Taste beim Browser.
+   * Aktion und eine unbekannte Taste ergeben `null`, dann bleibt die Taste beim Browser. Der modale Beenden-Dialog (R00050) lässt
+   * nur Esc durch — auch `?` öffnet die Hilfe nicht darüber.
    */
   function aktionFuer(taste, lage) {
     const anlage = lage || {};
@@ -150,8 +152,13 @@
       return null;
     }
     if (anlage.offenerDialog) {
-      const imDialog = eintrag.aktion === 'hilfe' || eintrag.aktion === 'schliessen';
-      return imDialog ? eintrag.aktion : null;
+      if (eintrag.aktion === 'schliessen') {
+        return eintrag.aktion;
+      }
+      if (eintrag.aktion === 'hilfe' && !anlage.modalerDialog) {
+        return eintrag.aktion;
+      }
+      return null;
     }
     if (eintrag.nurEbene) {
       return null;

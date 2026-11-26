@@ -50,8 +50,10 @@
     }
   }
 
-  /** Die Lage des Tastendrucks: Feld im Fokus, Modifikatoren, offener Dialog, Modus und die gebauten Bedienelemente. */
+  /** Die Lage des Tastendrucks: Feld im Fokus, Modifikatoren, offener Dialog, Modus und die gebauten Bedienelemente. Der modale
+      Beenden-Dialog (R00050) meldet sich als eigener Dialog: er fängt die Kürzel ganz, auch `?` (die Hilfe öffnet nicht darüber). */
   function lageJetzt(ereignis) {
+    const beendenDialogOffen = Boolean(window.gitreviewaBeendenDialog && window.gitreviewaBeendenDialog.istOffen());
     return {
       feldImFokus: imEingabefeld(ereignis.target),
       modifikatoren: {
@@ -60,7 +62,8 @@
         meta: ereignis.metaKey,
         altGraph: typeof ereignis.getModifierState === 'function' && ereignis.getModifierState('AltGraph'),
       },
-      offenerDialog: Boolean(window.gitreviewaHilfe && window.gitreviewaHilfe.istOffen()) || offenesNotizfeld() || Boolean(window.gitreviewaAnsichtMenue && window.gitreviewaAnsichtMenue.istOffen()) || Boolean(window.gitreviewaBeendenDialog && window.gitreviewaBeendenDialog.istOffen()),
+      offenerDialog: Boolean(window.gitreviewaHilfe && window.gitreviewaHilfe.istOffen()) || offenesNotizfeld() || Boolean(window.gitreviewaAnsichtMenue && window.gitreviewaAnsichtMenue.istOffen()) || beendenDialogOffen,
+      modalerDialog: beendenDialogOffen,
       modus: window.gitreviewaModus ? window.gitreviewaModus.hole() : werte().EINZELN,
       laufart: werte().REVIEW,
       vorhanden: vorhandeneAktionen(),

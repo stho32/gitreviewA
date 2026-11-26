@@ -82,6 +82,22 @@ test.describe('Baustein Tasten-Werte — Tastenbelegung und Kontext (B2901)', ()
     }
   });
 
+  // R00050 „Bedienung“: der modale Beenden-Dialog fängt die Kürzel ganz — auch `?` öffnet die Hilfe nicht darüber.
+  test('soll im modalen Beenden-Dialog nur Esc durchlassen — `?` öffnet die Hilfe nicht darüber', () => {
+    const dialog = { offenerDialog: true, modalerDialog: true, modus: werte.EINZELN, vorhanden: ['beendenDialog'] };
+    expect(werte.aktionFuer('Escape', lage(dialog))).toBe('schliessen');
+    expect(werte.aktionFuer('?', lage(dialog)), '? über dem Dialog').toBeNull();
+    for (const taste of ['j', 'k', 'x', 'm', 'n', 'Enter', 'e', 'v', 'q']) {
+      expect(werte.aktionFuer(taste, lage(dialog)), `Taste ${taste}`).toBeNull();
+    }
+  });
+
+  test('soll die Hilfe im Offen-Zustand weiter schließen lassen (Hilfe-Overlay: Esc und ?)', () => {
+    const hilfe = { offenerDialog: true, modalerDialog: false, vorhanden: [] };
+    expect(werte.aktionFuer('Escape', lage(hilfe))).toBe('schliessen');
+    expect(werte.aktionFuer('?', lage(hilfe))).toBe('hilfe');
+  });
+
   test('soll Esc ohne offenes Feld und ohne Dialog nichts tun lassen', () => {
     expect(werte.aktionFuer('Escape', lage())).toBeNull();
   });

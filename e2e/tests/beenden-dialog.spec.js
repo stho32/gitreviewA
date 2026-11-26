@@ -71,6 +71,29 @@ test.describe('Dialog Beenden und Abbrechen (B4602)', () => {
     expect(gr.ergebnis(lauf)).toBe('');
   });
 
+  // R00050 „Bedienung“ (Nacharbeit B1): bei offenem Dialog wirken die Kürzel nicht, auch `?` öffnet die Hilfe nicht darüber;
+  // die Hilfe liegt unter dem Scrim und darf darum weder sichtbar werden noch den Fokus nehmen, der nächste Esc gilt dem Dialog.
+  test('B1: bei offenem Beenden-Dialog öffnet `?` die Hilfe nicht darüber; Esc schließt den Dialog und der Lauf läuft', async ({ gr, page }) => {
+    const repo = gr.repoMitCommits();
+    const lauf = await gr.gitreviewAStarten(repo, repo.hashes);
+    await gr.oberflaecheOeffnen(page, lauf);
+    await gr.beendenDialogOeffnen(page);
+
+    await page.keyboard.press('?');
+
+    await expect(page.locator('#hilfe')).toBeHidden();
+    await expect(page.locator('header.kz')).toHaveAttribute('inert', '');
+    await expect(gr.beendenDialog(page)).toBeVisible();
+    await expect(gr.beendenDialogKnopf(page, 'Beenden (Enter)')).toBeFocused();
+
+    await page.keyboard.press('Escape');
+
+    await expect(gr.beendenDialog(page)).toBeHidden();
+    await expect(page.locator('header.kz')).not.toHaveAttribute('inert', '');
+    expect(gr.laeuftNoch(lauf)).toBe(true);
+    expect(gr.ergebnis(lauf)).toBe('');
+  });
+
   test('Kriterium 5 (Anschluss I0042): Tab läuft durch die Knöpfe und fragt die Elemente bei jedem Tab neu ab', async ({ gr, page }) => {
     const repo = gr.repoMitCommits();
     const lauf = await gr.gitreviewAStarten(repo, repo.hashes);
