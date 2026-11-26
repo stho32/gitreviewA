@@ -13,7 +13,7 @@ internal static class Aufrufleser
     private const string Aufrufform = "gitreviewA <hash…> | <von>..<bis>… | - [--port <n>] [--kein-browser] [--ignore <muster>] [--verbose] [--quiet]";
     private const string DateienOption = "--dateien";
     private const string Doppelstrich = "--";
-    private const string Dateienform = "gitreviewA --dateien <datei> [--port <n>] [--kein-browser] [--verbose] [--quiet]";
+    private const string Dateienform = "gitreviewA --dateien <datei…> [--port <n>] [--kein-browser] [--verbose] [--quiet]";
     private const string NichtBeides = "Review oder Dateiansicht, nicht beides: --dateien steht allein, ohne Hash, Bereich, - oder --ignore.";
 
     public static Aufrufergebnis Lesen(string[] argumente)
