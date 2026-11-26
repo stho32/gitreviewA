@@ -98,6 +98,7 @@
       case 'commitWeiter': return schrittCommit(1);
       case 'commitZurueck': return schrittCommit(-1);
       case 'abgehakteAusblenden': return schalteAbgehakteAusblenden();
+      case 'dateiSuchen': return fokussiereDateisuche();
       case 'seitenleisteEinklappen': return schalteSeitenleiste();
       case 'ergebnisEinklappen': return schalteErgebnisSpalte();
       case 'abschnittWeiter': return springeAbschnitt(1);
@@ -112,7 +113,7 @@
       case 'leerraumWechseln': return schalteLeerraum();
       case 'naechsteLuecke': return springeZurLuecke();
       case 'inVsCode': return oeffneVsCode();
-      case 'suche': return fokussiere('#suche-eingabe');
+      case 'suche': return fokussiere('#diff-suche');
       case 'dateiAnmerken': return merkeDateiAn();
       case 'anmerkungAendern': return aendereAnmerkung();
       case 'hilfe': return oeffneHilfe();
@@ -364,6 +365,16 @@
     schalter.click();
     ansagen(`Abgehakte ${schalter.checked ? 'ausgeblendet' : 'sichtbar'}`);
     return true;
+  }
+
+  /** `f` klappt die Seitenleiste bei Bedarf aus und setzt den Fokus ins Suchfeld der Dateiliste (R00049, PO Zeile 158:
+      `/` bleibt die Suche im Diff). Ohne das Feld bleibt die Taste beim Browser. */
+  function fokussiereDateisuche() {
+    const einklappen = window.gitreviewaEinklappen;
+    if (einklappen && einklappen.seitenleiste && einklappen.seitenleiste.istEingeklappt()) {
+      einklappen.seitenleiste.umschalten();
+    }
+    return fokussiere('#dateiliste-suche');
   }
 
   /** `b` betätigt den Ausklapp-Knopf an der Grenze (R00035): derselbe Weg wie die Maus, und die Zustandsänderung wird angesagt. */

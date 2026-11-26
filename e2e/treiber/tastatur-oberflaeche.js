@@ -157,6 +157,14 @@ async function hilfeGruppen(page) {
   }, HILFE);
 }
 
+/** Die Hilfe nennt diese Aktion verfügbar (ihr Ziel ist gebaut). */
+async function pruefeHilfeVerfuegbar(page, text) {
+  const gruppen = await hilfeGruppen(page);
+  const eintrag = gruppen.flatMap(gruppe => gruppe.eintraege).find(e => e.text.includes(text));
+  expect(eintrag, `Hilfe-Eintrag ${text}`).toBeTruthy();
+  expect(eintrag.verfuegbar, `${text} verfügbar`).toBe(true);
+}
+
 async function pruefeHilfeNichtVerfuegbar(page, text) {
   const gruppen = await hilfeGruppen(page);
   const eintrag = gruppen.flatMap(gruppe => gruppe.eintraege).find(e => e.text.includes(text));
@@ -523,7 +531,7 @@ module.exports = {
   hilfeOffen,
   pruefeHilfeOffen,
   hilfeGruppen,
-  pruefeHilfeNichtVerfuegbar,
+  pruefeHilfeVerfuegbar, pruefeHilfeNichtVerfuegbar,
   fokusImDialog,
   hintergrundInert,
   pruefeFokusAuf,

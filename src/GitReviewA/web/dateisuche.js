@@ -19,10 +19,35 @@
     const feld = document.getElementById('dateiliste-suche');
     if (feld) {
       feld.addEventListener('input', () => beiEingabe(feld.value));
+      feld.addEventListener('keydown', ereignis => beiTaste(ereignis));
     }
     document.addEventListener('dateiliste-gezeichnet', ereignis => {
       trefferFuer(ereignis.detail.dateien);
     });
+  }
+
+  /** Im Feld ist `f` Text (der Katalog fängt es dort nicht ab, R00030); `Esc` leert das Feld und gibt den Fokus an die
+      gewählte Dateizeile zurück (R00049, PO Zeile 158: das bleibt der einzige Weg aus dem Feld). */
+  function beiTaste(ereignis) {
+    if (ereignis.key !== 'Escape') {
+      return;
+    }
+    ereignis.preventDefault();
+    const feld = ereignis.target;
+    if (feld.value !== '') {
+      feld.value = '';
+      beiEingabe('');
+    }
+    fokussiereGewaehlteZeile();
+  }
+
+  /** Der Fokus zurück auf die gewählte Zeile; ohne Wahl bleibt er, wo er ist. */
+  function fokussiereGewaehlteZeile() {
+    const zeile = document.querySelector('#datei-zeilen .datei-zeile[aria-current="true"]');
+    if (zeile) {
+      zeile.focus({ preventScroll: true });
+      zeile.scrollIntoView({ block: 'nearest' });
+    }
   }
 
   /** Jede Eingabe wirkt sofort. Ein ungültiger Text (zu lang, Steuer- oder Richtungszeichen) meldet am Feld und lässt den

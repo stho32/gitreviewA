@@ -398,7 +398,7 @@ test.describe('R00030 Hilfe-Overlay', () => {
     expect(eintraege.some(eintrag => eintrag.text.includes('Anmerkung speichern'))).toBe(true);
 
     await tast.hilfeNichtVerfuegbar('nächster Commit');
-    await tast.hilfeNichtVerfuegbar('Suche im Diff');
+    await tast.hilfeVerfuegbar('Suche im Diff');
 
     expect(await tast.fokusImDialog(), 'Fokus im Dialog').toBe(true);
     expect(await tast.hintergrundInert(), 'Hintergrund inert').toBe(true);

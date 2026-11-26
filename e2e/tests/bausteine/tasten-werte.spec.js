@@ -177,7 +177,7 @@ test.describe('Baustein Tasten-Werte — Statuszeile und Hinweise (B2904/B2906)'
     expect(hinweis('#commit-waehler').anzeige).toEqual(['[', ']']);
     expect(hinweis('#hilfe-knopf').aria).toBe('?');
     expect(hinweis('#ansicht-knopf')).toEqual({ selektor: '#ansicht-knopf', anzeige: ['s', 'v', 'w', 'l'], aria: 's v w l' });
-    expect(hinweis('#suche-eingabe').aria).toBe('/');
+    expect(hinweis('#diff-suche').aria).toBe('/');
   });
 });
 test.describe('Baustein Tasten-Werte — Tasten 1–3 (R00036)', () => {
@@ -304,7 +304,7 @@ test.describe('Baustein Tasten-Werte — Katalogeintrag je Laufart (R00044, Kart
 
   test('soll Ziel und Text je Laufart überschreiben (/, Esc)', () => {
     expect(werte.zielFuer(werte.eintragFuerTaste('/'), dateiansichtLage())).toBe('#da-suche');
-    expect(werte.zielFuer(werte.eintragFuerTaste('/'), reviewLage())).toBe('#suche-eingabe');
+    expect(werte.zielFuer(werte.eintragFuerTaste('/'), reviewLage())).toBe('#diff-suche');
     expect(werte.textFuer(werte.eintragFuerTaste('/'), dateiansichtLage())).toBe('In der Datei suchen');
     expect(werte.textFuer(werte.eintragFuerTaste('/'), reviewLage())).toBe('Suche im Diff');
     expect(werte.textFuer(werte.eintragFuerTaste('Escape'), dateiansichtLage())).toBe('Markierung aufheben, Übersicht schließen');
@@ -404,5 +404,36 @@ test.describe('Baustein Tasten-Werte — Ziel je Laufart (R00039)', () => {
     const datei = werte.hinweise({ laufart: werte.DATEIANSICHT });
     const schalter = datei.find(hinweis => hinweis.selektor === '#da-umbruch');
     expect(schalter, 'Dateiansicht: Hinweis am Umbruch-Schalter').toEqual({ selektor: '#da-umbruch', anzeige: ['w'], aria: 'w' });
+  });
+});
+
+test.describe('Baustein Tasten-Werte — Katalog `f` der Dateisuche (R00049, B4506)', () => {
+  test('soll `f` genau einmal führen, im Bereich Liste, mit dem Suchfeld als Ziel', () => {
+    const eintraege = werte.EINTRAEGE.filter(eintrag => eintrag.taste === 'f');
+
+    expect(eintraege).toHaveLength(1);
+    expect(eintraege[0].aktion).toBe('dateiSuchen');
+    expect(eintraege[0].text).toBe('Dateien suchen');
+    expect(eintraege[0].ziel).toBe('#dateiliste-suche');
+    expect(eintraege[0].anzeige).toEqual(['f']);
+    expect(eintraege[0].bereich).toBe('liste');
+    expect(eintraege[0].laufart).toBe(werte.REVIEW);
+  });
+
+  test('soll `f` nur wirken lassen, wenn das Suchfeld gebaut ist, und nie in der Dateiansicht', () => {
+    expect(werte.aktionFuer('f', lage({ vorhanden: GEBAUT }))).toBe('dateiSuchen');
+    expect(werte.aktionFuer('f', lage({ vorhanden: [] }))).toBeNull();
+    expect(werte.aktionFuer('f', lage({ vorhanden: GEBAUT, laufart: werte.DATEIANSICHT }))).toBeNull();
+  });
+
+  test('soll `f` im Feld als Text lassen (das Feld fängt es selbst ab)', () => {
+    expect(werte.aktionFuer('f', lage({ vorhanden: GEBAUT, feldImFokus: true }))).toBeNull();
+  });
+
+  test('soll den Hinweis am Suchfeld liefern (Kriterium 9)', () => {
+    const hinweis = werte.hinweise({ laufart: werte.REVIEW }).find(eintrag => eintrag.selektor === '#dateiliste-suche');
+
+    expect(hinweis.anzeige).toEqual(['f']);
+    expect(hinweis.aria).toBe('f');
   });
 });

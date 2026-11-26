@@ -74,6 +74,7 @@ function tastaturSprache(gr, page) {
     statuszeileDom: () => tastatur.statuszeileDom(page),
     hilfeOffen: offen => tastatur.pruefeHilfeOffen(page, offen),
     hilfeGruppen: () => tastatur.hilfeGruppen(page),
+    hilfeVerfuegbar: text => tastatur.pruefeHilfeVerfuegbar(page, text),
     hilfeNichtVerfuegbar: text => tastatur.pruefeHilfeNichtVerfuegbar(page, text),
     fokusImDialog: () => tastatur.fokusImDialog(page),
     fokusAuf: selektor => tastatur.pruefeFokusAuf(page, selektor),
