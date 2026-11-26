@@ -37,10 +37,10 @@ Heute beendet „Beenden“ sofort, ohne Rückfrage, und der Lauf lässt sich nu
 - **Immer fragen**: auch bei n = 0 und h = 0 öffnet „Abbrechen“ den Dialog (der Abbruch selbst ist unumkehrbar: kein Fortsetzen).
 - **Zählweise unabhängig vom Modus und von der Sicht**: u und m zählen Dateien über die **ganze Auswahl** in „Zusammen“ wie in „Einzeln“, mit und ohne Dateisuche (R00049), ausgeblendete Muster (R00025) und ausgeblendete Abgehakte (R00029) — dieselbe Rechnung wie der Zähler in „Zusammen“ (`fortschrittZusammen`), keine zweite. Anmerkungen und Haken kommen vom Server (`GET /api/anmerkungen`, `GET /api/haken`) beim Öffnen des Dialogs, nicht aus einem Zwischenstand der Oberfläche. Ist die Netto-Liste oder eine Quelle nicht lesbar, steht in der Zeile „… konnte nicht bestimmt werden“; Bestätigen bleibt möglich.
 - **Bedienung**: Der Dialog ist modal (Fokus gefangen, Hintergrund inert und abgeschirmt, wie die Hilfe), nie höher als das Fenster, sein Inhalt rollt innen (Pflichtpunkt 3). **Enter** wirkt wie der Bestätigungsknopf, **solange der Fokus nicht auf einem anderen Knopf oder Eintrag des Dialogs steht** (dort wirkt Enter auf diesen; I0042 hängt Einträge an). **Esc** und „Zurück“ und ein Klick auf den Scrim schließen; der Fokus kehrt auf den auslösenden Knopf zurück. Bei offenem Dialog wirken die Kürzel nicht, auch `?` öffnet die Hilfe nicht darüber (Tastenschicht: der Dialog meldet sich bei `offenerDialog` an der einen Stelle in `tasten.js`).
-- **Kürzel** (offene Frage 1, vorläufig): `q` öffnet den Dialog „Beenden“ (er beendet nie selbst); „Abbrechen“ hat **kein** Kürzel (nicht Teil des Katalogs, erreichbar per Tab). Eintrag im Katalog `tasten-werte.js` mit `ziel: '#beenden'`, Bereich Allgemein, Laufart Review; Hilfe und Hinweis folgen daraus.
+- **Kürzel** (Frage 1, entschieden): `q` öffnet den Dialog „Beenden“ (er beendet nie selbst); „Abbrechen“ hat **kein** Kürzel (nicht Teil des Katalogs, erreichbar per Tab). Eintrag im Katalog `tasten-werte.js` mit `ziel: '#beenden'`, Bereich Allgemein, Laufart Review; Hilfe und Hinweis folgen daraus.
 - **Abbrechen-Weg**: Bestätigen sendet `POST /api/abbrechen` (Körper `{}`). Der Server nimmt den ersten Abbruch an (**ein Einmal-Schalter für Beenden und Abbrechen zusammen**: wer zuerst angenommen wird, gewinnt), antwortet 200 `{"zustand":"abgebrochen"}`, stoppt den Server geordnet; der Hauptablauf entscheidet über die vorhandene `AbbruchEntscheidung` (nichts auf stdout, `WARNUNG [Abbruch] Review abgebrochen` genau einmal auf stderr, Exit 130). Das Signal Strg+C/SIGTERM bleibt unverändert und nimmt denselben Weg. Ist „Beenden“ schon angenommen, antwortet der Endpunkt 409 `{"zustand":"beendet"}`; ist der Abbruch schon angenommen, antwortet `POST /api/beenden` 409 `{"zustand":"abgebrochen"}`; die Oberfläche zeigt in beiden Fällen den **tatsächlich geltenden** Endzustand.
-- **Endzustände**: „Review beendet“ (wie heute, Hinweis „Das Ergebnis steht in der Konsole …“) und neu „Review abgebrochen“ mit dem Hinweis „Es gibt kein Ergebnis. Dieses Fenster kann geschlossen werden.“ (offene Frage 3). Beide ersetzen die Bedienung; „Ergebnis kopieren“, „Abbrechen“ und „Beenden“ verschwinden.
-- **Tab zu, Neuladen**: ein geschlossener Tab beendet und bricht nichts ab; Neuladen schließt einen offenen Dialog, der Lauf, die Anmerkungen und Haken bleiben (Server). Es gibt keinen Browser-Dialog „Seite verlassen?“ (offene Frage 4).
+- **Endzustände**: „Review beendet“ (wie heute, Hinweis „Das Ergebnis steht in der Konsole …“) und neu „Review abgebrochen“ mit dem Hinweis „Es gibt kein Ergebnis. Dieses Fenster kann geschlossen werden.“ (Frage 3, entschieden). Beide ersetzen die Bedienung; „Ergebnis kopieren“, „Abbrechen“ und „Beenden“ verschwinden.
+- **Tab zu, Neuladen**: ein geschlossener Tab beendet und bricht nichts ab; Neuladen schließt einen offenen Dialog, der Lauf, die Anmerkungen und Haken bleiben (Server). Es gibt keinen Browser-Dialog „Seite verlassen?“ (Frage 4, entschieden).
 
 ## Nicht-funktionale Anforderungen
 
@@ -136,14 +136,14 @@ Abweichungen R00041 und B4003/B4004 gegen diesen Zuschnitt stehen im Bericht als
 
 ## Offene Fragen
 
-Die Empfehlungen sind eingearbeitet und gelten bis zur Antwort des product-owner.
+Alle sechs Fragen sind vom product-owner am 2026-11-26 **entschieden**, jeweils nach der Empfehlung des planers; keine ging an den Auftraggeber, keine ändert ein Kriterium (`AI-Team/po-entscheidungen.md`, letzte sechs Zeilen, Karte #32).
 
-1. **Tastenkürzel** — Empfehlung: `q` öffnet „Beenden“, „Abbrechen“ ohne Kürzel (zerstörerisch, nur per Tab/Maus). Alternativen: beide ohne Kürzel; `q` und `Umschalt+q`. Referenz: Editoren (VS Code „Fenster schließen“ Strg+Q/Strg+W) führen „Beenden“ mit Kürzel und fragen bei ungespeicherter Arbeit nach.
-2. **Abbrechen ohne Verlust (0 Anmerkungen, 0 Haken)** — Empfehlung: trotzdem fragen (der Abbruch selbst ist unumkehrbar und sagt der KI „kein Urteil“). Alternative: ohne Rückfrage, wenn nichts verloren geht (Editoren fragen nur bei ungespeicherten Änderungen).
-3. **Wortlaut** der Dialoge und der Endzustand „Review abgebrochen“ mit Hinweis (siehe oben). Beenden-Dialog nach Entwurf Fassung 2.
-4. **Neuladen und Tab schließen** — Empfehlung: kein `beforeunload`-Dialog (nichts geht verloren, der Server hält den Stand); Neuladen schließt den offenen Dialog.
-5. **Zählung im Beenden-Dialog** — Empfehlung: Dateien über die ganze Auswahl, unabhängig von Modus und Sicht (WBS-Empfehlung); das Ergebnis auf stdout zählt weiter Stellen („Ungeprüft: n von m“, R00011), der Dialog nennt Dateien — zwei Einheiten, im Dialog genannt.
-6. **Enter bei „Abbrechen“** — Empfehlung: Enter bestätigt nicht (Vorgabe „Zurück“); die WBS legt nur Beenden fest.
+1. **ENTSCHIEDEN** · **Tastenkürzel** — Empfehlung: `q` öffnet „Beenden“, „Abbrechen“ ohne Kürzel (zerstörerisch, nur per Tab/Maus). Alternativen: beide ohne Kürzel; `q` und `Umschalt+q`. Referenz: Editoren (VS Code „Fenster schließen“ Strg+Q/Strg+W) führen „Beenden“ mit Kürzel und fragen bei ungespeicherter Arbeit nach.
+2. **ENTSCHIEDEN** · **Abbrechen ohne Verlust (0 Anmerkungen, 0 Haken)** — Empfehlung: trotzdem fragen (der Abbruch selbst ist unumkehrbar und sagt der KI „kein Urteil“). Alternative: ohne Rückfrage, wenn nichts verloren geht (Editoren fragen nur bei ungespeicherten Änderungen).
+3. **ENTSCHIEDEN** · **Wortlaut** der Dialoge und der Endzustand „Review abgebrochen“ mit Hinweis (siehe oben). Beenden-Dialog nach Entwurf Fassung 2.
+4. **ENTSCHIEDEN** · **Neuladen und Tab schließen** — Empfehlung: kein `beforeunload`-Dialog (nichts geht verloren, der Server hält den Stand); Neuladen schließt den offenen Dialog.
+5. **ENTSCHIEDEN** · **Zählung im Beenden-Dialog** — Empfehlung: Dateien über die ganze Auswahl, unabhängig von Modus und Sicht (WBS-Empfehlung); das Ergebnis auf stdout zählt weiter Stellen („Ungeprüft: n von m“, R00011), der Dialog nennt Dateien — zwei Einheiten, im Dialog genannt.
+6. **ENTSCHIEDEN** · **Enter bei „Abbrechen“** — Empfehlung: Enter bestätigt nicht (Vorgabe „Zurück“); die WBS legt nur Beenden fest.
 
 ## Manuelle Vorbereitungstätigkeiten
 
