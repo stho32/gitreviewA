@@ -57,3 +57,4 @@ zuletzt: 2026-11-26
 | I0036 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester + Director, Auftrag Stefan Hoffmann) | 36 Prüfungen (R00035), S4 nach Nacharbeit vom Director nachgeprüft, Karte #38 |
 | I0044 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | Betreiberfall SQL und S1–S2 (R00043), Karte #42 |
 | I0038 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | Szenarien R00037, Spalte gleich stdout, Karte #46 |
+| I0041 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | Szenarien R00040, Karte #49 |

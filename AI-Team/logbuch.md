@@ -518,3 +518,8 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Durchlauf: Bau 63 min (6 Bubbles, Einklappen aus I0036 wiederverwendet), Code-Review ohne Muss, Security (Sonnet) ohne Muss — Spalte und stdout aus demselben Formatierer, `cmp` bei 4,69 MB gleich; Entwicklertest ohne Befund. Ohne eine einzige Nacharbeit. Karte gesamt 2,13 $.
 - Lehre: Eine Anzeige, die einen Vertrag spiegelt, holt ihn vom Server statt ihn im Browser nachzubauen — dann kann Anzeige und Wirklichkeit nicht auseinanderlaufen.
 - Gate: NUnit 1648/1648 zweimal, Playwright 904/904 zweimal.
+
+## Retrospektive #49 I0041 Dateiliste nach Gruppen (2026-11-26)
+- Durchlauf: Bau 62 min (5 Bubbles, Gruppenregel an einer Stelle, Bestands-Specs auf neue Reihenfolge umgestellt — vom Code-Review als nicht abgeschwächt bestätigt), Code-Review 1 Muss (`j`/`k` ohne Umlauf, PO-Zeile 197), Nacharbeit 11 min, Entwicklertest ohne Befund. Karte gesamt 1,15 $.
+- Lehre: Der entwickler stützte „kein Umlauf“ auf einen Satz, der in R00030 nicht steht — Begründungen mit Fundstelle prüfen lassen (der code-reviewer hat es mit grep belegt).
+- Gate: NUnit 1648/1648 zweimal, Playwright 939/939 (Lauf 2: ein Wackler → Karte #58).
