@@ -1,4 +1,5 @@
 using System.Globalization;
+using GitReviewA.Aufruf;
 
 namespace GitReviewA.Dateiansicht;
 
@@ -25,6 +26,16 @@ internal static class QuellengrundMeldungen
                 CultureInfo.InvariantCulture,
                 $"keine gültige UTF-8-Kodierung (Byte 0x{grund.UngueltigesByte:X2} an Stelle {grund.Stelle})"),
             Quellengrundart.NameNichtUebergebbar => "Name nicht übergebbar (ungültiges Byte oder Ersatzzeichen U+FFFD)",
+            Quellengrundart.CommitNichtGefunden => "Commit nicht gefunden",
+            Quellengrundart.CommitMehrdeutig => HashpraefixPruefer.Mehrdeutigmeldung,
+            Quellengrundart.KeinCommit => "kein Commit",
+            Quellengrundart.PfadImCommitNichtGefunden => "Pfad im Commit nicht gefunden",
+            Quellengrundart.IstImCommitEinVerzeichnis => "ist im Commit ein Verzeichnis",
+            Quellengrundart.IstImCommitEinSymbolischerLink => "ist im Commit ein symbolischer Link",
+            Quellengrundart.IstImCommitEinSubmodul => "ist im Commit ein Submodul",
+            Quellengrundart.KeinRepository => AufruffehlerMeldungen.Meldung(Aufrufgrund.KeinRepository),
+            Quellengrundart.NacktesRepository => AufruffehlerMeldungen.Meldung(Aufrufgrund.NacktesRepository),
+            Quellengrundart.GitNichtGefunden => AufruffehlerMeldungen.Meldung(Aufrufgrund.GitNichtGefunden),
             _ => throw new ArgumentOutOfRangeException(nameof(grund), grund.Art, "Unbekannter Quellengrund."),
         };
     }

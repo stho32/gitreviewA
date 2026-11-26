@@ -14,6 +14,16 @@ internal enum Quellengrundart
     Utf16NichtUnterstuetzt,
     UngueltigesUtf8,
     NameNichtUebergebbar,
+    CommitNichtGefunden,
+    CommitMehrdeutig,
+    KeinCommit,
+    PfadImCommitNichtGefunden,
+    IstImCommitEinVerzeichnis,
+    IstImCommitEinSymbolischerLink,
+    IstImCommitEinSubmodul,
+    KeinRepository,
+    NacktesRepository,
+    GitNichtGefunden,
 }
 
 /// <summary>
@@ -41,6 +51,26 @@ internal sealed record Quellengrund(Quellengrundart Art, byte UngueltigesByte = 
     public static Quellengrund Utf16NichtUnterstuetzt => new(Quellengrundart.Utf16NichtUnterstuetzt);
 
     public static Quellengrund NameNichtUebergebbar => new(Quellengrundart.NameNichtUebergebbar);
+
+    public static Quellengrund CommitNichtGefunden => new(Quellengrundart.CommitNichtGefunden);
+
+    public static Quellengrund CommitMehrdeutig => new(Quellengrundart.CommitMehrdeutig);
+
+    public static Quellengrund KeinCommit => new(Quellengrundart.KeinCommit);
+
+    public static Quellengrund PfadImCommitNichtGefunden => new(Quellengrundart.PfadImCommitNichtGefunden);
+
+    public static Quellengrund IstImCommitEinVerzeichnis => new(Quellengrundart.IstImCommitEinVerzeichnis);
+
+    public static Quellengrund IstImCommitEinSymbolischerLink => new(Quellengrundart.IstImCommitEinSymbolischerLink);
+
+    public static Quellengrund IstImCommitEinSubmodul => new(Quellengrundart.IstImCommitEinSubmodul);
+
+    public static Quellengrund KeinRepository => new(Quellengrundart.KeinRepository);
+
+    public static Quellengrund NacktesRepository => new(Quellengrundart.NacktesRepository);
+
+    public static Quellengrund GitNichtGefunden => new(Quellengrundart.GitNichtGefunden);
 
     public static Quellengrund UngueltigesUtf8(byte ungueltigesByte, int stelle)
     {

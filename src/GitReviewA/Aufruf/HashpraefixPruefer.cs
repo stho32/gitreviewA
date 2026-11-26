@@ -8,8 +8,15 @@ namespace GitReviewA.Aufruf;
 /// </summary>
 internal static class HashpraefixPruefer
 {
-    private const string Mehrdeutig =
+    /// <summary>Der Wortlaut der Mehrdeutigkeit — eine Stelle für Review-Auswahl und Commitquelle (R00046).</summary>
+    public const string Mehrdeutigmeldung =
         "Auswahl mehrdeutig: ein Hash-Präfix heißt wie ein Tag oder Zweig des Repos, und git würde einen anderen Commit zeigen — bitte den vollen Hash angeben.";
+
+    /// <summary>Ein einzelner aufgelöster Commit: die Eingabe muss ein Präfix des vollen Hashs sein (Lehre #2, R00046).</summary>
+    public static bool PraefixPasst(string eingabe, string vollerHash)
+    {
+        return BeginntMit(vollerHash, eingabe);
+    }
 
     public static void PruefeTreffer(CommitHashes eingaben, Commitzeilen gelesen)
     {
@@ -19,7 +26,7 @@ internal static class HashpraefixPruefer
             var hashGehoertZuEinerEingabe = BeginntMitEinemPraefix(hash, eingaben);
             if (!hashGehoertZuEinerEingabe)
             {
-                throw new AuswahlFehler(Mehrdeutig);
+                throw new AuswahlFehler(Mehrdeutigmeldung);
             }
         }
         foreach (var eingabe in eingaben)
@@ -27,7 +34,7 @@ internal static class HashpraefixPruefer
             var eingabeTrifftEinenCommit = gelieferteHashes.Any(hash => BeginntMit(hash, eingabe));
             if (!eingabeTrifftEinenCommit)
             {
-                throw new AuswahlFehler(Mehrdeutig);
+                throw new AuswahlFehler(Mehrdeutigmeldung);
             }
         }
     }

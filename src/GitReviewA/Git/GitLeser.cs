@@ -79,6 +79,137 @@ internal static class GitLeser
         return string.Equals(ausgabe, "true", StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// Der volle Hash, zu dem git die Eingabe auflöst (`git rev-parse --verify --quiet`, ohne zu peelen): <c>null</c>, wenn kein
+    /// Objekt passt oder der Hexpräfix mehrdeutig ist. Ein annotiertes Tag-Objekt wird **nicht** still zum Commit (der Aufrufer prüft
+    /// die Objektart über <see cref="ObjectartLesen"/>); ein Tag- oder Zweigname, der wie das Präfix heißt, löst auf sein Ziel auf,
+    /// und die Präfixprüfung des Aufrufers fängt die stille Umlenkung ab (Lehre #2).
+    /// </summary>
+    public static string? RevisionAufloesen(string eingabe, string arbeitsordner)
+    {
+        var start = GitStart.Im(arbeitsordner);
+        start.ArgumentList.Add("rev-parse");
+        start.ArgumentList.Add("--verify");
+        start.ArgumentList.Add("--quiet");
+        start.ArgumentList.Add("--end-of-options");
+        start.ArgumentList.Add(eingabe);
+        var lauf = WarteAufEndeMitGrenze(Starte(start), $"git rev-parse --verify {eingabe}", Ausgabegrenze.Standard);
+        if (lauf.ExitCode != 0)
+        {
+            return null;
+        }
+        var ausgabe = lauf.Ausgabe.Trim();
+        return ausgabe.Length == 0 ? null : ausgabe;
+    }
+
+    /// <summary>Alle Objekt-Hashes, deren Name mit dem Hexpräfix beginnt (`git rev-parse --disambiguate`); leer, wenn keiner passt.</summary>
+    public static CommitHashes KandidatenAufloesen(string praefix, string arbeitsordner)
+    {
+        var start = GitStart.Im(arbeitsordner);
+        start.ArgumentList.Add("rev-parse");
+        start.ArgumentList.Add($"--disambiguate={praefix}");
+        var lauf = WarteAufEndeMitGrenze(Starte(start), "git rev-parse --disambiguate", Ausgabegrenze.Standard);
+        if (lauf.ExitCode != 0)
+        {
+            return new CommitHashes([]);
+        }
+        return new CommitHashes(lauf.Ausgabe.Split('\n', StringSplitOptions.RemoveEmptyEntries));
+    }
+
+    /// <summary>Die Objektart (commit, tree, blob, tag) eines Objekts; <c>null</c>, wenn git sie nicht nennt.</summary>
+    public static string? ObjectartLesen(string hash, string arbeitsordner)
+    {
+        var start = GitStart.Im(arbeitsordner);
+        start.ArgumentList.Add("cat-file");
+        start.ArgumentList.Add("-t");
+        start.ArgumentList.Add("--end-of-options");
+        start.ArgumentList.Add(hash);
+        var lauf = WarteAufEndeMitGrenze(Starte(start), $"git cat-file -t {Kurz(hash)}", Ausgabegrenze.Standard);
+        if (lauf.ExitCode != 0)
+        {
+            return null;
+        }
+        var art = lauf.Ausgabe.Trim();
+        return art.Length == 0 ? null : art;
+    }
+
+    /// <summary>
+    /// Der Eintrag eines Pfads im Commit (`git ls-tree -l -z --full-tree` über <see cref="GitStart"/>, Pfad wörtlich über
+    /// `--literal-pathspecs`): genau ein Eintrag, dessen Name <b>byte-gleich</b> der gesuchte Pfad ist. git normalisiert im Pathspec
+    /// `./`, `//` und `..` — ein solcher Pfad gilt hier **nicht** als Treffer (R00046, „wörtlich“). Ein abschließender Schrägstrich
+    /// wird vor dem Aufruf abgeschnitten (sonst listete `ls-tree` den Verzeichnisinhalt) und zählt danach nur für einen Baum.
+    /// Die Grenze gilt auch hier: über der Grenze kein Eintrag, sondern <see cref="GitZuGross"/>.
+    /// </summary>
+    public static CommitEintrag? EintragLesen(string vollerHash, string pfad, string arbeitsordner, Ausgabegrenze grenze)
+    {
+        var suchpfad = pfad.TrimEnd('/');
+        if (suchpfad.Length == 0)
+        {
+            return null;
+        }
+        var start = GitStart.Im(arbeitsordner);
+        start.ArgumentList.Add("--literal-pathspecs");
+        start.ArgumentList.Add("ls-tree");
+        start.ArgumentList.Add("-l");
+        start.ArgumentList.Add("-z");
+        start.ArgumentList.Add("--full-tree");
+        start.ArgumentList.Add("--end-of-options");
+        start.ArgumentList.Add(vollerHash);
+        start.ArgumentList.Add("--");
+        start.ArgumentList.Add(suchpfad);
+        var lauf = WarteAufEndeMitGrenze(Starte(start), $"git ls-tree -l {Kurz(vollerHash)} -- {UnsichtbareZeichen.AlsMarken(pfad)}", grenze);
+        if (lauf.ExitCode != 0)
+        {
+            // Ein Pfad wie `/x` oder `../x` läuft aus dem Baum (`outside repository`) — kein Objekt, kein Eintrag.
+            return null;
+        }
+        var eintrag = ZerlegeEintrag(lauf.Ausgabe);
+        if (eintrag is null || !string.Equals(eintrag.Pfad, suchpfad, StringComparison.Ordinal))
+        {
+            return null;
+        }
+        var schraegstrichAufNichtBaum = pfad.EndsWith('/') && eintrag.Art != Baumart.Verzeichnis;
+        return schraegstrichAufNichtBaum ? null : eintrag;
+    }
+
+    /// <summary>Genau ein NUL-abgeschlossener Eintrag aus `ls-tree -l -z`; mehr oder weniger ist kein Treffer.</summary>
+    private static CommitEintrag? ZerlegeEintrag(string ausgabe)
+    {
+        var eintraege = ausgabe.Split('\0', StringSplitOptions.RemoveEmptyEntries);
+        if (eintraege.Length != 1)
+        {
+            return null;
+        }
+        var zeile = eintraege[0];
+        var tab = zeile.IndexOf('\t', StringComparison.Ordinal);
+        if (tab < 0)
+        {
+            return null;
+        }
+        var felder = zeile[..tab].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var hatVierFelder = felder.Length == 4;
+        var art = hatVierFelder ? ArtFuerModus(felder[0]) : null;
+        if (art is null)
+        {
+            return null;
+        }
+        var groesse = long.TryParse(felder[3], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var wert) ? wert : 0;
+        return new CommitEintrag(zeile[(tab + 1)..], art.Value, groesse);
+    }
+
+    private static Baumart? ArtFuerModus(string modus)
+    {
+        return modus switch
+        {
+            "040000" => Baumart.Verzeichnis,
+            "120000" => Baumart.SymbolischerLink,
+            "160000" => Baumart.Submodul,
+            "100755" => Baumart.AusfuehrbareDatei,
+            _ when modus.StartsWith("100", StringComparison.Ordinal) => Baumart.Datei,
+            _ => null,
+        };
+    }
+
     /// <summary>Welche der genannten Hashes sich nicht zu einem Commit auflösen lassen — für die Meldung, nicht für den Abbruch.</summary>
     public static CommitHashes NichtAufloesbareHashes(CommitHashes hashes, string arbeitsordner)
     {

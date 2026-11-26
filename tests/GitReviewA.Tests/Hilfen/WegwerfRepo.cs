@@ -31,6 +31,23 @@ internal sealed class WegwerfRepo : IDisposable
         return MitCommits(alleZurSelbenZeit: true, betreffe);
     }
 
+    /// <summary>Ein leeres Wegwerf-Repo ohne Commits — für Vorbereitungen, die selbst committen (etwa Repo C).</summary>
+    public static WegwerfRepo OhneCommits()
+    {
+        var ordner = Directory.CreateTempSubdirectory("gitreviewa-test-").FullName;
+        var repo = new WegwerfRepo(ordner);
+        try
+        {
+            repo.Git("init", "-q", "-b", "main");
+            return repo;
+        }
+        catch
+        {
+            repo.Dispose();
+            throw;
+        }
+    }
+
     private static WegwerfRepo MitCommits(bool alleZurSelbenZeit, string[] betreffe)
     {
         var ordner = Directory.CreateTempSubdirectory("gitreviewa-test-").FullName;
@@ -60,6 +77,14 @@ internal sealed class WegwerfRepo : IDisposable
             nachricht.AddRange(["-m", rumpf]);
         }
         Ausfuehren(nachricht.ToArray(), angaben);
+        return Git("rev-parse", "HEAD");
+    }
+
+    /// <summary>Committet den Stand des Index (ohne `git add`) — für Vorbereitungen, die den Index selbst setzen (Repo C, Submodul).</summary>
+    public string CommitteIndex(string betreff, string autor, string datum)
+    {
+        var angaben = new Dictionary<string, string> { ["GIT_AUTHOR_NAME"] = autor, ["GIT_AUTHOR_DATE"] = datum, ["GIT_COMMITTER_DATE"] = datum };
+        Ausfuehren(["commit", "-q", "-m", betreff], angaben);
         return Git("rev-parse", "HEAD");
     }
 
