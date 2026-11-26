@@ -48,6 +48,7 @@ Vorbereitung (herstellbar mit `git` allein, Wegwerf-Repo): Commit `p` „Start�
 ### Commit-Leiste
 - [ ] Gegeben die Commits `p`, `q`, `r`, wenn man `gitreviewA r q p` aufruft, dann zeigt die Leiste genau 3 Zeilen in dieser Reihenfolge, je mit den ersten 7 Zeichen des Hashes, dem Autor und dem Betreff (zuerst „Nichts“, dann „Dateien ändern“ von „Bernd Beispiel“, dann „Start“ von „Anna Beispiel“).
 - [ ] Gegeben `q` mit dem Autordatum `2026-03-05T18:30:00+01:00` und einen Browser in der Zeitzone Europe/Berlin (Winterzeit, +01:00), wenn die Leiste geladen ist, dann steht in der Zeile `05.03.2026 18:30`; im selben Lauf mit einem Browser in UTC steht `05.03.2026 17:30`, und der Hinweistext trägt in beiden Fällen den Zeitpunkt `2026-03-05T18:30:00+01:00`.
+- [ ] Gegeben ein Commit mit NUL im Autorkopf (R00048, Kriterium 11; der Zerleger liefert ein leeres Datum), wenn die Leiste ihn zeigt, dann steht an der Stelle des Datums „Datum nicht lesbar“; der Hinweis bleibt leer; Autor, Betreff und Message stehen an ihrer Stelle. Vorläufig, bis der product-owner die Frage L2 entschieden hat.
 - [ ] Gegeben `q` mit dem Rumpf „Zeile eins“ / „Zeile zwei“ und `p` ohne Rumpf, wenn die Leiste geladen ist, dann ist der Rumpf von `q` nicht zu sehen und wird nach dem Ausklappen vollständig (beide Zeilen) angezeigt, `p` bietet kein Ausklappen an, und das Einklappen versteckt den Rumpf wieder.
 - [ ] Gegeben ein Commit mit dem Autor `<i>Mallory</i>`, dem Betreff `<script>alert(1)</script>` und dem Rumpf `<b>fett</b>`, wenn die Leiste geladen und der Rumpf ausgeklappt ist, dann stehen alle drei als sichtbarer Text da (mit den spitzen Klammern), es erscheint kein Dialog, und der Rumpf ist nicht fett.
 
@@ -158,3 +159,4 @@ Gewählt: 1.
 | Datum | Änderung | Grund |
 |---|---|---|
 | 2026-11-25 | Binärdatei in der Dateiliste: „einen Strich“ → das Wort „binär“ (Funktionale Anforderung Z. 31, Kriterium Z. 56, „Nicht Teil dieser Anforderung“ Z. 113); das Kriterium wird rot, bis I0012 (B2302) es baut | Entscheidung des product-owner 2026-11-25 (`AI-Team/po-entscheidungen.md`, Zeilen 129–134, Commit 2373651): das Wort sagt, warum die Zahlen fehlen, und bleibt ohne Farbe lesbar; ein Strich liest sich als „0“ |
+| 2026-11-26 | „Datum nicht lesbar“ bei leerem Datum in der Commit-Leiste (L2); vorläufig, bis der product-owner die Frage L2 entschieden hat | Angriffsmatrix L2 (NUL im Autorkopf); PO-Entscheidung 2026-11-26 (`AI-Team/po-entscheidungen.md`, Zeile 253) |
