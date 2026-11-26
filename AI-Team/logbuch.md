@@ -566,3 +566,14 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Durchlauf: Bau 25 min, Code- und Security-Review ohne Muss, Entwicklertest (Betreiberfall SQL) ohne Befund; Rebase-Nacharbeit, weil #48 parallel einen zweiten Weg für Kürzel-Hinweise je Laufart gebaut hatte — aufgelöst auf den einen aus #48 (`hinweise.js`). Karte gesamt 0,67 $.
 - Lehre: Zwei Karten, die beide „das Katalogziel je Laufart“ brauchen, bauen es doppelt, wenn der Auftrag nur „wie #48 es einführt“ sagt — gemeinsame Bausteine zuerst auf main, dann die zweite Karte bauen (Braucht setzen).
 - Gate: NUnit 1648/1648, Playwright 1004/1004 zweimal.
+| 2026-11-26 | #51 | Detailplanung | planer | bestanden | 6 min | Claude Sonnet: B4101–B4106, R00042 K7–K10, Frage Ausklappen im engen Fenster (Empf. A) · claude · sonnet · Lauf 51-planer-1 · 1,23 $ · Karte gesamt 1,23 $ |
+| 2026-11-26 | #51 | Detailplanung | product-owner | bestanden | 1 min | Claude Sonnet: A — zuletzt ausgeklappte Seite behält Platz (Zeile 248, dec7574) · claude · sonnet · Lauf 51-product-owner-1 · 0,20 $ · Karte gesamt 1,43 $ |
+| 2026-11-26 | #53 | Nacharbeit | entwickler | bestanden | 35 min | opencode: Rebase auf #52 vereint, Kriterium 5 rot→grün · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 53-entwickler-2 · 0,20 $ · Karte gesamt 1,02 $ |
+| 2026-11-26 | #53 | Entwicklertest | entwicklertester | bestanden | 5 min | opencode: Nachtest 31/31, zwei pageerror als Anmerkung · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 53-entwicklertester-2 · 0,061 $ · Karte gesamt 1,08 $ |
+| 2026-11-26 | #53 | Nacharbeit | entwickler | bestanden | 11 min | opencode: pageerror-Probe rot→grün · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 53-entwickler-3 · 0,12 $ · Karte gesamt 1,20 $ |
+| 2026-11-26 | #51 | Entwicklung | entwickler | bestanden | 52 min | opencode: B4101–B4106, E2E 1036 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 51-entwickler-1 · 0,26 $ · Karte gesamt 1,69 $ |
+
+## Retrospektive #53 I0046 Mehrere Dateien in der Seitenleiste (2026-11-26)
+- Durchlauf: Bau 25 min, Code-Review ohne Muss (A6 Markierung nach Wechsel als Abhängigkeit zu #52), Entwicklertest (drei SQL-Migrationen) ohne Befund; Rebase-Nacharbeit gegen #52 (Werkzeugleiste/Hilfe + Seitenleiste vereint, Kriterium 5 rot→grün); Nachtest fand zwei `pageerror` (einer neu: `id="diff"` am `<main>` weckte die Review-Suche) — vom Director zu Muss hochgestuft, Nacharbeit mit Konsolen-Probe. Karte gesamt 1,20 $.
+- Lehre: Zwei parallele Karten an derselben Oberfläche (Dateiansicht) kosten je einen Rebase-Lauf — gleiche Oberfläche nacheinander bauen. Und: `pageerror` gehört in jede E2E-Probe einer Ansicht, nicht nur in die Erkundung.
+- Gate: NUnit 1665/1665, Playwright 1016/1016 zweimal.
