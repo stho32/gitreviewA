@@ -93,3 +93,4 @@ Nie vom User erfragen.
 | 2026-11-26 | R00047 Zeitkriterien als grobe Schranken | B4301 Gemeinsame Schranken-Konstanten | Standard | 2h | 0,1h | 0,1h | autonom |
 | 2026-11-26 | R00047 Zeitkriterien als grobe Schranken | B4302 Specs und DSL-Fristen umstellen | unklar | 2-4h | 0,25h | 0,25h | autonom |
 | 2026-11-26 | R00047 Zeitkriterien als grobe Schranken | B4303 Positivkontrollen der Schranken | Standard | 2h | 0,3h | 0,3h | autonom |
+| 2026-11-26 | Wackler #58 (R00012/R00023/R00030) | Vier Wackler messen, zwei Produktfehler beheben | Bug-Fix | – | 1,0h | – | autonom |
