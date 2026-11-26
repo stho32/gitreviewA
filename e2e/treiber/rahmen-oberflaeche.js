@@ -5,11 +5,14 @@
 const { expect } = require('@playwright/test');
 
 const KOPF = 'header.kz';
+const RAHMEN = '.gr-ansicht';
 const COMMIT_ZEILE = '#commit-zeile';
 const DATEIEN_KOPF = '#dateiliste .dateien-kopf';
 const DATEIEN_WERKZEUGE = '#dateiliste .dateien-werkzeuge';
 const LISTE = '#datei-zeilen';
+const SEITENLEISTE = '#seitenleiste';
 const DIFF_KOPF = '#diff .diff-kopf';
+const DIFF_BEREICH = '#diff';
 const DIFF = '#diff .df-sc';
 const STATUSZEILE = '.statuszeile';
 const DATEIZEILE = '#datei-zeilen .datei-zeile';
@@ -232,6 +235,51 @@ async function pruefeDiffOben(page) {
   expect(stand.scrollTop, 'Diff-Bildlauf am Anfang').toBe(0);
 }
 
+/**
+ * Trägt der Aufbau die verlangte Fensterbreite? Eine neue Größe kommt asynchron an, und die Mediengrenze des CSS greift
+ * erst mit dem nächsten Zeichnen — bis dahin steht im DOM die Lage (und der Zustand) der alten Größe, und die nächste
+ * Prüfung träfe eine Aussage über die alte Größe. Gemessen wird deshalb gegen die **verlangte** Breite und nicht gegen
+ * das, was die Seite gerade über sich selbst sagt: ab 566 px (die eine Quelle `passtZweiSpaltig` in `trenner-werte.js`)
+ * stehen Seitenleiste und Diff nebeneinander, darunter liegt die Dateiliste über dem Diff; Trennzug und Ausklapp-Knopf
+ * gehören nur in den zweispaltigen Aufbau; die Seitenleiste folgt ihrem Zustand (`hidden` ⇔ unsichtbar), und die
+ * Einklapp-Stellung am Rahmen deckt sich mit dem Knopf. Jede Zeile, die noch zur alten Größe gehört, lässt die Messung
+ * scheitern — gepollt wird, bis beide Seiten wieder zusammenpassen.
+ */
+function aufbauFolgtBreite(page, breite) {
+  return page.evaluate(([leisteSelektor, diffSelektor, rahmenSelektor, knopfSelektor, trennerSelektor, erwarteteBreite]) => {
+    const leiste = document.querySelector(leisteSelektor);
+    const diff = document.querySelector(diffSelektor);
+    const rahmen = document.querySelector(rahmenSelektor);
+    const knopf = document.querySelector(knopfSelektor);
+    const trenner = document.querySelector(trennerSelektor);
+    if (!leiste || !diff || !rahmen) {
+      return false;
+    }
+    const sichtbar = leiste.getClientRects().length > 0;
+    const kasten = leiste.getBoundingClientRect();
+    const ziel = diff.getBoundingClientRect();
+    if (window.gitreviewaTrennerWerte.passtZweiSpaltig(erwarteteBreite)) {
+      if (!knopf || !trenner) {
+        return false;
+      }
+      const eingeklappt = knopf.getAttribute('aria-expanded') === 'false';
+      return leiste.hidden === eingeklappt
+        && sichtbar === !eingeklappt
+        && rahmen.classList.contains('gr-eingeklappt') === eingeklappt
+        && kasten.right <= ziel.left + 1
+        && kasten.top <= ziel.top + 1;
+    }
+    return !knopf && !trenner && !leiste.hidden && !rahmen.classList.contains('gr-eingeklappt')
+      && sichtbar && kasten.bottom <= ziel.top + 1;
+  }, [SEITENLEISTE, DIFF_BEREICH, RAHMEN, EINKLAPPEN, TRENNER, breite]);
+}
+
+/** Nach dem Setzen einer Fenstergröße warten, bis der Aufbau die verlangte Größe trägt — kein Zustand von gestern, keine
+    feste Zeit; die Prüfungen danach lesen damit einen Zustand, der zur neuen Größe gehört. */
+async function warteAufAufbau(page, breite) {
+  await expect.poll(() => aufbauFolgtBreite(page, breite), `der Aufbau folgt der Fensterbreite (${breite} px)`).toBe(true);
+}
+
 /** Es gibt keinen Trenner und keinen Ausklapp-Knopf (Rückfall unter 566 px, R00034/R00035). */
 async function pruefeKeinTrennerKeinEinklappen(page) {
   await expect(page.locator(TRENNER), 'Trenner').toHaveCount(0);
@@ -273,4 +321,5 @@ module.exports = {
   masseDerAnmerkungen, pruefeDiffRollbereichBenutzbar, pruefeLetzteAnmerkungImFenster, pruefeLetzteAnmerkungErreichbar,
   pruefeKeinSeitenbildlauf, pruefeSeitenbildlauf, pruefeRollbereich, pruefeKeinRollbereich, pruefeUnveraendert,
   pruefeVersatzGleich, pruefeVersatzGeaendert, pruefeDiffOben, pruefeKeinTrennerKeinEinklappen, pruefeEineSpalte, pruefeZweiSpalten,
+  aufbauFolgtBreite, warteAufAufbau,
 };

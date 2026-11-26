@@ -41,9 +41,12 @@ function seitenleisteSprache(gr, page) {
     await expect(page.locator('#datei-zeilen .datei-zeile').first()).toBeVisible({ timeout: 5000 });
   }
 
-  /** Fenster in der Mitte des Laufs ändern (die Regeln gelten ohne Neuladen). */
+  /** Fenster in der Mitte des Laufs ändern (die Regeln gelten ohne Neuladen) und warten, bis der Aufbau die neue Größe
+      trägt: der Browser meldet sie asynchron, und die Mediengrenze des CSS greift erst mit dem nächsten Zeichnen — sonst
+      liest die nächste Prüfung den Zustand der alten Größe. */
   async function fensterSetzen(fenster) {
     await page.setViewportSize(fenster);
+    await rahmen.warteAufAufbau(page, fenster.width);
   }
 
   /** Eine Datei wählen wie mit der Maus (Wahl samt Diff laden) und warten, bis ihr Diff steht. */

@@ -51,7 +51,8 @@ function trennerVorhanden(page) {
 
 /** Wartet, bis der Trennzug die ARIA-Angaben der aktuellen Fenstergröße trägt. Die Größenänderung kommt im Browser asynchron
     an; statt einer festen Zeit wird gepollt, bis `aria-valuemax` der Höchstbreite entspricht, die das Programm selbst aus dem
-    Fenster rechnet. Im einspaltigen Rückfall gibt es keinen Trenner — dann ist nichts zu warten. */
+    Fenster rechnet. Ob ein Trenner dazugehört (Rückfall unter 566 px), klärt die Sprache mit `rahmen.warteAufAufbau` — hier
+    steht nur noch der Wert; ein fehlender Trenner ist damit kein „nichts zu warten", sondern der Rückfall. */
 async function warteAufGroesse(page) {
   await expect.poll(
     async () => {
