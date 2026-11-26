@@ -13,8 +13,8 @@ const { anfrage, senden, halbSenden } = require('../treiber/http.js');
 const oberflaeche = require('../treiber/oberflaeche.js');
 const hakenSchnittstelle = require('../treiber/haken-schnittstelle.js');
 const { fremdeSeiteStarten } = require('../treiber/fremde-seite.js');
+const { anzeigeSchrankeMs } = require('./schranken.js');
 
-const STARTZEILE_FRIST_MS = 2000;
 const DREI_COMMITS = ['Erster Commit', 'Zweiter Commit', 'Dritter Commit'];
 const JSON_INHALT = 'application/json';
 
@@ -89,7 +89,7 @@ function welt() {
   /** Startet gitreviewA und wartet auf die Startzeile. Standard: ohne Browser, Standardstufe. */
   async function gitreviewAStarten(repo, hashes, { mitBrowser = false, browserBefehl, zusatz = [], pfadVorne } = {}) {
     const lauf = gitreviewAAufrufen(repo, hashes, { mitBrowser, browserBefehl, zusatz, pfadVorne });
-    lauf.adresse = await adresseAbwarten(lauf, STARTZEILE_FRIST_MS);
+    lauf.adresse = await adresseAbwarten(lauf, anzeigeSchrankeMs);
     return lauf;
   }
 
@@ -98,7 +98,7 @@ function welt() {
     const lauf = imHintergrundStarten(repo.ordner, [...hashes, '--kein-browser'], { mitSetsid });
     laeufe.push(lauf);
     await pruefeSigintIgnoriert(lauf);
-    lauf.adresse = await adresseAbwarten(lauf, STARTZEILE_FRIST_MS);
+    lauf.adresse = await adresseAbwarten(lauf, anzeigeSchrankeMs);
     return lauf;
   }
 

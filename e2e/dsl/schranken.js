@@ -1,7 +1,8 @@
 'use strict';
 // Grobe Zeitschranken der E2E-Suite (R00047): die eine Stelle, die die Zahlen bestimmt — Specs, DSL und Treiber lesen sie.
-// Die engen Ziele der früheren Zeitkriterien (ein 0,7-s-Messwert mit 30 % Abstand, 1,4 s, eine 150-ms-Long-Task-Grenze)
-// sind abgelöst; es gibt keine dritte Zahl, kein „typisch“ und keine Abstandsregel. Strukturelle Grenzen (Zeilenzahl,
+// Die engen Ziele der früheren Zeitkriterien (ein 0,7-s-Messwert mit Abstandsregel, ein 1,4-s-Messwert, eine
+// 150-ms-Long-Task-Grenze) sind abgelöst; es gibt keine dritte Zahl, kein „typisch“ und keine Abstandsregel.
+// Strukturelle Grenzen (Zeilenzahl,
 // Zeichen, Marken, DOM-Knoten, Treffer, MiB) sind keine Zeitkriterien und stehen darum nicht hier.
 const { expect } = require('@playwright/test');
 

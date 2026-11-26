@@ -2,6 +2,7 @@
 // Spezifikation R00008 „Ganze Datei mit Diff“, Teil Oberfläche (User Story Szenarien 1, 3, 6–12, 16, 17): Umschalter, Darstellung, Laden und Zeit
 // im Browser. Was gelesen wird (Zeilen, Orakel, Dateiarten, fremdes Repo) prüft tests/GitReviewA.Tests/Akzeptanz/GanzeDateiMitDiffTests.cs.
 const { test } = require('../dsl/diff-lesen.js');
+const { anzeigeSchrankeMs } = require('../dsl/schranken.js');
 
 const NUR_AENDERUNGEN = 'nur Änderungen';
 const GANZE_DATEI = 'ganze Datei';
@@ -237,17 +238,17 @@ test.describe('Lastprofil ganze Datei', () => {
       ],
     });
 
-    const dauerMs = await diff.zugeklapptNachUmschalten(GANZE_DATEI, 'gross.txt', 'Sehr lang: 20.001 Zeilen — zugeklappt', 1000);
+    const dauerMs = await diff.zugeklapptNachUmschalten(GANZE_DATEI, 'gross.txt', 'Sehr lang: 20.001 Zeilen — zugeklappt', anzeigeSchrankeMs);
 
-    test.info().annotations.push({ type: 'Messwert', description: `Zuklappzustand nach ${dauerMs} ms nach dem Umschalten (Grenze 1000 ms, Ziel 700 ms)` });
+    test.info().annotations.push({ type: 'Messwert', description: `Zuklappzustand nach ${dauerMs} ms nach dem Umschalten (Anzeige-Schranke ${anzeigeSchrankeMs} ms)` });
   });
 
   test('soll die ganze Datei über 20 000 Zeilen spätestens 1 s nach dem Klick zugeklappt zeigen, wenn „ganze Datei“ vorher gewählt ist (R00017)', async ({ diff }) => {
     await diff.starten({ vorbereitung: '20 000 Zeilen, eine geändert' });
     await diff.ansichtWaehlen(GANZE_DATEI);
 
-    const dauerMs = await diff.zugeklapptNachKlick('gross.txt', 'gross.txt', 'Sehr lang: 20.001 Zeilen — zugeklappt', 1000);
+    const dauerMs = await diff.zugeklapptNachKlick('gross.txt', 'gross.txt', 'Sehr lang: 20.001 Zeilen — zugeklappt', anzeigeSchrankeMs);
 
-    test.info().annotations.push({ type: 'Messwert', description: `Zuklappzustand nach ${dauerMs} ms nach dem Klick (Grenze 1000 ms, Ziel 700 ms)` });
+    test.info().annotations.push({ type: 'Messwert', description: `Zuklappzustand nach ${dauerMs} ms nach dem Klick (Anzeige-Schranke ${anzeigeSchrankeMs} ms)` });
   });
 });

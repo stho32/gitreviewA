@@ -1,18 +1,19 @@
 'use strict';
 const { test, expect } = require('../dsl/auswahl.js');
+const { anzeigeSchrankeMs } = require('../dsl/schranken.js');
 
 test.describe('Menge der Auswahl und Lastprofil', () => {
   for (const weg of ['Bereich', 'stdin']) {
-    test(`Szenario 10: soll 200 Commits als ${weg} spätestens 2 s nach dem Start zeigen, ohne Warnung`, async ({ auswahl, page }) => {
+    test(`Szenario 10: soll 200 Commits als ${weg} spätestens 5 s nach dem Start zeigen, ohne Warnung`, async ({ auswahl, page }) => {
       const verlauf = auswahl.verlaufMitCommits(200);
       await page.goto('about:blank');
 
       const lauf = await auswahl.alleCommitsReviewen(verlauf, weg);
       const sekunden = await auswahl.sekundenBisAlleZeilenSichtbar(page, lauf, 200);
 
-      test.info().annotations.push({ type: 'Messwert', description: `${weg}: 200 Zeilen nach ${sekunden} s (Grenze 2 s)` });
+      test.info().annotations.push({ type: 'Messwert', description: `${weg}: 200 Zeilen nach ${sekunden} s (Anzeige-Schranke ${anzeigeSchrankeMs / 1000} s)` });
       console.log(`Messwert Szenario 10 (${weg}): 200 Zeilen sichtbar nach ${sekunden} s`);
-      expect(sekunden).toBeLessThanOrEqual(2);
+      expect(sekunden).toBeLessThanOrEqual(anzeigeSchrankeMs / 1000);
       expect(auswahl.warnungen(lauf)).toEqual([]);
     });
   }

@@ -2,11 +2,11 @@
 // Spezifikation R00035 „Seitenleiste ein- und ausklappen“ (I0036, B3405): das Ein- und Ausklappen verwirft keine Eingabe
 // (Lehre #23) — ein offenes Notizfeld mit Text und Fokus, die Markierung eines Zeilenbereichs (R00031), der Suchtreffer und die
 // Bildlaufposition bleiben, und es wird keine neue Diff-Anfrage gestellt; das gilt auch bei verzögert antwortendem Diff (Fake).
-// Dazu der Zeitwert der Anforderung („wirkt ≤ 1 s“, Messwert ≤ 0,7 s) mit einer Positivkontrolle derselben Messung. Browser-
+// Dazu die Anzeige-Schranke der Suite (5 s) mit einer Positivkontrolle derselben Messung. Browser-
 // Eigenes; Vorbereitung Repo Z (`src/a.txt`, angelegt in z1), 1280 × 800.
 const { test, expect } = require('../dsl/einklappen.js');
+const { erwarteBinnenAnzeigeSchranke } = require('../dsl/schranken.js');
 
-const FRIST_MS = 700;
 const VERZOEGERUNG_MS = 500;
 
 test.describe('Einklappen verwirft keine Eingabe (B3405, Lehre #23)', () => {
@@ -55,12 +55,12 @@ test.describe('Einklappen verwirft keine Eingabe (B3405, Lehre #23)', () => {
     const anfragen = einklappen.zaehleDiffAnfragen();
     const zeit = await einklappen.dauerEinklappen();
 
-    expect(zeit, `Einklappen bei zurückgehaltenen Diff-Antworten nach ${Math.round(zeit)} ms`).toBeLessThanOrEqual(FRIST_MS);
+    erwarteBinnenAnzeigeSchranke(zeit, `Einklappen bei zurückgehaltenen Diff-Antworten (${Math.round(zeit)} ms)`);
     expect(anfragen(), 'keine neue Diff-Anfrage (der Fake hätte sie um 500 ms verzögert)').toBe(0);
     await einklappen.seitenleisteVerborgen();
   });
 
-  test('der Zeitwert („wirkt ≤ 1 s“) hält den Messwert ≤ 0,7 s ein — die Messung sieht eine Verzögerung (Positivkontrolle)', async ({ einklappen }) => {
+  test('die Anzeige-Schranke (5 s) hält beim Einklappen — die Messung sieht eine Verzögerung (Positivkontrolle)', async ({ einklappen }) => {
     await einklappen.starten({ vorbereitung: 'Repo S' });
     await einklappen.dateiAnsehen('lang.txt');
 
@@ -71,7 +71,7 @@ test.describe('Einklappen verwirft keine Eingabe (B3405, Lehre #23)', () => {
       .toBeGreaterThanOrEqual(ohneVerzoegerung + VERZOEGERUNG_MS * 0.8);
 
     const zeit = await einklappen.dauerEinklappen();
-    expect(zeit, `Einklappen wirkt nach ${Math.round(zeit)} ms (Messwert ≤ ${FRIST_MS} ms)`).toBeLessThanOrEqual(FRIST_MS);
+    erwarteBinnenAnzeigeSchranke(zeit, `Einklappen wirkt nach ${Math.round(zeit)} ms`);
     expect(zeit, 'das Einklappen wartet auf keine Antwort der verzögerten Quelle').toBeLessThanOrEqual(mitVerzoegerung * 0.7);
   });
 });

@@ -10,7 +10,6 @@ const DIFFZEILE = '#diff .df-sc tr[data-art]';
 const KLASSE_JE_ROLLE = {
   Schlüsselwort: 'tk-keyword', Zeichenkette: 'tk-string', Kommentar: 'tk-comment', Zahl: 'tk-number', Funktion: 'tk-function', Typ: 'tk-type', Makro: 'tk-macro',
 };
-const LANGE_AUFGABE_MS = 150;
 
 /** Vor dem Laden der Seite: Long Tasks, jeder Wechsel von `data-farbe` mit Zeitpunkt, je Aufgabe die Zahl der in Textzellen eingefügten
     Knoten und Zeilen (eine Mitteilung des MutationObserver je Aufgabe) und die Zeilen unmittelbar nach dem Zeichnen, vor der Farbe (der erste Zustand
@@ -188,19 +187,19 @@ async function pruefeFarbeLiefNeu(page) {
   expect(zustaende.at(-1)).toBe('ja');
 }
 
-/** Keine Aufgabe des Hauptfadens über 150 ms, seit der Text zuletzt stand. */
-async function pruefeKeineLangeAufgabeSeitText(page) {
-  const lange = await page.evaluate(grenzeMs => {
+/** Keine Aufgabe des Hauptfadens über `grenzeMs`, seit der Text zuletzt stand (die Einfrier-Schranke der Suite kommt vom Aufrufer). */
+async function pruefeKeineLangeAufgabeSeitText(page, grenzeMs) {
+  const lange = await page.evaluate(fristMs => {
     const mitschrift = window.farbMitschrift;
-    return mitschrift.langeAufgaben.filter(aufgabe => aufgabe.startMs + aufgabe.dauerMs >= mitschrift.textStehtUm && aufgabe.dauerMs > grenzeMs);
-  }, LANGE_AUFGABE_MS);
+    return mitschrift.langeAufgaben.filter(aufgabe => aufgabe.startMs + aufgabe.dauerMs >= mitschrift.textStehtUm && aufgabe.dauerMs > fristMs);
+  }, grenzeMs);
   expect(lange).toEqual([]);
 }
 
 /** Das Färbefenster der zuletzt gezeigten Datei, vom letzten `laeuft` bis zum folgenden `ja` oder `nein` (das Zeichnen davor zählt nicht):
-    Aufgaben über 150 ms, die darin beginnen, die längste Aufgabe, die Zahl der Aufgaben mit Auflage und ihre meisten Knoten und Zeilen, dazu die
+    Aufgaben über `grenzeMs`, die darin beginnen, die längste Aufgabe, die Zahl der Aufgaben mit Auflage und ihre meisten Knoten und Zeilen, dazu die
     Elemente mit Rolle im Bereich. Ohne `laeuft` (gleich `nein`) ist das Fenster leer. */
-async function faerbefensterMessen(page) {
+async function faerbefensterMessen(page, grenzeMs) {
   await page.evaluate(() => new Promise(fertig => setTimeout(() => requestAnimationFrame(() => fertig()), 0)));
   return page.evaluate(([grenzeMs, bereichSelektor]) => {
     const mitschrift = window.farbMitschrift;
@@ -227,7 +226,7 @@ async function faerbefensterMessen(page) {
       meisteZeilen: Math.max(0, ...auflagen.map(auflage => auflage.zeilen)),
       rollenElemente,
     };
-  }, [LANGE_AUFGABE_MS, ROLLBEREICH]);
+  }, [grenzeMs, ROLLBEREICH]);
 }
 
 /** Farben der Rollen in einer Zeile je Art, in sRGB über eine Leinwand gerechnet, dazu der sichtbare Hintergrund der Textzelle (der erste

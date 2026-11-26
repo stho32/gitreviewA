@@ -3,8 +3,8 @@
 const { test: basis, expect } = require('./abbrechen.js');
 const veroeffentlichen = require('../treiber/veroeffentlichen.js');
 const { programmDateiStarten, adresseAbwarten, programmBeenden } = require('../treiber/programm.js');
+const { anzeigeSchrankeMs } = require('./schranken.js');
 
-const STARTZEILE_FRIST_MS = 5000;
 const BYTES_JE_MEGABYTE = 1024 * 1024;
 
 function veroeffentlichungSprache(gr) {
@@ -25,7 +25,7 @@ function veroeffentlichungSprache(gr) {
   async function alleinStarten(datei, repo, hashes) {
     const lauf = programmDateiStarten(datei, repo.ordner, [...hashes, '--kein-browser'], {});
     laeufe.push(lauf);
-    lauf.adresse = await adresseAbwarten(lauf, STARTZEILE_FRIST_MS);
+    lauf.adresse = await adresseAbwarten(lauf, anzeigeSchrankeMs);
     return lauf;
   }
 

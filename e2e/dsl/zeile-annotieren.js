@@ -9,12 +9,9 @@ const diffSeite = require('../treiber/diff-oberflaeche.js');
 const anmerkungSeite = require('../treiber/anmerkungen-oberflaeche.js');
 const hakenSeite = require('../treiber/haken-oberflaeche.js');
 const repos = require('../treiber/diff-repos.js');
+const { anzeigeSchrankeMs, einfrierSchrankeMs } = require('./schranken.js');
 
 const FENSTER = { width: 1280, height: 800 };
-const LADEFRIST_MS = 1000;
-/** Nach der Anzeige darf keine Aufgabe des Hauptfadens länger sein (R00017); „Beenden“ muss binnen einer Sekunde klickbar sein. */
-const BEDIENBAR_FRIST_MS = 150;
-const KLICK_FRIST_MS = 1000;
 
 const VORBEREITUNGEN = {
   'Repo A': { anlegen: repos.repoA, commits: ['q', 'p'] },
@@ -344,12 +341,12 @@ function annotierSprache(gr, page) {
     diffBinaer: (datei, grund) => diffSeite.pruefeBinaer(page, datei, grund),
     /** Beantwortet den Diff von `datei` mit `status` (etwa 500) statt des Patches. */
     diffAntwortScheitert: (datei, status) => diffSeite.diffAntwortErsetzen(page, { pfad: datei, status }),
-    anmerkungenRechtzeitigNachKlick: (datei, erwartet) => anmerkungSeite.pruefeAnmerkungenBinnen(page, () => seite.dateiWaehlen(page, datei), erwartet, LADEFRIST_MS),
+    anmerkungenRechtzeitigNachKlick: (datei, erwartet) => anmerkungSeite.pruefeAnmerkungenBinnen(page, () => seite.dateiWaehlen(page, datei), erwartet, anzeigeSchrankeMs),
     /** Sammelt ab jetzt die Aufgaben des Hauptfadens (> 50 ms) mit Startzeit — vor dem Klick auf die Datei aufrufen. */
     aufgabenSammeln: () => seite.aufgabenSammeln(page),
-    /** Nach der Anzeige: keine Aufgabe des Hauptfadens über `aufgabenFristMs` (gemessen ab der Anzeige), „Beenden“ binnen
-        `klickFristMs` geklickt; betätigt „Beenden“ und liefert Aufgaben, Messwert, Exit-Code und Ergebnis. */
-    bedienbarNachDerAnzeige: async ({ aufgabenFristMs = BEDIENBAR_FRIST_MS, klickFristMs = KLICK_FRIST_MS } = {}) => {
+    /** Nach der Anzeige: keine Aufgabe des Hauptfadens über der Einfrier-Schranke (gemessen ab der Anzeige), „Beenden“ binnen
+        der Anzeige-Schranke geklickt; betätigt „Beenden“ und liefert Aufgaben, Messwert, Exit-Code und Ergebnis. */
+    bedienbarNachDerAnzeige: async ({ aufgabenFristMs = einfrierSchrankeMs, klickFristMs = anzeigeSchrankeMs } = {}) => {
       const klickMs = await seite.beendenBetaetigenBinnen(page, klickFristMs);
       const aufgaben = await seite.pruefeAufgabenNachAnzeige(page, aufgabenFristMs);
       await seite.pruefeAufgabenZaehler(page);

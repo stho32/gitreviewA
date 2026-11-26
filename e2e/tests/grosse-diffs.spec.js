@@ -3,11 +3,11 @@
 // Blockgrenze an der Knotenzahl und Long Tasks beim Scrollen. Die Ausgabegrenze selbst prüfen die Integrationstests
 // (tests/GitReviewA.Tests/Akzeptanz/GrosseDiffsTests.cs); hier geht es um das, was nur im Browser zu sehen ist.
 const { test, expect } = require('../dsl/diff-lesen.js');
+const { anzeigeSchrankeMs, einfrierSchrankeMs } = require('../dsl/schranken.js');
 
 const NUR_AENDERUNGEN = 'nur Änderungen';
 const GANZE_DATEI = 'ganze Datei';
 const RIESIG_ZUGEKLAPPT = 'Sehr lang: 30.000 Zeilen — zugeklappt';
-const ZEILE_FRIST_MS = 1000;
 
 test.describe('Zuklappen und Trotzdem laden', () => {
   test('soll riesig.txt zugeklappt zeigen und erst auf „Trotzdem laden“ die Zeilen', async ({ diff }) => {
@@ -40,18 +40,18 @@ test.describe('Zuklappen und Trotzdem laden', () => {
     await diff.zugeklappt('riesig.txt', RIESIG_ZUGEKLAPPT);
   });
 
-  test('soll den Zuklappzustand an der Obergrenze spätestens 1 s nach dem Klick zeigen', async ({ diff }) => {
+  test('soll den Zuklappzustand an der Obergrenze spätestens 5 s nach dem Klick zeigen (Anzeige-Schranke)', async ({ diff }) => {
     await diff.starten({ vorbereitung: 'Große Diffs', commits: ['w'] });
     await diff.dateiAnsehen('riesig.txt');
     await diff.zugeklappt('riesig.txt', RIESIG_ZUGEKLAPPT);
     await diff.dateiAnsehen('winzig.txt');
     await diff.zeileZeigt(3, 'drei');
 
-    const dauerMs = await diff.zugeklapptNachKlick('riesig.txt', 'riesig.txt', RIESIG_ZUGEKLAPPT, ZEILE_FRIST_MS);
-    test.info().annotations.push({ type: 'Messwert', description: `Zuklappzustand nach ${dauerMs} ms (Grenze 1000 ms, Ziel 700 ms)` });
+    const dauerMs = await diff.zugeklapptNachKlick('riesig.txt', 'riesig.txt', RIESIG_ZUGEKLAPPT, anzeigeSchrankeMs);
+    test.info().annotations.push({ type: 'Messwert', description: `Zuklappzustand nach ${dauerMs} ms (Anzeige-Schranke ${anzeigeSchrankeMs} ms)` });
 
     const dauerGross = await diff.zeileRechtzeitigNachKlick('gross.txt', { kopf: '@@ -0,0 +1,20000 @@', plus: 'zeile 20000', neu: 20000 });
-    test.info().annotations.push({ type: 'Messwert', description: `gross.txt nach ${dauerGross} ms (Grenze 1000 ms, Ziel 700 ms)` });
+    test.info().annotations.push({ type: 'Messwert', description: `gross.txt nach ${dauerGross} ms (Anzeige-Schranke ${anzeigeSchrankeMs} ms)` });
   });
 });
 
@@ -98,7 +98,7 @@ test.describe('Flüssiges Zeichnen (Blockgrenze)', () => {
     await diff.zeileZeigt(1, 'zeile 00001');
   });
 
-  test('soll beim Scrollen durch dicht.js keine Aufgabe des Hauptfadens über 150 ms auslösen', async ({ diff }) => {
+  test(`soll beim Scrollen durch dicht.js keine Aufgabe des Hauptfadens über der Einfrier-Schranke auslösen`, async ({ diff }) => {
     await diff.starten({ vorbereitung: 'Große Diffs', commits: ['w'] });
 
     await diff.dateiAnsehen('dicht.js');
@@ -106,8 +106,8 @@ test.describe('Flüssiges Zeichnen (Blockgrenze)', () => {
     expect(zustand, 'Vorbedingung: dicht.js ist dicht gefärbt').toBe('ja');
     const aufgaben = await diff.langeAufgabenBeimScrollen(24);
 
-    test.info().annotations.push({ type: 'Messwert', description: `Aufgaben beim Scrollen über 150 ms: ${JSON.stringify(aufgaben.filter(a => a.dauerMs > 150))}` });
+    test.info().annotations.push({ type: 'Messwert', description: `Aufgaben beim Scrollen über der Einfrier-Schranke (${einfrierSchrankeMs} ms): ${JSON.stringify(aufgaben.filter(a => a.dauerMs > einfrierSchrankeMs))}` });
     expect(aufgaben.length, 'die Scrollprobe war nicht leer').toBeGreaterThan(0);
-    expect(aufgaben.filter(a => a.dauerMs > 150), 'Aufgaben über 150 ms').toEqual([]);
+    expect(aufgaben.filter(a => a.dauerMs > einfrierSchrankeMs), `Aufgaben über der Einfrier-Schranke (${einfrierSchrankeMs} ms)`).toEqual([]);
   });
 });

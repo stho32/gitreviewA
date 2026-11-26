@@ -3,6 +3,7 @@
 // Farbe und Kontrast, fremder Text, Long Tasks. Die Rechnungen (Sprache, Grenze, Tokens je Hunk-Seite, Schlange mit Frist) prüfen
 // die Bausteintests unter tests/bausteine/.
 const { test, expect } = require('../dsl/faerbung.js');
+const { anzeigeSchrankeMs, einfrierSchrankeMs } = require('../dsl/schranken.js');
 
 const NUR_AENDERUNGEN = 'nur Änderungen';
 const GANZE_DATEI = 'ganze Datei';
@@ -232,7 +233,7 @@ const DICHT_GEFAERBT = { pfad: 'dicht.toml', mindestensRollen: 125000 };
 
 test.describe('Dichte Inhalte', () => {
   for (const pfad of DICHTE_DATEIEN) {
-    test(`soll ${pfad} in jeder Ansicht mit und ohne Umbruch ohne Aufgabe über 150 ms und mit höchstens 4000 neuen Knoten je Aufgabe färben, Text gleich, nur der Text trägt Rollen (Kriterium 7)`, async ({ farbe }) => {
+    test(`soll ${pfad} in jeder Ansicht mit und ohne Umbruch ohne Aufgabe über der Einfrier-Schranke und mit höchstens 4000 neuen Knoten je Aufgabe färben, Text gleich, nur der Text trägt Rollen (Kriterium 7)`, async ({ farbe }) => {
       await farbe.starten({ vorbereitung: 'Repo D' });
       const messungen = [];
 
@@ -247,7 +248,7 @@ test.describe('Dichte Inhalte', () => {
       for (const messung of messungen) {
         const zelle = `${messung.ansicht}, Umbruch ${messung.umbruch}`;
         expect(['ja', 'nein'], zelle).toContain(messung.zustand);
-        expect(messung.langeAufgaben, `Aufgaben über 150 ms in ${zelle}`).toEqual([]);
+        expect(messung.langeAufgaben, `Aufgaben über der Einfrier-Schranke (${einfrierSchrankeMs} ms) in ${zelle}`).toEqual([]);
         expect(messung.meisteKnoten, `neue Knoten je Aufgabe in ${zelle}`).toBeLessThanOrEqual(KNOTEN_JE_AUFGABE_HOECHSTENS);
         expect(messung.meisteZeilen, `Zeilen je Aufgabe in ${zelle}`).toBeLessThanOrEqual(500);
         if (pfad === DICHT_GEFAERBT.pfad) {
@@ -293,19 +294,19 @@ test.describe('Fremder Text', () => {
 });
 
 test.describe('Lastprofil', () => {
-  test('soll 20 000 Zeilen spätestens 1 s nach dem Klick zeigen und danach in mindestens 40 Aufgaben, keine über 150 ms, färben (Kriterium 7, 9)', async ({ farbe }) => {
+  test('soll 20 000 Zeilen spätestens 5 s nach dem Klick zeigen und danach in mindestens 40 Aufgaben, keine über der Einfrier-Schranke, färben (Kriterium 7, 9)', async ({ farbe }) => {
     await farbe.starten({ vorbereitung: 'Repo L' });
 
     const dauerMs = await farbe.zeileRechtzeitigNachKlick('gross.js', { kopf: '@@ -0,0 +1,20000 @@', plus: 'x20000=1;', neu: 20000 });
 
     expect(await farbe.farbeAbgeschlossen()).toBe('ja');
     const fenster = await farbe.faerbefenster();
-    expect(fenster.langeAufgaben, 'Aufgaben über 150 ms').toEqual([]);
+    expect(fenster.langeAufgaben, `Aufgaben über der Einfrier-Schranke (${einfrierSchrankeMs} ms)`).toEqual([]);
     expect(fenster.aufgaben, 'Aufgaben mit Auflage').toBeGreaterThanOrEqual(40);
     test.info().annotations.push({ type: 'Färbefenster gross.js', description: JSON.stringify(fenster) });
     await farbe.traegt({ plus: 'x00001=1;' }, '1', 'Zahl', 2);
     await farbe.traegt({ plus: 'x20000=1;' }, '1', 'Zahl');
-    test.info().annotations.push({ type: 'gross.js bis Zeile 20000', description: `${dauerMs} ms` });
+    test.info().annotations.push({ type: 'gross.js bis Zeile 20000', description: `${dauerMs} ms (Anzeige-Schranke ${anzeigeSchrankeMs} ms)` });
   });
 });
 

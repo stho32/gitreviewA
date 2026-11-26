@@ -6,6 +6,7 @@ const { execFileSync } = require('child_process');
 const { test, expect } = require('../dsl/gitreviewa.js');
 const { programmStarten } = require('../treiber/programm.js');
 const verlauf = require('../treiber/verlauf-repo.js');
+const { anzeigeSchrankeMs } = require('../dsl/schranken.js');
 
 const GIT_UMGEBUNG = {
   ...process.env,
@@ -137,7 +138,7 @@ test.describe('Ungültiger Aufruf (I0003, R00016)', () => {
       expect(lauf.stderr).toContain('git');
       expect(lauf.stderr).not.toContain('http://127.0.0.1');
       expect(lauf.stdout).toBe('');
-      expect(sekundenNachStart(lauf)).toBeLessThanOrEqual(2);
+      expect(sekundenNachStart(lauf)).toBeLessThanOrEqual(anzeigeSchrankeMs / 1000);
     } finally {
       fs.rmSync(leer, { recursive: true, force: true });
     }

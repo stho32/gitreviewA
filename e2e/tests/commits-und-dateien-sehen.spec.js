@@ -1,6 +1,7 @@
 'use strict';
 // Spezifikation R00003 „Commits und Dateien sehen“ (User Story Szenarien 1–14). Commits heißen wie in der Vorbereitung der Anforderung.
 const { test, AUTOR_MIT_HTML, PFAD_MIT_RICHTUNGSZEICHEN } = require('../dsl/commits-und-dateien.js');
+const { anzeigeSchrankeMs } = require('../dsl/schranken.js');
 
 const DATEIEN_VON_P = {
   summe: '4 Dateien · +11 −0',
@@ -256,23 +257,23 @@ test.describe('Dateilisten nur auf Anfrage lesen', () => {
 });
 
 test.describe('Große Reviews', () => {
-  test('soll 200 Commits mit Autor und Rumpf spätestens 2 s nach dem Start zeigen, gelesen mit einem git-Aufruf', async ({ review }) => {
+  test('soll 200 Commits mit Autor und Rumpf spätestens 5 s nach dem Start zeigen, gelesen mit einem git-Aufruf', async ({ review }) => {
     await review.starten({ vorbereitung: '200 Commits', alleCommits: true });
 
     const dauerMs = await review.leisteRechtzeitigVollstaendig();
 
-    test.info().annotations.push({ type: 'Messwert', description: `200 Zeilen nach ${dauerMs} ms (Grenze 2000 ms)` });
+    test.info().annotations.push({ type: 'Messwert', description: `200 Zeilen nach ${dauerMs} ms (Anzeige-Schranke ${anzeigeSchrankeMs} ms)` });
     await review.leisteZeigt([...Array(199).fill({}).map((_, index) => ({ commit: `c${index + 1}` })), { commit: 'c200', betreff: 'Commit Nummer 200', autor: 'Autor 200' }]);
     await review.gitAufrufe({ log: 1 });
   });
 
-  test('soll 2 000 Dateien spätestens 1 s nach dem Klick zeigen', async ({ review }) => {
+  test('soll 2 000 Dateien spätestens 5 s nach dem Klick zeigen', async ({ review }) => {
     await review.starten({ vorbereitung: '2000 Dateien', commits: ['p', 'u'] });
     await review.dateienZeigen({ summe: '1 Datei · +1 −0', eintraege: [{ status: 'A', name: 'README.md' }] });
 
     const dauerMs = await review.dateienRechtzeitigNachKlick('u', 2000);
 
-    test.info().annotations.push({ type: 'Messwert', description: `2000 Dateizeilen nach ${dauerMs} ms (Grenze 1000 ms)` });
+    test.info().annotations.push({ type: 'Messwert', description: `2000 Dateizeilen nach ${dauerMs} ms (Anzeige-Schranke ${anzeigeSchrankeMs} ms)` });
     await review.dateienZeigen({ summe: '2000 Dateien · +2000 −0', eintraege: Array(2000).fill({ status: 'A', zahlen: '+1 −0' }) });
   });
 });

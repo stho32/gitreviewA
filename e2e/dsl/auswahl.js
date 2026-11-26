@@ -7,8 +7,8 @@ const verlauf = require('../treiber/verlauf-repo.js');
 const { repoEntfernen } = require('../treiber/wegwerf-repo.js');
 const { programmStarten, programmImTerminalStarten, adresseAbwarten, programmBeenden } = require('../treiber/programm.js');
 const oberflaeche = require('../treiber/oberflaeche.js');
+const { anzeigeSchrankeMs } = require('./schranken.js');
 
-const STARTZEILE_FRIST_MS = 2000;
 const ENDE_FRIST_MS = 20000;
 const STARTZEILE = 'http://127.0.0.1';
 const WARNUNG = / WARNUNG \[/;
@@ -29,7 +29,7 @@ function auswahlWelt(gr) {
   }
 
   async function startzeileAbwarten(lauf) {
-    lauf.adresse = await adresseAbwarten(lauf, STARTZEILE_FRIST_MS);
+    lauf.adresse = await adresseAbwarten(lauf, anzeigeSchrankeMs);
     lauf.sekundenBisStartzeile = (Date.now() - lauf.gestartetUmMs) / 1000;
     return lauf;
   }

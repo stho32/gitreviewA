@@ -4,10 +4,9 @@
 const { test: basis, expect } = require('./gitreviewa.js');
 const seite = require('../treiber/oberflaeche.js');
 const beobachtung = require('../treiber/beobachtung.js');
+const { anzeigeSchrankeMs } = require('./schranken.js');
 
-const LEISTE_FRIST_MS = 2000;
 const AUTOR_MIT_HTML = 'Mallory &lt;i&gt; &amp; Co';
-const DATEILISTE_FRIST_MS = 1000;
 const PFAD_MIT_RICHTUNGSZEICHEN = 'a\u202Eb\u2066c\u200F.txt';
 
 /** Repos je Vorbereitung; jedes liefert Ordner und die Hashes je Name. */
@@ -125,10 +124,10 @@ function reviewSprache(gr, page) {
     fehlerProtokolliertFuer: commit => beobachtung.pruefeFehlerzeileMit(lauf, hash(commit)),
     ergebnisBleibtLeer: () => beobachtung.pruefeStdoutLeer(lauf),
 
-    /** Alle Zeilen der Leiste sichtbar binnen 2 s nach dem Prozessstart; liefert den Messwert. */
-    leisteRechtzeitigVollstaendig: () => seite.pruefeZeilenBinnen(page, Object.keys(repo.hashes).length, lauf.gestartetUmMs, LEISTE_FRIST_MS),
-    /** `anzahl` Dateizeilen binnen 1 s nach dem Klick auf den Commit; liefert den Messwert. */
-    dateienRechtzeitigNachKlick: (commit, anzahl) => seite.pruefeDateizeilenBinnenNachKlick(page, kurz(commit), anzahl, DATEILISTE_FRIST_MS),
+    /** Alle Zeilen der Leiste sichtbar binnen der Anzeige-Schranke nach dem Prozessstart; liefert den Messwert. */
+    leisteRechtzeitigVollstaendig: () => seite.pruefeZeilenBinnen(page, Object.keys(repo.hashes).length, lauf.gestartetUmMs, anzeigeSchrankeMs),
+    /** `anzahl` Dateizeilen binnen der Anzeige-Schranke nach dem Klick auf den Commit; liefert den Messwert. */
+    dateienRechtzeitigNachKlick: (commit, anzahl) => seite.pruefeDateizeilenBinnenNachKlick(page, kurz(commit), anzahl, anzeigeSchrankeMs),
   };
 }
 

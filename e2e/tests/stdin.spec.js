@@ -1,5 +1,8 @@
 'use strict';
 const { test, expect } = require('../dsl/auswahl.js');
+const { anzeigeSchrankeMs } = require('../dsl/schranken.js');
+
+const START_SCHRANKE_S = anzeigeSchrankeMs / 1000;
 
 test.describe('Auswahl über stdin', () => {
   test('Szenario 5: soll die Ausgabe von git rev-list b..e wie den Bereich b..e zeigen', async ({ auswahl }) => {
@@ -58,11 +61,11 @@ test.describe('Auswahl über stdin', () => {
       expect(ende.exitCode).not.toBe(0);
       expect(ende.meldung).not.toBe('');
       expect(ende.serverGestartet).toBe(false);
-      expect(ende.sekundenNachStart).toBeLessThan(2);
+      expect(ende.sekundenNachStart).toBeLessThan(START_SCHRANKE_S);
     });
   }
 
-  test('Szenario 8: soll im Terminal nach höchstens 2 s enden und eine Pipe mit einem Hash je Zeile verlangen', async ({ auswahl }) => {
+  test('Szenario 8: soll im Terminal spätestens 5 s enden und eine Pipe mit einem Hash je Zeile verlangen', async ({ auswahl }) => {
     const { repo } = auswahl.verlaufAbisE();
 
     const ende = await auswahl.imTerminalAufrufen(repo, ['-']);
@@ -70,7 +73,7 @@ test.describe('Auswahl über stdin', () => {
     expect(ende.exitCode).not.toBe(0);
     expect(ende.meldung).toMatch(/ein Hash je Zeile|Pipe/);
     expect(ende.serverGestartet).toBe(false);
-    expect(ende.sekundenNachStart).toBeLessThanOrEqual(2);
+    expect(ende.sekundenNachStart).toBeLessThanOrEqual(START_SCHRANKE_S);
   });
 
   test('Szenario 8: soll bei offener, stiller Eingabe spätestens 15 s nach dem Start mit der Frist 10 s enden', async ({ auswahl }) => {
@@ -85,11 +88,11 @@ test.describe('Auswahl über stdin', () => {
     expect(ende.sekundenNachStart).toBeLessThanOrEqual(15);
   });
 
-  test('Szenario 8: soll ohne - bei offener, stiller Eingabe die Startzeile nach höchstens 2 s zeigen', async ({ auswahl }) => {
+  test('Szenario 8: soll ohne - bei offener, stiller Eingabe die Startzeile nach höchstens 5 s zeigen', async ({ auswahl }) => {
     const { repo, b, e } = auswahl.verlaufAbisE();
 
     const lauf = await auswahl.mitOffenerStillerEingabeReviewen(repo, [`${b}..${e}`]);
 
-    expect(lauf.sekundenBisStartzeile).toBeLessThanOrEqual(2);
+    expect(lauf.sekundenBisStartzeile).toBeLessThanOrEqual(START_SCHRANKE_S);
   });
 });

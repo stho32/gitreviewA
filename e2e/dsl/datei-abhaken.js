@@ -11,10 +11,10 @@ const schnittstelle = require('../treiber/haken-schnittstelle.js');
 const beobachtung = require('../treiber/beobachtung.js');
 const fremdeNamen = require('../treiber/fremde-namen-repo.js');
 const diffSeite = require('../treiber/diff-oberflaeche.js');
+const { anzeigeSchrankeMs } = require('./schranken.js');
 
 const NAME_MIT_ZEILENUMBRUCH = 'ab\ncd‮.txt';
 const NAME_MIT_HTML = '<b>x</b>.txt';
-const START_FRIST_MS = 2000;
 
 function repoAnlegen(gr, art) {
   switch (art) {
@@ -178,9 +178,8 @@ function abhakenSprache(gr, page) {
       const antwort = await gr.dateienAbfragen(lauf, hash(commit));
       return JSON.parse(antwort.koerper).map(datei => datei.pfad);
     },
-    dateienRechtzeitigNachKlick: (commit, anzahl) => seite.pruefeDateizeilenBinnenNachKlick(page, kurz(commit), anzahl, 1000),
+    dateienRechtzeitigNachKlick: (commit, anzahl) => seite.pruefeDateizeilenBinnenNachKlick(page, kurz(commit), anzahl, anzeigeSchrankeMs),
     lauf: () => lauf,
-    START_FRIST_MS,
   };
 }
 

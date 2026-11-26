@@ -629,8 +629,8 @@ async function warteAufFarbe(page) {
   return page.evaluate(() => document.querySelector('#diff .df-sc').dataset.farbe);
 }
 
-/** Scrollt in `schritte` Sprüngen durch die Seite über den Diff-Bereich und liefert die Aufgaben des Hauptfadens über 150 ms (Long Tasks)
-    samt der erzwingenden Layoutzeit je Sprung. */
+/** Scrollt in `schritte` Sprüngen durch die Seite über den Diff-Bereich und liefert die Aufgaben des Hauptfadens (Long Tasks)
+    samt der erzwingenden Layoutzeit je Sprung; die Einfrier-Schranke der Suite beurteilt sie. */
 async function langeAufgabenBeimScrollen(page, schritte = 24) {
   return page.evaluate(async anzahl => {
     const aufgaben = [];

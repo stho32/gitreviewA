@@ -1,5 +1,6 @@
 'use strict';
 const { test, expect, kurz } = require('../dsl/gitreviewa.js');
+const { anzeigeSchrankeMs } = require('../dsl/schranken.js');
 
 test.describe('Commit-Liste', () => {
   test('Szenario 2: die Oberfläche zeigt genau die übergebenen Commits in Aufrufreihenfolge', async ({ gr, page }) => {
@@ -35,7 +36,7 @@ test.describe('Commit-Liste', () => {
     expect(dialoge).toBe(1);
   });
 
-  test('Szenario 9: 200 Commits sind spätestens 2 s nach dem Prozessstart sichtbar', async ({ gr, page }) => {
+  test('Szenario 9: 200 Commits sind spätestens 5 s nach dem Prozessstart sichtbar', async ({ gr, page }) => {
     const betreffe = Array.from({ length: 200 }, (_, index) => `Commit Nummer ${index + 1}`);
     const repo = gr.repoMitCommits(betreffe);
     await page.goto('about:blank');
@@ -45,9 +46,9 @@ test.describe('Commit-Liste', () => {
     await gr.aufZeilenWarten(page, 200);
     const dauerMs = Date.now() - lauf.gestartetUmMs;
 
-    test.info().annotations.push({ type: 'Messwert', description: `200 Zeilen nach ${dauerMs} ms (Grenze 2000 ms)` });
+    test.info().annotations.push({ type: 'Messwert', description: `200 Zeilen nach ${dauerMs} ms (Anzeige-Schranke ${anzeigeSchrankeMs} ms)` });
     console.log(`Messwert Szenario 9: 200 Zeilen sichtbar nach ${dauerMs} ms`);
-    expect(dauerMs).toBeLessThanOrEqual(2000);
+    expect(dauerMs).toBeLessThanOrEqual(anzeigeSchrankeMs);
     const zeilen = await gr.commitZeilenLesen(page);
     expect(zeilen[199]).toEqual({ kurzHash: repo.hashes[199].slice(0, 7), betreff: 'Commit Nummer 200' });
   });

@@ -1,6 +1,7 @@
 'use strict';
 // Spezifikation R00004 „Diff einer Datei lesen“ (User Story Szenarien 1–16). Commits heißen wie in der Vorbereitung der Anforderung (p, q, s; m; u).
 const { test } = require('../dsl/diff-lesen.js');
+const { anzeigeSchrankeMs } = require('../dsl/schranken.js');
 
 const LANGE_ZEILE = '0123456789'.repeat(30);
 const DIFF_VON_B = {
@@ -309,23 +310,23 @@ test.describe('Binärdateien', () => {
 });
 
 test.describe('Große Diffs', () => {
-  test('soll 20 000 Zeilen spätestens 1 s nach dem Klick zeigen', async ({ diff }) => {
+  test('soll 20 000 Zeilen spätestens 5 s nach dem Klick zeigen (Anzeige-Schranke)', async ({ diff }) => {
     await diff.starten({ vorbereitung: '20 000 Zeilen', commits: ['u'] });
 
     const dauerMs = await diff.zeileRechtzeitigNachKlick('gross.txt', { kopf: '@@ -0,0 +1,20000 @@', plus: 'zeile 20000', neu: 20000 });
 
-    test.info().annotations.push({ type: 'Messwert', description: `Zeile 20000 nach ${dauerMs} ms (Grenze 1000 ms, Ziel 700 ms)` });
+    test.info().annotations.push({ type: 'Messwert', description: `Zeile 20000 nach ${dauerMs} ms (Anzeige-Schranke ${anzeigeSchrankeMs} ms)` });
   });
 });
 
 test.describe('Große Binärdateien als Text', () => {
-  test('soll nach „Als Text zeigen“ bei Null-Bytes und Zufall von 100 KB bis 3 MB spätestens 1 s später bedienbar sein', async ({ diff }) => {
+  test('soll nach „Als Text zeigen“ bei Null-Bytes und Zufall von 100 KB bis 3 MB spätestens 5 s später bedienbar sein', async ({ diff }) => {
     await diff.starten({ vorbereitung: 'große Binärdateien', commits: ['k'] });
 
     for (const datei of ['k100.bin', 'k500.bin', 'k3m.bin', 'z200.bin']) {
-      const dauerMs = await diff.alsTextBleibtBedienbar(datei, 'klein.txt', 1000);
+      const dauerMs = await diff.alsTextBleibtBedienbar(datei, 'klein.txt', anzeigeSchrankeMs);
 
-      test.info().annotations.push({ type: 'Messwert', description: `${datei}: bedienbar nach ${dauerMs} ms (Grenze 1000 ms)` });
+      test.info().annotations.push({ type: 'Messwert', description: `${datei}: bedienbar nach ${dauerMs} ms (Anzeige-Schranke ${anzeigeSchrankeMs} ms)` });
     }
   });
 });

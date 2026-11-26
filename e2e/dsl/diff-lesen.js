@@ -10,9 +10,9 @@ const schnittstelle = require('../treiber/diff-schnittstelle.js');
 const beobachtung = require('../treiber/beobachtung.js');
 const repos = require('../treiber/diff-repos.js');
 const fremdeNamen = require('../treiber/fremde-namen-repo.js');
+const { anzeigeSchrankeMs } = require('./schranken.js');
 
 const FENSTER = { width: 1280, height: 800 };
-const ZEILE_FRIST_MS = 1000;
 
 const VORBEREITUNGEN = {
   'Repo A': { anlegen: repos.repoA, commits: ['q', 'p'] },
@@ -116,9 +116,9 @@ function diffSprache(gr, page) {
     /** Der Abschnittskopf nennt Kurz-Hash und Betreff wie die Commit-Zeile; `rohzeichen` steht dort nie (M1). */
     abschnittskopfZeigt: (name, erwartet, rohzeichen) => diffSeite.pruefeAbschnittskopf(page, hash(name), erwartet, rohzeichen),
     /** Wählt `datei` und misst vom Klick bis zum Zuklapphinweis `meldung`; liefert den Messwert. */
-    zugeklapptNachKlick: (datei, pfad, meldung, fristMs = 1000) => diffSeite.zugeklapptRechtzeitigNachKlick(page, () => seite.dateiWaehlen(page, datei), pfad, meldung, fristMs),
+    zugeklapptNachKlick: (datei, pfad, meldung, fristMs = anzeigeSchrankeMs) => diffSeite.zugeklapptRechtzeitigNachKlick(page, () => seite.dateiWaehlen(page, datei), pfad, meldung, fristMs),
     /** Schaltet auf `ansicht` und misst bis zum Zuklapphinweis `meldung`; liefert den Messwert. */
-    zugeklapptNachUmschalten: (ansicht, pfad, meldung, fristMs = 1000) => diffSeite.zugeklapptRechtzeitigNachAktion(page, () => diffSeite.ansichtWaehlen(page, ansicht), pfad, meldung, fristMs),
+    zugeklapptNachUmschalten: (ansicht, pfad, meldung, fristMs = anzeigeSchrankeMs) => diffSeite.zugeklapptRechtzeitigNachAktion(page, () => diffSeite.ansichtWaehlen(page, ansicht), pfad, meldung, fristMs),
     zeileZeigt: (neu, text) => diffSeite.pruefeZeile(page, neu, text),
     alsTextGelesen: anzahl => schnittstelle.pruefeTextAufrufe(zaehler, anzahl),
     diffMeldet: (pfad, text) => diffSeite.pruefeMeldung(page, pfad, text, false),
@@ -189,7 +189,7 @@ function diffSprache(gr, page) {
     /** Knotenzahl je Block des gezeigten Diffs. */
     blockKnoten: () => diffSeite.blockKnoten(page),
     warteAufFarbe: () => diffSeite.warteAufFarbe(page),
-    /** Aufgaben des Hauptfadens über 150 ms beim Scrollen durch den gezeigten Diff. */
+    /** Aufgaben des Hauptfadens beim Scrollen durch den gezeigten Diff (die Einfrier-Schranke beurteilt sie). */
     langeAufgabenBeimScrollen: (schritte = 24) => diffSeite.langeAufgabenBeimScrollen(page, schritte),
 
     /** Ansicht „nur Änderungen“ oder „ganze Datei“ (R00008). */
@@ -199,9 +199,9 @@ function diffSprache(gr, page) {
     dateiGewaehlt: name => seite.pruefeGewaehlteDateien(page, [name]),
     zeilenfarben: () => diffSeite.zeilenfarbenLesen(page),
     zeilenfarbenSind: farben => diffSeite.pruefeZeilenfarben(page, farben),
-    /** Kontextzeile binnen 1 s nach dem Umschalten auf `ansicht` bzw. nach dem Klick auf `datei`; liefert den Messwert. */
-    kontextzeileRechtzeitigNachUmschalten: (ansicht, erwartet) => diffSeite.pruefeKontextzeileBinnen(page, () => diffSeite.ansichtWaehlen(page, ansicht), erwartet, ZEILE_FRIST_MS),
-    kontextzeileRechtzeitigNachKlick: (datei, erwartet) => diffSeite.pruefeKontextzeileBinnen(page, () => seite.dateiWaehlen(page, datei), erwartet, ZEILE_FRIST_MS),
+    /** Kontextzeile binnen der Anzeige-Schranke nach dem Umschalten auf `ansicht` bzw. nach dem Klick auf `datei`; liefert den Messwert. */
+    kontextzeileRechtzeitigNachUmschalten: (ansicht, erwartet) => diffSeite.pruefeKontextzeileBinnen(page, () => diffSeite.ansichtWaehlen(page, ansicht), erwartet, anzeigeSchrankeMs),
+    kontextzeileRechtzeitigNachKlick: (datei, erwartet) => diffSeite.pruefeKontextzeileBinnen(page, () => seite.dateiWaehlen(page, datei), erwartet, anzeigeSchrankeMs),
 
     diffsGelesen: (commit, anzahl) => schnittstelle.pruefeDiffsGelesen(lauf, hash(commit), anzahl),
     commitObjektEntfernen: commit => gr.commitObjektEntfernen(repo, hash(commit)),
@@ -240,8 +240,8 @@ function diffSprache(gr, page) {
 
     /** Die Seite ist `fristMs` nach dem Klick auf „Als Text zeigen“ bedienbar: Zeilen oder „Trotzdem laden“ stehen, und ein Klick auf `andereDatei` wirkt. */
     alsTextBleibtBedienbar: (datei, andereDatei, fristMs) => diffSeite.pruefeBedienbarNachAlsText(page, name => seite.dateiWaehlen(page, name), datei, andereDatei, fristMs),
-    /** Zeile `neu` binnen 1 s nach dem Klick auf `datei`; liefert den Messwert. */
-    zeileRechtzeitigNachKlick: (datei, erwartet) => diffSeite.pruefeZeileBinnenNachKlick(page, () => seite.dateiWaehlen(page, datei), erwartet, ZEILE_FRIST_MS),
+    /** Zeile `neu` binnen der Anzeige-Schranke nach dem Klick auf `datei`; liefert den Messwert. */
+    zeileRechtzeitigNachKlick: (datei, erwartet) => diffSeite.pruefeZeileBinnenNachKlick(page, () => seite.dateiWaehlen(page, datei), erwartet, anzeigeSchrankeMs),
   };
 }
 

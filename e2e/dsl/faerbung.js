@@ -8,9 +8,9 @@ const diffSeite = require('../treiber/diff-oberflaeche.js');
 const farbe = require('../treiber/farb-oberflaeche.js');
 const anmerkungSeite = require('../treiber/anmerkungen-oberflaeche.js');
 const repos = require('../treiber/farb-repos.js');
+const { anzeigeSchrankeMs, einfrierSchrankeMs } = require('./schranken.js');
 
 const FENSTER = { width: 1280, height: 800 };
-const ZEILE_FRIST_MS = 1000;
 
 const VORBEREITUNGEN = {
   'Repo F': { anlegen: repos.repoF, commits: ['f', 'e'] },
@@ -77,15 +77,15 @@ function farbSprache(gr, page) {
       umbruchAn = umbruch;
     }
     await waehlen(pfad);
-    return farbe.faerbefensterMessen(page);
+    return farbe.faerbefensterMessen(page, einfrierSchrankeMs);
   }
 
   return {
     starten,
-    /** Wählt `pfad` in Ansicht und Umbruch der Zelle; liefert das Färbefenster (Zustand, Aufgaben über 150 ms, Aufgaben mit Auflage, Rollen). */
+    /** Wählt `pfad` in Ansicht und Umbruch der Zelle; liefert das Färbefenster (Zustand, Aufgaben über der Einfrier-Schranke, Aufgaben mit Auflage, Rollen). */
     inZelleWaehlen,
     /** Das Färbefenster der zuletzt gezeigten Datei. */
-    faerbefenster: () => farbe.faerbefensterMessen(page),
+    faerbefenster: () => farbe.faerbefensterMessen(page, einfrierSchrankeMs),
     /** Wählt die Datei und wartet auf das Ende ihrer Färbung; liefert `ja` oder `nein`. */
     waehlen,
     /** Wählt die Datei und erwartet den Zuklapphinweis `meldung` (über der Zuklappgrenze, R00017) statt einer Farbauflage. */
@@ -124,7 +124,7 @@ function farbSprache(gr, page) {
         await farbe.pruefeOhneWorker(page);
       }
     },
-    nichtsFriertEin: () => farbe.pruefeKeineLangeAufgabeSeitText(page),
+    nichtsFriertEin: () => farbe.pruefeKeineLangeAufgabeSeitText(page, einfrierSchrankeMs),
     fremderTextBleibtText: async () => {
       await farbe.pruefeKeinElement(page, ['img', 'b', 'script']);
       await seite.pruefeKeineFormatierung(page);
@@ -134,9 +134,9 @@ function farbSprache(gr, page) {
     nurEigenerHost: () => farbe.pruefeNurEigenerHost(anfragen, lauf.adresse),
     umbruchUmschalten: () => diffSeite.umbruchUmschalten(page),
 
-    /** Zeile `neu` binnen 1 s nach dem Klick auf `datei` (Kriterium 9); liefert den Messwert. */
+    /** Zeile `neu` binnen der Anzeige-Schranke nach dem Klick auf `datei` (Kriterium 9); liefert den Messwert. */
     zeileRechtzeitigNachKlick: async (datei, erwartet) => {
-      const dauerMs = await diffSeite.pruefeZeileBinnenNachKlick(page, () => seite.dateiMitPfadWaehlen(page, datei), erwartet, ZEILE_FRIST_MS);
+      const dauerMs = await diffSeite.pruefeZeileBinnenNachKlick(page, () => seite.dateiMitPfadWaehlen(page, datei), erwartet, anzeigeSchrankeMs);
       gewaehlterPfad = datei;
       return dauerMs;
     },

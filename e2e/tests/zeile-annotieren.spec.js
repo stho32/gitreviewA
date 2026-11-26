@@ -4,6 +4,7 @@
 // Lastprofil. Was angelegt, abgelehnt und ausgegeben wird, prüft tests/GitReviewA.Tests/Akzeptanz/ZeileAnnotierenTests.cs, die Rechnung
 // Zeile → Stelle und Anmerkungsstand tests/bausteine/anmerkungen-werte.spec.js.
 const { test, expect } = require('../dsl/zeile-annotieren.js');
+const { einfrierSchrankeMs } = require('../dsl/schranken.js');
 
 const ENTFERNT = 'Entfernte Zeile — Anmerkung an eine Zeile im neuen Stand oder an die Datei';
 const UEBERSCHRIFT = '# Ergebnis manueller Review';
@@ -228,7 +229,7 @@ test.describe('Zeile annotieren', () => {
     expect(ergebnis).not.toContain('\u202E');
   });
 
-  test('Lastprofil: 500 Anmerkungen an gross.txt mit 20 000 Zeilen stehen binnen 1 s nach dem Klick, danach bleibt die Seite bedienbar', async ({ anm }) => {
+  test('Lastprofil: 500 Anmerkungen an gross.txt mit 20 000 Zeilen stehen binnen 5 s nach dem Klick, danach bleibt die Seite bedienbar', async ({ anm }) => {
     await anm.starten({ vorbereitung: 'Repo U', seiteOeffnen: false });
     const text = 'a'.repeat(200);
     for (let zeile = 1; zeile <= 500; zeile += 1) {
@@ -241,7 +242,7 @@ test.describe('Zeile annotieren', () => {
 
     test.info().annotations.push({ type: 'Messwert', description: `500 Anmerkungen an 20 000 Zeilen: ${dauerMs} ms` });
     const { aufgaben, klickMs, ergebnis } = await anm.bedienbarNachDerAnzeige();
-    test.info().annotations.push({ type: 'Bedienbarkeit nach der Anzeige', description: `„Beenden“ geklickt nach ${klickMs} ms, Aufgaben über 150 ms: ${aufgaben.length}` });
+    test.info().annotations.push({ type: 'Bedienbarkeit nach der Anzeige', description: `„Beenden“ geklickt nach ${klickMs} ms, Aufgaben über der Einfrier-Schranke (${einfrierSchrankeMs} ms): ${aufgaben.length}` });
     expect(ergebnis).toContain('Anmerkungen: 500\n');
   });
 
