@@ -114,3 +114,4 @@ Nie vom User erfragen.
 | 2026-11-26 | R00042 Ergebnis-Spalte ziehen | B4104 Schrumpfen, Wachsen und Ausklappen | unklar | 2-4h | 0,1h | – | autonom |
 | 2026-11-26 | R00042 Ergebnis-Spalte ziehen | B4105 Drei Rollbereiche, ohne Neuzeichnen, Diff-Kopf bei schmalem Diff | unklar | 2-4h | 0,2h | – | autonom |
 | 2026-11-26 | R00042 Ergebnis-Spalte ziehen | B4106 Akzeptanz-Szenarien der User Story | unklar | 2-4h | 0,1h | – | autonom |
+| 2026-11-26 | R00042 Ergebnis-Spalte ziehen | B4107 Nacharbeit Code-Review B1: Grenze fuer zwei Spalten 590 px (Test zuerst) | Bug-Fix | – | 0,4h | – | autonom |
