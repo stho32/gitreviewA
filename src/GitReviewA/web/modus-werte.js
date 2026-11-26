@@ -32,9 +32,12 @@
    * Beschriftung der zugeklappten Commit-Zeile: die Antwort von `GET /api/zusammen` allein sagt, ob die Auswahl eine lückenlose
    * Kette bildet. Vor der Antwort und nach einem Fehler steht dort nie die Behauptung „lückenlos · netto“ (R00012, Kriterien 2/4).
    */
-  function kettenbeschriftung(stand, istGescheitert) {
+  function kettenbeschriftung(stand, istGescheitert, grund) {
     if (stand) {
       return stand.beschriftung;
+    }
+    if (grund) {
+      return grund;
     }
     if (istGescheitert) {
       return KETTE_NICHT_LESBAR;

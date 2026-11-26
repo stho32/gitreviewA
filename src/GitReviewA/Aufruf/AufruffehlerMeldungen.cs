@@ -1,6 +1,5 @@
 namespace GitReviewA.Aufruf;
 
-using System.Globalization;
 using GitReviewA.Git;
 
 /// <summary>
@@ -33,9 +32,8 @@ internal static class AufruffehlerMeldungen
     /// </summary>
     public static string CommitAngabenZuGross(long grenze)
     {
-        var mib = grenze / (1024.0 * 1024.0);
-        var anzeige = mib.ToString("0.#", CultureInfo.InvariantCulture);
-        return $"Die Commit-Angaben der Auswahl sind größer als {anzeige} MiB (Autor, Betreff, Message); bitte die Auswahl teilen.";
+        var anzeige = Ausgabegrenze.AlsText(grenze);
+        return $"Die Commit-Angaben der Auswahl sind größer als {anzeige} (Autor, Betreff, Message); bitte die Auswahl teilen.";
     }
 
     /// <summary>

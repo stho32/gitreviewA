@@ -28,12 +28,12 @@ internal sealed class GitZusammenquelle : IZusammenquelle
         {
             hashes.Add(commit.Hash);
         }
-        return GitLeser.ElternfolgeLesen(new CommitHashes(hashes), arbeitsordner);
+        return GitLeser.ElternfolgeLesen(new CommitHashes(hashes), arbeitsordner, grenze);
     }
 
     public Dateiaenderungen NettoDateien(string basis, string spitze)
     {
-        return GitLeser.NettoDateienLesen(basis, spitze, arbeitsordner);
+        return GitLeser.NettoDateienLesen(basis, spitze, arbeitsordner, grenze);
     }
 
     public string NettoDiff(string basis, string spitze, Dateiaenderung datei, Diffumfang umfang, Leerraum leerraum)

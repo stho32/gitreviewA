@@ -11,4 +11,7 @@ internal sealed class GitZuGross(string aufruf, long grenze) : GitFehler($"Ausga
     public string Aufruf { get; } = aufruf;
 
     public long Grenze { get; } = grenze;
+
+    /// <summary>Der Grund, den die Ansichten zeigen (PO #60): „zu groß (über 8 MiB)“ — eine Stelle für den Wortlaut.</summary>
+    public string UiGrund => $"zu groß (über {Ausgabegrenze.AlsText(Grenze)})";
 }

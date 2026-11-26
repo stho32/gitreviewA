@@ -130,6 +130,11 @@ internal sealed class ZusammenLesenInteractor : INettoDateiliste
             protokoll.Melde(Protokollstufe.Debug, Kontext, $"Netto-Liste gelesen: {liste.Anzahl} Dateien, {liste.Beschriftung}");
             return new Zusammenstand(true, kette.Lueckenlos, kette.Basis, spitze, liste);
         }
+        catch (GitZuGross zuGross)
+        {
+            protokoll.Melde(Protokollstufe.Warnung, Kontext, $"Zusammen-Ansicht {zuGross.UiGrund}: Ausgabegrenze von {zuGross.Grenze} Byte überschritten");
+            return new Zusammenstand(false, false, string.Empty, string.Empty, new NettoDateiliste(false, []), ZuGrossGrund: zuGross.UiGrund);
+        }
         catch (GitFehler fehler)
         {
             protokoll.Melde(Protokollstufe.Fehler, Kontext, $"Zusammen-Ansicht nicht lesbar: {fehler.Message}");

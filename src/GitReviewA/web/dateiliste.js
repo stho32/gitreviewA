@@ -36,11 +36,12 @@
       zustand.uebernehmenAusstehend = false;
       uebernimmNettoStand(ansicht, ereignis.detail, uebernehmen);
     });
-    document.addEventListener('zusammen-fehler', () => {
+    document.addEventListener('zusammen-fehler', ereignis => {
       if (zustand.modus !== 'zusammen') {
         return;
       }
-      zeigeMeldung(ansicht, 'Dateien konnten nicht gelesen werden', true);
+      const grund = ereignis && ereignis.detail && ereignis.detail.meldung;
+      zeigeMeldung(ansicht, grund || 'Dateien konnten nicht gelesen werden', true);
       meldeGezeichnet();
     });
     ansicht.darstellungElement.addEventListener('click', ereignis => waehleDarstellung(ansicht, ereignis));
@@ -133,6 +134,14 @@
     } catch {
       if (ladung === zustand.letzteLadung) {
         zeigeMeldung(ansicht, 'Dateien konnten nicht gelesen werden', true);
+        meldeGezeichnet();
+      }
+      return;
+    }
+    if (dateien && dateien.zuGross) {
+      if (ladung === zustand.letzteLadung) {
+        zustand.dateien = [];
+        zeigeMeldung(ansicht, dateien.meldung || 'zu groß', true);
         meldeGezeichnet();
       }
       return;

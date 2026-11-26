@@ -62,6 +62,12 @@ internal static class Program
         {
             return await lauf();
         }
+        catch (GitZuGross zuGross)
+        {
+            protokoll.Melde(Protokollstufe.Warnung, "git", $"Ausgabe über der Ausgabegrenze ({zuGross.UiGrund}) — ohne fremden Text, der Aufruf steht im Debug");
+            protokoll.Melde(Protokollstufe.Debug, "git", zuGross.Message);
+            return ExitLaufGescheitert;
+        }
         catch (GitFehler fehler)
         {
             protokoll.Melde(Protokollstufe.Fehler, "git", fehler.Message);

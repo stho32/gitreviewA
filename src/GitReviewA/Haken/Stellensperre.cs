@@ -19,11 +19,21 @@ internal sealed class Stellensperre(GemerkteUebersicht uebersicht, StderrProtoko
         {
             gelesen = uebersicht.Lesen();
         }
+        catch (GitZuGross zuGross)
+        {
+            protokoll.Melde(Protokollstufe.Warnung, Kontext, $"Übersicht der Dateien {zuGross.UiGrund} ({Kurz(commit)}), Anmerkung ohne Sperrprüfung");
+            return string.Empty;
+        }
         catch (GitFehler fehler)
         {
             protokoll.Melde(Protokollstufe.Fehler, Kontext, $"Übersicht der Dateien nicht lesbar, Anmerkung ohne Sperrprüfung: {fehler.Message}");
             return string.Empty;
         }
         return gelesen.SperrgrundVon(new Stelle(commit, datei));
+    }
+
+    private static string Kurz(string hash)
+    {
+        return hash.Length > 7 ? hash[..7] : hash;
     }
 }

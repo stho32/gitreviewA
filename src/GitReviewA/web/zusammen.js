@@ -27,6 +27,11 @@
         if (ladung !== zustand.ladung) {
           return;
         }
+        if (daten && daten.zuGross) {
+          zustand.fehler = true;
+          document.dispatchEvent(new CustomEvent('zusammen-fehler', { detail: { meldung: daten.meldung || 'zu groß' } }));
+          return;
+        }
         zustand.daten = daten;
         zustand.fehler = false;
         document.dispatchEvent(new CustomEvent('zusammen-geladen', { detail: daten }));

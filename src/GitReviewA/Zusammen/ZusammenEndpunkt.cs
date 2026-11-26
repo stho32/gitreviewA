@@ -24,6 +24,10 @@ internal static class ZusammenEndpunkt
         return kontext =>
         {
             var stand = interactor.Stand();
+            if (stand.ZuGrossGrund.Length > 0)
+            {
+                return JsonAntwort.SendeAsync(kontext, StatusCodes.Status200OK, new ZuGrossAntwort(true, stand.ZuGrossGrund));
+            }
             if (!stand.IstLesbar)
             {
                 return JsonAntwort.SendeMeldungAsync(kontext, StatusCodes.Status500InternalServerError, NichtLesbarMeldung);

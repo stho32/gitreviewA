@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  const zustand = { commits: [], gewaehlt: null, zusammen: null, zusammenFehler: false };
+  const zustand = { commits: [], gewaehlt: null, zusammen: null, zusammenFehler: false, zusammenGrund: '' };
 
   async function init() {
     const statusElement = document.getElementById('commit-status');
@@ -21,11 +21,13 @@
     document.addEventListener('zusammen-geladen', ereignis => {
       zustand.zusammen = ereignis.detail;
       zustand.zusammenFehler = false;
+      zustand.zusammenGrund = '';
       zeichneZusammenfassung();
       zeichneKopfZahlen();
     });
-    document.addEventListener('zusammen-fehler', () => {
+    document.addEventListener('zusammen-fehler', ereignis => {
       zustand.zusammenFehler = true;
+      zustand.zusammenGrund = (ereignis && ereignis.detail && ereignis.detail.meldung) || '';
       zeichneZusammenfassung();
     });
     document.addEventListener('haken-stand-geladen', zeichneWaehler);
@@ -186,7 +188,7 @@
       element.textContent = 'Keine Commits';
       return;
     }
-    const beschriftung = window.gitreviewaModusWerte.kettenbeschriftung(zustand.zusammen, zustand.zusammenFehler);
+    const beschriftung = window.gitreviewaModusWerte.kettenbeschriftung(zustand.zusammen, zustand.zusammenFehler, zustand.zusammenGrund);
     const erster = zustand.commits[0].kurzHash;
     const letzter = zustand.commits[zustand.commits.length - 1].kurzHash;
     element.textContent = window.gitreviewaModusWerte.commitZeileText(zustand.commits.length, erster, letzter, beschriftung);

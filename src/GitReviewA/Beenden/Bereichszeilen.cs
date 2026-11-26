@@ -123,6 +123,11 @@ internal sealed class Bereichszeilen(GemerkteUebersicht uebersicht, string arbei
         {
             gelesen = uebersicht.Lesen();
         }
+        catch (GitZuGross zuGross)
+        {
+            protokoll.Melde(Protokollstufe.Warnung, Kontext, $"Übersicht {zuGross.UiGrund}, kein Zitat");
+            return new Dateisuche(null, UeberDerGrenze);
+        }
         catch (GitFehler fehler)
         {
             protokoll.Melde(Protokollstufe.Fehler, Kontext, $"Übersicht nicht lesbar, kein Zitat: {fehler.Message}");

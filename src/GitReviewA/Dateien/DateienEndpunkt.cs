@@ -1,3 +1,4 @@
+using GitReviewA.Diff;
 using GitReviewA.Git;
 using GitReviewA.Protokoll;
 using GitReviewA.Server;
@@ -47,11 +48,21 @@ internal static class DateienEndpunkt
             var dateien = AlsListe(quelle.Lesen(hash));
             return Results.Json(dateien, JsonAntwort.Optionen);
         }
+        catch (GitZuGross zuGross)
+        {
+            protokoll.Melde(Protokollstufe.Warnung, Fehlerkontext, $"Dateiliste von Commit {Kurz(hash)} zu groß: {zuGross.UiGrund}, Ausgabegrenze von {zuGross.Grenze} Byte überschritten");
+            return Results.Json(new ZuGrossAntwort(true, zuGross.UiGrund), JsonAntwort.Optionen);
+        }
         catch (GitFehler fehler)
         {
             protokoll.Melde(Protokollstufe.Fehler, Fehlerkontext, $"Dateiliste von Commit {hash} nicht lesbar: {fehler.Message}");
             return Results.Json(new MeldungAntwort(Fehlermeldung), JsonAntwort.Optionen, statusCode: StatusCodes.Status500InternalServerError);
         }
+    }
+
+    private static string Kurz(string hash)
+    {
+        return hash.Length > 7 ? hash[..7] : hash;
     }
 
     private static List<Dateiaenderung> AlsListe(Dateiaenderungen dateien)

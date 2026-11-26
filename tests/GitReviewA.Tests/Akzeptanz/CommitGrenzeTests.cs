@@ -88,7 +88,7 @@ public class CommitGrenzeTests
         using var mittel = MitMessage(5 * 1024, out var mittelHash);
         var abgewiesen = CommitSprache.Laufe(mittel.Ordner, CommitSprache.Einzelne(mittelHash), new StringWriter(), string.Empty, grenze);
         Assert.That(abgewiesen.IstErfolg, Is.False, "5 KiB liegt über der Grenze");
-        Assert.That(abgewiesen.Fehler!.Meldung, Does.Contain("MiB"), "die Meldung nennt die Grenze");
+        Assert.That(abgewiesen.Fehler!.Meldung, Does.Contain("4 KiB"), "die Meldung nennt die Grenze");
 
         using var gross = MitMessage(7 * 1024, out var grossHash);
         var abgewiesenGross = CommitSprache.Laufe(gross.Ordner, CommitSprache.Einzelne(grossHash), new StringWriter(), string.Empty, grenze);
