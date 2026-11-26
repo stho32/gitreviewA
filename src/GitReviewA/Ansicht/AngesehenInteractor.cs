@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using GitReviewA.Haken;
 using GitReviewA.Protokoll;
 
@@ -57,6 +58,24 @@ internal sealed class AngesehenInteractor
     private static bool VersucheStellenZuLesen(Ansichtanfrage? anfrage, out List<Stelle> stellen, out string grund)
     {
         stellen = [];
+        if (!VersucheStellenlisteZuLesen(anfrage, out var gelesen, out grund))
+        {
+            return false;
+        }
+        foreach (var eintrag in gelesen)
+        {
+            if (!VersucheStelleZuLesen(eintrag, out var stelle, out grund))
+            {
+                return false;
+            }
+            stellen.Add(stelle);
+        }
+        return true;
+    }
+
+    private static bool VersucheStellenlisteZuLesen(Ansichtanfrage? anfrage, [NotNullWhen(true)] out List<Ansichtsstelle>? gelesen, out string grund)
+    {
+        gelesen = null;
         grund = string.Empty;
         if (anfrage?.Stellen is null)
         {
@@ -73,20 +92,25 @@ internal sealed class AngesehenInteractor
             grund = $"höchstens {HoechsteStellenJeAnfrage} Stellen je Anfrage";
             return false;
         }
-        foreach (var eintrag in anfrage.Stellen)
+        gelesen = anfrage.Stellen;
+        return true;
+    }
+
+    private static bool VersucheStelleZuLesen(Ansichtsstelle? eintrag, out Stelle stelle, out string grund)
+    {
+        stelle = new Stelle(string.Empty, string.Empty);
+        grund = string.Empty;
+        if (eintrag?.Commit is not { Length: > 0 } commit)
         {
-            if (eintrag?.Commit is not { Length: > 0 } commit)
-            {
-                grund = "commit fehlt";
-                return false;
-            }
-            if (eintrag.Datei is not { Length: > 0 } datei)
-            {
-                grund = "datei fehlt";
-                return false;
-            }
-            stellen.Add(new Stelle(commit, datei));
+            grund = "commit fehlt";
+            return false;
         }
+        if (eintrag.Datei is not { Length: > 0 } datei)
+        {
+            grund = "datei fehlt";
+            return false;
+        }
+        stelle = new Stelle(commit, datei);
         return true;
     }
 

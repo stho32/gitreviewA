@@ -47,10 +47,10 @@ internal sealed class Ansichtsstand
     {
         lock (sperre)
         {
-            return angesehen
+            var sortiert = angesehen
                 .OrderBy(stelle => stelle.Commit, StringComparer.Ordinal)
-                .ThenBy(stelle => stelle.Pfad, StringComparer.Ordinal)
-                .ToArray();
+                .ThenBy(stelle => stelle.Pfad, StringComparer.Ordinal);
+            return sortiert.ToArray();
         }
     }
 }
