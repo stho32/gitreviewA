@@ -115,3 +115,8 @@ Nie vom User erfragen.
 | 2026-11-26 | R00042 Ergebnis-Spalte ziehen | B4105 Drei Rollbereiche, ohne Neuzeichnen, Diff-Kopf bei schmalem Diff | unklar | 2-4h | 0,2h | – | autonom |
 | 2026-11-26 | R00042 Ergebnis-Spalte ziehen | B4106 Akzeptanz-Szenarien der User Story | unklar | 2-4h | 0,1h | – | autonom |
 | 2026-11-26 | R00042 Ergebnis-Spalte ziehen | B4107 Nacharbeit Code-Review B1: Grenze fuer zwei Spalten 590 px (Test zuerst) | Bug-Fix | – | 0,4h | – | autonom |
+
+| 2026-11-26 | R00046 Datei aus einem Commit | I0047 B4261 Commitquelle erkennen | Standard | 2h | 0,4h | 0,4h | autonom |
+| 2026-11-26 | R00046 Datei aus einem Commit | I0047 B4262 Commit und Eintrag auflösen | unklar | 2-4h | 0,9h | 0,9h | autonom |
+| 2026-11-26 | R00046 Datei aus einem Commit | I0047 B4263 Inhalt aus dem Commit lesen | Standard | 2h | 0,5h | 0,5h | autonom |
+| 2026-11-26 | R00046 Datei aus einem Commit | I0047 B4264 Tests (Matrix, Marker, Grenze, Unterordner, E2E) | unklar | 2-4h | 0,8h | 0,8h | autonom |
