@@ -39,4 +39,16 @@ internal class Aufruffehler : Exception
             Aufrufgrund.AuswahlNichtAufloesbar,
             debugtext);
     }
+
+    /// <summary>
+    /// Zu große Commit-Angaben: die Meldung nennt die Grenze und den Ausweg, keinen Text aus dem Commit (L5). Kein Debugtext —
+    /// der rohe git-Text des Lesers trägt den Aufruf, nicht den Inhalt, aber die Zeile bleibt so in jedem Fall frei von fremdem Text.
+    /// </summary>
+    public static Aufruffehler FuerCommitAngabenZuGross(long grenze)
+    {
+        return new Aufruffehler(
+            AufruffehlerMeldungen.CommitAngabenZuGross(grenze),
+            Aufrufgrund.CommitAngabenZuGross,
+            string.Empty);
+    }
 }

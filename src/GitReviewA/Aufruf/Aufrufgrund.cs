@@ -8,4 +8,5 @@ internal enum Aufrufgrund
     GitNichtGefunden,
     LeereAuswahl,
     AuswahlNichtAufloesbar,
+    CommitAngabenZuGross,
 }

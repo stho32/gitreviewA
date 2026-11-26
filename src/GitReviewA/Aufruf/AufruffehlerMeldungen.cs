@@ -1,5 +1,8 @@
 namespace GitReviewA.Aufruf;
 
+using System.Globalization;
+using GitReviewA.Git;
+
 /// <summary>
 /// Eine Stelle für Meldungen und den Exit-Code eines ungültigen Aufrufs. Die Meldung nennt den Grund und den Ausweg;
 /// der rohe git-Text bleibt im Debug-Text. Bei einer nur teilweise auflösbaren Auswahl nennt sie die nicht auflösbaren Hashes.
@@ -19,8 +22,20 @@ internal static class AufruffehlerMeldungen
             Aufrufgrund.GitNichtGefunden => "git wurde nicht gefunden — bitte git installieren und im Suchpfad bereitstellen.",
             Aufrufgrund.LeereAuswahl => Auswahlgrenze.Leermeldung(),
             Aufrufgrund.AuswahlNichtAufloesbar => "Die Auswahl ließ sich nicht auflösen — bitte einen Hash dieses Repositories angeben.",
+            Aufrufgrund.CommitAngabenZuGross => CommitAngabenZuGross(Ausgabegrenze.Standard.Bytes),
             _ => throw new ArgumentOutOfRangeException(nameof(grund), grund, "Unbekannter Aufrufgrund."),
         };
+    }
+
+    /// <summary>
+    /// Die eine Zeile für zu große Commit-Angaben (R00048 Kriterium 4): sie nennt die Grenze und den Ausweg und **keinen** Text aus
+    /// dem Commit — kein Autor, kein Betreff, keine Message, keine Pfade, kein Steuer- oder Formatzeichen (L5).
+    /// </summary>
+    public static string CommitAngabenZuGross(long grenze)
+    {
+        var mib = grenze / (1024.0 * 1024.0);
+        var anzeige = mib.ToString("0.#", CultureInfo.InvariantCulture);
+        return $"Die Commit-Angaben der Auswahl sind größer als {anzeige} MiB (Autor, Betreff, Message); bitte die Auswahl teilen.";
     }
 
     /// <summary>

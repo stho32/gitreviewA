@@ -47,11 +47,11 @@ internal static class CommitSprache
         return folge.Fehler!;
     }
 
-    public static Aufruffolge Laufe(string ordner, Auswahl auswahl, StringWriter stderr, string stdinText = "")
+    public static Aufruffolge Laufe(string ordner, Auswahl auswahl, StringWriter stderr, string stdinText = "", Ausgabegrenze? grenze = null)
     {
         var auftrag = new Startauftrag(auswahl, 0, false, Protokollstufe.Warnung, new Musterliste([]));
         var anfrage = new Aufrufanfrage(auftrag, new Standardeingabe(new StringReader(stdinText), IstTerminal: false), ordner);
-        return AufrufInteractor.StarteAsync(anfrage, Protokoll(stderr)).GetAwaiter().GetResult();
+        return AufrufInteractor.StarteAsync(anfrage, Protokoll(stderr), grenze).GetAwaiter().GetResult();
     }
 
     private static StderrProtokoll Protokoll(StringWriter ziel)

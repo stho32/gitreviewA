@@ -23,23 +23,30 @@ internal static class CommitsDerAuswahl
         return Auswahl.AusEinzelcommits(hashes);
     }
 
-    public static Commitzeilen Lesen(Auswahl auswahl, string arbeitsordner, StderrProtokoll protokoll)
+    public static Commitzeilen Lesen(Auswahl auswahl, string arbeitsordner, StderrProtokoll protokoll, Ausgabegrenze? grenze = null)
     {
-        var commits = LeseMitGrund(auswahl, arbeitsordner);
+        var commits = LeseMitGrund(auswahl, arbeitsordner, grenze);
         Beurteile(commits, protokoll);
         return commits;
     }
 
-    /// <summary>Ein gescheitertes Auflösen ist ein ungültiger Aufruf; der rohe git-Text wandert in den Debugtext.</summary>
-    private static Commitzeilen LeseMitGrund(Auswahl auswahl, string arbeitsordner)
+    /// <summary>
+    /// Ein gescheitertes Auflösen ist ein ungültiger Aufruf; der rohe git-Text wandert in den Debugtext.
+    /// Zu große Angaben sind ein **eigener** Ausgang und werden vor <see cref="GitFehler"/> gefangen: nie „nicht auflösbar“ (Kriterium 4).
+    /// </summary>
+    private static Commitzeilen LeseMitGrund(Auswahl auswahl, string arbeitsordner, Ausgabegrenze? grenze)
     {
         try
         {
-            return LeseRoh(auswahl, arbeitsordner);
+            return LeseRoh(auswahl, arbeitsordner, grenze);
         }
         catch (GitNichtGefunden fehler)
         {
             throw Aufruffehler.Fuer(Aufrufgrund.GitNichtGefunden, fehler.Message);
+        }
+        catch (GitZuGross zuGross)
+        {
+            throw Aufruffehler.FuerCommitAngabenZuGross(zuGross.Grenze);
         }
         catch (GitFehler fehler)
         {
@@ -58,22 +65,22 @@ internal static class CommitsDerAuswahl
         return GitLeser.NichtAufloesbareHashes(auswahl.Hashes, arbeitsordner);
     }
 
-    private static Commitzeilen LeseRoh(Auswahl auswahl, string arbeitsordner)
+    private static Commitzeilen LeseRoh(Auswahl auswahl, string arbeitsordner, Ausgabegrenze? grenze)
     {
         switch (auswahl.Art)
         {
             case Auswahlart.Einzelcommits:
-                return LeseHashesGeprueft(auswahl.Hashes, arbeitsordner);
+                return LeseHashesGeprueft(auswahl.Hashes, arbeitsordner, grenze);
             case Auswahlart.Bereiche:
-                return GitLeser.LeseBereiche(auswahl.Bereiche, arbeitsordner);
+                return GitLeser.LeseBereiche(auswahl.Bereiche, arbeitsordner, grenze);
             default:
                 throw new ArgumentOutOfRangeException(nameof(auswahl), auswahl.Art, "unbekannte Auswahlart");
         }
     }
 
-    private static Commitzeilen LeseHashesGeprueft(CommitHashes hashes, string arbeitsordner)
+    private static Commitzeilen LeseHashesGeprueft(CommitHashes hashes, string arbeitsordner, Ausgabegrenze? grenze)
     {
-        var commits = GitLeser.Lesen(hashes, arbeitsordner);
+        var commits = GitLeser.Lesen(hashes, arbeitsordner, grenze);
         HashpraefixPruefer.PruefeTreffer(hashes, commits);
         return commits;
     }
