@@ -56,4 +56,15 @@ test.describe('Baustein Dateiansicht-Werte', () => {
     expect(gekuerzt.endsWith('datei.sql')).toBe(true);
     expect(pfadKuerzen('/kurz/a.sql', 60)).toBe('/kurz/a.sql');
   });
+
+  test('soll beim Pfadkürzen nie mitten in einer Marke schneiden (R00045, Kriterium 6)', () => {
+    const halbeMarke = `${'a'.repeat(46)}⟨U+202E⟩${'b'.repeat(100)}`;
+    const gekuerzt = pfadKuerzen(halbeMarke, 100);
+    expect(gekuerzt).not.toContain('⟨');
+    expect(gekuerzt).not.toContain('⟩');
+    expect(gekuerzt).toBe(`${'a'.repeat(46)}…${'b'.repeat(49)}`);
+
+    const ganzeMarke = `⟨U+202E⟩${'b'.repeat(120)}`;
+    expect(pfadKuerzen(ganzeMarke, 100)).toContain('⟨U+202E⟩');
+  });
 });

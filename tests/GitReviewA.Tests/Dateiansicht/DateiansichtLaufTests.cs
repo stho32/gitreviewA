@@ -326,6 +326,37 @@ public class DateiansichtLaufTests
         Assert.That(lauf.Ausgabe, Is.Empty);
     }
 
+    [Test]
+    public async Task Wenn_viele_8_MiB_Dateien_zusammen_ueber_32_MiB_gehen_dann_bricht_das_Lesen_ab_und_Exit_2()
+    {
+        using var d = OrdnerD.Anlegen();
+        var acht = new byte[8_388_608];
+        Array.Fill(acht, (byte)'a');
+        var angaben = new List<string>();
+        for (var nummer = 0; nummer < 5; nummer++)
+        {
+            var name = $"gross-{nummer}.sql";
+            File.WriteAllBytes(d.Pfad(name), acht.ToArray());
+            angaben.Add(name);
+        }
+        for (var nummer = 0; nummer < 45; nummer++)
+        {
+            var name = $"klein-{nummer}.sql";
+            File.WriteAllBytes(d.Pfad(name), [(byte)'x']);
+            angaben.Add(name);
+        }
+
+        using var lauf = await Dateiansichtprozess.StarteAsync(d.Ordner, [.. new[] { "--dateien" }, .. angaben, "--kein-browser"]);
+
+        var ende = await lauf.WarteAufEndeAsync(TimeSpan.FromSeconds(30));
+
+        Assert.That(ende, Is.EqualTo(2));
+        Assert.That(lauf.Ausgabe, Is.Empty);
+        Assert.That(lauf.Fehler, Does.Contain("zusammen zu groß (über 32 MiB)"));
+        Assert.That(lauf.Fehler, Does.Not.Contain("http://127.0.0.1"));
+        Assert.That(Fehlerzeilen(lauf.Fehler), Is.EqualTo(1));
+    }
+
     private static async Task WarteAufInhalt(string pfad, string text)
     {
         var frist = System.Diagnostics.Stopwatch.StartNew();
