@@ -67,3 +67,4 @@ zuletzt: 2026-11-26
 | I0050 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | Betreiberfall 60 Dateien (R00049), Groß/Klein nach PO-Zeile 255, Karte #33 |
 | I0049 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester + Director, Auftrag Stefan Hoffmann) | Szenarien R00048, Regression Exit 134 nach Nacharbeit vom Director nachgeprobt (4–7 Stellen), Karte #60 |
 | I0039 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | Szenarien R00038 und Betreiberfall sechs Commits an einer Datei, Karte #47 |
+| I0028 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester + Director, Auftrag Stefan Hoffmann) | 12 Szenarien R00050, US-8 (zweiter Tab) nach Nacharbeit vom Director nachgeprüft, Karte #32 |
