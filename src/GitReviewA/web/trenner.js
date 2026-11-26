@@ -25,7 +25,22 @@
   }
 
   function hoechste() {
-    return werte.hoechsteBreite(window.innerWidth);
+    return werte.hoechsteBreite(window.innerWidth, ergebnisBreiteJetzt());
+  }
+
+  /**
+   * Die Breite, die die ausgeklappte Ergebnis-Spalte belegt; 0, wenn sie eingeklappt ist (dann belegt sie nur den Streifen).
+   * Der Zustand kommt aus der Klasse am Rahmen, die `einklappen.js` setzt — keine zweite Zustandsquelle.
+   */
+  function ergebnisBreiteJetzt() {
+    const rahmenElement = rahmen();
+    if (!rahmenElement || !werte.ergebnisVorhanden(window.innerWidth)) {
+      return 0;
+    }
+    if (rahmenElement.classList.contains('gr-ergebnis-eingeklappt')) {
+      return 0;
+    }
+    return werte.ergebnisBreite(window.innerWidth);
   }
 
   function init() {
@@ -37,6 +52,7 @@
       medien.addEventListener('change', beiGroesse);
     }
     window.addEventListener('resize', beiGroesse);
+    document.addEventListener('ergebnis-eingeklappt-geaendert', beiGroesse);
   }
 
   /** Die gezeigte Breite: der Wunsch, auf die tatsächliche Spanne geklemmt; im einspaltigen Rückfall bleibt der Wunsch. */
@@ -47,11 +63,13 @@
     return werte.klemme(zustand.wunsch, werte.kleinsteBreite(), hoechste());
   }
 
-  /** Die Breite der Seitenleiste als CSS-Variable am Rahmen setzen — das Layout folgt, der Diff zeichnet nicht neu. */
+  /** Die Breite der Seitenleiste als CSS-Variable am Rahmen setzen — das Layout folgt, der Diff zeichnet nicht neu. Die
+      ausgeklappte Ergebnis-Spalte bekommt ihre Breite aus derselben Rechnung (R00037). */
   function anwenden() {
     const rahmenElement = rahmen();
     if (rahmenElement) {
       rahmenElement.style.setProperty('--gr-leiste-breite', `${zustand.breite}px`);
+      rahmenElement.style.setProperty('--gr-ergebnis-breite', `${werte.ergebnisBreite(window.innerWidth)}px`);
     }
     aktualisiereAria();
   }

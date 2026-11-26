@@ -584,7 +584,7 @@ test.describe('R00030 Gesperrte Stelle und kein neuer Weg', () => {
 
     const bekannt = [/^\/api\/zustand$/, /^\/api\/commits$/, /^\/api\/commits\/[^/]+\/dateien$/, /^\/api\/commits\/[^/]+\/diff$/,
       /^\/api\/zusammen$/, /^\/api\/zusammen\/diff$/, /^\/api\/zusammen\/[^/]+\/diff$/, /^\/api\/haken$/, /^\/api\/anmerkungen$/, /^\/api\/anmerkungen\/\d+$/,
-      /^\/api\/sprung$/, /^\/api\/commits\/[^/]+\/sprung$/, /^\/api\/beenden$/];
+      /^\/api\/ergebnis$/, /^\/api\/sprung$/, /^\/api\/commits\/[^/]+\/sprung$/, /^\/api\/beenden$/];
     for (const pfad of anfragen()) {
       expect(bekannt.some(muster => muster.test(pfad)), `bekannter Endpunkt: ${pfad}`).toBe(true);
     }

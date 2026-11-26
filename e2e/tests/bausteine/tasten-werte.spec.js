@@ -256,3 +256,35 @@ test.describe('Baustein Tasten-Werte — Katalog `b` der Seitenleiste (R00035, B
     expect(eintraege[0].verfuegbar).toBe(true);
   });
 });
+
+test.describe('Baustein Tasten-Werte — Katalog `r` der Ergebnis-Spalte (R00037, B3604)', () => {
+  test('soll `r` genau einmal fuehren, mit der Aktion und dem Ziel des Ausklapp-Knopfes (Kriterium 10)', () => {
+    const eintraege = werte.EINTRAEGE.filter(eintrag => eintrag.taste === 'r');
+
+    expect(eintraege).toHaveLength(1);
+    expect(eintraege[0].aktion).toBe('ergebnisEinklappen');
+    expect(eintraege[0].text).toBe('Ergebnis-Spalte ein-/ausklappen');
+    expect(eintraege[0].ziel).toBe('#ergebnis-einklappen');
+    expect(eintraege[0].anzeige).toEqual(['r']);
+  });
+
+  test('soll `r` betätigen lassen, sobald der Knopf gebaut ist, sonst nicht (Abriss am Rand)', () => {
+    expect(werte.aktionFuer('r', lage({ vorhanden: GEBAUT }))).toBe('ergebnisEinklappen');
+    expect(werte.aktionFuer('r', lage({ vorhanden: [] }))).toBeNull();
+  });
+
+  test('soll den Hinweis an den Knopf der Ergebnis-Spalte liefern', () => {
+    const hinweis = werte.hinweise().find(eintrag => eintrag.selektor === '#ergebnis-einklappen');
+
+    expect(hinweis).toEqual({ selektor: '#ergebnis-einklappen', anzeige: ['r'], aria: 'r' });
+  });
+
+  test('soll die Aktion in der Hilfe nennen und beim gebauten Knopf als verfügbar zeigen', () => {
+    const gruppen = werte.belegung(lage({ vorhanden: GEBAUT }));
+    const eintraege = gruppen.flatMap(gruppe => gruppe.eintraege).filter(eintrag => eintrag.aktion === 'ergebnisEinklappen');
+
+    expect(eintraege).toHaveLength(1);
+    expect(eintraege[0].text).toBe('Ergebnis-Spalte ein-/ausklappen');
+    expect(eintraege[0].verfuegbar).toBe(true);
+  });
+});

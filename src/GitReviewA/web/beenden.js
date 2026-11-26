@@ -10,6 +10,7 @@
     const statusElement = document.getElementById('beenden-status');
     knopfElement.disabled = true;
     statusElement.textContent = '';
+    document.dispatchEvent(new CustomEvent('beenden-gestartet'));
     try {
       await beendenAnfordern();
       zeigeBeendet(knopfElement);

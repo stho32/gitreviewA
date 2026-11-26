@@ -25,7 +25,7 @@ test.describe('Fenstergröße ändern (Nacharbeit B1)', () => {
   test('700 → 565 → 700: Breite bleibt mindestens 240 px', async ({ breite }) => {
     await breite.starten({ vorbereitung: 'Repo S' });
     await breite.fensterSetzen({ width: 700, height: 800 });
-    await breite.breiteIst(360);
+    await breite.breiteIst(350);
 
     await breite.fensterSetzen({ width: 565, height: 800 });
     await expect.poll(() => breite.trennerVorhanden(), 'unter 566 px kein Trenner').toBe(0);
@@ -33,13 +33,13 @@ test.describe('Fenstergröße ändern (Nacharbeit B1)', () => {
     await breite.fensterSetzen({ width: 700, height: 800 });
     await expect.poll(() => breite.trennerVorhanden(), 'zurück im zweispaltigen Fenster ein Trenner').toBe(1);
 
-    await breite.breiteIst(360);
+    await breite.breiteIst(350);
   });
 
-  test('aus 640 ziehen, verkleinern, vergrößern: Breite bleibt mindestens 240 px und der Wunsch 640', async ({ breite }) => {
+  test('aus 640 ziehen, verkleinern, vergrößern: Breite bleibt mindestens 240 px, der Wunsch 640 wird gezeigt, sobald er passt', async ({ breite }) => {
     await breite.starten({ vorbereitung: 'Repo S' });
     await breite.ziehen(2000);
-    await breite.breiteIst(640);
+    await breite.breiteIst(628); // 1280 − 320 − 6 − 326 (ausgeklappte Ergebnis-Spalte, R00037)
 
     await breite.fensterSetzen({ width: 500, height: 800 });
     await expect.poll(() => breite.trennerVorhanden(), 'unter 566 px kein Trenner').toBe(0);
@@ -47,6 +47,6 @@ test.describe('Fenstergröße ändern (Nacharbeit B1)', () => {
     await breite.fensterSetzen({ width: 1280, height: 800 });
     await expect.poll(() => breite.trennerVorhanden(), 'zurück im zweispaltigen Fenster ein Trenner').toBe(1);
 
-    await breite.breiteIst(640);
+    await breite.breiteIst(628);
   });
 });

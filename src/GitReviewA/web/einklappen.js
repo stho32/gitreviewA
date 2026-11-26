@@ -1,17 +1,15 @@
-/* gitreviewA — Seitenleiste ein- und ausklappen (R00035, I0036): der Knopf an der Grenze klappt die Seitenleiste ein und wieder
-   aus. Der Zustand ist nur RAM (Start ausgeklappt) und bleibt beim Wechsel von Datei, Commit, Modus, Ansicht und Anordnung; er
-   wirkt allein über das Layout — der Diff wird nicht neu gezeichnet (Lehre #23), und das Ausklappen bringt die gewählte Zeile in
-   den Blick. Der Knopf trägt `aria-expanded` und `aria-controls`, sein Name und die Pfeilrichtung folgen dem Zustand; beim
-   Einklappen wandert ein Fokus aus der Leiste auf den Knopf (nie ins Leere). Unter 566 px gibt es den Knopf nicht (eine Spalte,
-   kein Einklappen). Der Mechanismus wird je Seitenleiste angelegt (`anlegen`) — eine zweite Seitenleiste (I0038) nutzt ihn ohne
-   Kopie. Die reine Rechnung liegt in `einklappen-werte.js`. */
+/* gitreviewA — Seitenleiste und Ergebnis-Spalte ein- und ausklappen (R00035/R00037, I0036/I0038): der Knopf an der Grenze
+   klappt den Bereich ein und wieder aus. Der Zustand ist nur RAM und bleibt beim Wechsel von Datei, Commit, Modus, Ansicht und
+   Anordnung; er wirkt allein über das Layout — der Diff wird nicht neu gezeichnet (Lehre #23), und das Ausklappen bringt die
+   gewählte Zeile in den Blick. Der Knopf trägt `aria-expanded` und `aria-controls`, sein Name und die Pfeilrichtung folgen dem
+   Zustand; beim Einklappen wandert ein Fokus aus dem Bereich auf den Knopf (nie ins Leere). Unter 566 px gibt es den Knopf
+   nicht (eine Spalte, kein Einklappen). Die Mechanik wird je Bereich angelegt (`anlegen`) — die Ergebnis-Spalte (I0038) nutzt
+   sie ohne Kopie. Eine Seite nennt zusätzlich `start` (Stellung beim Laden), `ausklappbar` (darf ausgeklappt werden) und
+   `grund` (warum nicht). Die reine Rechnung liegt in `einklappen-werte.js`. */
 (function () {
   'use strict';
 
   const RAHMEN = '.gr-ansicht';
-  const SEITENLEISTE = '#seitenleiste';
-  const STREIFEN = '.gr-streifen';
-  const WAEHLBARE_ZEILE = '#datei-zeilen .datei-zeile[aria-current="true"]';
 
   function werte() {
     return window.gitreviewaEinklappenWerte;
@@ -22,14 +20,15 @@
   }
 
   /**
-   * Eine Seitenleiste ein-/ausklappbar machen. `seite` nennt: `rahmen` (die Rahmenfläche, an der die Klasse wirkt), `leiste`
-   * (die Seitenleiste), `streifen` (der Ort des Knopfes an der Grenze), `trenner` (der Trennzug, der beim Einklappen
-   * verschwindet), `knopfId`, `klasse` (die Stellung am Rahmen), `bezeichnung` (Anfangs des Namens), `ereignis` (der
-   * Zustandswechsel), `wahl` (die Zeile, die beim Ausklappen in den Blick kommt) und `medien` (die Mediengrenze des
-   * zweispaltigen Aufbaus).
+   * Einen Bereich ein-/ausklappbar machen. `seite` nennt: `rahmen` (die Rahmenfläche, an der die Klasse wirkt), `leiste`
+   * (der Bereich), `streifen` (der Ort des Knopfes an der Grenze), `trenner` (der Trennzug, der beim Einklappen verschwindet;
+   * null, wenn es keinen gibt), `knopfId`, `klasse` (die Stellung am Rahmen), `bezeichnung` (Anfangs des Namens), `ereignis`
+   * (der Zustandswechsel), `wahl` (die Zeile, die beim Ausklappen in den Blick kommt; null, wenn keine), `medien` (die
+   * Mediengrenze des zweispaltigen Aufbaus), `rechts` (Pfeilrichtung), `start` (Stellung beim Laden aus der Fensterbreite) und
+   * `ausklappbar` (darf zur aktuellen Fensterbreite ausgeklappt werden) samt `grund`.
    */
   function anlegen(seite) {
-    const zustand = { eingeklappt: werte().start() };
+    const zustand = { eingeklappt: startStellung() };
     let knopf = null;
 
     function rahmen() {
@@ -45,8 +44,27 @@
     }
 
     function trenner() {
+      if (!seite.trenner) {
+        return null;
+      }
       const rahmenElement = rahmen();
       return rahmenElement ? rahmenElement.querySelector(seite.trenner) : null;
+    }
+
+    /** Die Stellung beim Laden: die Seite darf sie aus der Fensterbreite ableiten (Ergebnis-Spalte ab 1012 px ausgeklappt). */
+    function startStellung() {
+      if (typeof seite.start === 'function') {
+        return seite.start(window.innerWidth);
+      }
+      return werte().start();
+    }
+
+    /** Darf der Bereich zur aktuellen Fensterbreite ausgeklappt werden? (Ergebnis-Spalte erst ab 812 px.) */
+    function ausklappbar() {
+      if (typeof seite.ausklappbar === 'function') {
+        return seite.ausklappbar(window.innerWidth);
+      }
+      return true;
     }
 
     function init() {
@@ -58,13 +76,17 @@
       anwenden();
     }
 
-    /** Die sichtbare Stellung: der Zustand wirkt nur im zweispaltigen Aufbau (unter 566 px gilt eine Spalte). */
+    /** Die sichtbare Stellung: der Zustand wirkt nur im zweispaltigen Aufbau (unter 566 px gilt eine Spalte); ist der Bereich
+        nicht ausklappbar, bleibt er eingeklappt, egal was der Mensch zuletzt gewählt hat. */
     function eingeklappt() {
-      return zweispaltig() && zustand.eingeklappt;
+      if (!zweispaltig()) {
+        return false;
+      }
+      return zustand.eingeklappt || !ausklappbar();
     }
 
-    /** Zustand → Layout und Bedienelement; erzeugt bzw. entfernt den Knopf je Aufbau. Die eingeklappte Leiste ist `hidden` und
-        `inert`: sie ist weder sichtbar noch im Tab- oder Lese-Weg (kein unsichtbarer Stopp). */
+    /** Zustand → Layout und Bedienelement; erzeugt bzw. entfernt den Knopf je Aufbau. Der eingeklappte Bereich ist `hidden`
+        und `inert`: er ist weder sichtbar noch im Tab- oder Lese-Weg (kein unsichtbarer Stopp). */
     function anwenden() {
       sichereKnopf();
       const eingeklapptJetzt = eingeklappt();
@@ -84,6 +106,7 @@
       if (knopf) {
         setzeKnopf(eingeklapptJetzt);
       }
+      document.dispatchEvent(new CustomEvent(seite.ereignis, { detail: { eingeklappt: eingeklapptJetzt } }));
     }
 
     /** Der Knopf gehört nur in den zweispaltigen Aufbau; unter 566 px gibt es ihn nicht (R00033: eine Spalte). */
@@ -132,12 +155,20 @@
       knopf = null;
     }
 
-    /** Zustand am Knopf: `aria-expanded`, `aria-controls`, Name und Pfeilrichtung — alle aus `einklappen-werte.js`. */
+    /** Zustand am Knopf: `aria-expanded`, `aria-controls`, Name und Pfeilrichtung — alle aus `einklappen-werte.js`; ist der
+        Bereich nicht ausklappbar, ist der Knopf gesperrt und nennt den Grund. */
     function setzeKnopf(eingeklapptJetzt) {
       knopf.setAttribute('aria-expanded', werte().erweitert(eingeklapptJetzt));
       const leisteElement = leiste();
       if (leisteElement && leisteElement.id) {
         knopf.setAttribute('aria-controls', leisteElement.id);
+      }
+      const gesperrt = !ausklappbar();
+      knopf.setAttribute('aria-disabled', String(gesperrt));
+      if (gesperrt && seite.grund) {
+        knopf.title = seite.grund;
+      } else {
+        knopf.removeAttribute('title');
       }
       const beschriftung = knopf.querySelector('.gr-einklappen-text');
       const pfeil = knopf.querySelector('.gr-einklappen-pfeil');
@@ -145,19 +176,19 @@
         beschriftung.textContent = werte().name(seite.bezeichnung, eingeklapptJetzt);
       }
       if (pfeil) {
-        pfeil.textContent = werte().pfeil(eingeklapptJetzt);
+        pfeil.textContent = werte().pfeil(eingeklapptJetzt, seite.rechts);
       }
     }
 
     /**
-     * Die Betätigung (Klick oder Taste `b`, die denselben Knopf betätigt): Stellung wechseln, sonst nichts. Der Fokus geht nie
-     * ins Leere: hatte er in einem Element gestanden, das jetzt verschwindet (Leiste `hidden`/`inert` oder Trennzug
+     * Die Betätigung (Klick oder Kürzel, das denselben Knopf betätigt): Stellung wechseln, sonst nichts. Der Fokus geht nie
+     * ins Leere: hatte er in einem Element gestanden, das jetzt verschwindet (Bereich `hidden`/`inert` oder Trennzug
      * `display:none`), oder war er nirgends, steht er danach auf dem Knopf; stand er anderswo (etwa im offenen Notizfeld des
      * Diffs), bleibt er dort — das Einklappen verwirft keine Eingabe (Lehre #23). Beim Ausklappen bleibt der Fokus auf demselben
      * Bedienelement.
      */
     function umschalten() {
-      if (!zweispaltig()) {
+      if (!zweispaltig() || !ausklappbar()) {
         return;
       }
       // Der Fokusstand wird vor dem Anwenden gelesen: das Verbergen blurst das Element erst mit der nächsten Stilberechnung.
@@ -170,12 +201,11 @@
       if (!zustand.eingeklappt) {
         bringeWahlInDenBlick();
       }
-      document.dispatchEvent(new CustomEvent(seite.ereignis, { detail: { eingeklappt: zustand.eingeklappt } }));
     }
 
     /**
-     * Wird dieses Element durch das Einklappen verborgen? Die Leiste verschwindet per `hidden`/`inert`, der Trennzug per CSS
-     * (`display:none`); ein Fokus in einem von beiden fällt sonst auf `BODY`. Nachbarn der Leiste haben eigene Tab-Stopps und
+     * Wird dieses Element durch das Einklappen verborgen? Der Bereich verschwindet per `hidden`/`inert`, der Trennzug per CSS
+     * (`display:none`); ein Fokus in einem von beiden fällt sonst auf `BODY`. Nachbarn des Bereichs haben eigene Tab-Stopps und
      * gehören darum in dieselbe Prüfung.
      */
     function wirdVerborgen(element) {
@@ -196,6 +226,9 @@
 
     /** Das Ausklappen bringt die gewählte Zeile in den Blick (R00033): kleinste Bewegung, kein Sprung, wenn sie schon steht. */
     function bringeWahlInDenBlick() {
+      if (!seite.wahl) {
+        return;
+      }
       const zeile = document.querySelector(seite.wahl);
       if (zeile) {
         zeile.scrollIntoView({ block: 'nearest' });
@@ -212,19 +245,35 @@
     };
   }
 
-  const api = { anlegen, seitenleiste: null };
+  const api = { anlegen, seitenleiste: null, ergebnis: null };
   document.addEventListener('DOMContentLoaded', () => {
     api.seitenleiste = anlegen({
       rahmen: RAHMEN,
-      leiste: SEITENLEISTE,
-      streifen: STREIFEN,
+      leiste: '#seitenleiste',
+      streifen: '.gr-streifen',
       trenner: '.gr-trenner',
       knopfId: 'einklappen',
       klasse: 'gr-eingeklappt',
       bezeichnung: 'Seitenleiste',
       ereignis: 'eingeklappt-geaendert',
-      wahl: WAEHLBARE_ZEILE,
+      wahl: '#datei-zeilen .datei-zeile[aria-current="true"]',
       medien: `(min-width:${werte().mindestFensterBreite()}px)`,
+    });
+    api.ergebnis = anlegen({
+      rahmen: RAHMEN,
+      leiste: '#ergebnis',
+      streifen: '.gr-ergebnis-streifen',
+      trenner: null,
+      knopfId: 'ergebnis-einklappen',
+      klasse: 'gr-ergebnis-eingeklappt',
+      bezeichnung: 'Ergebnis-Spalte',
+      ereignis: 'ergebnis-eingeklappt-geaendert',
+      wahl: null,
+      medien: `(min-width:${werte().mindestFensterBreite()}px)`,
+      rechts: true,
+      start: fensterBreite => !werte().ergebnisStartetAusgeklappt(fensterBreite),
+      ausklappbar: fensterBreite => werte().ergebnisAusklappbar(fensterBreite),
+      grund: 'Fenster zu schmal',
     });
   });
   window.gitreviewaEinklappen = api;

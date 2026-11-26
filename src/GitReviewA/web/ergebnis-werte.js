@@ -64,7 +64,7 @@
     const angewendet = erfolg ? fassung : zustand.angewendet;
     const nachAntwort = { ...zustand, laeuft: false, angewendet };
     if (!zustand.ausstehend) {
-      return { art: NICHTS, zustand: nachAntwort, anwenden: erfolg };
+      return { art: NICHTS, zustand: nachAntwort, anwenden: erfolg, fehler: !erfolg };
     }
     const naechste = nachAntwort.fassung + 1;
     return {
@@ -72,11 +72,12 @@
       fassung: naechste,
       zustand: { ...nachAntwort, laeuft: true, ausstehend: false, fassung: naechste },
       anwenden: erfolg,
+      fehler: !erfolg,
     };
   }
 
   function nichts(zustand) {
-    return { art: NICHTS, zustand, anwenden: false };
+    return { art: NICHTS, zustand, anwenden: false, fehler: false };
   }
 
   const api = { start, naechsteAnfrage };

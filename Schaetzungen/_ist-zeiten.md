@@ -78,3 +78,8 @@ Nie vom User erfragen.
 | 2026-11-26 | Wackler #56 (Fokus, Lastprofil, WebserverTests) | Fokus im `zeichneDateikopf`, ereignisgenaue Zeitmessung, genaue Feldprüfung | unklar | – | 2,4h | – | autonom |
 
 | 2026-11-26 | R00037 Ergebnis-Spalte live | B3601 Auffrischregel | klar | 2h | 0,2h | 0,2h | autonom |
+| 2026-11-26 | R00037 Ergebnis-Spalte live | B3602 Spalte als Bereich | unklar | 2-4h | 0,7h | 0,7h | autonom |
+| 2026-11-26 | R00037 Ergebnis-Spalte live | B3603 Auffrischen bei Aenderung | unklar | 2-4h | 0,6h | 0,6h | autonom |
+| 2026-11-26 | R00037 Ergebnis-Spalte live | B3604 Ergebnis-Spalte einklappen | unklar | 2-4h | 0,5h | 0,5h | autonom |
+| 2026-11-26 | R00037 Ergebnis-Spalte live | B3605 Drei Bereiche in der Breite | unklar | 2-4h | 0,5h | 0,5h | autonom |
+| 2026-11-26 | R00037 Ergebnis-Spalte live | B3606 Tests und abgeloeste Zusage | unklar | 2-4h | 0,4h | 0,4h | autonom |

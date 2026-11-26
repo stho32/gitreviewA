@@ -99,6 +99,7 @@
       case 'commitZurueck': return schrittCommit(-1);
       case 'abgehakteAusblenden': return schalteAbgehakteAusblenden();
       case 'seitenleisteEinklappen': return schalteSeitenleiste();
+      case 'ergebnisEinklappen': return schalteErgebnisSpalte();
       case 'abschnittWeiter': return springeAbschnitt(1);
       case 'abschnittZurueck': return springeAbschnitt(-1);
       case 'zeileAnmerken': return merkeZeileAn();
@@ -370,6 +371,18 @@
     }
     knopf.click();
     ansagen(knopf.getAttribute('aria-expanded') === 'false' ? 'Seitenleiste eingeklappt' : 'Seitenleiste ausgeklappt');
+    return true;
+  }
+
+  /** `r` betätigt den Knopf der Ergebnis-Spalte (R00037): derselbe Weg wie die Maus; ist er gesperrt, bleibt die Taste beim
+      Browser. */
+  function schalteErgebnisSpalte() {
+    const knopf = document.getElementById('ergebnis-einklappen');
+    if (!knopf || knopf.getAttribute('aria-disabled') === 'true') {
+      return false;
+    }
+    knopf.click();
+    ansagen(knopf.getAttribute('aria-expanded') === 'false' ? 'Ergebnis-Spalte eingeklappt' : 'Ergebnis-Spalte ausgeklappt');
     return true;
   }
 

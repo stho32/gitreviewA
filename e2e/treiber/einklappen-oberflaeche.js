@@ -102,23 +102,32 @@ function streifenAngaben(page) {
   }, STREIFEN);
 }
 
-/** Die Lage von Seitenleiste und Diff-Bereich (links, rechts, Breite) in einem Zug. */
+/** Die Lage von Seitenleiste und Diff-Bereich (links, rechts, Breite) in einem Zug. Dazu die rechte Grenze (die
+    Ergebnis-Spalte bzw. ihr Streifen, R00037). */
 function grenzlage(page) {
-  return page.evaluate(([leiste, diff, streifen]) => {
+  return page.evaluate(([leiste, diff, streifen, ergebnis, ergebnisStreifen]) => {
     const l = document.querySelector(leiste);
     const d = document.querySelector(diff);
     const s = document.querySelector(streifen);
+    const e = document.querySelector(ergebnis);
+    const es = document.querySelector(ergebnisStreifen);
     const dl = d.getBoundingClientRect();
     const sr = s ? s.getBoundingClientRect() : null;
+    const er = e ? e.getBoundingClientRect() : null;
+    const esr = es ? es.getBoundingClientRect() : null;
+    const ergebnisOffen = Boolean(e && e.hidden === false);
     return {
       diffLinks: Math.round(dl.left),
       diffRechts: Math.round(dl.right),
       diffBreite: Math.round(dl.width),
       leisteBreite: l ? Math.round(l.getBoundingClientRect().width) : null,
       streifenRechts: sr ? Math.round(sr.right) : null,
+      ergebnisSichtbar: ergebnisOffen,
+      ergebnisLinks: er ? Math.round(er.left) : null,
+      ergebnisStreifenLinks: esr ? Math.round(esr.left) : null,
       fensterBreite: window.innerWidth,
     };
-  }, [SEITENLEISTE, '#diff', STREIFEN]);
+  }, [SEITENLEISTE, '#diff', STREIFEN, '#ergebnis', '.gr-ergebnis-streifen']);
 }
 
 /** Der Knopf bedeckt keinen Inhalt: er steht in den Rändern an der Grenze (links neben dem Ende der Dateiliste, rechts vor
@@ -358,11 +367,14 @@ async function pruefeStreifen(page) {
   expect(angaben.breite, 'schmaler Streifen (schmaler als die Mindestbreite der Seitenleiste)').toBeLessThan(240);
 }
 
-/** Der Diff nimmt die volle Breite ein: er beginnt an der Grenze und reicht bis zum Fensterrand. */
+/** Der Diff nimmt die freie Breite ein: er beginnt an der Grenze und reicht bis zur Ergebnis-Spalte bzw. ihrem Streifen
+    (R00037). Ist die Ergebnis-Spalte ausgeklappt, endet der Diff an ihrem linken Rand (minus des Trennstrichs); ist sie
+    eingeklappt, am linken Rand des Streifens. */
 async function pruefeVolleBreite(page) {
   const lage = await grenzlage(page);
+  const grenze = lage.ergebnisSichtbar ? lage.ergebnisLinks - 6 : lage.ergebnisStreifenLinks;
   expect(lage.diffLinks, `Diff beginnt an der Grenze (${JSON.stringify(lage)})`).toBeLessThanOrEqual(32);
-  expect(lage.diffRechts, `Diff reicht bis zum Fensterrand (${JSON.stringify(lage)})`).toBeGreaterThanOrEqual(lage.fensterBreite - 1);
+  expect(lage.diffRechts, `Diff reicht bis zur Ergebnis-Spalte (${JSON.stringify(lage)})`).toBeGreaterThanOrEqual(grenze - 1);
 }
 
 /** Der Diff ist breiter als vor dem Einklappen (die Seitenleiste ist gewichen). */

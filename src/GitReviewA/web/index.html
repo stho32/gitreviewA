@@ -47,6 +47,8 @@
 <script src="anmerkungen.js" defer></script>
 <script src="commits.js" defer></script>
 <script src="ergebnis-kopieren.js" defer></script>
+<script src="ergebnis-werte.js" defer></script>
+<script src="ergebnis-spalte.js" defer></script>
 <script src="beenden.js" defer></script>
 <script src="tasten.js" defer></script>
 <script src="hilfe.js" defer></script>
@@ -173,6 +175,18 @@
       <p class="anmerkung-hinweis-anmerken" hidden><button type="button" class="btn datei-anmerken-hinweis">Datei anmerken</button></p>
       <div class="anm-datei-bereich"></div>
       <div class="df-sc" tabindex="0" role="region" hidden></div>
+    </section>
+    <!-- Der Streifen an der Grenze zum Diff und die Ergebnis-Spalte (R00037): rechts steht „Ergebnis für die KI“ als eigener
+         Rollbereich; der Knopf am linken Rand klappt sie ein und aus (Mechanik aus I0036). Unter 566 px gibt es weder Spalte
+         noch Streifen (eine Spalte, R00033) — `gitreviewa.css` blendet beide aus. -->
+    <div class="gr-ergebnis-streifen"></div>
+    <section id="ergebnis" class="gr-ergebnis" aria-labelledby="ergebnis-titel" tabindex="0">
+      <div class="gr-ergebnis-kopf">
+        <h2 id="ergebnis-titel" class="gr-ergebnis-titel">Ergebnis für die KI</h2>
+        <span id="ergebnis-veraltet" class="gr-ergebnis-veraltet" hidden>veraltet</span>
+      </div>
+      <p id="ergebnis-fehler" class="gr-ergebnis-fehler gr-status fehler" role="status" hidden>Ergebnis konnte nicht geladen werden</p>
+      <pre id="ergebnis-text" class="gr-ergebnis-text"></pre>
     </section>
   </div>
 </main>

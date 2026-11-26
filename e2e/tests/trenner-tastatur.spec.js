@@ -24,8 +24,8 @@ test.describe('Trenner per Tastatur (B3304)', () => {
     await breite.breiteIst(240);
 
     await breite.druecke('End');
-    await breite.breiteIst(640);
-    expect(await breite.valuenow(), 'aria-valuenow zeigt die Höchstbreite').toBe(640);
+    await breite.breiteIst(628); // 1280 − 320 − 6 − 326 (ausgeklappte Ergebnis-Spalte, R00037)
+    expect(await breite.valuenow(), 'aria-valuenow zeigt die Höchstbreite').toBe(628);
   });
 
   test('bleibt an der Mindestbreite stehen: kein Wert unter 240 px (aria-valuenow bleibt)', async ({ breite }) => {
@@ -42,14 +42,14 @@ test.describe('Trenner per Tastatur (B3304)', () => {
     expect(await breite.valuenow(), 'aria-valuenow bleibt an der Mindestbreite').toBe(240);
   });
 
-  test('nennt die tatsächliche Höchstbreite im aria-valuemax (enges Fenster: Ende klemmt bei Fenster − 326)', async ({ breite }) => {
+  test('nennt die tatsächliche Höchstbreite im aria-valuemax (enges Fenster: Ende klemmt bei Fenster − 350)', async ({ breite }) => {
     await breite.starten({ vorbereitung: 'Repo S' });
     await breite.fensterSetzen({ width: 700, height: 800 });
 
     await breite.fokussiereTrenner();
-    expect((await breite.trennerAngaben()).max, 'aria-valuemax im 700-px-Fenster').toBe('374');
+    expect((await breite.trennerAngaben()).max, 'aria-valuemax im 700-px-Fenster').toBe('350');
 
     await breite.druecke('End');
-    await breite.breiteIst(374);
+    await breite.breiteIst(350);
   });
 });

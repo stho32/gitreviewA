@@ -22,8 +22,8 @@ test.describe('Trenner ziehen (B3303)', () => {
   test('klemmt an der Höchst- und Mindestbreite (Szenario 2)', async ({ breite }) => {
     await breite.starten({ vorbereitung: 'Repo S' });
 
-    await breite.ziehen(2000); // weit über die Höchstbreite hinaus
-    await breite.breiteIst(640);
+    await breite.ziehen(2000); // weit über die Höchstbreite hinaus; 1280 − 320 − 6 − 326 (ausgeklappte Ergebnis-Spalte) = 628
+    await breite.breiteIst(628);
 
     await breite.ziehen(-2000); // weit über die Mindestbreite hinaus
     await breite.breiteIst(240);

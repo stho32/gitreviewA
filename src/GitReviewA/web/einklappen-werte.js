@@ -33,8 +33,12 @@
     return `${bezeichnung} ${eingeklappt ? 'ausklappen' : 'einklappen'}`;
   }
 
-  /** Das sichtbare Bild der Wirkung: der Pfeil zeigt, wohin die Leiste geht (nach links einklappen, nach rechts ausklappen). */
-  function pfeil(eingeklappt) {
+  /** Das sichtbare Bild der Wirkung: der Pfeil zeigt, wohin der Bereich geht. Links einklappen zeigt nach links (`«`),
+      rechts einklappen nach rechts (`»`); eingeklappt zeigt er jeweils den Weg zurück (R00037). */
+  function pfeil(eingeklappt, rechts = false) {
+    if (rechts) {
+      return eingeklappt ? '«' : '»';
+    }
     return eingeklappt ? '»' : '«';
   }
 
@@ -48,7 +52,19 @@
     return trenner.mindestFensterBreite();
   }
 
-  const api = { START, start, umschalten, erweitert, name, pfeil, passtZweiSpaltig, mindestFensterBreite };
+  /** Die Schwellen der Ergebnis-Spalte (R00037) kommen aus derselben Quelle wie die Breitenregel (`trenner-werte.js`). */
+  function ergebnisStartetAusgeklappt(fensterBreite) {
+    return trenner.ergebnisStartetAusgeklappt(fensterBreite);
+  }
+
+  function ergebnisAusklappbar(fensterBreite) {
+    return trenner.ergebnisAusklappbar(fensterBreite);
+  }
+
+  const api = {
+    START, start, umschalten, erweitert, name, pfeil, passtZweiSpaltig, mindestFensterBreite,
+    ergebnisStartetAusgeklappt, ergebnisAusklappbar,
+  };
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   } else {

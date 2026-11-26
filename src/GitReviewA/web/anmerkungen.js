@@ -890,6 +890,7 @@
     setzeAuswahl(feld.ansicht, null);
     zeigeAnmerkungen(feld.ansicht);
     ladeAnmerkungen(feld.ansicht);
+    document.dispatchEvent(new CustomEvent('anmerkung-geaendert'));
   }
 
   /** Sendet einen POST mit JSON-Körper. Bei Antwort `{ok: true, inhalt}`; sonst `{ok: false, meldung}`: der Satz des Servers bei 4xx,
@@ -1080,6 +1081,7 @@
     zeigeAnmerkungen(feld.ansicht);
     fokussiereKopf(feld.ansicht, ausgang.nummer);
     ladeAnmerkungen(feld.ansicht, ausgang.nummer);
+    document.dispatchEvent(new CustomEvent('anmerkung-geaendert'));
   }
 
   /** `{nummer, text}` bei Erfolg; sonst `{meldung}`: der Satz des Servers bei 4xx, bei 5xx und ohne Antwort der allgemeine Satz. */
@@ -1137,6 +1139,7 @@
     zustand.anmerkungen = ohneAnmerkung(zustand.anmerkungen, ausgang.nummer);
     zeigeAnmerkungen(ansicht);
     ladeAnmerkungen(ansicht);
+    document.dispatchEvent(new CustomEvent('anmerkung-geaendert'));
   }
 
   function loeschtGerade(nummer) {

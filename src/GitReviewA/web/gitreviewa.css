@@ -199,6 +199,11 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .anm-kopf .btn{height:24px;padding:0 var(--kd-s2);font-size:12px}
 .anm-kopf-fehler{margin-inline-start:var(--kd-s2);font-size:12px;color:var(--kd-status-error-ink)}
 .anm-kopf-fehler:empty{display:none}
+/* Die Anmerkungs- und Feldzeilen duerfen die Breite des Diff-Blocks (`--bb`) nicht sprengen (R00037): der Diff ist schmaler
+   geworden, die Ergebnis-Spalte nimmt Platz; ohne Grenze wuechse die Tabelle ueber den Block hinaus. */
+.dz .anm-zelle{max-inline-size:var(--bb,100%)}
+.anm-art{min-inline-size:0}
+.anm-eingabe{inline-size:100%;box-sizing:border-box;min-inline-size:0}
 .anm-stelle{margin-block-start:var(--kd-s1);font:11px/1.4 var(--kd-mono);color:var(--kd-muted);overflow-wrap:anywhere}
 .dz tr.anm-feld .anm-zelle,.dz tr.anm-aendern .anm-zelle{background:var(--kd-surface)}
 .anm-eingabe{display:block;inline-size:min(72ch,calc(100vw - 220px));height:auto;min-block-size:72px;padding:var(--kd-s2) var(--kd-s3);resize:vertical;font:13px/1.45 var(--kd-font)}
@@ -289,6 +294,9 @@ kbd{font:11px/1.2 var(--kd-mono);padding:1px 4px;border:1px solid var(--kd-line-
 /* Einklappen der Seitenleiste (R00035, I0036): der Streifen an der Grenze ist der Ort des Ausklapp-Knopfes. Unter 566 px gibt
    es kein Einklappen (eine Spalte, R00033); der Knopf entsteht erst im zweispaltigen Aufbau (`einklappen.js`). */
 .gr-streifen{display:none}
+/* Ergebnis-Spalte (R00037): unter 566 px gibt es weder Spalte noch Streifen (eine Spalte, R00033). */
+.gr-ergebnis-streifen{display:none}
+.gr-ergebnis{display:none}
 
 /* Fester Rahmen mit zwei getrennten Rollbereichen (R00033, B3201/B3202): ab 566 px — der Summe der Mindestbreiten 240
    (Seitenleiste) + 320 (Diff) + 6 (Trenner, PO 2026-11-25) — füllt der Aufbau die Fensterhöhe. Kopf und Werkzeugzeilen
@@ -303,7 +311,7 @@ kbd{font:11px/1.2 var(--kd-mono);padding:1px 4px;border:1px solid var(--kd-line-
   body{display:flex;flex-direction:column}
   .gr-inhalt{flex:1 1 auto;min-block-size:0;display:flex;flex-direction:column;padding:0}
   .gr-inhalt>.gr-status,.gr-inhalt>.gr-beendet,.gr-inhalt>.gr-beendet-hinweis{margin-inline:var(--kd-s5)}
-  .gr-ansicht{flex:1 1 auto;min-block-size:0;grid-template-columns:var(--gr-leiste-breite,360px) var(--gr-trenner-breite,6px) minmax(320px,1fr);gap:0;align-items:stretch}
+  .gr-ansicht{flex:1 1 auto;min-block-size:0;grid-template-columns:var(--gr-leiste-breite,360px) var(--gr-trenner-breite,6px) minmax(0,1fr) var(--gr-ergebnis-trenner-breite,6px) var(--gr-ergebnis-breite,320px);gap:0;align-items:stretch}
   /* Spalten fest zuordnen: die Seitenleiste links, der Trenner in der Mitte, der Diff nimmt den Rest (auch wenn der Trenner
      kurz fehlt, landet der Diff nie in der schmalen Trennspalte). */
   /* Die Zeile steht fest: der Trenner und der Streifen teilen sich Spalte 2; ohne feste Zeile schöbe die automatische
@@ -340,16 +348,35 @@ kbd{font:11px/1.2 var(--kd-mono);padding:1px 4px;border:1px solid var(--kd-line-
      ragt in die Ränder beider Nachbarn hinein (er deckt keinen Inhalt) und liegt über dem Trennzug, der darunter weiter greift
      (nur der Knopf selbst fängt den Zeiger). Eingeklappt wird aus ihm der sichtbare Streifen mit dem Weg zurück. */
   .gr-streifen{grid-column:2;grid-row:1;display:flex;align-self:start;justify-self:center;inline-size:var(--gr-streifen-breite,24px);margin-block-start:var(--kd-s5);pointer-events:none;z-index:2}
+  /* Der Ergebnis-Streifen (R00037) liegt in der zweiten Trennspalte (Spalte 4) und traegt den Einklapp-Knopf der
+     Ergebnis-Spalte. */
+  .gr-ergebnis-streifen{grid-column:4;grid-row:1;display:flex;align-self:start;justify-self:center;inline-size:var(--gr-streifen-breite,24px);margin-block-start:var(--kd-s5);pointer-events:none;z-index:2}
+  /* Die Ergebnis-Spalte (R00037): ein eigener Rollbereich rechts neben dem Diff. Der Text steht als vorformatierter Block
+     (`textContent`), lange Zeilen werden umbrochen, es gibt keinen waagerechten Bildlauf. */
+  .gr-ergebnis{grid-column:5;grid-row:1;display:block;min-block-size:0;overflow-y:auto;overflow-x:hidden;padding:var(--kd-s5);border-inline-start:1px solid var(--kd-line)}
+  .gr-ergebnis-kopf{display:flex;align-items:baseline;gap:var(--kd-s2);margin:0 0 var(--kd-s3)}
+  .gr-ergebnis-titel{margin:0;font-size:14px;font-weight:600}
+  .gr-ergebnis-veraltet{font-size:12px;color:var(--kd-status-error-ink)}
+  .gr-ergebnis-fehler{margin:0 0 var(--kd-s3)}
+  .gr-ergebnis-text{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12.5px;line-height:1.4}
   /* Eingeklappt (B3403): die Seitenleiste weicht ganz (hidden/inert setzt `einklappen.js`), der Diff nimmt ihre Spalte mit, und
      aus dem Streifen wird der sichtbare Weg zurück an der Grenze. Der Trenn-Zug ist weg (keine Breite zu ziehen); die gemerkte
      Breite bleibt in `--gr-leiste-breite` stehen und gilt beim Ausklappen weiter. Alles wirkt über das Layout — der Diff wird
      nicht neu gezeichnet (Lehre #23). */
   #seitenleiste[hidden]{display:none}
-  .gr-ansicht.gr-eingeklappt{grid-template-columns:0 var(--gr-streifen-breite,24px) minmax(0,1fr)}
+  .gr-ansicht.gr-eingeklappt{grid-template-columns:0 var(--gr-streifen-breite,24px) minmax(0,1fr) var(--gr-ergebnis-trenner-breite,6px) var(--gr-ergebnis-breite,320px)}
   .gr-ansicht.gr-eingeklappt .gr-trenner{display:none}
   .gr-ansicht.gr-eingeklappt .gr-streifen{align-self:stretch;justify-self:stretch;inline-size:auto;margin-block-start:0;background:var(--kd-sunken);border-inline:1px solid var(--kd-line)}
-  .gr-ansicht.gr-eingeklappt .gr-einklappen{inline-size:100%;padding:var(--kd-s2) 0;border:0;border-radius:0;background:none}
-  .gr-ansicht.gr-eingeklappt .gr-einklappen:hover{background:var(--kd-surface)}
+  .gr-ansicht.gr-eingeklappt .gr-streifen .gr-einklappen{inline-size:100%;padding:var(--kd-s2) 0;border:0;border-radius:0;background:none}
+  .gr-ansicht.gr-eingeklappt .gr-streifen .gr-einklappen:hover{background:var(--kd-surface)}
+  /* Eingeklappte Ergebnis-Spalte (R00037, B3604): die Spalte weicht ganz, der Diff nimmt ihre Breite mit, und aus dem
+     Ergebnis-Streifen wird der sichtbare Weg zurück. Die Kombination mit der eingeklappten Seitenleiste bleibt ein Aufbau. */
+  .gr-ansicht.gr-ergebnis-eingeklappt{grid-template-columns:var(--gr-leiste-breite,360px) var(--gr-trenner-breite,6px) minmax(0,1fr) var(--gr-streifen-breite,24px) 0}
+  .gr-ansicht.gr-ergebnis-eingeklappt.gr-eingeklappt{grid-template-columns:0 var(--gr-streifen-breite,24px) minmax(0,1fr) var(--gr-streifen-breite,24px) 0}
+  #ergebnis[hidden]{display:none}
+  .gr-ansicht.gr-ergebnis-eingeklappt .gr-ergebnis-streifen{align-self:stretch;justify-self:stretch;inline-size:auto;margin-block-start:0;background:var(--kd-sunken);border-inline:1px solid var(--kd-line)}
+  .gr-ansicht.gr-ergebnis-eingeklappt .gr-ergebnis-streifen .gr-einklappen{inline-size:100%;padding:var(--kd-s2) 0;border:0;border-radius:0;background:none}
+  .gr-ansicht.gr-ergebnis-eingeklappt .gr-ergebnis-streifen .gr-einklappen:hover{background:var(--kd-surface)}
   /* Der Knopf am Trenner (B3402): ein schmaler Streifen-Knopf, oben das sichtbare Bild der Wirkung (der Pfeil), darunter der
      Name senkrecht — beide aus `einklappen-werte.js`; der Fokusring kommt aus der einen Regel für alle Bedienelemente (B2907). */
   .gr-einklappen{pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:var(--kd-s1);box-sizing:border-box;inline-size:var(--gr-streifen-breite,24px);margin:0;padding:var(--kd-s2) 0;border:1px solid var(--kd-line);border-radius:var(--kd-s2);background:var(--kd-surface);color:var(--kd-muted);font:inherit;cursor:pointer}
