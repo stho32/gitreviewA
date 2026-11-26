@@ -171,8 +171,7 @@ public class WebserverTests
 
         var ausgabe = ziel.ToString();
 
-        Assert.That(ausgabe, Does.Contain("1 Muster"));
-        Assert.That(ausgabe, Does.Contain("Längen: 6"));
+        Assert.That(ausgabe, Does.Contain("[Ausblenden] 1 Muster (Längen: 6)"));
         Assert.That(ausgabe, Does.Not.Contain("*.lock"));
     }
 
