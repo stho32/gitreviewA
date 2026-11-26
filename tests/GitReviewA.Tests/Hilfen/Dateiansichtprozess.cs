@@ -113,13 +113,22 @@ internal sealed class Dateiansichtprozess : IDisposable
 
     public async Task<int> WarteAufEndeAsync()
     {
-        ende ??= WarteAufEndeInternAsync();
+        return await WarteAufEndeAsync(TimeSpan.FromSeconds(30));
+    }
+
+    /// <summary>
+    /// Wartet höchstens <paramref name="hoechsteWartezeit"/> auf das Ende; danach wird der Prozessbaum beendet und der Test rot.
+    /// So wird ein Mutant sichtbar, der den Start hängen lässt (etwa eine FIFO ohne Schreiber; R00043, P5/T2), statt zu hängen.
+    /// </summary>
+    public async Task<int> WarteAufEndeAsync(TimeSpan hoechsteWartezeit)
+    {
+        ende ??= WarteAufEndeInternAsync(hoechsteWartezeit);
         return await ende;
     }
 
-    private async Task<int> WarteAufEndeInternAsync()
+    private async Task<int> WarteAufEndeInternAsync(TimeSpan hoechsteWartezeit)
     {
-        using var frist = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        using var frist = new CancellationTokenSource(hoechsteWartezeit);
         try
         {
             await prozess.WaitForExitAsync(frist.Token);
@@ -127,7 +136,7 @@ internal sealed class Dateiansichtprozess : IDisposable
         catch (OperationCanceledException)
         {
             prozess.Kill(entireProcessTree: true);
-            throw new TimeoutException($"gitreviewA endet nicht; stderr: {Fehler}");
+            throw new TimeoutException($"gitreviewA endet nicht innerhalb von {hoechsteWartezeit.TotalSeconds} Sekunden; stderr: {Fehler}");
         }
         await BeendeLeser(ausLesen);
         await BeendeLeser(fehlerLesen);

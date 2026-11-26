@@ -118,7 +118,7 @@ public class DateiLeserTests
         using var d = OrdnerD.Anlegen();
         var uhr = Stopwatch.StartNew();
 
-        var ergebnis = Leser().Lies(d.Pfad("fifo.sql"), Grenze);
+        var ergebnis = LiesMitZeitgrenze(Leser(), d.Pfad("fifo.sql"));
 
         uhr.Stop();
         Assert.That(ergebnis.Grund?.Art, Is.EqualTo(Quellengrundart.KeineRegulaereDatei));
@@ -266,7 +266,7 @@ public class DateiLeserTests
             fifo?.WaitForExit();
         });
 
-        var ergebnis = haken.Lies(d.Pfad("haken.sql"), Grenze);
+        var ergebnis = LiesMitZeitgrenze(haken, d.Pfad("haken.sql"));
 
         uhr.Stop();
         Assert.That(ergebnis.Grund?.Art, Is.EqualTo(Quellengrundart.KeineRegulaereDatei));
@@ -308,5 +308,17 @@ public class DateiLeserTests
     private static DateiLeser Leser()
     {
         return new DateiLeser(new Quellenbuchung());
+    }
+
+    /// <summary>
+    /// Liest mit harter Zeitgrenze: hängt das Öffnen oder Lesen (etwa weil eine FIFO blockiert), wird der Test rot, statt die
+    /// ganze Suite zu blockieren — so wird ein Mutant sichtbar (R00043, P5/T2).
+    /// </summary>
+    private static Lesergebnis LiesMitZeitgrenze(DateiLeser leser, string angabe)
+    {
+        var aufgabe = Task.Run(() => leser.Lies(angabe, Grenze));
+        var fertig = aufgabe.Wait(TimeSpan.FromSeconds(5));
+        Assert.That(fertig, Is.True, $"Das Lesen von {angabe} hing länger als fünf Sekunden");
+        return aufgabe.Result;
     }
 }

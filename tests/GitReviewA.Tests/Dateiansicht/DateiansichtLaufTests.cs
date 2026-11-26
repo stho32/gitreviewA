@@ -69,12 +69,27 @@ public class DateiansichtLaufTests
     }
 
     [Test]
+    public async Task Wenn_eine_FIFO_ohne_Schreiber_genannt_wird_dann_Exit_2_in_unter_fuenf_Sekunden_ohne_Haengen()
+    {
+        using var d = OrdnerD.Anlegen();
+        using var lauf = await Dateiansichtprozess.StarteAsync(d.Ordner, "--dateien", "fifo.sql", "--kein-browser");
+
+        var ende = await lauf.WarteAufEndeAsync(TimeSpan.FromSeconds(5));
+
+        Assert.That(ende, Is.EqualTo(2));
+        Assert.That(lauf.Ausgabe, Is.Empty);
+        Assert.That(lauf.Fehler, Does.Contain("keine reguläre Datei"));
+        Assert.That(lauf.Fehler, Does.Not.Contain("http://127.0.0.1"));
+        Assert.That(Fehlerzeilen(lauf.Fehler), Is.EqualTo(1));
+    }
+
+    [Test]
     public async Task Wenn_dateien_mit_einer_Option_ohne_Doppelstrich_startet_dann_Exit_2_ohne_Server()
     {
         using var d = OrdnerD.Anlegen();
         using var lauf = await Dateiansichtprozess.StarteAsync(d.Ordner, "--dateien", "-x.sql", "--kein-browser");
 
-        var ende = await lauf.WarteAufEndeAsync();
+        var ende = await lauf.WarteAufEndeAsync(TimeSpan.FromSeconds(10));
 
         Assert.That(ende, Is.EqualTo(2));
         Assert.That(lauf.Ausgabe, Is.Empty);
@@ -185,12 +200,12 @@ public class DateiansichtLaufTests
 
         using (var dateiansicht = await Dateiansichtprozess.StarteAsync(d.Ordner, "--dateien", "a.sql", "--kein-browser", "--port", port))
         {
-            PruefeServerzeile(await dateiansicht.WarteAufEndeAsync(), dateiansicht);
+            PruefeServerzeile(await dateiansicht.WarteAufEndeAsync(TimeSpan.FromSeconds(10)), dateiansicht);
         }
 
         using var repo = WegwerfRepo.MitCommits("Erster Stand");
         using var review = await Dateiansichtprozess.StarteAsync(repo.Ordner, repo.Hashes[0], "--kein-browser", "--port", port);
-        PruefeServerzeile(await review.WarteAufEndeAsync(), review);
+        PruefeServerzeile(await review.WarteAufEndeAsync(TimeSpan.FromSeconds(10)), review);
     }
 
     [Test]
