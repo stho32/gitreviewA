@@ -44,6 +44,11 @@ internal sealed class DiffLesenInteractor(Commitzeilen commits, GemerkteDateique
         {
             dateienDesCommits = dateien.GemerktOderGelesen(hash);
         }
+        catch (GitZuGross zuGross)
+        {
+            protokoll.Melde(Protokollstufe.Warnung, Fehlerkontext, $"Dateiliste von Commit {hash} für den Diff {zuGross.UiGrund}: Ausgabegrenze von {zuGross.Grenze} Byte überschritten");
+            return Differgebnis.ZuGross(zuGross.Grenze);
+        }
         catch (GitFehler fehler)
         {
             protokoll.Melde(Protokollstufe.Fehler, Fehlerkontext, $"Dateiliste von Commit {hash} für den Diff nicht lesbar: {fehler.Message}");

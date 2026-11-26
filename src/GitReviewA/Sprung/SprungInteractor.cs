@@ -32,6 +32,11 @@ internal sealed class SprungInteractor(Commitzeilen commits, GemerkteDateiquelle
         {
             dateienDesCommits = dateien.GemerktOderGelesen(hash);
         }
+        catch (GitZuGross zuGross)
+        {
+            protokoll.Melde(Protokollstufe.Warnung, Fehlerkontext, $"Dateiliste von Commit {hash} für den Sprung {zuGross.UiGrund}: Ausgabegrenze von {zuGross.Grenze} Byte überschritten");
+            return Sprungergebnis.KeinSprung(zuGross.UiGrund);
+        }
         catch (GitFehler fehler)
         {
             protokoll.Melde(Protokollstufe.Warnung, Fehlerkontext, $"Dateiliste von Commit {hash} für den Sprung nicht lesbar: {fehler.Message}");

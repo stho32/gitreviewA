@@ -1,12 +1,14 @@
 using System.Net;
 using System.Runtime.Versioning;
 using System.Text.Json;
+using GitReviewA.Bild;
 using GitReviewA.Dateien;
 using GitReviewA.Diff;
 using GitReviewA.Git;
 using GitReviewA.Haken;
 using GitReviewA.Protokoll;
 using GitReviewA.Server;
+using GitReviewA.Sprung;
 using GitReviewA.Tests.Hilfen;
 using GitReviewA.Zusammen;
 
@@ -78,6 +80,48 @@ public class CommitZuGrossAnsichtenTests
         Assert.That(ergebnis.Ausgang, Is.EqualTo(Hakenausgang.NichtLesbar));
         Assert.That(ergebnis.Grund, Does.Contain("zu groß").And.Contain("4 KiB"));
         Assert.That(haken.Schnappschuss().Anzahl, Is.Zero, "kein Haken gesetzt");
+    }
+
+    [Test]
+    [Description("H1: die Dateiliste von w über der Grenze — der Diff meldet „zu groß“ statt „nicht lesbar“")]
+    public void Wenn_die_Dateiliste_fuer_den_Diff_ueber_der_Grenze_liegt_dann_zu_gross()
+    {
+        using var w = CommitRepo.W();
+        var commits = CommitSprache.Lies(w.Ordner, CommitSprache.Einzelne(w.Hash("w")));
+        var interactor = new DiffLesenInteractor(commits, new GemerkteDateiquelle(new GitDateiquelle(w.Ordner, Klein)), TestDiffquelle.Leer(), Protokoll(new StringWriter()));
+
+        var ergebnis = interactor.Lesen(new Diffanfrage(w.Hash("w"), "a.txt", false, Diffumfang.Aenderungen, Leerraum.Beachten));
+
+        Assert.That(ergebnis.Ausgang, Is.EqualTo(Diffausgang.ZuGross));
+        Assert.That(ergebnis.Meldung, Does.Contain("zu groß").And.Contain("4096"), "die Meldung nennt die Grenze");
+    }
+
+    [Test]
+    [Description("H1: die Dateiliste von w über der Grenze — der Sprung nennt den Grund „zu groß“ statt „nicht gefunden“")]
+    public void Wenn_die_Dateiliste_fuer_den_Sprung_ueber_der_Grenze_liegt_dann_Grund_zu_gross()
+    {
+        using var w = CommitRepo.W();
+        var commits = CommitSprache.Lies(w.Ordner, CommitSprache.Einzelne(w.Hash("w")));
+        var interactor = new SprungInteractor(commits, new GemerkteDateiquelle(new GitDateiquelle(w.Ordner, Klein)), new TestSprungquelle(w.Ordner), Protokoll(new StringWriter()));
+
+        var ergebnis = interactor.Lesen(new Sprunganfrage(w.Hash("w"), "a.txt"));
+
+        Assert.That(ergebnis.Ausgang, Is.EqualTo(Sprungausgang.Beantwortet), "kein Link, aber ein Grund");
+        Assert.That(ergebnis.Grund, Does.Contain("zu groß").And.Contain("4 KiB"), "der Grund nennt die Grenze");
+    }
+
+    [Test]
+    [Description("H1: die Dateiliste von w über der Grenze — das Bild meldet „zu groß“ statt „nicht lesbar“")]
+    public void Wenn_die_Dateiliste_fuer_das_Bild_ueber_der_Grenze_liegt_dann_zu_gross()
+    {
+        using var w = CommitRepo.W();
+        var commits = CommitSprache.Lies(w.Ordner, CommitSprache.Einzelne(w.Hash("w")));
+        var interactor = new BildLesenInteractor(commits, new GemerkteDateiquelle(new GitDateiquelle(w.Ordner, Klein)), new TestBildquelle(), Protokoll(new StringWriter()));
+
+        var ergebnis = interactor.Lesen(new Bildanfrage(w.Hash("w"), "a.txt", Bildseite.Nachher));
+
+        Assert.That(ergebnis.Ausgang, Is.EqualTo(Bildausgang.ZuGross));
+        Assert.That(ergebnis.Meldung, Does.Contain("zu groß").And.Contain("4096"), "die Meldung nennt die Grenze");
     }
 
     private static Commitzeilen CommitsVonW(CommitRepo w)

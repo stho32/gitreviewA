@@ -31,6 +31,11 @@ internal sealed class BildLesenInteractor(Commitzeilen commits, GemerkteDateique
         {
             dateienDesCommits = dateien.GemerktOderGelesen(hash);
         }
+        catch (GitZuGross zuGross)
+        {
+            protokoll.Melde(Protokollstufe.Warnung, Fehlerkontext, $"Dateiliste von Commit {hash} für das Bild {zuGross.UiGrund}: Ausgabegrenze von {zuGross.Grenze} Byte überschritten");
+            return Bildergebnis.ZuGross(zuGross.Grenze);
+        }
         catch (GitFehler fehler)
         {
             protokoll.Melde(Protokollstufe.Fehler, Fehlerkontext, $"Dateiliste von Commit {hash} für das Bild nicht lesbar: {fehler.Message}");
