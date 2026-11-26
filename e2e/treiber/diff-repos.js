@@ -557,6 +557,31 @@ function repoP(ordner, zusatz = {}) {
   return { ordner, hashes: { p1, p2 } };
 }
 
+/** Repo P der User Story R00049 mit **langer Zeile** in `src/app.js` (Befund der Karte #63, R00053): dieselben acht Dateien
+    wie `repoP`, `src/app.js` trägt zwei Zeilen, davon eine lange; `q2` „Ändern“ stellt beide um und ändert `db/002_aendern.sql`.
+    `repoP` selbst bleibt unverändert (die Specs der Dateisuche prüfen es). */
+function repoPLang(ordner) {
+  repoAnlegen(ordner);
+  const dateien = {
+    'README.md': 'readme\n',
+    'db/001_anlegen.sql': 'anlegen 1\n',
+    'db/002_aendern.sql': 'aendern 1\n',
+    'docs/api.md': 'api 1\n',
+    'src/app.js': 'app eins\napp zwei\n',
+    'src/data/app.sql': 'daten 1\n',
+    'src/util.js': 'util 1\n',
+    'tests/app.test.js': 'test 1\n',
+  };
+  for (const [pfad, inhalt] of Object.entries(dateien)) {
+    dateiSchreiben(ordner, pfad, inhalt);
+  }
+  const q1 = commitAnlegen(ordner, { betreff: 'Anlegen' });
+  dateiSchreiben(ordner, 'src/app.js', 'app eins geaendert\napp zwei mit deutlich mehr Zeichen\n');
+  dateiSchreiben(ordner, 'db/002_aendern.sql', 'aendern 2\n');
+  const q2 = commitAnlegen(ordner, { betreff: 'Aendern' });
+  return { ordner, hashes: { q1, q2 } };
+}
+
 function zufallsBytes(anzahl) {
   const bytes = Buffer.alloc(anzahl);
   let zustand = 12345;
@@ -567,4 +592,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoGruppen, repoAbsicht, repoUmbenennung, repoP, repoV, repoG, repoKlammern, repoX, repoK, repoZ, repoZeilenbereich, repoQ, repoS, repoL, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, repoY, repoLangerPfad, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoGruppen, repoAbsicht, repoUmbenennung, repoP, repoPLang, repoV, repoG, repoKlammern, repoX, repoK, repoZ, repoZeilenbereich, repoQ, repoS, repoL, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, repoY, repoLangerPfad, markerVorhanden, diffProgrammOhneSchutzStarten };

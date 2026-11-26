@@ -746,15 +746,30 @@ async function pruefeLoeschenFrei(page, nummer) {
   await expect(anmerkungszeile(page, nummer).getByRole('button', { name: 'Löschen', exact: true })).toBeEnabled();
 }
 
-/** Die Messung der Abnahme-Probe (R00053, Kriterien 1–5): das offene Notizfeld `name` gegen den Diff-Bereich und seinen
-    Rollbereich (`#diff`, `.df-sc`), dazu der waagerechte Bildlauf des Rollbereichs und was `elementFromPoint` an der rechten
-    Feldkante trifft. Die rechte Kante ist sichtbar, wenn dort das Feld selbst liegt und nicht der abgeschnittene Nachbar. */
+/** Ein Punkt und was `elementFromPoint` dort trifft (`tag`, `klasse`) — die Kante ist sichtbar, wenn das Element der eigene
+    Nachbar ist und nicht der abgeschnittene Rand eines anderen Bereichs. */
+async function trefferAnDerKante(page, box) {
+  return page.evaluate(({ x, y }) => {
+    const element = document.elementFromPoint(x, y);
+    if (!element) {
+      return { tag: 'nichts', klasse: '' };
+    }
+    return { tag: element.tagName.toLowerCase(), klasse: typeof element.className === 'string' ? element.className : '' };
+  }, { x: box.x + box.width - 1, y: box.y + box.height / 2 });
+}
+
+/** Die Messung der Abnahme-Probe (R00053, Kriterien 1–5): das offene Notizfeld `name` und seine Knopfzeile („Abbrechen“)
+    gegen den Diff-Bereich und seinen Rollbereich (`#diff`, `.df-sc`), dazu der waagerechte Bildlauf des Rollbereichs und was
+    `elementFromPoint` an den rechten Kanten trifft. Eine Kante ist sichtbar, wenn dort das Element selbst liegt und nicht der
+    abgeschnittene Nachbar. */
 async function lageDesFeldes(page, name) {
   const feld = page.getByRole('textbox', { name, exact: true });
   const box = await feld.boundingBox();
   if (!box) {
     return null;
   }
+  const knopf = feld.locator('xpath=..').getByRole('button', { name: 'Abbrechen', exact: true });
+  const knopfBox = await knopf.boundingBox();
   const rahmen = await page.evaluate(([diffSel, rollSel]) => {
     const diff = document.querySelector(diffSel).getBoundingClientRect();
     const roll = document.querySelector(rollSel);
@@ -765,18 +780,16 @@ async function lageDesFeldes(page, name) {
       rollBildlauf: Math.round(roll.scrollLeft),
     };
   }, [ANMERKUNGSBEREICH, ROLLBEREICH]);
-  const kante = await page.evaluate(({ x, y }) => {
-    const element = document.elementFromPoint(x, y);
-    if (!element) {
-      return { tag: 'nichts', klasse: '' };
-    }
-    return { tag: element.tagName.toLowerCase(), klasse: typeof element.className === 'string' ? element.className : '' };
-  }, { x: box.x + box.width - 1, y: box.y + box.height / 2 });
+  const kante = await trefferAnDerKante(page, box);
+  const kanteKnopf = knopfBox ? await trefferAnDerKante(page, knopfBox) : null;
   return {
     feld: { links: Math.round(box.x), rechts: Math.round(box.x + box.width), breite: Math.round(box.width) },
+    knopf: knopfBox ? { links: Math.round(knopfBox.x), rechts: Math.round(knopfBox.x + knopfBox.width), breite: Math.round(knopfBox.width) } : null,
     ...rahmen,
     kante,
     kanteAmFeld: kante.klasse.split(/\s+/).includes('anm-eingabe'),
+    kanteKnopf,
+    kanteAmKnopf: kanteKnopf !== null && kanteKnopf.tag === 'button',
   };
 }
 

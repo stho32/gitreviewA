@@ -8,6 +8,7 @@ const seite = require('../treiber/oberflaeche.js');
 const diffSeite = require('../treiber/diff-oberflaeche.js');
 const anmerkungSeite = require('../treiber/anmerkungen-oberflaeche.js');
 const hakenSeite = require('../treiber/haken-oberflaeche.js');
+const farbSeite = require('../treiber/farb-oberflaeche.js');
 const trennerSeite = require('../treiber/trenner-oberflaeche.js');
 const repos = require('../treiber/diff-repos.js');
 const { anzeigeSchrankeMs, einfrierSchrankeMs } = require('./schranken.js');
@@ -25,6 +26,10 @@ const VORBEREITUNGEN = {
   'Repo W': { anlegen: repos.repoW, commits: ['w2'] },
   'Repo R (Bereich)': { anlegen: repos.repoZeilenbereich, commits: ['r2', 'r1'] },
   'Repo mit Rumpf': { anlegen: repos.repoMitRumpf, commits: ['p', 'q', 'r'] },
+  // Repo P der User Story R00049 (R00053): `p1` legt acht Dateien an, `p2` ändert `src/app.js` (Zeile 1) und `db/002_aendern.sql`.
+  'Repo P': { anlegen: repos.repoP, commits: ['p1', 'p2'] },
+  // Repo P mit langer Zeile in `src/app.js` (Befund der Karte #63, R00053): zwei Zeilen, die zweite lang.
+  'Repo P lang': { anlegen: repos.repoPLang, commits: ['q1', 'q2'] },
 };
 
 function annotierSprache(gr, page) {
@@ -94,6 +99,13 @@ function annotierSprache(gr, page) {
     feldname,
     dateiFeldname,
     dateiAnsehen: name => seite.dateiWaehlen(page, name),
+    /** Die Datei ansehen und warten, bis ihr Weg geladen ist: der Diff ist gezeichnet und gefärbt (`data-farbe` steht), damit
+        sind seine Nachladungen (Färbe-Skripte, Meldung „angesehen“) durch. Erst danach zählt eine Aufrufzählung nur noch, was
+        der Klick und das Messen auslösen (R00053, Kriterium 6). */
+    dateiAnsehenGeladen: async name => {
+      await seite.dateiWaehlen(page, name);
+      await farbSeite.farbeAbwarten(page, name);
+    },
     commitAnsehen: name => seite.commitWaehlen(page, hash(name).slice(0, 7)),
     ansichtWaehlen: name => diffSeite.ansichtWaehlen(page, name),
     diffZeigt: erwartet => diffSeite.pruefeDiff(page, erwartet),
