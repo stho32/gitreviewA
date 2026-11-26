@@ -140,11 +140,13 @@ Diese Anforderung löst die folgenden **Zeitkriterien** ab (Anforderung:Zeile, b
 | R00036:37 | ≤ 1 s | 5 s Anzeige |
 | R00037:40, 56 | ≤ 1 s, Messwert ≤ 0,7 s | 5 s Anzeige |
 | R00040:40 | ≤ 200 ms typisch, ≤ 1 s | 5 s Anzeige |
-| R00041:37, 51 | ≤ 1 s, Messwert ≤ 0,7 s | 5 s Anzeige |
+| R00041:37, 51 | ≤ 1 s, Messwert ≤ 0,7 s | Abschlussdialog bei 2 000 Dateien 15 s (PO Zeile 273); „Beenden“ bis Ausgabe 5 s |
 | R00042:37, 51 | Long Task ≤ 150 ms | 2 s Einfrier |
 | R00043:45 | ≤ 2 s / ≤ 1 s | 5 s Anzeige |
 | R00044:36 | Long Task ≤ 150 ms, ≤ 1 s | 2 s Einfrier / 5 s Anzeige |
 | R00045:34 | ≤ 2 s, ≤ 200 ms typisch, ≤ 1 s | 5 s Anzeige |
+
+> **Ausnahme (PO Zeile 273, 2026-11-26):** der Abschlussdialog aus [R00041](R00041-abschlussschritt-vor-beenden.md) (Kriterium 6, 2 000 Dateien) steht erst innerhalb **15 s** — die Einzelprobe lag bei etwa 1 s, unter Last bei etwa 5 s. Das ist die einzige dritte Zahl neben Anzeige-Schranke und Einfrier-Schranke; sie fängt einen echten Einbruch weiterhin und setzt keine engen Ziele (Entscheidung des Betreibers: keine harten Performance-Ziele).
 
 ### Spec-Bauplan (für den `entwickler`)
 
