@@ -638,3 +638,11 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Ursache belegt (entwickler Flash, 31 min, 0,16 $): Ändert sich ein anderer Text im Diff-Kopf (Herkunft, Sprunghinweis, Werkzeugzeile), wird der Pfad schmaler, ohne dass der Bereich seine Größe ändert; der `ResizeObserver` kürzt erst im nächsten Zeichenschritt. Fix im Produkt (`MutationObserver` auf den Kopf, `data-gekuerzt-fuer`) und im Treiber (wartet auf dieses Merkmal statt auf Stabilität). Prüfung nicht abgeschwächt; 2/8 rot → 16/16 und 64/64 grün.
 - Lehre: Wieder ein Produktfehler hinter einem Wackler — der vierte von sieben gemessenen.
 - Gate: NUnit 1823/1823, Playwright 1115/1115 zweimal.
+| 2026-11-26 | #47 | Reviews | security-reviewer | bestanden | 2 min | Claude Sonnet: kein Muss; HTML/Bidi/0x1F nur Text, Kürzung nie in Marke, 1000 Commits ohne Einfrieren, kein neuer Endpunkt · claude · sonnet · Lauf 47-security-reviewer-1 · 0,42 $ · Karte gesamt 3,78 $ |
+| 2026-11-26 | #47 | Reviews | code-reviewer | bestanden | 2 min | opencode: kein Muss · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 47-code-reviewer-1 · 0,087 $ · Karte gesamt 3,87 $ |
+| 2026-11-26 | #47 | Entwicklertest | entwicklertester | bestanden | 5 min | opencode: Szenarien R00038 und Betreiberfall ohne Befund · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 47-entwicklertester-1 · 0,12 $ · Karte gesamt 3,99 $ |
+
+## Retrospektive #47 I0039 Absicht der KI über dem Diff (2026-11-26)
+- Durchlauf: Abgleich der alten Planung (planer Claude Opus, 2,82 $) — sieben Abweichungen zum Code, u. a. wäre der Block bei jedem Umschalten verschwunden (`.df-sc` an vier Stellen neu befüllt) → B3705; Befund im Commit-Leser → eigene Karte #60 vorgezogen; PO Zeile 250 (20 000 Zeichen). Bau 61 min; Code-Review und Security-Review (Sonnet) ohne Muss; Entwicklertest ohne Befund. Karte gesamt 3,99 $.
+- Lehre: Eine Planung, die älter ist als die Umbauten an ihrer Oberfläche, vor dem Bau gegen den Code abgleichen — der Abgleich kostete 2,82 $ und ersparte einen Bau gegen ein verschwundenes Ziel und einen ungesicherten Leser.
+- Gate: NUnit 1823/1823, Playwright 1156/1156 zweimal.
