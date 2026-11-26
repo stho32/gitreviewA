@@ -603,3 +603,24 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 
 ## Retrospektive #45 LICENSE (MIT) und Herkunft der kanbanD-Teile (2026-11-26)
 - dokumentar Claude Sonnet: `LICENSE` byte-gleich zu kanbanD (MIT, 2026 Stefan Hoffmann), README-Abschnitt „Lizenz und Herkunft“ mit 14 Dateien nach ihren Kopfkommentaren. 0,15 $. Nur Dokumente — Gate Build + NUnit, kein Release-Tag.
+| 2026-11-26 | #60 | Detailplanung | planer | bestanden | 11 min | Claude Opus: Befund rot nachgeprüft, R00048, I0049 B4401–B4405, Angriffsmatrix klein nötig · claude · opus · Lauf 60-planer-1 · 3,92 $ · Karte gesamt 3,92 $ |
+| 2026-11-26 | #60 | Detailplanung | product-owner | bestanden | 1 min | Claude Sonnet: Start abweisen über 8 MiB, keine Server-Grenze je Nachricht, Folgekarte Commit-Leiste (Zeilen 250–252, a44781e) · claude · sonnet · Lauf 60-product-owner-1 · 0,23 $ · Karte gesamt 4,15 $ |
+| 2026-11-26 | #60 | Detailplanung | security-reviewer | bestanden | 5 min | Claude Sonnet: Angriffsmatrix 53 Zeilen (e471e0b), Lücken L1–L5, davon L1/L2/L4 wichtig · claude · sonnet · Lauf 60-security-reviewer-1 · 0,78 $ · Karte gesamt 4,93 $ |
+| 2026-11-26 | #33 | Detailplanung | planer | bestanden | 7 min | Claude Sonnet: R00049, I0050 B4501–B4507, 5 Fragen mit Empfehlung · claude · sonnet · Lauf 33-planer-1 · 1,48 $ · Karte gesamt 1,48 $ |
+| 2026-11-26 | #60 | Detailplanung | product-owner | bestanden | 0 min | Claude Sonnet: L2 Lauf startet, Datum nicht lesbar (Zeile 253, aaa636d); Lauf nachträglich angemeldet · claude · sonnet · Lauf 60-product-owner-2 |
+| 2026-11-26 | #33 | Detailplanung | product-owner | bestanden | 2 min | Claude Sonnet: Filter, Sicht, f, ein Feld; abweichend: ohne Unterschied Groß/Klein (Zeilen 251–255, d75d104) · claude · sonnet · Lauf 33-product-owner-1 · 0,36 $ · Karte gesamt 1,84 $ |
+| 2026-11-26 | #60 | Detailplanung | planer | bestanden | 12 min | opencode: K10–K13, K4 ergänzt, B4406/B4407 neu (c6958b3) · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 60-planer-2 · 0,20 $ · Karte gesamt 5,13 $ |
+| 2026-11-26 | #60 | Entwicklung | entwickler | bestanden | 54 min | opencode: B4401–B4407, NUnit 1807, E2E 1056; K13/K10 als Kontrollpaar gemessen · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 60-entwickler-1 · 0,58 $ · Karte gesamt 5,71 $ |
+| 2026-11-26 | #60 | Reviews | code-reviewer | bestanden | 3 min | opencode: kein Muss · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 60-code-reviewer-1 · 0,057 $ · Karte gesamt 5,77 $ |
+| 2026-11-26 | #60 | Reviews | security-reviewer | befund | 12 min | Claude Sonnet: Muss M-1 UTC-Datum (Z) gilt als unlesbar; Matrix hält sonst, kein Leser ohne Grenze (84074de) · claude · sonnet · Lauf 60-security-reviewer-2 · 0,82 $ · Karte gesamt 6,59 $ |
+| 2026-11-26 | #33 | Entwicklung | entwickler | bestanden | 1 h 23 min | opencode: B4501–B4507, E2E 1112 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 33-entwickler-1 · 0,64 $ · Karte gesamt 2,48 $ |
+| 2026-11-26 | #60 | Nacharbeit | entwickler | bestanden | 9 min | opencode: M-1 UTC rot→grün, H1, H2 mit Mutant · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 60-entwickler-2 · 0,16 $ · Karte gesamt 6,75 $ |
+| 2026-11-26 | #33 | Reviews | code-reviewer | bestanden | 8 min | opencode: kein Muss; A1/A2 vom Director zu Muss hochgestuft · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 33-code-reviewer-1 · 0,078 $ · Karte gesamt 2,56 $ |
+| 2026-11-26 | #33 | Nacharbeit | entwickler | bestanden | 9 min | opencode: A1 Mutant stirbt, A2 falte an einer Stelle · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 33-entwickler-2 · 0,25 $ · Karte gesamt 2,81 $ |
+| 2026-11-26 | #33 | Entwicklertest | entwicklertester | bestanden | 12 min | opencode: Betreiberfall 60 Dateien ohne Befund · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 33-entwicklertester-1 · 0,27 $ · Karte gesamt 3,08 $ |
+| 2026-11-26 | #60 | Entwicklertest | entwicklertester | befund | 42 min | opencode: Muss Exit 134 bei nicht auflösbarem Präfix (Regression, auf main Exit 2) · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 60-entwicklertester-1 · 0,41 $ · Karte gesamt 7,16 $ |
+
+## Retrospektive #33 Dateiliste nach Mustern durchsuchen (2026-11-26)
+- Durchlauf: Detailplanung Claude Sonnet (R00049, I0050, 7 Bubbles, Bausteine aus I0013/I0026 wiederverwendet), PO: Filter, Sicht, `f`, ein Feld, abweichend **ohne** Groß/Klein (Zeilen 251–255); Bau 83 min; Code-Review ohne Muss — Director stufte A1 (Test kann nicht rot werden, Mutant überlebt 20/20) und A2 (Faltregel doppelt) hoch; Nacharbeit 9 min; Entwicklertest (60 Dateien) ohne Befund. Karte gesamt 3,08 $.
+- Lehre: Ein Zähler, der neben der Buchung hochgezählt wird, prüft nichts — der Mutant „Reihenfolge vertauscht“ gehört in jeden Test einer Aufwandsgrenze.
+- Gate: NUnit 1768/1768, Playwright 1114/1114 zweimal.

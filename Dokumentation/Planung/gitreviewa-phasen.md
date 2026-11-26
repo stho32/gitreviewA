@@ -64,3 +64,4 @@ zuletzt: 2026-11-26
 | I0046 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester + Director, Auftrag Stefan Hoffmann) | Betreiberfall drei SQL-Migrationen (R00045), Nachtest nach Rebase, Konsolenfehler nach Nacharbeit vom Director nachgeprüft, Karte #53 |
 | I0043 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | Szenarien 1–9, Kriterien 1–10 (R00042), Grenze 590 px nach PO-Zeile 249, Karte #51 |
 | I0047 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | Betreiberfall SQL in zwei Commits (R00046), Karte #54 |
+| I0050 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | Betreiberfall 60 Dateien (R00049), Groß/Klein nach PO-Zeile 255, Karte #33 |
