@@ -51,6 +51,21 @@ async function pruefeMenueZustand(page, name, erwartet) {
 
 /* ── Werkzeugleiste mit fester Höhe (R00039, B3802) ── */
 
+/** Wartet, bis der Pfad für die Breite des Kopfs gekürzt ist (R00039, B3802): die Kürzung hängt am `ResizeObserver` und
+    wird erst im nächsten Zeichenschritt nachgezogen — die Breite des Pfads ändert sich auch ohne Größenänderung des Bereichs
+    (Herkunft, Werkzeugzeile). Das Merkmal ist die Angabe des Produkts, für welche Breite die Anzeige steht; eine Frist wäre
+    geraten. */
+async function warteAufGekuerztenPfad(page) {
+  await page.waitForFunction(() => {
+    const pfad = document.querySelector('#diff .diff-pfad');
+    const gekuerztFuer = pfad.dataset.gekuerztFuer;
+    if (gekuerztFuer === undefined) {
+      return pfad.clientWidth === 0;
+    }
+    return gekuerztFuer === String(pfad.clientWidth);
+  }, undefined, { polling: 'raf' });
+}
+
 /** Setzt die Breite des Diff-Bereichs (`#diff`) über Fensterbreite und Seitenleiste (640 px) und wartet, bis sie steht.
     Die Ergebnis-Spalte (R00037) nimmt im zweispaltigen Aufbau 320 px ein; sie wird ausgeklappt, damit die Rechnung aufgeht
     (Fenster = Seitenleiste 640 + Trenner 6 + Diff + Trenner 6 + Spalte 320). */
@@ -64,6 +79,7 @@ async function setzeDiffBreite(page, breite) {
   });
   await page.evaluate(() => window.gitreviewaBreite.setzen(640));
   await expect.poll(() => page.evaluate(() => document.getElementById('diff').clientWidth), `Diff-Breite ${breite} px`).toBe(breite);
+  await warteAufGekuerztenPfad(page);
 }
 
 /** Die Höhe des Diff-Kopfs und die Zahl der sichtbaren Zeilenbänder (R00039, AK5): die Kinder des Kopfs werden nach ihrer
@@ -952,7 +968,7 @@ async function sprungAntwortScheitern(page, pfad, status = 500) {
 module.exports = {
   pruefeBedienbarNachAlsText, ansichtWaehlen, ansichtPerTastaturWechseln, pruefeAnsicht, zeilenfarbenLesen, pruefeZeilenfarben, pruefeKontextzeileBinnen,
   menueOeffnen, menueSchliessen, menueEintrag, menueWaehlen, pruefeMenueZustand, umbruchStellung,
-  setzeDiffBreite, leistenmass, pfadmass, herkunftmass,
+  setzeDiffBreite, warteAufGekuerztenPfad, leistenmass, pfadmass, herkunftmass,
   pruefeDiff, pruefePfad, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, pruefeHerkunft, pruefeSichtbarenText, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, pruefeUmbruchStellung, pruefeUmschalter, pruefeUmschalterPerTabErreichbar, umbruchPerTastaturUmschalten, pruefeZeileUmbrochen, pruefeAbschnittZeileUmbrochen, diffAntwortVerzoegern,
   pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
   pruefeAbschnittZugeklappt, abschnittTrotzdemLaden, pruefeAbschnittZeile, pruefeAbschnittskopf,
