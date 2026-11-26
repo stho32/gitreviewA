@@ -17,7 +17,16 @@ internal static class GitLogAusgabe
     private const int FelderJeDatensatz = 5;
     private const int HexHashKurz = 40;
     private const int HexHashLang = 64;
-    private const string Datumsformat = "yyyy-MM-dd'T'HH:mm:sszzz";
+
+    /// <summary>
+    /// Die Formen, in denen git `%aI` ausgibt (ISO 8601 strict): mit Zeitzone `±hh:mm`, bei UTC als `Z` — git 2.48 schreibt
+    /// `+0000` und `-0000` beide als `Z` (geprobt). Ein Datum in einer anderen Form wird leer (Kriterium 11).
+    /// </summary>
+    private static readonly string[] Datumsformate =
+    [
+        "yyyy-MM-dd'T'HH:mm:sszzz",
+        "yyyy-MM-dd'T'HH:mm:ss'Z'",
+    ];
 
     public static Commitzeilen Zerlegen(string ausgabe)
     {
@@ -65,12 +74,14 @@ internal static class GitLogAusgabe
     }
 
     /// <summary>
-    /// Nur ein ISO-8601-Datum mit Zeitzone bleibt stehen; jeder andere Text wird leer (L2/Kriterium 11): git gibt bei einem NUL
-    /// im Autorkopf den festen Text `%aI` aus, kein Datum. Leer bleibt leer — die Leiste zeigt „Datum nicht lesbar“.
+    /// Nur ein ISO-8601-Datum in einer der <see cref="Datumsformate"/> bleibt stehen; jeder andere Text wird leer (L2/Kriterium 11):
+    /// git gibt bei einem NUL im Autorkopf den festen Text `%aI` aus, kein Datum. Das Datum geht unverändert weiter, wie git es
+    /// liefert — `…Z` bleibt `…Z`, es wird nicht in eine andere Zeitzone umgerechnet. Leer bleibt leer — die Leiste zeigt
+    /// „Datum nicht lesbar“.
     /// </summary>
     private static string Datumsform(string datum)
     {
-        var istDatum = DateTimeOffset.TryParseExact(datum, Datumsformat, CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
+        var istDatum = DateTimeOffset.TryParseExact(datum, Datumsformate, CultureInfo.InvariantCulture, DateTimeStyles.None, out _);
         return istDatum ? datum : string.Empty;
     }
 }

@@ -147,6 +147,16 @@ public class GitLogAusgabeTests
         Assert.That(GitLogAusgabe.Zerlegen(ausgabe).AlsArray().Single().Datum, Is.EqualTo(datum));
     }
 
+    [TestCase("2023-11-14T22:13:20Z")]
+    [TestCase("2023-11-14T22:13:20+00:00")]
+    [Description("F16: git 2.48 gibt %aI bei UTC als „…Z“ aus (+0000 und -0000) — das Datum bleibt stehen, wie git es liefert, nicht leer")]
+    public void Wenn_Datum_in_UTC_dann_bleibt_es(string datum)
+    {
+        var ausgabe = Ausgabe(Datensatz(HashA, "A", datum, "B", ""));
+
+        Assert.That(GitLogAusgabe.Zerlegen(ausgabe).AlsArray().Single().Datum, Is.EqualTo(datum));
+    }
+
     [TestCase("")]
     [Description("ein leeres Datum bleibt leer (kein Ersatztext)")]
     public void Wenn_Datum_leer_dann_leer(string datum)
