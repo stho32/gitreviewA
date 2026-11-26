@@ -173,7 +173,35 @@
   /** Der Diff-Kopf nennt bei einer Umbenennung beide Namen (`neu ← alt`, PO 2026-11-25); der neue Pfad führt, sonst der Pfad. */
   function setzePfad(ansicht, datei) {
     const umbenennung = window.umbenennungsText ? window.umbenennungsText(datei) : null;
-    ansicht.pfadElement.replaceChildren(...sichtbarTeile(umbenennung || datei.pfad).map(teilKnoten));
+    const teile = sichtbarTeile(umbenennung || datei.pfad);
+    const voll = teile.map(teil => teil.text).join('');
+    ansicht.pfadElement.setAttribute('title', voll);
+    ansicht.pfadElement.setAttribute('aria-label', voll);
+    ansicht.pfadElement.replaceChildren(...teile.map(teilKnoten));
+    kuerzePfad(ansicht.pfadElement, teile);
+  }
+
+  /** Bei Platzmangel den Pfad in der Mitte kürzen (R00039, B3802): die sichtbare Breite misst das Element; der volle Pfad steht
+      in `title` und im zugänglichen Namen. Marken bleiben in der gekürzten Form sichtbar, wenn sie im sichtbaren Teil liegen. */
+  function kuerzePfad(pfadElement, teile) {
+    const gesamt = teile.reduce((summe, teil) => summe + teil.text.length, 0);
+    if (gesamt === 0 || pfadElement.clientWidth === 0 || pfadElement.scrollWidth <= pfadElement.clientWidth) {
+      return;
+    }
+    let unten = 1;
+    let oben = gesamt;
+    let beste = 1;
+    while (unten <= oben) {
+      const mitte = Math.floor((unten + oben) / 2);
+      pfadElement.replaceChildren(...kuerzeTeile(teile, mitte).map(teilKnoten));
+      if (pfadElement.scrollWidth <= pfadElement.clientWidth) {
+        beste = mitte;
+        unten = mitte + 1;
+      } else {
+        oben = mitte - 1;
+      }
+    }
+    pfadElement.replaceChildren(...kuerzeTeile(teile, beste).map(teilKnoten));
   }
 
   /** Die jüngste Wahl gewinnt: eine Antwort zählt nur, wenn seit ihrer Anfrage keine andere Datei, kein anderer Commit, keine andere

@@ -49,6 +49,30 @@ async function pruefeMenueZustand(page, name, erwartet) {
   await menueSchliessen(page);
 }
 
+/* ── Werkzeugleiste mit fester Höhe (R00039, B3802) ── */
+
+/** Setzt die Breite des Diff-Bereichs (`#diff`) über Fensterbreite und Seitenleiste (640 px) und wartet, bis sie steht —
+    samt der Klasse `schmal` am Kopf, die `leiste.js` nach der Breite setzt. */
+async function setzeDiffBreite(page, breite) {
+  await page.setViewportSize({ width: breite + 646, height: 800 });
+  await page.evaluate(() => window.gitreviewaBreite.setzen(640));
+  await expect.poll(() => page.evaluate(() => document.getElementById('diff').clientWidth), `Diff-Breite ${breite} px`).toBe(breite);
+  await expect.poll(() => page.evaluate(() => document.querySelector('#diff .diff-kopf').classList.contains('schmal')), `Leiste schmal (${breite} px)`).toBe(breite < 600);
+}
+
+/** Die Höhe des Diff-Kopfs und die Zeilenzahl der Leiste (1 oder 2): die Werkzeugzeile steht auf derselben Zeile wie der Pfad
+    oder darunter. */
+async function leistenmass(page) {
+  return page.evaluate(() => {
+    const kopf = document.querySelector('#diff .diff-kopf');
+    const pfad = kopf.querySelector('.diff-pfad');
+    const werkzeuge = kopf.querySelector('.diff-werkzeuge');
+    const p = pfad.getBoundingClientRect();
+    const w = werkzeuge.getBoundingClientRect();
+    return { hoehe: Math.round(kopf.getBoundingClientRect().height), zeilen: w.top >= p.bottom - 1 ? 2 : 1 };
+  });
+}
+
 /** Je Zeile Art, Nummern (aus den Spalten und aus `data-alt`/`data-neu`), Vorzeichen und Text ohne die Lesetexte für Screenreader. */
 async function diffZeilenLesen(page) {
   return page.locator(ZEILE).evaluateAll(zeilen => zeilen.map(zeile => {
@@ -852,6 +876,7 @@ async function sprungAntwortScheitern(page, pfad, status = 500) {
 module.exports = {
   pruefeBedienbarNachAlsText, ansichtWaehlen, ansichtPerTastaturWechseln, pruefeAnsicht, zeilenfarbenLesen, pruefeZeilenfarben, pruefeKontextzeileBinnen,
   menueOeffnen, menueSchliessen, menueEintrag, menueWaehlen, pruefeMenueZustand, umbruchStellung,
+  setzeDiffBreite, leistenmass,
   pruefeDiff, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, pruefeHerkunft, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, pruefeUmbruchStellung, pruefeUmschalter, pruefeUmschalterPerTabErreichbar, umbruchPerTastaturUmschalten, pruefeZeileUmbrochen, pruefeAbschnittZeileUmbrochen, diffAntwortVerzoegern,
   pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
   pruefeAbschnittZugeklappt, abschnittTrotzdemLaden, pruefeAbschnittZeile, pruefeAbschnittskopf,

@@ -1,7 +1,7 @@
 'use strict';
 // Bausteintests (ohne Browser) der Diff-Rechnung: Zeilen mit Nummern aus den Hunk-Köpfen, sichtbare Marken, Blöcke.
 const { test, expect } = require('@playwright/test');
-const { patchZeilen, ganzeDateiZeilen, sichtbarTeile, bloecke, blockBreite, zuLang, BLOCK_ZEILEN, BLOCK_KNOTEN, ZEICHEN_GRENZE, MARKEN_GRENZE, ZEILEN_GRENZE } = require('../../../src/GitReviewA/web/diff-werte.js');
+const { patchZeilen, ganzeDateiZeilen, sichtbarTeile, kuerzeTeile, bloecke, blockBreite, zuLang, BLOCK_ZEILEN, BLOCK_KNOTEN, ZEICHEN_GRENZE, MARKEN_GRENZE, ZEILEN_GRENZE } = require('../../../src/GitReviewA/web/diff-werte.js');
 
 const kopf = text => ({ art: 'kopf', alt: null, neu: null, text });
 const kontext = (text, alt, neu) => ({ art: 'kontext', alt, neu, text });
@@ -191,5 +191,28 @@ test.describe('Baustein Diff-Werte', () => {
       minus('a', 1), { art: 'hinweis', alt: null, neu: null, text: '\\ No newline at end of file' }, plus('a', 1),
     ]);
     expect(ganzeDateiZeilen('')).toEqual([]);
+  });
+});
+
+// R00039 (B3802): der Pfad wird bei Platzmangel in der Mitte gekürzt — vorn und hinten bleibt etwas, dazwischen „…“.
+test.describe('Baustein Diff-Werte — Pfad kürzen (R00039)', () => {
+  test('soll einen kurzen Pfad unverändert lassen', () => {
+    expect(kuerzeTeile([{ text: 'src/a.txt' }], 20)).toEqual([{ text: 'src/a.txt' }]);
+    expect(kuerzeTeile([{ text: 'src/a.txt' }], 9)).toEqual([{ text: 'src/a.txt' }]);
+  });
+
+  test('soll einen langen Pfad in der Mitte kürzen und die Länge halten', () => {
+    const teile = [{ text: 'a'.repeat(100) }];
+    const gekuerzt = kuerzeTeile(teile, 20);
+    expect(gekuerzt.map(teil => teil.text).join('')).toBe(`${'a'.repeat(10)}…${'a'.repeat(9)}`);
+    expect(gekuerzt.map(teil => teil.text).join('').length).toBeLessThanOrEqual(20);
+  });
+
+  test('soll Marken ganz übernehmen, wenn sie in den sichtbaren Teil fallen, und sonst weglassen', () => {
+    const teile = [{ text: 'aa' }, { marke: 'bidi', code: 'U+202E', text: '⟨U+202E⟩' }, { text: 'b'.repeat(50) }];
+    const vorne = kuerzeTeile(teile, 20);
+    expect(vorne.some(teil => teil.marke === 'bidi'), 'Marke vorn sichtbar').toBe(true);
+    const hinten = kuerzeTeile(teile, 6);
+    expect(hinten.some(teil => teil.marke === 'bidi'), 'Marke außerhalb des sichtbaren Teils weggelassen').toBe(false);
   });
 });

@@ -57,6 +57,20 @@ function zeilen(anzahl, text) {
   return Array.from({ length: anzahl }, (_, index) => `${text(index + 1)}\n`).join('');
 }
 
+/** Repo L der Karte #48 (R00039): ein Pfad von rund 300 Zeichen mit U+202E — für die Kürzung in der Leiste.
+    `l1` legt die Datei an, `l2` ändert sie; der Pfad steht als `pfad` im Ergebnis. */
+function repoLangerPfad(ordner) {
+  repoAnlegen(ordner);
+  const ordnerName = 'a'.repeat(120);
+  const dateiName = `${'b'.repeat(120)}\u202Ec${'d'.repeat(50)}.txt`;
+  const pfad = `lang/${ordnerName}/${dateiName}`;
+  dateiSchreiben(ordner, pfad, 'kurz\n');
+  const l1 = commitAnlegen(ordner, { betreff: 'Lang' });
+  dateiSchreiben(ordner, pfad, 'kurz\nlang\n');
+  const l2 = commitAnlegen(ordner, { betreff: 'Geändert' });
+  return { ordner, hashes: { l1, l2 }, pfad, anzeige: pfad.replace('\u202E', '⟨U+202E⟩') };
+}
+
 /** Repo W (R00026): `w1` „Anlegen“ legt `leerraum.txt` und `weit.txt` (60 Zeilen, `<b>z20</b>`, `a`+U+202E+`b`) an;
     `w2` „Ändern“ stellt in `leerraum.txt` `zwei` auf `  zwei` um, ändert `drei` und fügt eine leere Zeile an, in `weit.txt` ändert es `z05` und `z35`.
     Gleicher Inhalt wie `DiffRepo.W()` in tests/GitReviewA.Tests/Akzeptanz/DiffRepo.cs. */
@@ -494,4 +508,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoGruppen, repoV, repoG, repoKlammern, repoX, repoK, repoZ, repoZeilenbereich, repoQ, repoS, repoL, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, repoY, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoGruppen, repoV, repoG, repoKlammern, repoX, repoK, repoZ, repoZeilenbereich, repoQ, repoS, repoL, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, repoY, repoLangerPfad, markerVorhanden, diffProgrammOhneSchutzStarten };

@@ -113,11 +113,16 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .gr-diff{margin-block-start:var(--kd-s5);min-width:0}
 .diff-wahl{display:flex;gap:var(--kd-s2);margin:0 0 var(--kd-s3)}
 .diff-wahl:not(:has(button:not([hidden]))),.diff-wahl button[hidden]{display:none}
-.diff-kopf{display:flex;flex-wrap:wrap;align-items:center;gap:var(--kd-s2) var(--kd-s4);margin:0 0 var(--kd-s3)}
-.diff-pfad{margin:0;font-size:13px;font-weight:600;overflow-wrap:anywhere;min-width:0}
+.diff-kopf{display:flex;flex-wrap:nowrap;align-items:center;gap:var(--kd-s2) var(--kd-s4);margin:0 0 var(--kd-s3);min-block-size:var(--kd-ziel)}
+/* Feste Höhe (R00039, B3802): ab 600 px Breite des Diff-Bereichs eine Zeile; darunter rückt die Werkzeugzeile (Suche und
+   „Ansicht ▾“) in die zweite Zeile. Die Klasse `schmal` setzt `leiste.js` nach der Breite von `#diff`; die Leiste wächst nie
+   über zwei Zeilen, weil der Pfad in der Mitte gekürzt wird und Gründe/Meldungen gekürzt in derselben Zeile stehen. */
+.diff-kopf.schmal{flex-wrap:wrap}
+.diff-kopf.schmal .diff-werkzeuge{flex-basis:100%}
+.diff-pfad{margin:0;font-size:13px;font-weight:600;flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden}
 .diff-pfad:empty{display:none}
 /* Werkzeugzeile des Diff-Kopfs (R00039): Suche und das Menü „Ansicht ▾“ — die vier Anzeigeverfahren stehen im Menü. */
-.diff-werkzeuge{display:flex;flex-wrap:wrap;align-items:center;gap:var(--kd-s2) var(--kd-s3);min-width:0}
+.diff-werkzeuge{display:flex;flex-wrap:nowrap;align-items:center;gap:var(--kd-s2) var(--kd-s3);min-width:0}
 .ansicht-menue{position:relative;flex:none}
 .ansicht-menue-liste{position:absolute;top:calc(100% + 4px);right:0;z-index:5;min-inline-size:14rem;padding:var(--kd-s1) 0;border:1px solid var(--kd-line-strong);border-radius:var(--kd-s2);background:var(--kd-surface);box-shadow:var(--kd-shadow-mod,0 8px 24px rgb(0 0 0 / 25%))}
 .ansicht-menue-liste[hidden]{display:none}

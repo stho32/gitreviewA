@@ -236,5 +236,40 @@
     return 1;
   }
 
-  Object.assign(ziel, { patchZeilen, ganzeDateiZeilen, sichtbarTeile, bloecke, blockBreite, zuLang, BLOCK_ZEILEN, BLOCK_KNOTEN, ZEILEN_GRENZE, ZEICHEN_GRENZE, MARKEN_GRENZE });
+  /** Die sichtbaren Teile bei Platzmangel in der Mitte kürzen (R00039): vorn und hinten bleibt etwas, dazwischen ein
+      Auslassungszeichen „…“. Marken bleiben ganz — eine angeschnittene Marke fällt weg; die Länge bleibt höchstens `maxZeichen`. */
+  function kuerzeTeile(teile, maxZeichen) {
+    const gesamt = teile.reduce((summe, teil) => summe + teil.text.length, 0);
+    if (gesamt <= maxZeichen) {
+      return teile;
+    }
+    const behalten = Math.max(1, maxZeichen - 1);
+    const vorne = Math.ceil(behalten / 2);
+    const hinten = behalten - vorne;
+    return [...seitenteile(teile, vorne, false), { text: '…' }, ...seitenteile(teile, hinten, true)];
+  }
+
+  /** `budget` Zeichen von vorn (`vonHinten` false) bzw. von hinten; Textteile werden angeschnitten, Marken nur ganz übernommen. */
+  function seitenteile(teile, budget, vonHinten) {
+    const ergebnis = [];
+    let rest = budget;
+    const reihenfolge = vonHinten ? [...teile].reverse() : teile;
+    for (const teil of reihenfolge) {
+      if (rest <= 0) {
+        break;
+      }
+      if (teil.text.length <= rest) {
+        ergebnis.push(teil);
+        rest -= teil.text.length;
+        continue;
+      }
+      if (!teil.marke) {
+        ergebnis.push({ text: vonHinten ? teil.text.slice(teil.text.length - rest) : teil.text.slice(0, rest) });
+      }
+      rest = 0;
+    }
+    return vonHinten ? ergebnis.reverse() : ergebnis;
+  }
+
+  Object.assign(ziel, { patchZeilen, ganzeDateiZeilen, sichtbarTeile, kuerzeTeile, bloecke, blockBreite, zuLang, BLOCK_ZEILEN, BLOCK_KNOTEN, ZEILEN_GRENZE, ZEICHEN_GRENZE, MARKEN_GRENZE });
 })(typeof module !== 'undefined' ? module.exports : window);

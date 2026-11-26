@@ -41,6 +41,8 @@ const VORBEREITUNGEN = {
   'Repo V': { anlegen: repos.repoV, commits: ['v1', 'v3'] },
   // Karte #44: `y3` und `y1` bilden keine lückenlose Kette (es fehlt `y2`); `weit.txt` hat zwei Abschnitte mit der Lücke 9–31.
   'Repo Y': { anlegen: repos.repoY, commits: ['y3', 'y1'] },
+  // Karte #48 (R00039): ein Pfad von rund 300 Zeichen mit U+202E — für die Kürzung in der Leiste (Szenario 5).
+  'Langer Pfad': { anlegen: repos.repoLangerPfad, commits: ['l1', 'l2'] },
 };
 
 function diffSprache(gr, page) {
@@ -89,6 +91,8 @@ function diffSprache(gr, page) {
     starten,
     hash: name => hash(name),
     kurz: name => kurz(name),
+    /** Der angezeigte Pfad der Vorbereitung „Langer Pfad“ (R00039, Szenario 5): das Zeichen U+202E als Marke. */
+    langerPfad: () => repo.anzeige,
     commitGewaehlt: commit => seite.pruefeGewaehlterCommit(page, kurz(commit)),
     commitAnsehen: commit => seite.commitWaehlen(page, kurz(commit)),
     dateiAnsehen: name => seite.dateiWaehlen(page, name),
