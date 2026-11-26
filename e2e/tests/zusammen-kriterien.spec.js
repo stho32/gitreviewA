@@ -41,6 +41,16 @@ test.describe('R00012 Kriterien 2, 4 und 5', () => {
     await anm.messageVerborgen('q');
   });
 
+  test('Kriterium 2: eine während der Ladung geöffnete Commit-Zeile bleibt offen', async ({ anm }) => {
+    await anm.commitsAntwortVerzoegern(1500);
+    const antwort = anm.commitsAntwortAbwarten();
+    await anm.starten({ vorbereitung: 'Repo mit Rumpf', modus: null });
+
+    await anm.commitZeileSofortAufklappen();
+    await antwort;
+    await anm.commitZeileBleibtOffen();
+  });
+
   test('Kriterium 4: ohne Kette sagt die Commit-Zeile „keine lückenlose Kette · je Commit“, der Diff steht in Abschnitten je Commit', async ({ anm }) => {
     await anm.starten({ vorbereitung: 'Repo Z', commits: ['z1', 'z3'], modus: null });
     const kurz = name => anm.hash(name).slice(0, 7);

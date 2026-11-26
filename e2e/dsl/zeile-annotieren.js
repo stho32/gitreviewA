@@ -322,6 +322,14 @@ function annotierSprache(gr, page) {
     zusammenScheitert: status => seite.zusammenAntwortScheitert(page, status),
     commitZeileAufklappen: () => seite.commitZeileAufklappen(page),
     commitZeileZuklappen: () => seite.commitZeileZuklappen(page),
+    /** Verzögert die Antwort der Commit-Liste; vor dem Öffnen der Seite aufrufen. */
+    commitsAntwortVerzoegern: ms => seite.commitsAntwortVerzoegern(page, ms),
+    /** Wartet auf die Antwort der Commit-Liste; vor dem Öffnen der Seite aufrufen. */
+    commitsAntwortAbwarten: () => seite.commitsAntwortAbwarten(page),
+    /** Öffnet die Commit-Zeile sofort, ohne auf die geladene Liste zu warten. */
+    commitZeileSofortAufklappen: () => seite.commitZeileSofortAufklappen(page),
+    /** Die Commit-Zeile ist offen. */
+    commitZeileBleibtOffen: () => seite.commitZeileBleibtOffen(page),
     /** Die Commit-Zeile über der Dateiliste; liefert ihre Höhe in px. */
     commitZeileUeberDerListe: () => seite.pruefeCommitZeileUeberDerListe(page),
     commitZeilen: () => seite.commitZeilenLesen(page),

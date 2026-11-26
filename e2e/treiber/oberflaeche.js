@@ -39,6 +39,30 @@ async function aufZeilenWarten(page, anzahl) {
   await page.waitForFunction(erwartet => document.querySelectorAll('#commit-liste .commit-zeile').length === erwartet, anzahl, { polling: 'raf' });
 }
 
+/** Hält die Antwort auf die Commit-Liste zurück; vor dem Öffnen der Seite aufrufen. */
+async function commitsAntwortVerzoegern(page, ms) {
+  await page.route('**/api/commits', async route => {
+    await new Promise(weiter => setTimeout(weiter, ms));
+    await route.continue();
+  });
+}
+
+/** Wartet auf die Antwort der Commit-Liste; vor dem Öffnen der Seite aufrufen. */
+function commitsAntwortAbwarten(page) {
+  return page.waitForResponse('**/api/commits');
+}
+
+/** Öffnet die Commit-Zeile sofort, ohne auf die geladene Liste zu warten (für die Probe der Ladephase). */
+async function commitZeileSofortAufklappen(page) {
+  await commitZeileZusammenfassung(page).click();
+  await expect(page.locator('#commit-zeile')).toHaveJSProperty('open', true);
+}
+
+/** Die Commit-Zeile ist offen. */
+async function commitZeileBleibtOffen(page) {
+  await expect(page.locator('#commit-zeile'), 'die Commit-Zeile bleibt offen').toHaveJSProperty('open', true);
+}
+
 /** Der Knopf „Beenden“ über Rolle und sichtbaren Namen, gesucht im Kopfbereich seiner Aktionen.
     Eine Rollen-Abfrage über das ganze Dokument löst den Namen jedes Knopfes auf und liest je Knopf dessen `labels` über das
     ganze Dokument: bei 20 000 Diff-Zeilen mit 500 Anmerkungen (1 020 Knöpfe) kostet eine solche Abfrage über fünf Sekunden. */
@@ -100,8 +124,9 @@ async function zusammenAntwortVerzoegern(page, ms) {
   });
 }
 
-/** Klappt die zugeklappte Commit-Zeile auf und wartet, bis der Zustand steht. */
+/** Klappt die zugeklappte Commit-Zeile auf und wartet, bis der Zustand steht: erst die geladene Liste, dann der Klick. */
 async function commitZeileAufklappen(page) {
+  await expect(page.locator('#commit-liste .commit-zeile'), 'die Commit-Liste ist geladen').not.toHaveCount(0);
   await commitZeileZusammenfassung(page).click();
   await expect(page.locator('#commit-zeile')).toHaveJSProperty('open', true);
 }
@@ -576,5 +601,6 @@ module.exports = {
   kopfZahlen, fortschrittZaehler, commitZeileZusammenfassung, commitZeileText, pruefeKopfZahlen, pruefeFortschritt, pruefeCommitZeileZusammenfassung,
   pruefeCommitZeileEnthaelt, pruefeCommitZeileEnthaeltNicht, zusammenAntwortVerzoegern, zusammenAntwortScheitert,
   commitZeileAufklappen, commitZeileZuklappen, pruefeCommitZeileUeberDerListe,
+  commitsAntwortVerzoegern, commitsAntwortAbwarten, commitZeileSofortAufklappen, commitZeileBleibtOffen,
   ergebnisKopierenKnopf, ergebnisKopierenBetaetigen, kopierenStatus, ergebnisAntwortZurueckhalten,
 };
