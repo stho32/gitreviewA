@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text;
 using System.Text.Json;
 using GitReviewA.Aufruf;
 using GitReviewA.Git;
@@ -95,6 +96,22 @@ public class WebserverTests
         Assert.That(eigen, Is.EqualTo(HttpStatusCode.OK));
     }
 
+    [TestCase("api/dateiansicht")]
+    [TestCase("api/dateiansicht/0")]
+    [TestCase("api/schliessen")]
+    public async Task Wenn_ein_Endpunkt_der_Dateiansicht_im_Review_abgefragt_wird_dann_404_ohne_Zustandswechsel(string pfad)
+    {
+        await using var server = await StarteServer(new StringWriter(), Protokollstufe.Warnung);
+        using var client = new HttpClient();
+
+        var get = await client.GetAsync(new Uri(new Uri(server.Adresse), pfad));
+        var post = await client.PostAsync(new Uri(new Uri(server.Adresse), pfad), new StringContent("{}", Encoding.UTF8, "application/json"));
+
+        Assert.That((int)get.StatusCode, Is.EqualTo(404));
+        Assert.That((int)post.StatusCode, Is.EqualTo(404));
+        Assert.That(server.Anmerkungen.IstAbgeschlossen, Is.False);
+    }
+
     [Test]
     public async Task Wenn_zwei_Server_ohne_Port_dann_verschiedene_Ports()
     {
@@ -155,7 +172,7 @@ public class WebserverTests
         var ausgabe = ziel.ToString();
 
         Assert.That(ausgabe, Does.Contain("1 Muster"));
-        Assert.That(ausgabe, Does.Contain("5"));
+        Assert.That(ausgabe, Does.Contain("Längen: 6"));
         Assert.That(ausgabe, Does.Not.Contain("*.lock"));
     }
 

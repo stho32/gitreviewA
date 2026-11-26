@@ -33,8 +33,7 @@ internal sealed class DateiansichtServer : IAsyncDisposable
         anwendung.MapGet(DateiansichtEndpunkt.Listenmuster, DateiansichtEndpunkt.Liste(stand));
         anwendung.MapGet(DateiansichtEndpunkt.Textmuster, DateiansichtEndpunkt.Text(stand));
         anwendung.Map(DateiansichtEndpunkt.Schliessenmuster, GeschuetzterEndpunkt.Mit(DateiansichtEndpunkt.Schliessen(zustand, anwendung.Lifetime, protokoll), protokoll));
-        anwendung.MapGet("/", () => Serverbau.Oberflaechendatei(oberflaeche, Startseite));
-        anwendung.MapGet("/{**pfad}", (string pfad) => Serverbau.Oberflaechendatei(oberflaeche, pfad));
+        Serverbau.BaueOberflaechenrouten(anwendung, oberflaeche, Startseite);
         await anwendung.StartAsync();
         lauscherPort.Wert = Serverbau.TatsaechlicherPort(anwendung);
         return new DateiansichtServer(anwendung, lauscherPort.Wert, zustand);

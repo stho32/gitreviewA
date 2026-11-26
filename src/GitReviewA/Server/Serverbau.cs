@@ -50,6 +50,20 @@ internal static class Serverbau
         return Results.Bytes(datei.Inhalt, datei.Inhaltstyp);
     }
 
+    /// <summary>
+    /// Die Startseite und jede weitere eingebettete Datei — eine Stelle für beide Laufarten. Je Datei eine eigene Route statt
+    /// eines Sammelpfads: ein Sammelpfad kennt den Pfad <c>/api/…</c> und antwortet auf eine fremde Methode mit 405; die
+    /// Laufart-Trennung verlangt, dass die Endpunkte der anderen Laufart gar nicht erst existieren (R00043, Kriterium 10; H3).
+    /// </summary>
+    public static void BaueOberflaechenrouten(WebApplication anwendung, Oberflaeche oberflaeche, string startseite)
+    {
+        anwendung.MapGet("/", () => Oberflaechendatei(oberflaeche, startseite));
+        foreach (var pfad in oberflaeche.Pfade)
+        {
+            anwendung.MapGet($"/{pfad}", () => Oberflaechendatei(oberflaeche, pfad));
+        }
+    }
+
     public static int TatsaechlicherPort(WebApplication anwendung)
     {
         var serverMerkmale = anwendung.Services.GetRequiredService<IServer>().Features;

@@ -103,9 +103,12 @@ public class DateiansichtEndpunktTests
     }
 
     [TestCase("api/commits")]
+    [TestCase("api/commits/c3d4e5f/dateien")]
     [TestCase("api/diff")]
     [TestCase("api/haken")]
     [TestCase("api/anmerkungen")]
+    [TestCase("api/anmerkungen/0")]
+    [TestCase("api/anmerkungen/0/loeschen")]
     [TestCase("api/ergebnis")]
     [TestCase("api/beenden")]
     [TestCase("api/zustand")]
@@ -121,8 +124,8 @@ public class DateiansichtEndpunktTests
         var get = await client.GetAsync(new Uri(new Uri(server.Adresse), pfad));
         var post = await client.PostAsync(new Uri(new Uri(server.Adresse), pfad), new StringContent("{}", Encoding.UTF8, "application/json"));
 
-        Assert.That((int)get.StatusCode, Is.AnyOf(404, 405));
-        Assert.That((int)post.StatusCode, Is.AnyOf(404, 405));
+        Assert.That((int)get.StatusCode, Is.EqualTo(404));
+        Assert.That((int)post.StatusCode, Is.EqualTo(404));
         Assert.That(server.IstGeschlossen, Is.False);
     }
 

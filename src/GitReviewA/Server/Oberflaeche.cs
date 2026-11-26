@@ -46,6 +46,9 @@ internal sealed class Oberflaeche
         return dateiNachPfad.TryGetValue(pfad, out datei);
     }
 
+    /// <summary>Die Pfade der eingebetteten Dateien, ohne führenden Schrägstrich — je Datei eine eigene Route (siehe <see cref="Serverbau.BaueOberflaechenrouten"/>).</summary>
+    public IReadOnlyCollection<string> Pfade => dateiNachPfad.Keys;
+
     private static string? InhaltstypVon(string pfad)
     {
         InhaltstypNachEndung.TryGetValue(Path.GetExtension(pfad), out var inhaltstyp);

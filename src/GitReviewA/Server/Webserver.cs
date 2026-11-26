@@ -84,8 +84,7 @@ internal sealed class Webserver : IAsyncDisposable
         var zustand = new ZustandAntwort("laeuft", commits.Anzahl, Mustertexte(muster));
         anwendung.MapGet("/api/commits", () => Results.Json(commitAntworten, JsonOptionen));
         anwendung.MapGet("/api/zustand", () => Results.Json(zustand, JsonOptionen));
-        anwendung.MapGet("/", () => Serverbau.Oberflaechendatei(oberflaeche, Startseite));
-        anwendung.MapGet("/{**pfad}", (string pfad) => Serverbau.Oberflaechendatei(oberflaeche, pfad));
+        Serverbau.BaueOberflaechenrouten(anwendung, oberflaeche, Startseite);
     }
 
     private static string[] Mustertexte(Musterliste? muster)
