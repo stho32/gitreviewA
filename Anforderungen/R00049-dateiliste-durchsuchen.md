@@ -8,13 +8,13 @@ datum: 2026-11-26
 
 ## Beschreibung
 
-Der prüfende Mensch gibt in der Dateiliste einen Suchtext ein — ein Wort wie `app` oder ein Muster wie `*.sql` — und sieht nur noch die Dateien, die dazu passen. Die Suche **findet**, was [R00025](R00025-dateien-ausblenden.md) **ausblendet**: Sie ist wie dort eine **Sicht** auf die Liste, nicht die Auswahl — nicht passende Dateien bleiben abhakbar, zählen in „n von m abgehakt“ und stehen im Ergebnis; der Zähler im Kopf nennt sie als dritten Grund neben „abgehakt“ und „Muster“. Mustersprache, Längengrenze und Groß/Klein kommen aus R00025 (ein Baustein, kein Nachbau).
+Der prüfende Mensch gibt in der Dateiliste einen Suchtext ein — ein Wort wie `app` oder ein Muster wie `*.sql` — und sieht nur noch die Dateien, die dazu passen. Die Suche **findet**, was [R00025](R00025-dateien-ausblenden.md) **ausblendet**: Sie ist wie dort eine **Sicht** auf die Liste, nicht die Auswahl — nicht passende Dateien bleiben abhakbar, zählen in „n von m abgehakt“ und stehen im Ergebnis; der Zähler im Kopf nennt sie als dritten Grund neben „abgehakt“ und „Muster“. Mustersprache und Längengrenze kommen aus R00025 (ein Baustein, kein Nachbau); **anders als dort** fragt die Suche nicht nach Groß und klein (PO-Entscheidung, siehe „Offene Fragen“).
 
 Zahlt ein auf: [Vision](R00000-vision.md) — „Anmerkungen an Stellen“ („Ausblendmuster und Suche helfen, das Wesentliche zu finden“) und das Lastprofil (2 000 geänderte Dateien).
 
 Baut auf auf: [R00025](R00025-dateien-ausblenden.md) (Muster-Abgleich `passt`, Musterprüfung, Zählertext), [R00029](R00029-abgehakte-dateien-ausblenden.md) (die gemeinsame Sicht mit Gründen, Hinweis „gewählte Datei ausgeblendet“), [R00040](R00040-dateiliste-nach-gruppen.md) (Gruppen), [R00028](R00028-naechste-ungepruefte-datei.md) (nächste ungeprüfte), [R00030](R00030-tastaturbedienung.md) (Kürzel-Katalog), [R00035](R00035-seitenleiste-ein-und-ausklappen.md) (eingeklappt), [R00012](R00012-oberflaeche-liste-detail-zusammen.md) (Liste, Modi, Kopf).
 
-**Abgrenzung:** [R00027](R00027-im-diff-suchen.md) sucht **im Text des Diffs** der gewählten Datei (Taste `/`); diese Anforderung sucht **unter den Dateinamen** der Liste. Zwei Felder, zwei Orte, zwei Wirkungen — sie teilen nur die Regel „Groß und klein unterscheiden“. R00025 blendet **dauerhaft per Aufruf oder Chip** aus; die Suche ist ein einzelner, flüchtiger Text, der sich mit einem Griff leeren lässt.
+**Abgrenzung:** [R00027](R00027-im-diff-suchen.md) sucht **im Text des Diffs** der gewählten Datei (Taste `/`); diese Anforderung sucht **unter den Dateinamen** der Liste. Zwei Felder, zwei Orte, zwei Wirkungen — sie teilen nichts außer dem Wort „Suche“: R00027 unterscheidet Groß und klein, die Dateisuche nicht. R00025 blendet **dauerhaft per Aufruf oder Chip** aus; die Suche ist ein einzelner, flüchtiger Text, der sich mit einem Griff leeren lässt.
 
 ### Domänenbezug
 
@@ -30,7 +30,7 @@ In einer KI-Änderung mit 400 Dateien will der Mensch zwischendurch „alle SQL-
 - **Regel (die eine Stelle, die über „passt“ entscheidet):** Der Suchtext wird gegen den **Anzeigenamen** des Pfades gehalten (neuer Pfad bei Umbenennung, unsichtbare Zeichen als Marke `⟨U+202E⟩`, Rohbytes als `⟨0xFF⟩`; wer die Marke tippt, findet die Datei).
   - Enthält der Text **kein** `*`, `?` und `[`, passt jede Datei, deren Anzeigename ihn als **Teilzeichenkette** enthält (`app` findet `src/app.js` und `src/data/app.sql`).
   - Enthält er mindestens eins davon, gilt er als **Muster** und wird vom selben Abgleich `passt` geprüft wie in R00025 (ohne `/` gegen den Dateinamen jeder Ebene, mit `/` gegen den ganzen Pfad; `*` bleibt im Segment, `**` geht darüber).
-  - **Groß und klein werden unterschieden**, wie in R00025 und R00027.
+  - **Groß und klein werden nicht unterschieden** — für die Teilzeichenkette wie für das Muster (`readme` findet `README.md`, `*.SQL` findet `app.sql`). Das gilt nur für die Suche; R00025 (Ausblenden) und R00027 (Suche im Diff) unterscheiden weiter. Gefaltet wird je Zeichen mit der einfachen Kleinschreibung der Sprache, **ohne Locale** (kein ß-/türkisches-i-Sonderfall); der Abgleich `passt` aus R00025 bekommt dafür eine Angabe „ohne Rücksicht auf Groß/Klein“, seine Regeln und sein Verhalten ohne die Angabe bleiben unverändert. Eine Zeichenklasse trifft ein Zeichen, wenn eine seiner Schreibweisen im Bereich liegt (`[A-Z]` und `[a-z]` sind gleich).
   - Ein leerer Text oder einer nur aus Leerraum ist **keine Suche**: alle Dateien stehen da, kein Zähler, keine Meldung.
 - **Gültig:** 1 bis 200 Zeichen ohne Steuer- und Richtungszeichen (dieselbe Prüfung wie das Musterfeld, R00025). Ein ungültiger Text zeigt eine Meldung am Feld und **lässt die Liste so, wie der letzte gültige Text sie gemacht hat**. Führender und folgender Leerraum bleibt Teil des Textes (wie in R00025).
 - **Sicht, nicht Auswahl:** Nicht passende Dateien verschwinden nur aus der **Anzeige** (beide Modi, flach und Baum, mit Gruppen). Haken, Stellen, Fortschritt „n von m abgehakt“, Gruppenköpfe (b zählt alle), Beenden und der Abschnitt `## Dateien` rechnen über die **ganze** Auswahl. Der Suchtext erreicht den Server nie.
@@ -56,7 +56,7 @@ In einer KI-Änderung mit 400 Dateien will der Mensch zwischendurch „alle SQL-
 Vorbereitung: **Repo P** (neu, `user-stories/R00049.md`; Wegwerf-Ordner, nie das Projekt-Repo): Commit `p1` „Anlegen“ legt je mit einer Zeile an `README.md`, `db/001_anlegen.sql`, `db/002_aendern.sql`, `docs/api.md`, `src/app.js`, `src/data/app.sql`, `src/util.js`, `tests/app.test.js` (acht Dateien: Code 5, Tests 1, Doku 2); Commit `p2` „Ändern“ ändert `src/app.js` und `db/002_aendern.sql`. Aufruf `gitreviewA <p1> <p2> --kein-browser` (Start in „Zusammen“), wo nicht anders genannt. Die Angabe „Ebene“ nennt, wo das Kriterium geprüft wird; „Oberfläche“ heißt Integrationstest der Oberfläche gegen einen Fake-Server, nicht Playwright. Die Suche liegt **nicht** auf dem Hot Path; Playwright nur für Browser-Eigenes (Fokus, Tastatur, Neuladen, Einklappen, Zeit).
 
 ### Regel und Eingabe
-- [ ] 1. Gegeben die Pfade von Repo P, wenn man sie gegen einen Suchtext hält, dann trifft `app` genau `src/app.js`, `src/data/app.sql` und `tests/app.test.js` (Teilzeichenkette); `readme` trifft nichts, `README` trifft `README.md` (Groß und klein verschieden); `*.sql` trifft `db/001_anlegen.sql`, `db/002_aendern.sql` und `src/data/app.sql` (Dateiname auf jeder Ebene); `db/*` trifft die beiden Dateien in `db`; `src/*` trifft `src/app.js` und `src/util.js`, **nicht** `src/data/app.sql` (ein `*` bleibt im Segment); `src/?pp.js` trifft `src/app.js`. Rechnung: 3 + 0 + 1 + 3 + 2 + 2 + 1. *Ebene: Unit.*
+- [ ] 1. Gegeben die Pfade von Repo P, wenn man sie gegen einen Suchtext hält, dann trifft `app` genau `src/app.js`, `src/data/app.sql` und `tests/app.test.js` (Teilzeichenkette), `APP` dieselben drei (Groß und klein egal); `readme` und `README` treffen beide `README.md`; `*.sql` und `*.SQL` treffen beide `db/001_anlegen.sql`, `db/002_aendern.sql` und `src/data/app.sql` (Dateiname auf jeder Ebene); `db/*` trifft die beiden Dateien in `db`; `src/*` trifft `src/app.js` und `src/util.js`, **nicht** `src/data/app.sql` (ein `*` bleibt im Segment); `src/?pp.js` und `src/[A-Z]pp.js` treffen `src/app.js`. Rechnung: 3 + 3 + 1 + 1 + 3 + 3 + 2 + 2 + 1 + 1. Gegenprobe zur Gleichheit mit R00025: dort trifft `*.SQL` nichts (dort unverändert). *Ebene: Unit.*
 - [ ] 2. Gegeben die Liste mit `*.sql` (drei Dateien), wenn man das Feld leert, einen Text aus Leerraum oder einen aus genau 200 Zeichen eingibt, dann stehen bei leer und Leerraum alle acht Dateien da ohne Zähler und ohne Meldung, und der 200-Zeichen-Text wird angewendet; bei einem Text aus 201 Zeichen oder mit U+202E erscheint eine Meldung am Feld, und die Liste zeigt weiter die Treffer des letzten gültigen Textes. Der Text `⟨U+202E⟩` findet die Datei `ab⟨U+202E⟩.sql` (Name mit U+202E, nur im Fake). *Ebene: Unit (Prüfung, Regel) und Oberfläche gegen Fake (Meldung, Liste).*
 
 ### Liste, Zähler, Zusammenspiel
@@ -90,10 +90,10 @@ Grenz- und Leerfälle bedacht: leerer Text und Leerraum (Kriterium 2), 200/201 Z
 
 ### Ablauf
 
-1. **Text prüfen** — `musterFehler(text, 0)` aus R00025; Leerraum und leer sind keine Suche.
-2. **Suchlauf** — je Eintrag der gezeigten Liste: Kosten buchen, dann Abgleich (Teilzeichenkette oder `passt`); bei Überschreiten des Budgets abbrechen.
-3. **Sicht** — die gemeinsame Sicht (`abgehakte-werte.js sicht`) bekommt die Treffermenge als dritten Grund; Zähler und Leerfall aus ihr.
-4. **Zeichnen** — Liste (flach/Baum, Gruppen), Zähler im Kopf, Hinweis „gewählte Datei“; `naechste.js` und `j`/`k` lesen die gezeigte Liste.
+1. **Text prüfen** — `musterFehler(text, 0)` aus R00025; Leerraum und leer sind keine Suche. **Entschieden: Filter** (PO 2026-11-26, wie empfohlen).
+2. **Suchlauf** — je Eintrag der gezeigten Liste: Kosten buchen, dann Abgleich (Teilzeichenkette oder `passt`); bei Überschreiten des Budgets abbrechen. **Entschieden: Sicht, nicht Auswahl** (PO 2026-11-26, wie empfohlen).
+3. **Sicht** — die gemeinsame Sicht (`abgehakte-werte.js sicht`) bekommt die Treffermenge als dritten Grund; Zähler und Leerfall aus ihr. **Entschieden: `f`** (PO 2026-11-26, wie empfohlen).
+4. **Zeichnen** — Liste (flach/Baum, Gruppen), Zähler im Kopf, Hinweis „gewählte Datei“; `naechste.js` und `j`/`k` lesen die gezeigte Liste. **Entschieden: ein Feld, zwei Arten** (PO 2026-11-26, wie empfohlen).
 5. **Kürzel** — `f` öffnet die Seitenleiste bei Bedarf und fokussiert das Feld.
 
 ### Grobentwurf (Klassen-Entwurf ohne Implementierungen)
@@ -120,17 +120,17 @@ Nach Test-Pyramide, Test zuerst je Bubble; Akzeptanz gegen den reinen Baustein u
 - Abhängig von: R00025/I0013 (Muster-Abgleich, grün), R00029/I0026 (Sicht, grün), R00040/I0041 (Gruppen, grün), R00028/I0025 (nächste ungeprüfte, grün), R00030/I0015 (Katalog, grün), R00012/I0027 (Liste, grün).
 - Blockiert: nichts. Parallel baubar zu I0031 (Suche im Diff) und zu den Karten am Diff.
 
-Nicht Teil dieser Anforderung (eigene Karten, falls gewünscht): Treffer in der Liste markieren und mit Pfeilen springen (Frage 1), unscharfe Suche wie „Gehe zu Datei“ (Buchstaben in Reihenfolge), Suche unabhängig von Groß/Klein, Suche in der Dateiansicht `--dateien`, Suche im Inhalt der Dateien.
+Nicht Teil dieser Anforderung (eigene Karten, falls gewünscht): Treffer in der Liste markieren und mit Pfeilen springen (Frage 1), unscharfe Suche wie „Gehe zu Datei“ (Buchstaben in Reihenfolge), Suche in der Dateiansicht `--dateien`, Suche im Inhalt der Dateien.
 
 ## Offene Fragen
 
-An den product-owner (die Empfehlung ist vorläufig eingearbeitet und gilt bis zur Antwort):
+**Alle fünf Fragen sind vom product-owner entschieden (2026-11-26, `AI-Team/po-entscheidungen.md`).** Die Fragen 1–4 folgen der Empfehlung des planers, Frage 5 weicht ab. Der Wortlaut der Frage steht unverändert, die Entscheidung ist je Frage ergänzt:
 
 1. **Filter oder Suche mit Springen?** Empfehlung: **Filter** — nur passende Dateien stehen in der Liste. Die Liste führt die Prüfung (Vision „die Dateien führen“), bis 2 000 Dateien lassen sich durch Zeigen und Weglassen schneller überblicken als durch Springen, und der Filter nutzt die vorhandene Sicht samt Zähler, Gruppen und Navigation. So macht es der Dateifilter von GitHub (PO Zeilen 136/137). Alternative: die Liste bleibt voll, Treffer sind markiert, Enter springt zum nächsten (wie „Im Diff suchen“, R00027) — das braucht eine eigene Treffer-Navigation und lässt das Rauschen stehen.
 2. **Verhältnis zu den Haken und zum Ergebnis?** Empfehlung: **Sicht, nicht Auswahl** — m, Haken, Gruppenköpfe und das Ergebnis über die ganze Auswahl; der Zähler nennt die Suche als dritten Grund („…, c Suche“). Das folgt PO Zeile 136 (ausgeblendete Dateien zählen in m); offen ist nur der Wortlaut des Zählers und die Reihenfolge der Gründe (Muster, Suche, abgehakt). Alternative: gesuchte Dateien fallen aus m — dann ändert sich der Vertrag mit der KI.
 3. **Tastenkürzel?** Empfehlung: **`f`** (Bereich Liste), weil `/` für die Suche im Diff vergeben ist (PO Zeile 158) und `f` im Katalog frei ist (Strg-Kombinationen sind ausgeschlossen, R00030). Alternativen: `/` für die Dateiliste und eine andere Taste für den Diff (ändert eine entschiedene Zeile), oder kein Kürzel (die Suche bliebe ohne Tastaturweg, gegen „Alles per Tastatur“).
 4. **Eingabeform?** Empfehlung: **ein Feld, zwei Arten** — ohne `*`, `?`, `[` eine Teilzeichenkette („Enthält“), mit eins davon ein Muster nach R00025. So findet `app` ohne Umweg `app.js`, und der Betreiber, der „nach Mustern“ suchen will, schreibt `*.sql` oder `db/*`. Alternative: immer Muster (dann braucht „app“ ein `*app*`) oder zwei Felder.
-5. **Groß und klein?** Empfehlung: **unterscheiden**, wie R00025 und R00027 (PO Zeilen 137/145). Folge: `readme` findet `README.md` nicht; eine Suche ohne Rücksicht auf Groß/Klein (wie GitHub und „Gehe zu Datei“) wäre ein späterer Schalter — wenn der Betreiber es im Alltag vermisst.
+5. **Groß und klein?** **Entschieden (PO 2026-11-26, abweichend von der Empfehlung): nicht unterscheiden**, für Teilzeichenkette und Muster; nur die Dateisuche, R00025 und R00027 bleiben bei „unterscheiden“. Folge: `readme` findet `README.md`, `*.SQL` findet `app.sql`; ein Muster unter dem Suchfeld verhält sich damit anders als dasselbe Muster als Ausblendmuster (R00025) — dort fehlt ein Treffer nie still, hier ist ein Treffer mehr harmlos (Sicht, nicht Auswahl). Quelle: PO-Zeile in `AI-Team/po-entscheidungen.md` (Dateisuche, Groß/Klein).
 
 Ohne Rückfrage entschieden (Begründung unter „Notizen“): ein einzelner Suchtext (kein Chip), live ohne Bestätigung, Treffer gegen den Anzeigenamen (neuer Pfad bei Umbenennung), Abbruchgrenze als Aufwandsbudget, `Esc` leert, die Dateiansicht bleibt außen vor.
 
@@ -153,7 +153,7 @@ Auslöser: Der Betreiber (2026-11-25, wörtlich): „Ich möchte in der Dateilis
 ## Missing-Docs
 
 - Gestaltung des Feldes im Kopf der Dateiliste neben dem Musterfeld: zwei Eingabefelder untereinander müssen unterscheidbar sein („Dateien suchen“ gegen „Muster ausblenden“); vor dem Bauen gegen kanbanD und Material 3 (Text field, Search) prüfen — der Entwurf Fassung 2 zeigt kein Feld.
-- Belege der Referenzprodukte (GitHub-Dateifilter, VS Code „Gehe zu Datei“) sind hier nicht neu abgerufen; die GitHub-Angabe stützt sich auf die Abruf-Fundstelle in PO Zeilen 136/137 (2026-11-25), die Aussage zu VS Code (unscharf, ohne Rücksicht auf Groß/Klein, springt statt zu filtern) auf Wissen ohne Fundstelle.
+- Belege der Referenzprodukte (GitHub-Dateifilter, VS Code „Gehe zu Datei“) sind für Groß/Klein nicht durch Dokumentation belegt (GitHub-Hilfe und VS-Code-Seite zur Oberfläche sagen dazu nichts, abgerufen 2026-11-26); die Aussage „ohne Rücksicht auf Groß/Klein“ stützt sich auf das beobachtbare Verhalten beider Produkte, das der planer genannt hat, ohne Fundstelle. Die Entscheidung trägt deshalb vor allem das Nutzerargument (Teilzeichenkette beim Tippen, fehlender Treffer teurer als zusätzlicher), nicht die Referenz.
 
 ## Notizen
 
@@ -176,6 +176,8 @@ Gewählt: **1.** Die Suche ist eine Darstellung der geladenen Liste; sie braucht
 
 ### Verworfene Alternativen
 
+- **Groß und klein unterscheiden (Empfehlung des planers, gleich R00025/R00027):** `readme` fände `README.md` nicht, ein Tippfehler in der Schreibweise sähe aus wie „die Datei gibt es nicht“; vergleichbare Dateisuchen fragen nicht danach. Verworfen von PO; der Preis ist, dass Suchfeld und Musterfeld Muster verschieden lesen.
+- **Teilzeichenkette ohne Unterschied, Muster mit Unterschied:** zwei Regeln in einem Feld, je nachdem, ob ein `*` darin steht — für den Nutzer nicht vorhersehbar.
 - **Immer Muster:** `app` fände nur eine Datei, die genau so heißt; das Wort „suchen“ verspräche mehr.
 - **Suchtext als Regex:** ReDoS-Risiko, ungewohnt für Dateinamen (wie R00025).
 - **Unscharfe Suche („Gehe zu Datei“):** eigene Rangfolge und eine zweite Mustersprache; nicht beauftragt.
@@ -186,3 +188,4 @@ Gewählt: **1.** Die Suche ist eine Darstellung der geladenen Liste; sie braucht
 | Datum | Änderung | Grund |
 |---|---|---|
 | 2026-11-26 | Angelegt | Karte #33, Auftrag des Betreibers 2026-11-25 („Ich möchte in der Dateiliste gerne nach Mustern suchen können.“); Fragen 1–5 offen, Empfehlungen eingearbeitet |
+| 2026-11-26 | Fragen 1–5 entschieden (product-owner); Frage 5 abweichend: Groß/Klein nicht unterscheiden; Kriterium 1 und Regel angepasst | PO-Entscheidung Karte #33 |
