@@ -234,6 +234,16 @@
       ereignis: 'breite-geaendert',
       vor: '#diff',
     },
+    rechts: {
+      seite: 'rechts',
+      klasse: 'gr-ergebnis-trenner',
+      steuert: 'ergebnis',
+      name: 'Breite der Ergebnis-Spalte',
+      start: werte.ERGEBNIS,
+      richtung: -1,
+      ereignis: 'ergebnis-breite-geaendert',
+      vor: '.gr-ergebnis-streifen',
+    },
   };
 
   function init() {
@@ -251,6 +261,7 @@
   }
 
   const api = anlegen(SEITEN.links);
+  const ergebnisApi = anlegen(SEITEN.rechts);
 
   /** Der gemeinsame Breitenzustand für `einklappen.js` (B4104): es liest die Stellung und wechselt sie über `klappeUm`. */
   window.gitreviewaBreiten = {
@@ -260,6 +271,7 @@
     klappeUm,
   };
   window.gitreviewaBreite = api;
+  window.gitreviewaErgebnisBreite = ergebnisApi;
 
   document.addEventListener('DOMContentLoaded', init);
 }());

@@ -340,6 +340,11 @@ kbd{font:11px/1.2 var(--kd-mono);padding:1px 4px;border:1px solid var(--kd-line-
   .gr-trenner{grid-column:2;grid-row:1;align-self:stretch;cursor:col-resize;touch-action:none;background:linear-gradient(to right,transparent calc(50% - .5px),var(--kd-line-strong) calc(50% - .5px),var(--kd-line-strong) calc(50% + .5px),transparent calc(50% + .5px))}
   .gr-trenner:hover,.gr-trenner.aktiv{background:linear-gradient(to right,transparent calc(50% - .5px),var(--kd-accent) calc(50% - .5px),var(--kd-accent) calc(50% + .5px),transparent calc(50% + .5px))}
   .gr-trenner:focus-visible{outline:2px solid var(--kd-accent);outline-offset:-2px}
+  /* Der zweite Trenner (R00042, B4103): dieselbe Ziehfläche an der Grenze zwischen Diff und Ergebnis-Spalte, in Spalte 4.
+     Spalte 4 teilt sich Trenner und Streifen wie Spalte 2 links; eingeklappt gibt es ihn nicht (unten). */
+  .gr-ergebnis-trenner{grid-column:4;grid-row:1;align-self:stretch;cursor:col-resize;touch-action:none;background:linear-gradient(to right,transparent calc(50% - .5px),var(--kd-line-strong) calc(50% - .5px),var(--kd-line-strong) calc(50% + .5px),transparent calc(50% + .5px))}
+  .gr-ergebnis-trenner:hover,.gr-ergebnis-trenner.aktiv{background:linear-gradient(to right,transparent calc(50% - .5px),var(--kd-accent) calc(50% - .5px),var(--kd-accent) calc(50% + .5px),transparent calc(50% + .5px))}
+  .gr-ergebnis-trenner:focus-visible{outline:2px solid var(--kd-accent);outline-offset:-2px}
   /* Seitenleiste: die Commit-Zeile steht, die Dateiliste scrollt in ihrem eigenen Bereich */
   .gr-links{padding:var(--kd-s5);min-block-size:0;overflow:hidden}
   .gr-links>.gr-leiste{flex:none}
@@ -370,7 +375,7 @@ kbd{font:11px/1.2 var(--kd-mono);padding:1px 4px;border:1px solid var(--kd-line-
   .gr-ergebnis-streifen{grid-column:4;grid-row:1;display:flex;align-self:start;justify-self:center;inline-size:var(--gr-streifen-breite,24px);margin-block-start:var(--kd-s5);pointer-events:none;z-index:2}
   /* Die Ergebnis-Spalte (R00037): ein eigener Rollbereich rechts neben dem Diff. Der Text steht als vorformatierter Block
      (`textContent`), lange Zeilen werden umbrochen, es gibt keinen waagerechten Bildlauf. */
-  .gr-ergebnis{grid-column:5;grid-row:1;display:block;min-block-size:0;overflow-y:auto;overflow-x:hidden;padding:var(--kd-s5);border-inline-start:1px solid var(--kd-line)}
+  .gr-ergebnis{grid-column:5;grid-row:1;display:block;min-block-size:0;overflow-y:auto;overflow-x:hidden;padding:var(--kd-s5)}
   .gr-ergebnis-kopf{display:flex;align-items:baseline;gap:var(--kd-s2);margin:0 0 var(--kd-s3)}
   .gr-ergebnis-titel{margin:0;font-size:14px;font-weight:600}
   .gr-ergebnis-veraltet{font-size:12px;color:var(--kd-status-error-ink)}
@@ -391,6 +396,8 @@ kbd{font:11px/1.2 var(--kd-mono);padding:1px 4px;border:1px solid var(--kd-line-
   .gr-ansicht.gr-ergebnis-eingeklappt{grid-template-columns:var(--gr-leiste-breite,360px) var(--gr-trenner-breite,6px) minmax(0,1fr) var(--gr-streifen-breite,24px) 0}
   .gr-ansicht.gr-ergebnis-eingeklappt.gr-eingeklappt{grid-template-columns:0 var(--gr-streifen-breite,24px) minmax(0,1fr) var(--gr-streifen-breite,24px) 0}
   #ergebnis[hidden]{display:none}
+  /* Eingeklappt gibt es den rechten Trenner nicht (R00042): Spalte 4 trägt dann nur den Streifen mit dem Knopf. */
+  .gr-ansicht.gr-ergebnis-eingeklappt .gr-ergebnis-trenner{display:none}
   .gr-ansicht.gr-ergebnis-eingeklappt .gr-ergebnis-streifen{align-self:stretch;justify-self:stretch;inline-size:auto;margin-block-start:0;background:var(--kd-sunken);border-inline:1px solid var(--kd-line)}
   .gr-ansicht.gr-ergebnis-eingeklappt .gr-ergebnis-streifen .gr-einklappen{inline-size:100%;padding:var(--kd-s2) 0;border:0;border-radius:0;background:none}
   .gr-ansicht.gr-ergebnis-eingeklappt .gr-ergebnis-streifen .gr-einklappen:hover{background:var(--kd-surface)}

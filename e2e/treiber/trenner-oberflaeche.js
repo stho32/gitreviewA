@@ -154,9 +154,129 @@ async function pruefeTrennerAria(page, erwarteteBreite) {
   expect(angaben.tabindex, 'tabindex').toBe('0');
 }
 
+/* ── Die rechte Seite: der Trenner zwischen Diff und Ergebnis-Spalte (R00042) ── */
+
+const RECHTS_TRENNER = '.gr-ansicht .gr-ergebnis-trenner';
+const ERGEBNIS = '#ergebnis';
+
+/** Die gemessene Breite der Ergebnis-Spalte (R00042: „die Spalte 520 px breit“). */
+function breiteDerErgebnisSpalte(page) {
+  return page.evaluate(sel => {
+    const element = document.querySelector(sel);
+    if (!element) {
+      return null;
+    }
+    return Math.round(element.getBoundingClientRect().width);
+  }, ERGEBNIS);
+}
+
+async function pruefeErgebnisBreite(page, erwartet) {
+  const breite = await breiteDerErgebnisSpalte(page);
+  expect(breite, `Breite der Ergebnis-Spalte (${breite} px, erwartet ${erwartet} px)`).toBe(erwartet);
+}
+
+/** Alle Angaben des rechten Trennzugs, die der Vorleser braucht, in einem Zug. */
+function rechterTrennerAngaben(page) {
+  return page.evaluate(sel => {
+    const element = document.querySelector(sel);
+    if (!element) {
+      return null;
+    }
+    return {
+      rolle: element.getAttribute('role'),
+      orientierung: element.getAttribute('aria-orientation'),
+      steuert: element.getAttribute('aria-controls'),
+      jetzt: element.getAttribute('aria-valuenow'),
+      min: element.getAttribute('aria-valuemin'),
+      max: element.getAttribute('aria-valuemax'),
+      name: element.getAttribute('aria-label'),
+      tabindex: element.getAttribute('tabindex'),
+      fokussiert: document.activeElement === element,
+      sichtbar: element.getClientRects().length > 0,
+    };
+  }, RECHTS_TRENNER);
+}
+
+/** Ist der rechte Trenner vorhanden (im DOM)? Eingeklappt gibt es ihn nicht. */
+function rechterTrennerVorhanden(page) {
+  return page.locator(RECHTS_TRENNER).count();
+}
+
+/** Zieht den rechten Trenner mit der Maus um `deltaX` px (negativ = nach links, die Spalte wächst). */
+async function rechtesZiehen(page, deltaX, { schritte = 5 } = {}) {
+  const box = await page.locator(RECHTS_TRENNER).boundingBox();
+  const mitte = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  await page.mouse.move(mitte.x, mitte.y);
+  await page.mouse.down();
+  await page.mouse.move(mitte.x + deltaX, mitte.y, { steps: schritte });
+  await page.mouse.up();
+}
+
+/** Doppelklick auf den rechten Trenner. */
+async function rechtesDoppelklick(page) {
+  await page.locator(RECHTS_TRENNER).dblclick();
+}
+
+/** Den rechten Trenner per Tastatur fokussieren (programmatischer Fokus plus eine Tastaturbewegung, damit `:focus-visible` gilt). */
+async function fokussiereRechtenTrenner(page) {
+  await page.locator(RECHTS_TRENNER).focus();
+  await page.keyboard.press('Shift+Tab');
+  await page.keyboard.press('Tab');
+}
+
+/** Die ARIA-Angaben des rechten Trennzugs; der Name ist „Breite der Ergebnis-Spalte“. */
+async function pruefeRechterTrennerAria(page, erwarteteBreite) {
+  const angaben = await rechterTrennerAngaben(page);
+  expect(angaben, 'rechter Trenner vorhanden').not.toBeNull();
+  expect(angaben.rolle, 'role').toBe('separator');
+  expect(angaben.orientierung, 'aria-orientation').toBe('vertical');
+  expect(angaben.steuert, 'aria-controls auf die Ergebnis-Spalte').toBe('ergebnis');
+  expect(Number(angaben.jetzt), 'aria-valuenow').toBe(erwarteteBreite);
+  expect(Number(angaben.min), 'aria-valuemin').toBe(240);
+  expect(Number(angaben.max), 'aria-valuemax').toBeGreaterThanOrEqual(240);
+  expect(angaben.name, 'Name').toBe('Breite der Ergebnis-Spalte');
+  expect(angaben.tabindex, 'tabindex').toBe('0');
+}
+
+/** Die Lage von Diff und Ergebnis-Spalte (Breiten und die Grenze dazwischen). */
+function lageRechts(page) {
+  return page.evaluate(([diff, ergebnis]) => {
+    const d = document.querySelector(diff).getBoundingClientRect();
+    const e = document.querySelector(ergebnis).getBoundingClientRect();
+    return {
+      diffBreite: Math.round(d.width),
+      diffRechts: Math.round(d.right),
+      ergebnisBreite: Math.round(e.width),
+      ergebnisLinks: Math.round(e.left),
+    };
+  }, [DIFF, ERGEBNIS]);
+}
+
+/** Wartet, bis die Ergebnis-Spalte der aktuellen Fenstergröße folgt: `hidden` und `aria-valuenow` stimmen mit der einen
+    Breitenregel überein (kein Zustand von gestern, keine feste Zeit). Unter 566 px gilt die eine Spalte: dann steht die Spalte
+    ohne Trenner (R00033). */
+async function warteAufSpalte(page) {
+  await expect.poll(
+    () => page.evaluate(() => {
+      const zwei = window.gitreviewaTrennerWerte.passtZweiSpaltig(window.innerWidth);
+      const gezeigt = window.gitreviewaBreiten.gezeigt();
+      const spalte = document.getElementById('ergebnis');
+      const trenner = document.querySelector('.gr-ansicht .gr-ergebnis-trenner');
+      if (!zwei) {
+        return spalte !== null && spalte.hidden === false && trenner === null;
+      }
+      return spalte !== null && spalte.hidden === gezeigt.rechtsEin && trenner !== null
+        && Number(trenner.getAttribute('aria-valuenow')) === gezeigt.rechts;
+    }),
+    'die Ergebnis-Spalte folgt der Fenstergröße'
+  ).toBe(true);
+}
+
 module.exports = {
-  SEITENLEISTE, TRENNER, DIFF,
+  SEITENLEISTE, TRENNER, DIFF, RECHTS_TRENNER, ERGEBNIS,
   breiteDerSeitenleiste, pruefeBreite, trennerAngaben, trennerVorhanden, warteAufGroesse, fokusAufTrenner,
   ziehen, doppelklick, fokussiereTrenner, fokusring, zaehleDiffAnfragen, lageSeitenleiste,
   pruefeTrennerVorhanden, pruefeTrennerAnDerGrenze, pruefeTrennerAria,
+  breiteDerErgebnisSpalte, pruefeErgebnisBreite, rechterTrennerAngaben, rechterTrennerVorhanden,
+  rechtesZiehen, rechtesDoppelklick, fokussiereRechtenTrenner, pruefeRechterTrennerAria, lageRechts, warteAufSpalte,
 };

@@ -13,6 +13,7 @@ function breiteSprache(seit, page) {
     fensterSetzen: async fenster => {
       await seit.fensterSetzen(fenster);
       await trenner.warteAufGroesse(page);
+      await trenner.warteAufSpalte(page);
     },
 
     /* ── Breite lesen und setzen ── */
@@ -38,6 +39,18 @@ function breiteSprache(seit, page) {
       }
     },
     valuenow: async () => Number((await trenner.trennerAngaben(page)).jetzt),
+
+    /* ── Die rechte Seite: die Ergebnis-Spalte ziehen und ihre ARIA-Angaben (R00042, B4103) ── */
+    spalteBreite: () => trenner.breiteDerErgebnisSpalte(page),
+    spalteBreiteIst: erwartet => trenner.pruefeErgebnisBreite(page, erwartet),
+    rechtesZiehen: (deltaX, optionen) => trenner.rechtesZiehen(page, deltaX, optionen),
+    rechtesDoppelklick: () => trenner.rechtesDoppelklick(page),
+    fokussiereRechtenTrenner: () => trenner.fokussiereRechtenTrenner(page),
+    rechterTrennerVorhanden: () => trenner.rechterTrennerVorhanden(page),
+    rechterTrennerAngaben: () => trenner.rechterTrennerAngaben(page),
+    rechterTrennerAria: erwartet => trenner.pruefeRechterTrennerAria(page, erwartet),
+    rechteLage: () => trenner.lageRechts(page),
+    rechterValuenow: async () => Number((await trenner.rechterTrennerAngaben(page)).jetzt),
 
     /* ── Neuladen ── */
     neuLaden: async () => {
