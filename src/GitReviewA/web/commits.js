@@ -174,9 +174,12 @@
     const anzahl = zustand.dateienAnzahl;
     if (anzahl === undefined) {
       element.textContent = `${zustand.commits.length} Commits`;
+      element.title = element.textContent;
       return;
     }
     element.textContent = window.gitreviewaModusWerte.kopfZahlen(zustand.commits.length, anzahl);
+    // Bei Platzmangel kürzt das CSS sichtbar mit „…“; der volle Text steht im Namen (R00050, Kriterium 15).
+    element.title = element.textContent;
   }
 
   function zeichneZusammenfassung() {

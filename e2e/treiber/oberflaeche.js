@@ -158,6 +158,12 @@ async function zusammenAntwortScheitert(page, status) {
   });
 }
 
+/** Setzt die Fenstergröße und wartet auf den eingeschwungenen Aufbau (zwei Animationsbilder). */
+async function fensterSetzen(page, breite, hoehe) {
+  await page.setViewportSize({ width: breite, height: hoehe });
+  await page.evaluate(() => new Promise(fertig => requestAnimationFrame(() => requestAnimationFrame(fertig))));
+}
+
 /** Lädt die Seite neu; das Neuladen beginnt im Standard der Seite, ein Startmodus (Init-Skript) gilt weiter. */
 async function neuLaden(page, modus = null) {
   await page.reload();
@@ -645,7 +651,7 @@ module.exports = {
   dateiwahlenSammeln, gesammelteDateiwahlen, formatierungsElementeZaehlen,
   beendenKnopf, abbrechenKnopf, beendenDialog, beendenDialogTitel, beendenDialogZeilen, beendenDialogKnopf, beendenDialogFehler,
   beendenDialogOeffnen, abbrechenDialogOeffnen, beendenDialogBestaetigen,
-  beendenBetaetigen, beendenBetaetigenBinnen, aufgabenSammeln, pruefeAufgabenNachAnzeige, pruefeAufgabenZaehler, beendetMeldung, beendenFehler, beendenScheitertMit, modusWaehlen, neuLaden,
+  beendenBetaetigen, beendenBetaetigenBinnen, aufgabenSammeln, pruefeAufgabenNachAnzeige, pruefeAufgabenZaehler, beendetMeldung, beendenFehler, beendenScheitertMit, modusWaehlen, neuLaden, fensterSetzen,
   kopfZahlen, fortschrittZaehler, commitZeileZusammenfassung, commitZeileText, pruefeKopfZahlen, pruefeFortschritt, pruefeCommitZeileZusammenfassung,
   pruefeCommitZeileEnthaelt, pruefeCommitZeileEnthaeltNicht, zusammenAntwortVerzoegern, zusammenAntwortScheitert,
   commitZeileAufklappen, commitZeileZuklappen, pruefeCommitZeileUeberDerListe,

@@ -6,6 +6,8 @@ const os = require('os');
 const path = require('path');
 const base = require('@playwright/test');
 const repos = require('../treiber/wegwerf-repo.js');
+const diffRepos = require('../treiber/diff-repos.js');
+const fremdeNamen = require('../treiber/fremde-namen-repo.js');
 const { repoAnlegen, repoEntfernen } = repos;
 const { imHintergrundStarten, pruefeSigintIgnoriert } = require('../treiber/hintergrund-start.js');
 const { programmStarten, adresseAbwarten, programmBeenden, lauschendeAdressen } = require('../treiber/programm.js');
@@ -50,6 +52,16 @@ function welt() {
 
   function repoMitDateien(dateien) {
     return gemerkt(repos.repoMitDateienAnlegen(dateien));
+  }
+
+  /** Repo Z der Anforderungen R00012/R00050 (`z1`, `z2`, `z3`; drei Dateien). */
+  function repoZ() {
+    return gemerkt(diffRepos.repoZ(path.join(eigenerOrdner(), 'repo-z')));
+  }
+
+  /** Repo N plus `v` (R00014, nur Linux): zehn Stellen, drei gesperrt. */
+  function repoNMitV() {
+    return gemerkt(fremdeNamen.repoNMitV(path.join(eigenerOrdner(), 'repo-n')));
   }
 
   function repoMitFremdemText(angaben) {
@@ -352,7 +364,7 @@ function welt() {
     beendetMeldung: oberflaeche.beendetMeldung,
     beendenFehler: oberflaeche.beendenFehler,
     beendenScheitertMit: oberflaeche.beendenScheitertMit,
-    eigenerOrdner, gemerktesRepo, repoMitVorbereitung, repoMitDateien, repoMitFremdemText, repoMitUnterordner, repoMitVielenCommits, repoMitGrossemCommit, commitObjektEntfernen,
+    eigenerOrdner, gemerktesRepo, repoZ, repoNMitV, repoMitVorbereitung, repoMitDateien, repoMitFremdemText, repoMitUnterordner, repoMitVielenCommits, repoMitGrossemCommit, commitObjektEntfernen,
     // Der Standard der Seite ist „Zusammen“ (B1108). Eine Spec, die den Ablauf in „Einzeln“ prüft, startet dort ohne Wechsel-Ereignis
     // (ein Wechsel würde die erste Datei wählen); `modus` `null` lässt den Standard gelten. Der Startmodus ist ein Eingabewert der
     // Seite (modus.js).

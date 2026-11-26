@@ -150,3 +150,4 @@ Nie vom User erfragen.
 | 2026-11-26 | R00050 Beenden und Abbrechen im Kopf | I0028 B4602 Dialog zeigen und bedienen | unklar | 2-4h | 1,0h | 1,0h | autonom |
 | 2026-11-26 | R00050 Beenden und Abbrechen im Kopf | I0028 B4604 Knöpfe, Kürzel und Endzustände | unklar | 2-4h | 0,9h | 0,9h | autonom |
 | 2026-11-26 | R00050 Beenden und Abbrechen im Kopf | I0028 B4605 Bestehende Specs und Treiber umziehen | Standard | 2h | 0,5h | 0,5h | autonom |
+| 2026-11-26 | R00050 Beenden und Abbrechen im Kopf | I0028 B4606 Tests und Wegwerf-Repos | unklar | 2-4h | 1,2h | 1,2h | autonom |
