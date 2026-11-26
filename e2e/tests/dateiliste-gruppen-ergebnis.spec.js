@@ -39,5 +39,7 @@ test.describe('Ergebnis unverändert', () => {
     expect(gruppen.ergebnis()).toBe(erwartet);
     // Keine Gruppennamen und keine Gruppenköpfe im Ergebnis (die Sicht bleibt in der Oberfläche).
     expect(gruppen.ergebnis()).not.toMatch(/^(Code|Tests|Doku)\b/m);
+    // Das Gruppieren ist rein Browser: nichts darüber auf stderr (NFA Logging).
+    expect(gruppen.stderr()).not.toMatch(/^(Code|Tests|Doku)\b/m);
   });
 });

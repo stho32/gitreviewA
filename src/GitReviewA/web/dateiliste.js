@@ -237,12 +237,12 @@
     titelElement.className = 'gruppe-titel';
     titelElement.setAttribute('role', 'heading');
     titelElement.setAttribute('aria-level', '2');
-    titelElement.append(textElement('gruppe-name', gruppe.name), document.createTextNode(' '), textElement('gruppe-zaehler', zaehlerText(gruppe, zaehler)));
+    titelElement.append(textElement('gruppe-name', gruppe.name), document.createTextNode(' '), textElement('gruppe-zaehler', zaehlerFuer(gruppe, zaehler)));
     element.append(titelElement);
     return element;
   }
 
-  function zaehlerText(gruppe, zaehler) {
+  function zaehlerFuer(gruppe, zaehler) {
     const gefunden = zaehler.find(eintrag => eintrag.schluessel === gruppe.schluessel);
     return gefunden ? gefunden.text : '';
   }

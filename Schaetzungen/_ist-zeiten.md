@@ -83,3 +83,9 @@ Nie vom User erfragen.
 | 2026-11-26 | R00037 Ergebnis-Spalte live | B3604 Ergebnis-Spalte einklappen | unklar | 2-4h | 0,5h | 0,5h | autonom |
 | 2026-11-26 | R00037 Ergebnis-Spalte live | B3605 Drei Bereiche in der Breite | unklar | 2-4h | 0,5h | 0,5h | autonom |
 | 2026-11-26 | R00037 Ergebnis-Spalte live | B3606 Tests und abgeloeste Zusage | unklar | 2-4h | 0,4h | 0,4h | autonom |
+
+| 2026-11-26 | R00040 Dateiliste nach Gruppen | B3901 Gruppenregel | klar | 2h | 0,05h | 0,05h | autonom |
+| 2026-11-26 | R00040 Dateiliste nach Gruppen | B3903 Fortschritt je Gruppe | klar | 2h | 0,02h | 0,02h | autonom |
+| 2026-11-26 | R00040 Dateiliste nach Gruppen | B3902 Gruppen in der Liste | unklar | 2-4h | 0,25h | 0,25h | autonom |
+| 2026-11-26 | R00040 Dateiliste nach Gruppen | B3904 Navigation in Gruppenreihenfolge | unklar | 2-4h | 0,05h | 0,05h | autonom |
+| 2026-11-26 | R00040 Dateiliste nach Gruppen | B3905 Tests und Wegwerf-Repos | unklar | 2-4h | 0,05h | 0,05h | autonom |
