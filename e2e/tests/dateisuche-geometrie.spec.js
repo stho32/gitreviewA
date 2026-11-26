@@ -43,6 +43,18 @@ test.describe('Breite des Suchfelds am Behälter (B4801: Kriterium 1, Vorarbeit)
       expect(lage.feld.rechts, `rechte Feldkante (${JSON.stringify(lage)})`).toBeLessThanOrEqual(lage.leiste.innenRechts);
     });
   }
+
+  // Die alte Regel band die Obergrenze an den Viewport (60vw): im schmalen Fenster (eine Spalte, R00033) wurde das Feld 240 px
+  // breit, obwohl sein Behälter 16rem trägt. Die Behälterbindung hält den Startwert 16rem — hier ist der Unterschied messbar.
+  test('soll den Startwert 16rem am Behälter messen, nicht am Viewport (400 px: 256 statt 60vw)', async ({ dateisuche }) => {
+    await dateisuche.starten();
+    await dateisuche.fensterSetzen({ width: 400, height: 800 });
+
+    const lage = await messung(dateisuche);
+
+    expect(lage.feld.breite, `16rem = 256 px im schmalen Fenster (${JSON.stringify(lage)})`).toBe(256);
+    expect(lage.feld.rechts, `rechte Feldkante (${JSON.stringify(lage)})`).toBeLessThanOrEqual(lage.leiste.innenRechts);
+  });
 });
 
 test.describe('Abnahme-Probe des Entwicklertesters (B4803: Kriterium 1)', () => {

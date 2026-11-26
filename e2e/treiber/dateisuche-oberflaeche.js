@@ -120,7 +120,7 @@ function lage(page) {
     const feldzeile = document.querySelector(feldzeileSel);
     const feld = document.querySelector(feldSel);
     const knopf = document.querySelector(knopfSel);
-    if (!leiste || !suchzeile || !feldzeile || !feld || !knopf) {
+    if (!leiste || !suchzeile || !feldzeile || !feld) {
       return null;
     }
     const rechteck = element => {
@@ -144,7 +144,7 @@ function lage(page) {
       suchzeile: rechteck(suchzeile),
       feldzeile: rechteck(feldzeile),
       feld: rechteck(feld),
-      knopf: rechteck(knopf),
+      knopf: knopf ? rechteck(knopf) : null,
       trefferFeld: amFeld(treffer),
       treffer: beschreibe(treffer),
       kanteAmFeld: amFeld(document.elementFromPoint(f.right - 1, mitte)),
