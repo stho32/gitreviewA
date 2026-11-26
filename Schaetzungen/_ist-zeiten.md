@@ -137,3 +137,4 @@ Nie vom User erfragen.
 | 2026-11-26 | R00048 Commit-Angaben unverfälscht und begrenzt lesen | I0049 B4407 „Datum nicht lesbar“ in der Leiste | Standard | 2h | 0,1h | 0,1h | autonom |
 | 2026-11-26 | R00048 Commit-Angaben unverfälscht und begrenzt lesen | I0049 B4404 „zu groß“ in Dateiliste, Zusammen, Haken und Ergebnis | unklar | 2-4h | 0,3h | 0,3h | autonom |
 | 2026-11-26 | R00048 Commit-Angaben unverfälscht und begrenzt lesen | Nacharbeit Security-Review F16 (Datum `Z` in UTC) und Code-Review H1 (Diff/Sprung/Bild) und H2 (stderr-Kappung) | Bug-Fix | – | 0,5h | – | autonom |
+| 2026-11-26 | R00048 Commit-Angaben unverfälscht und begrenzt lesen | Nacharbeit Entwicklertest: nicht auflösbares Hexpräfix mit 4–6 Stellen (Exit 134) | Bug-Fix | – | 0,1h | – | autonom |
