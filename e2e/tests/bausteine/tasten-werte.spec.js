@@ -315,3 +315,27 @@ test.describe('Baustein Tasten-Werte — Menü „Ansicht ▾“ (R00039)', () =
     }
   });
 });
+
+// R00039 (B3): dasselbe Kürzel `w` steht in beiden Laufarten an einem anderen Bedienelement — Review im Menüknopf,
+// Dateiansicht am Umbruch-Schalter. Das `ziel` des Katalogs muss je Laufart das vorhandene Element nennen.
+test.describe('Baustein Tasten-Werte — Ziel je Laufart (R00039)', () => {
+  const UMBRUCH = werte.EINTRAEGE.find(eintrag => eintrag.aktion === 'umbruchWechseln');
+
+  test('soll das Ziel eines Eintrags je Laufart nennen — Review Menüknopf, Dateiansicht Umbruch-Schalter', () => {
+    expect(werte.zielFuer(UMBRUCH, lage({ laufart: werte.REVIEW })), 'Review').toBe('#ansicht-knopf');
+    expect(werte.zielFuer(UMBRUCH, lage({ laufart: werte.DATEIANSICHT })), 'Dateiansicht').toBe('#da-umbruch');
+    expect(werte.zielFuer(UMBRUCH, lage()), 'ohne Laufart der Review-Ort').toBe('#ansicht-knopf');
+  });
+
+  test('soll die Hinweise je Laufart an das vorhandene Element binden', () => {
+    const review = werte.hinweise({ laufart: werte.REVIEW });
+    const menu = review.find(hinweis => hinweis.selektor === '#ansicht-knopf');
+    expect(menu, 'Review: Hinweis am Menüknopf').toBeTruthy();
+    expect(menu.anzeige).toEqual(['s', 'v', 'w', 'l']);
+    expect(review.some(hinweis => hinweis.selektor === '#da-umbruch'), 'Review kennt den Umbruch-Schalter nicht').toBe(false);
+
+    const datei = werte.hinweise({ laufart: werte.DATEIANSICHT });
+    const schalter = datei.find(hinweis => hinweis.selektor === '#da-umbruch');
+    expect(schalter, 'Dateiansicht: Hinweis am Umbruch-Schalter').toEqual({ selektor: '#da-umbruch', anzeige: ['w'], aria: 'w' });
+  });
+});
