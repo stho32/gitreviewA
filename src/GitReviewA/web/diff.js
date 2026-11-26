@@ -181,7 +181,7 @@
     zustand.aufgedeckt = {};
     zustand.lueckenfehler = {};
     const vorherGezeichnet = zustand.gezeichnet;
-    zustand.gezeichnet = { commit: datei.commit, pfad: datei.pfad, zeilen: [] };
+    zustand.gezeichnet = { commit: datei.commit, pfad: datei.pfad, zeilen: [], tabelle: null };
     const istDieselbeStelle = vorherGezeichnet !== null && vorherGezeichnet.commit === datei.commit && vorherGezeichnet.pfad === datei.pfad;
     if (!istDieselbeStelle) {
       zustand.sprung = null;
@@ -627,6 +627,7 @@
     const gezeichneteZeilen = teile.filter(teil => teil.zeile).map(teil => teil.zeile);
     if (zustand.gezeichnet) {
       zustand.gezeichnet.zeilen = gezeichneteZeilen;
+      zustand.gezeichnet.tabelle = null;
     }
     const name = bereichsname(antwort);
     const sammelElement = document.createDocumentFragment();
@@ -659,6 +660,7 @@
       // Die gezeichnete Folge samt den aufgedeckten Zeilen ist wie einspaltig die eine Quelle für Links, Färbung und die
       // Wahl der Sprungzeile (R00026, Befund B1).
       zustand.gezeichnet.zeilen = aufbau.zeilen;
+      zustand.gezeichnet.tabelle = aufbau.tabelle;
     }
     ansicht.rollElement.setAttribute('aria-label', name);
     ansicht.rollElement.replaceChildren(aufbau.sammelElement);
@@ -1083,11 +1085,25 @@
 
   /* ── Sprung in VS Code (R00021): Links an Zeilen und Abschnittsköpfen, Verweis und Hinweis im Kopf ── */
 
-  /** Übernimmt die Antwort aus `sprung.js`; ohne Ziel bleibt der Verweis verborgen und der Kopf zeigt den Grund. */
+  /** Übernimmt die Antwort aus `sprung.js`; ohne Ziel bleibt der Verweis verborgen und der Kopf zeigt den Grund. Die Antwort
+      kann vor oder nach dem Zeichnen eintreffen: der Setzer muss zur gezeichneten Anordnung passen — einspaltig Zeilen, zweispaltig
+      Tabellenzeilen (sonst verschieben Paarungen die Indizes und Links fehlen). */
   function uebernehmeSprung(ansicht, sprung) {
     zustand.sprung = sprung;
-    setzeSprunglinks(ansicht);
+    setzeSprunglinksZurAnsicht(ansicht);
     aktualisiereSprungkopf(ansicht);
+  }
+
+  /** Setzt die Sprunglinks in der gerade gezeichneten Anordnung: einspaltig je Zeile, zweispaltig je Tabellenzeile. */
+  function setzeSprunglinksZurAnsicht(ansicht) {
+    if (istNebeneinander()) {
+      const gezeichnet = zustand.gezeichnet;
+      if (gezeichnet && gezeichnet.tabelle) {
+        setzeSprunglinksNeben(ansicht, gezeichnet.tabelle, gezeichnet.zeilen);
+      }
+      return;
+    }
+    setzeSprunglinks(ansicht);
   }
 
   /** Merkt die angeklickte Zeile als gewählte für den Verweis im Kopf. */
