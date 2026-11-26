@@ -474,17 +474,39 @@ internal static class GitLeser
         return anfang;
     }
 
+    /// <summary>
+    /// Mehrere Bereiche in zwei Lesungen (L1/Kriterium 10): erst nur die Reihenfolge — eine Lesung mit `%H` und der Ordnung
+    /// `--date-order` wie bisher —, dann die Angaben **nur der Auswahl** in einer zweiten, begrenzten Lesung über den einen Leseweg
+    /// (`--no-walk=unsorted` gibt sie in der gelesenen Reihenfolge aus). Die Grenze zählt damit die Auswahl, nicht den Verlauf
+    /// zwischen den Bereichen: die Angaben der Commits dazwischen liest niemand (vorher las derselbe Weg sie ganz).
+    /// </summary>
     private static Commitzeilen LeseNeuesteZuerst(CommitHashes hashes, CommitHashes gemeinsameVorfahren, string arbeitsordner, Ausgabegrenze grenze)
     {
-        var start = GitLogMitFormat(arbeitsordner);
+        var reihenfolge = LeseReihenfolge(hashes, gemeinsameVorfahren, arbeitsordner, grenze);
+        var istLeer = reihenfolge.Anzahl == 0;
+        if (istLeer)
+        {
+            return new Commitzeilen([]);
+        }
+        var angaben = Ausfuehren(GitLogStart(reihenfolge, arbeitsordner), "git log", grenze);
+        return GitLogAusgabe.Zerlegen(angaben);
+    }
+
+    /// <summary>Die Reihenfolge der Auswahl (neueste zuerst, Kind vor Eltern wie `--date-order`) — gelesen wird nur der Hash.</summary>
+    private static CommitHashes LeseReihenfolge(CommitHashes hashes, CommitHashes gemeinsameVorfahren, string arbeitsordner, Ausgabegrenze grenze)
+    {
+        var start = GitStart.Im(arbeitsordner);
+        start.ArgumentList.Add("log");
+        start.ArgumentList.Add("--no-color");
+        start.ArgumentList.Add("--format=%H");
         start.ArgumentList.Add("--date-order");
         start.ArgumentList.Add("--end-of-options");
-        var hashesUnabhaengigVonDerBereichsreihenfolge = new SortedSet<string>(StringComparer.Ordinal);
+        var vereinigung = new SortedSet<string>(StringComparer.Ordinal);
         foreach (var hash in hashes)
         {
-            hashesUnabhaengigVonDerBereichsreihenfolge.Add(hash);
+            vereinigung.Add(hash);
         }
-        foreach (var hash in hashesUnabhaengigVonDerBereichsreihenfolge)
+        foreach (var hash in vereinigung)
         {
             start.ArgumentList.Add(hash);
         }
@@ -493,22 +515,17 @@ internal static class GitLeser
             start.ArgumentList.Add($"^{vorfahr}");
         }
         start.ArgumentList.Add("--");
-        var verlauf = GitLogAusgabe.Zerlegen(Ausfuehren(start, "git log", grenze));
-        return NurDieAusDerVereinigung(verlauf, hashesUnabhaengigVonDerBereichsreihenfolge);
-    }
-
-    private static Commitzeilen NurDieAusDerVereinigung(Commitzeilen verlauf, SortedSet<string> vereinigung)
-    {
-        var auswahl = new List<Commitzeile>();
-        foreach (var zeile in verlauf)
+        var ausgabe = Ausfuehren(start, "git log", grenze);
+        var inDerVereinigung = new List<string>();
+        foreach (var zeile in ausgabe.Split('\n', StringSplitOptions.RemoveEmptyEntries))
         {
-            var gehoertZurVereinigung = vereinigung.Contains(zeile.Hash);
+            var gehoertZurVereinigung = vereinigung.Contains(zeile);
             if (gehoertZurVereinigung)
             {
-                auswahl.Add(zeile);
+                inDerVereinigung.Add(zeile);
             }
         }
-        return new Commitzeilen(auswahl);
+        return new CommitHashes(inDerVereinigung);
     }
 
     private static ProcessStartInfo GitDiffNettoStart(string basis, string spitze, string arbeitsordner)

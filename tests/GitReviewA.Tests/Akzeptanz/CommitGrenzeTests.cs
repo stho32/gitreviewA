@@ -114,6 +114,19 @@ public class CommitGrenzeTests
         Assert.That(zeilen[0], Does.Not.Contain("Riesig"), "kein Text aus dem Commit");
     }
 
+    [Test]
+    [Description("Kriterium 10 (L1): Auswahl a..b c..d aus 3 000 Commits — der Lauf startet, der Verlauf dazwischen wird nicht gelesen")]
+    public void Wenn_zwei_weit_auseinanderliegende_Bereiche_dann_startet_mit_der_Auswahl()
+    {
+        using var l = CommitRepo.L();
+        var auswahl = CommitSprache.AusBereichen($"{l.Hash("a")}..{l.Hash("b")}", $"{l.Hash("c")}..{l.Hash("d")}");
+
+        var folge = CommitSprache.Laufe(l.Ordner, auswahl, new StringWriter(), string.Empty, new Ausgabegrenze(256 * 1024));
+
+        Assert.That(folge.IstErfolg, Is.True, $"die Lesung des Verlaufs sprengt die Grenze ({folge.Fehler?.Meldung})");
+        Assert.That(folge.Commits!.Anzahl, Is.EqualTo(CommitRepo.AuswahlZahlInL), "die 20 Commits der Auswahl");
+    }
+
     private static bool IstSteuerOderFormatzeichen(char zeichen)
     {
         var kategorie = char.GetUnicodeCategory(zeichen);
