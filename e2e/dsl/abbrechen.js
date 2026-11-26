@@ -27,6 +27,19 @@ function abbruchSprache(gr) {
     return signale.pruefeAbbruchOhneErgebnis(lauf);
   }
 
+  /**
+   * Strg+C und die Abbruchanforderung zusammen (R00050, Kriterium 10): beide gehen denselben Einmal-Schalter, die Abbruchzeile
+   * bleibt einmal. Die Anforderung kann den fallenden Server nicht mehr erreichen — dann ist die Antwort `null`.
+   */
+  async function mitStrgCUndAbbruchanforderung(lauf) {
+    signale.signalSenden(lauf, signale.STRG_C);
+    try {
+      return await gr.abbrechenAnfordern(lauf);
+    } catch {
+      return null;
+    }
+  }
+
   function sollWeiterlaufen(lauf) {
     signale.pruefeLaeuftOhneErgebnis(lauf);
   }
@@ -60,6 +73,7 @@ function abbruchSprache(gr) {
 
   return {
     mitStrgCAbbrechen, mitBeendigungssignalAbbrechen, mitStrgCAbbrechenUndDauerMessen, sollOhneErgebnisAbgebrochenSein, sollWeiterlaufen,
+    mitStrgCUndAbbruchanforderung,
     waehrendDesStartsMitStrgCAbbrechen, tabSchliessen, oberflaecheInNeuemTabOeffnen, aufraeumen,
   };
 }

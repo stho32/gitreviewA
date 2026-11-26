@@ -121,6 +121,18 @@ test.describe('Review abbrechen', () => {
     await abbruch.sollOhneErgebnisAbgebrochenSein(lauf);
   });
 
+  test('soll bei Strg+C und Abbruchanforderung zusammen die Abbruchzeile genau einmal nennen und mit 130 enden (R00050, Kriterium 10)', async ({ gr, abbruch }) => {
+    const repo = gr.repoMitCommits();
+    const lauf = await gr.gitreviewAStarten(repo, [repo.hashes[0]]);
+
+    const antwort = await abbruch.mitStrgCUndAbbruchanforderung(lauf);
+
+    if (antwort !== null) {
+      expect(antwort.zustand, 'Antwort der Abbruchanforderung').toBe('abgebrochen');
+    }
+    await abbruch.sollOhneErgebnisAbgebrochenSein(lauf);
+  });
+
   test('soll einen nie ganz ankommenden Körper nicht als Abbruch nehmen und danach die Positivkontrolle wirken lassen (R00050, Kriterium 12)', async ({ gr, abbruch }) => {
     const repo = gr.repoMitCommits();
     const lauf = await gr.gitreviewAStarten(repo, [repo.hashes[0]]);
