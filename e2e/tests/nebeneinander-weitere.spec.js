@@ -207,6 +207,19 @@ test.describe('Nebeneinander-Ansicht — Färbung, große Dateien, Anmerken', ()
     expect(await neben.sprungzeileImVerborgenen(18), 'fokussierbarer Link in einer verborgenen Zelle nach dem Zyklus').toBe(false);
   });
 
+  test('Kriterium 12: eine späte Sprungantwort setzt die Links auch in der Nebeneinander-Ansicht', async ({ neben }) => {
+    await neben.starten({ vorbereitung: 'Repo A', commits: ['q', 'p'], modus: 'einzeln' });
+    await neben.anordnungWaehlen('nebeneinander');
+    const verzoegert = await neben.sprungAntwortVerzoegern('lang.txt', 1500);
+    await neben.dateiAnsehen('lang.txt');
+    await verzoegert.eingetroffen();
+
+    await neben.sprungzeile(18, 'lang.txt Zeile 18, in VS Code öffnen');
+    expect(await neben.sprungzeileImVerborgenen(18), 'fokussierbarer Link in einer verborgenen Zelle').toBe(false);
+    await neben.sprungzeile(3, 'lang.txt Zeile 3, in VS Code öffnen');
+    expect(await neben.sprungzeileImVerborgenen(3), 'fokussierbarer Link einer hinzugefügten Zeile').toBe(false);
+  });
+
   test('Kriterium 14: 20 000 Zeilen zweispaltig stehen spätestens 5 s nach dem Umschalten (Anzeige-Schranke)', async ({ neben }) => {
     await neben.starten({ vorbereitung: 'Eine Zeile in 20 000', commits: ['v'] });
     await neben.dateiAnsehen('gross.txt');

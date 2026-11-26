@@ -90,6 +90,8 @@ function nebenSprache(gr, page) {
     umbruchIst: stellung => diffSeite.pruefeUmbruchStellung(page, stellung),
     sprungzeile: (neu, name) => nebenSeite.pruefeSprungzeile(page, neu, name),
     sprungzeileImVerborgenen: neu => nebenSeite.sprungzeileLiegtImVerborgenen(page, neu),
+    /** Verzögert die Sprungantwort für `pfad`; vor dem Wählen der Datei aufrufen, `eingetroffen` abwarten. */
+    sprungAntwortVerzoegern: (pfad, ms) => diffSeite.sprungAntwortVerzoegern(page, pfad, ms),
     sprunglinks: () => nebenSeite.sprunglinksZaehlen(page),
     anordnungKlicken: wert => nebenSeite.anordnungKlicken(page, wert),
     paarBinnen: (links, rechts, fristMs) => nebenSeite.pruefePaarBinnen(page, () => nebenSeite.anordnungKlicken(page, 'nebeneinander'), links, rechts, fristMs),
