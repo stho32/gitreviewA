@@ -58,3 +58,4 @@ zuletzt: 2026-11-26
 | I0044 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | Betreiberfall SQL und S1–S2 (R00043), Karte #42 |
 | I0038 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | Szenarien R00037, Spalte gleich stdout, Karte #46 |
 | I0041 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | Szenarien R00040, Karte #49 |
+| I0048 | Entwicklertest | 2026-11-26 | entfällt | Claude (autonom, Director, Auftrag Stefan Hoffmann) | reine Teständerung ohne Oberfläche (Zeitschranken der E2E-Suite), Beleg Gate 944/944 zweimal, Karte #57 |
