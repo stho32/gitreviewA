@@ -57,7 +57,7 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .diff-herkunft{margin:0;font-size:11px;color:var(--kd-muted);flex:1 1 1rem;min-inline-size:0;max-inline-size:20rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .diff-herkunft:empty{display:none}
 /* Diff-Kopf: Kästchen „Haken“ der gewählten Datei (R00012) */
-.gr-diff-haken{display:inline-flex;align-items:center;gap:var(--kd-s2);flex:none;font-size:11px;min-block-size:var(--kd-ziel);cursor:pointer}
+.gr-diff-haken{display:inline-flex;align-items:center;gap:var(--kd-s1);flex:none;font-size:11px;min-block-size:var(--kd-ziel);cursor:pointer}
 .gr-diff-haken[hidden]{display:none}
 /* Abschnitte ohne lückenlose Kette (R00012): je Commit ein eigener Block mit Kopf */
 .diff-abschnitt{border-top:1px solid var(--kd-line);padding-top:var(--kd-s2);margin-top:var(--kd-s2)}
@@ -117,7 +117,7 @@ body{background:var(--kd-bg);min-block-size:100vh}
 /* Feste Höhe (R00039, B3802): die Leiste bricht nur um, wenn die Bedienelemente nebeneinander nicht mehr passen; der Pfad
    wird dafür in der Mitte gekürzt (R00039). Ab 600 px Breite des Diff-Bereichs stehen alle in einer Zeile, darunter höchstens
    zwei — die Werkzeugzeile (Suche und „Ansicht ▾“) bricht als Ganzes in die zweite. */
-.diff-kopf .btn{font-size:11px;padding:0 5px;gap:3px}
+.diff-kopf .btn{font-size:11px;padding:0 4px;gap:3px}
 .diff-pfad{margin:0;font-size:13px;font-weight:600;flex:1 1 4rem;min-inline-size:0;white-space:nowrap;overflow:hidden}
 .diff-pfad:empty{display:none}
 /* Werkzeugzeile des Diff-Kopfs (R00039): Suche und das Menü „Ansicht ▾“ — die vier Anzeigeverfahren stehen im Menü. */
@@ -125,6 +125,7 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .ansicht-menue{position:relative;flex:none}
 /* „Datei anmerken“ und sein Grund bleiben eine Einheit; sie schrumpfen nicht mit (R00022, R00039). */
 .diff-datei-anmerken{display:flex;align-items:center;gap:4px;flex:none;min-width:0}
+.diff-datei-anmerken[hidden]{display:none}
 /* Der Menüknopf trägt den Hinweis aller vier Kürzel (R00039): die Tasten stehen in der ganzen Leiste kompakt, damit sie
    einzeilig bleibt — der Menüknopf allein trägt vier. */
 .ansicht-knopf{gap:4px;padding:0 var(--kd-s2)}

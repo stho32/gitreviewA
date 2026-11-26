@@ -61,11 +61,12 @@ async function mitschriftEinrichten(page) {
   return meldungen;
 }
 
-/** Wartet, bis der Diff von `pfad` steht und seine Färbung abgeschlossen ist (`ja` oder `nein`); liefert den Zustand. */
+/** Wartet, bis der Diff von `pfad` steht und seine Färbung abgeschlossen ist (`ja` oder `nein`); liefert den Zustand.
+    Der Pfad steht ganz im zugänglichen Namen (R00039): die Anzeige darf gekürzt sein. */
 async function farbeAbwarten(page, pfad) {
   await page.waitForFunction(([pfadSelektor, bereichSelektor, erwartet]) => {
     const zustand = document.querySelector(bereichSelektor).getAttribute('data-farbe');
-    return document.querySelector(pfadSelektor).textContent === erwartet && (zustand === 'ja' || zustand === 'nein');
+    return document.querySelector(pfadSelektor).getAttribute('aria-label') === erwartet && (zustand === 'ja' || zustand === 'nein');
   }, [PFAD, ROLLBEREICH, pfad], { polling: 'raf', timeout: 15000 });
   return page.locator(ROLLBEREICH).getAttribute('data-farbe');
 }

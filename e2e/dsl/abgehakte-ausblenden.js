@@ -104,7 +104,8 @@ function sprache(gr, page) {
     darstellungWaehlen: darstellung => seite.darstellungWaehlen(page, darstellung),
     neuLaden: () => seite.neuLaden(page),
     aufZeilen: anzahl => seite.aufDateizeilenWarten(page, anzahl),
-    diffPfad: () => page.locator('#diff .diff-pfad').textContent(),
+    /** Der Pfad steht ganz im zugänglichen Namen (R00039); die Anzeige darf in der Mitte gekürzt sein. */
+    diffPfad: () => page.locator('#diff .diff-pfad').getAttribute('aria-label'),
     /** Setzt einen Haken über `POST /api/haken` (Prozessprobe). */
     ueberDieSchnittstelleAbhaken: (name, datei, abgehakt = true) => schnittstelle.hakenSetzen(lauf.adresse, { commit: hash(name), datei, abgehakt }),
     beendenAnfordern: () => gr.beendenAnfordern(lauf),

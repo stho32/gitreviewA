@@ -253,9 +253,9 @@ async function pruefeMeldungInDerLeiste(page, text) {
   await expect(page.locator(MELDUNG_DRAUSSEN), 'keine zweite Meldung außerhalb der Leiste').toBeHidden();
 }
 
-/** Der Diff zeigt diesen Pfad (der Diff-Bereich ist der sichtbare Teil der Seite). */
+/** Der Diff zeigt diesen Pfad im zugänglichen Namen (R00039); die Anzeige darf in der Mitte gekürzt sein. */
 function diffPfad(page) {
-  return page.locator('#diff .diff-pfad').textContent();
+  return page.locator('#diff .diff-pfad').getAttribute('aria-label');
 }
 
 /**
@@ -291,7 +291,7 @@ function messeDateiwechsel(page, pfad) {
     const start = performance.now();
     zeile.click();
     // Der Pfad steht schon vor der Antwort; „geladen“ heißt: keine Meldung mehr und der Rollbereich sichtbar.
-    const steht = () => document.querySelector('#diff .diff-pfad').textContent === ziel
+    const steht = () => document.querySelector('#diff .diff-pfad').getAttribute('aria-label') === ziel
       && document.querySelector('#diff .diff-meldung').textContent === ''
       && document.querySelector('#diff .df-sc').hidden === false;
     while (performance.now() - start < 10000) {

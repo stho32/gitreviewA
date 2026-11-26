@@ -131,7 +131,8 @@ test.describe('R00024 Anzeige (Browser-Eigenes)', () => {
     await expect.poll(async () => (await seite.dateilisteLesen(page)).some(eintrag => eintrag.name === 'umbenannt.png ← alt.png')).toBe(true);
     await seite.dateiWaehlen(page, 'umbenannt.png ← alt.png');
 
-    await expect(page.locator('#diff .diff-pfad')).toHaveText('umbenannt.png ← alt.png');
+    // Der Pfad steht ganz im zugänglichen Namen (R00039): die Anzeige darf in der Mitte gekürzt sein.
+    await expect(page.locator('#diff .diff-pfad')).toHaveAttribute('aria-label', 'umbenannt.png ← alt.png');
     await expect(page.locator('#diff .bild-titel')).toHaveText('umbenannt.png ← alt.png');
     const bilder = await diffSeite.bilderLesen(page);
     expect(bilder).toHaveLength(2);
