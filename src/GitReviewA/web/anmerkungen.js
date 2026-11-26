@@ -186,6 +186,11 @@
     bereichElement.append(blockElement);
     if (feld) {
       blockElement.querySelector('tbody').append(feld.feldzeileElement);
+      // Das offene Datei-Feld übersteht ein Neuzeichnen wie das Notizfeld an einer Zeile (Lehre #23): hatte es den Fokus,
+      // bekommt es ihn zurück — sonst reißt jede Zeichnung dem Menschen den Fokus aus dem offenen Feld.
+      if (zustand.fokussiert === feld.eingabeElement) {
+        feld.eingabeElement.focus();
+      }
     }
     // Befund B1: im festen Rahmen ist der Bereich ein eigener Rollbereich mit Obergrenze; die jüngste Anmerkung (zuletzt
     // angehängt) bleibt so im Blick, ohne dass der Diff-Rollbereich darunter verdrängt wird.

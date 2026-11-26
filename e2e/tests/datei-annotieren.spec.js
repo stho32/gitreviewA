@@ -305,6 +305,21 @@ test.describe('Datei annotieren — Bedienweg und Browser-Eigenes', () => {
     await anm.anmerkungenUnter('lang.txt', { neu: 18 }, ['eine Zeilennotiz']);
   });
 
+  test('das offene „Datei anmerken“-Feld übersteht ein Neuzeichnen desselben Diffs mit Fokus und Eingabe (Lehre #23)', async ({ anm }) => {
+    await anm.starten({ modus: 'zusammen' });
+    await anm.dateiAnsehen('lang.txt');
+    await anm.dateiAnmerken();
+    await anm.dateiFeldOffenMitFokus('lang.txt');
+    await anm.dateiFeldTextSchreiben('lang.txt', 'getippt-bleibt');
+
+    // Ein Neuzeichnen derselben Stelle (Leerraum, Färbung, Blockgrenze) darf dem offenen Feld weder den Fokus noch die
+    // Eingabe nehmen — dieselbe Zusage wie beim Notizfeld an einer Zeile (Lehre #23).
+    await anm.neuzeichnen();
+
+    await anm.dateiFeldOffenMitFokus('lang.txt');
+    await anm.dateiFeldEnthaelt('lang.txt', 'getippt-bleibt');
+  });
+
   test('an einer gesperrten Stelle ist „Datei anmerken“ nicht bedienbar und nennt den Grund (PO zu R00022 Frage 3)', async ({ anm }) => {
     await anm.starten({ modus: 'einzeln', seiteOeffnen: false });
     await anm.hakenAntwortetMit({
