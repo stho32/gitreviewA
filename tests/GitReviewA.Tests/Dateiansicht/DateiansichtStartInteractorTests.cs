@@ -290,8 +290,12 @@ public class DateiansichtStartInteractorTests
 
     private static Startausgang Starte(params string[] angaben)
     {
+        var buchung = new Quellenbuchung();
         var aufruf = new Dateiaufruf(angaben, 0, BrowserOeffnen: false, Protokollstufe.Warnung);
-        return new DateiansichtStartInteractor(new DateiLeser(new Quellenbuchung()), Ausgabegrenze.Standard).Starte(aufruf);
+        return new DateiansichtStartInteractor(
+            new DateiLeser(buchung),
+            new GitCommitDateiquelle(Environment.CurrentDirectory, buchung),
+            Ausgabegrenze.Standard).Starte(aufruf);
     }
 
     private static Startausgang InOrdner(OrdnerD d, Func<Startausgang> arbeit)

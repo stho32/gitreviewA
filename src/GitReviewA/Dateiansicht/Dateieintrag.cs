@@ -24,6 +24,21 @@ internal sealed record Dateieintrag(int Nummer, string Angabe, string Anzeigenam
             text);
     }
 
+    /// <summary>
+    /// Eine Datei aus einem Commit (R00046): der Anzeigename ist `<Kurzhash>:<Pfad>` (Pfad mit Marken), der Kopf nennt statt
+    /// des echten Pfads den **vollen Hash** — die Bytes sind der Blob, den git ohne Umwandlung liefert.
+    /// </summary>
+    public static Dateieintrag AusCommit(int nummer, string vollerHash, string pfad, Dateitext text)
+    {
+        var kurz = vollerHash[..7];
+        return new Dateieintrag(
+            nummer,
+            $"{vollerHash}:{pfad}",
+            $"{kurz}:{UnsichtbareZeichen.AlsMarken(pfad)}",
+            vollerHash,
+            text);
+    }
+
     /// <summary>Zählt, ohne die Zeilen als Liste zu halten (G7): jede Zeile ist nur ein Bereich im einen Text.</summary>
     private static int AnzahlGekuerzterZeilen(string text)
     {

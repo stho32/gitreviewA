@@ -237,7 +237,8 @@ public class DateiansichtEndpunktTests
 
     private static Dateiansichtsstand Stand(string pfad)
     {
-        var ausgang = new DateiansichtStartInteractor(new DateiLeser(new Quellenbuchung()))
+        var buchung = new Quellenbuchung();
+        var ausgang = new DateiansichtStartInteractor(new DateiLeser(buchung), new GitCommitDateiquelle(Environment.CurrentDirectory, buchung))
             .Starte(new Dateiaufruf([pfad], 0, BrowserOeffnen: false, Protokollstufe.Warnung));
         return ausgang.Stand ?? throw new InvalidOperationException(ausgang.Fehler[0].Grund.Art.ToString());
     }

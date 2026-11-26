@@ -82,7 +82,10 @@ internal static class Program
     {
         const int ExitAbgebrochen = 130;
         const int HoechsteGrundzeilenlaenge = 300;
-        var interactor = new DateiansichtStartInteractor(new DateiLeser(new Quellenbuchung()));
+        var buchung = new Quellenbuchung();
+        var interactor = new DateiansichtStartInteractor(
+            new DateiLeser(buchung),
+            new GitCommitDateiquelle(Environment.CurrentDirectory, buchung));
         var ausgang = interactor.Starte(aufruf);
         if (!ausgang.IstErfolg)
         {

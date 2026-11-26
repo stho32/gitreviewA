@@ -181,7 +181,7 @@ public class DateiansichtMatrixTests
         Directory.SetCurrentDirectory(d.Ordner);
         try
         {
-            var ausgang = new DateiansichtStartInteractor(new DateiLeser(new Quellenbuchung()))
+            var ausgang = new DateiansichtStartInteractor(new DateiLeser(new Quellenbuchung()), new GitCommitDateiquelle(Directory.GetCurrentDirectory(), new Quellenbuchung()))
                 .Starte(new Dateiaufruf([angabe], 0, BrowserOeffnen: false, Protokollstufe.Warnung));
 
             Assert.That(ausgang.IstErfolg, Is.True);
@@ -204,7 +204,7 @@ public class DateiansichtMatrixTests
         }
         var uhr = Stopwatch.StartNew();
 
-        var ausgang = new DateiansichtStartInteractor(new DateiLeser(new Quellenbuchung()))
+        var ausgang = new DateiansichtStartInteractor(new DateiLeser(new Quellenbuchung()), new GitCommitDateiquelle(Directory.GetCurrentDirectory(), new Quellenbuchung()))
             .Starte(new Dateiaufruf([sparse], 0, BrowserOeffnen: false, Protokollstufe.Warnung));
 
         uhr.Stop();
