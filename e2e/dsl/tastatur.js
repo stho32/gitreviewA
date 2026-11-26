@@ -133,7 +133,12 @@ function tastaturSprache(gr, page) {
     ladeSeiteNeu: () => page.reload(),
     klickeHilfeKnopf: () => page.locator('#hilfe-knopf').click(),
     klickeHilfeZu: () => page.locator('#hilfe-zu').click(),
-    inVsCodeHref: () => page.locator('#diff .sprung-knopf').getAttribute('href'),
+    /** Ziel des Verweises „In VS Code“; wartet, bis die Sprungantwort eingetroffen ist (der Link ist bis dahin verborgen). */
+    inVsCodeHref: async () => {
+      const verweis = page.locator('#diff .sprung-knopf');
+      await expect(verweis).toHaveAttribute('href', /^vscode:\/\/file\//);
+      return verweis.getAttribute('href');
+    },
     /** Installiert einen Zähler für Klicks auf VS-Code-Verweise — kein Test startet VS Code. */
     vsCodeKlickZaehlen: () => page.evaluate(() => {
       window.__vsCodeKlicks = [];
