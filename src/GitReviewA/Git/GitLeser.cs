@@ -553,10 +553,20 @@ internal static class GitLeser
         return istLeer ? GitStart.Leerbaum : basis;
     }
 
+    /// <summary>
+    /// Die ersten sieben Zeichen eines Hashs für den Aufruftext — eine Anzeige, kein Wert für git. Ein bereits kurzer
+    /// Wert (der Aufrufleser erlaubt ab vier Hexziffern, und ein nicht aufgelöstes Präfix kommt genau so hier an) steht
+    /// unverändert; ein leeres Argument heißt „leer“ (Bereichsanfang oder Wurzel).
+    /// </summary>
     private static string Kurz(string hash)
     {
         var istLeer = hash.Length == 0;
-        return istLeer ? "leer" : hash[..7];
+        if (istLeer)
+        {
+            return "leer";
+        }
+        var istLaengerAlsDieAnzeige = hash.Length > 7;
+        return istLaengerAlsDieAnzeige ? hash[..7] : hash;
     }
 
     private static ProcessStartInfo GitElternfolgeStart(CommitHashes auswahl, string arbeitsordner)
