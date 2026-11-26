@@ -746,6 +746,40 @@ async function pruefeLoeschenFrei(page, nummer) {
   await expect(anmerkungszeile(page, nummer).getByRole('button', { name: 'Löschen', exact: true })).toBeEnabled();
 }
 
+/** Die Messung der Abnahme-Probe (R00053, Kriterien 1–5): das offene Notizfeld `name` gegen den Diff-Bereich und seinen
+    Rollbereich (`#diff`, `.df-sc`), dazu der waagerechte Bildlauf des Rollbereichs und was `elementFromPoint` an der rechten
+    Feldkante trifft. Die rechte Kante ist sichtbar, wenn dort das Feld selbst liegt und nicht der abgeschnittene Nachbar. */
+async function lageDesFeldes(page, name) {
+  const feld = page.getByRole('textbox', { name, exact: true });
+  const box = await feld.boundingBox();
+  if (!box) {
+    return null;
+  }
+  const rahmen = await page.evaluate(([diffSel, rollSel]) => {
+    const diff = document.querySelector(diffSel).getBoundingClientRect();
+    const roll = document.querySelector(rollSel);
+    const rollRahmen = roll.getBoundingClientRect();
+    return {
+      diffRechts: Math.round(diff.right),
+      rollRechts: Math.round(rollRahmen.right),
+      rollBildlauf: Math.round(roll.scrollLeft),
+    };
+  }, [ANMERKUNGSBEREICH, ROLLBEREICH]);
+  const kante = await page.evaluate(({ x, y }) => {
+    const element = document.elementFromPoint(x, y);
+    if (!element) {
+      return { tag: 'nichts', klasse: '' };
+    }
+    return { tag: element.tagName.toLowerCase(), klasse: typeof element.className === 'string' ? element.className : '' };
+  }, { x: box.x + box.width - 1, y: box.y + box.height / 2 });
+  return {
+    feld: { links: Math.round(box.x), rechts: Math.round(box.x + box.width), breite: Math.round(box.width) },
+    ...rahmen,
+    kante,
+    kanteAmFeld: kante.klasse.split(/\s+/).includes('anm-eingabe'),
+  };
+}
+
 module.exports = {
   anordnungWaehlen,
   bereichWaehlen,
@@ -766,7 +800,7 @@ module.exports = {
   dateiAnmerkenAmHinweis, pruefeHinweisAnmerkenSichtbar, pruefeHinweisAnmerkenVerborgen,
   pruefeHinweisEntfernt, pruefeKeinHinweisEntfernt, pruefeHinweisAusserhalb, pruefeKeinHinweisAusserhalb,
   inDenDiffTabben, pfeilAbBis, taste, pruefeFokusAufZeile, anlegenAntwortetEinmal, anlegenVerzoegern, pruefeAnmerkungenBinnen,
-  pruefeAnmerkungOhneHtml, sichtbarerAnmerkungstext,
+  pruefeAnmerkungOhneHtml, sichtbarerAnmerkungstext, lageDesFeldes,
   aenderungOeffnen, pruefeKopfNenntNummer, pruefeFokusAufKopf, pruefeAnzahlAenderungsfelder, pruefeAnmerkungszeileEnthaelt, abbrechen, pruefeSpeichernGesperrt,
   aenderungAntwortetEinmal, aenderungVerzoegern,
   aenderungsfeldTextSchreiben, pruefeAenderungsfeldText, aenderungsfeldSpeichern, aenderungsfeldSpeichernUndWarten, caretPosition, fokusAufKnopf, pruefeKnopfHatFokus,

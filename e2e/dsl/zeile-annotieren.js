@@ -8,6 +8,7 @@ const seite = require('../treiber/oberflaeche.js');
 const diffSeite = require('../treiber/diff-oberflaeche.js');
 const anmerkungSeite = require('../treiber/anmerkungen-oberflaeche.js');
 const hakenSeite = require('../treiber/haken-oberflaeche.js');
+const trennerSeite = require('../treiber/trenner-oberflaeche.js');
 const repos = require('../treiber/diff-repos.js');
 const { anzeigeSchrankeMs, einfrierSchrankeMs } = require('./schranken.js');
 
@@ -214,6 +215,8 @@ function annotierSprache(gr, page) {
     anzahlAenderungsfelder: anzahl => anmerkungSeite.pruefeAnzahlAenderungsfelder(page, anzahl),
     anmerkungszeileEnthaelt: (nummer, text) => anmerkungSeite.pruefeAnmerkungszeileEnthaelt(page, nummer, text),
     abbrechen: (datei, neu) => anmerkungSeite.abbrechen(page, feldname(datei, neu)),
+    /** „Abbrechen“ an einem Feld, dessen Name schon gebaut ist (Bereichs- und Dateifeld). */
+    abbrechenMitName: name => anmerkungSeite.abbrechen(page, name),
     speichernIstGesperrt: (datei, neu) => anmerkungSeite.pruefeSpeichernGesperrt(page, feldname(datei, neu)),
     serverAntwortetBeimAendern: antwort => anmerkungSeite.aenderungAntwortetEinmal(page, antwort),
     aendernVerzoegern: () => anmerkungSeite.aenderungVerzoegern(page),
@@ -253,6 +256,18 @@ function annotierSprache(gr, page) {
     artAmKopf: (nummer, wort) => anmerkungSeite.pruefeArtAmKopf(page, nummer, wort),
     /** Ohne Art steht im Kopf nichts Zusätzliches. */
     keineArtAmKopf: nummer => anmerkungSeite.pruefeKeineArtAmKopf(page, nummer),
+
+    /* ── Lage des Notizfelds im Diff-Bereich (R00053, Kriterien 1–5) ── */
+    /** Fenster setzen und warten, bis der Aufbau die neue Größe trägt (Mediengrenze, Spaltenzustand). */
+    fensterSetzen: async fenster => {
+      await page.setViewportSize(fenster);
+      await trennerSeite.warteAufSpalte(page);
+    },
+    ergebnisSpalteSichtbar: () => trennerSeite.pruefeErgebnisSpalteSichtbar(page),
+    ergebnisSpalteVerborgen: () => trennerSeite.pruefeErgebnisSpalteVerborgen(page),
+    ergebnisSpalteUmschalten: () => trennerSeite.spaltenKnopfBetatigen(page),
+    /** Feld, Diff-Bereich und Rollbereich in einem Zug: rechte Kanten, waagerechter Bildlauf, Treffer an der rechten Kante. */
+    lageDesFeldes: name => anmerkungSeite.lageDesFeldes(page, name),
 
     /* ── Datei anmerken (R00022) ── */
     dateiAnmerken: () => anmerkungSeite.dateiAnmerken(page),
