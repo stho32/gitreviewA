@@ -73,23 +73,30 @@ test.describe('Dialog Beenden und Abbrechen (B4602)', () => {
 
   // R00050 „Bedienung“ (Nacharbeit B1): bei offenem Dialog wirken die Kürzel nicht, auch `?` öffnet die Hilfe nicht darüber;
   // die Hilfe liegt unter dem Scrim und darf darum weder sichtbar werden noch den Fokus nehmen, der nächste Esc gilt dem Dialog.
-  test('B1: bei offenem Beenden-Dialog öffnet `?` die Hilfe nicht darüber; Esc schließt den Dialog und der Lauf läuft', async ({ gr, page }) => {
+  // Beide Ausprägungen desselben Dialogs (Beenden und Abbrechen) laufen durch dieselbe Stelle.
+  test('B1: bei offenem Beenden- oder Abbrechen-Dialog öffnet `?` die Hilfe nicht darüber; Esc schließt den Dialog und der Lauf läuft', async ({ gr, page }) => {
     const repo = gr.repoMitCommits();
     const lauf = await gr.gitreviewAStarten(repo, repo.hashes);
     await gr.oberflaecheOeffnen(page, lauf);
-    await gr.beendenDialogOeffnen(page);
 
-    await page.keyboard.press('?');
+    for (const { name, oeffnen, vorgabe } of [
+      { name: 'Beenden', oeffnen: gr.beendenDialogOeffnen, vorgabe: 'Beenden (Enter)' },
+      { name: 'Abbrechen', oeffnen: gr.abbrechenDialogOeffnen, vorgabe: 'Zurück (Esc)' },
+    ]) {
+      await oeffnen(page);
 
-    await expect(page.locator('#hilfe')).toBeHidden();
-    await expect(page.locator('header.kz')).toHaveAttribute('inert', '');
-    await expect(gr.beendenDialog(page)).toBeVisible();
-    await expect(gr.beendenDialogKnopf(page, 'Beenden (Enter)')).toBeFocused();
+      await page.keyboard.press('?');
 
-    await page.keyboard.press('Escape');
+      await expect(page.locator('#hilfe'), `Hilfe bleibt zu (${name})`).toBeHidden();
+      await expect(page.locator('header.kz'), `Hintergrund inert (${name})`).toHaveAttribute('inert', '');
+      await expect(gr.beendenDialog(page), `Dialog offen (${name})`).toBeVisible();
+      await expect(gr.beendenDialogKnopf(page, vorgabe), `Fokus im Dialog (${name})`).toBeFocused();
 
-    await expect(gr.beendenDialog(page)).toBeHidden();
-    await expect(page.locator('header.kz')).not.toHaveAttribute('inert', '');
+      await page.keyboard.press('Escape');
+
+      await expect(gr.beendenDialog(page), `Esc schließt (${name})`).toBeHidden();
+      await expect(page.locator('header.kz'), `Hintergrund wieder bedienbar (${name})`).not.toHaveAttribute('inert', '');
+    }
     expect(gr.laeuftNoch(lauf)).toBe(true);
     expect(gr.ergebnis(lauf)).toBe('');
   });
