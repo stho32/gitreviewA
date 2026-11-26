@@ -126,12 +126,8 @@ test.describe('R00030 Dateiliste und Haken — j, k, x, m, u, [, ]', () => {
     await tast.ansage('Modus Zusammen');
   });
 
-  test('u springt der Reihe nach zu README.md, src/a.txt, src/b.txt und wieder README.md; der Fokus steht auf der neuen Zeile', async ({ tast }) => {
+  test('u springt der Reihe nach zu src/a.txt, src/b.txt, README.md und wieder src/a.txt; der Fokus steht auf der neuen Zeile', async ({ tast }) => {
     await tast.starten();
-
-    await tast.druecke('u');
-    await tast.gewaehlt('README.md');
-    await tast.fokusAufDateizeile('README.md');
 
     await tast.druecke('u');
     await tast.gewaehlt('src/a.txt');
@@ -144,6 +140,10 @@ test.describe('R00030 Dateiliste und Haken — j, k, x, m, u, [, ]', () => {
     await tast.druecke('u');
     await tast.gewaehlt('README.md');
     await tast.fokusAufDateizeile('README.md');
+
+    await tast.druecke('u');
+    await tast.gewaehlt('src/a.txt');
+    await tast.fokusAufDateizeile('src/a.txt');
   });
 
   test('h blendet Abgehakte aus wie der Schalter aus R00029 und wieder ein', async ({ tast }) => {

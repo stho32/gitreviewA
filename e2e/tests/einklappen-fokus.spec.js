@@ -64,16 +64,16 @@ test.describe('Anschluss an Nächste ungeprüfte und Fokus (B3404)', () => {
     await einklappen.seitenleisteVerborgen();
 
     await einklappen.druecke('u');
-    await einklappen.diffZeigt('README.md');
+    await einklappen.diffZeigt('src/a.txt');
     await einklappen.diffOben();
     await einklappen.seitenleisteVerborgen();
 
     await einklappen.druecke('u');
-    await einklappen.diffZeigt('src/a.txt');
+    await einklappen.diffZeigt('src/b.txt');
     await einklappen.seitenleisteVerborgen();
 
     await einklappen.druecke('j');
-    await einklappen.gewaehlt('src/b.txt');
+    await einklappen.gewaehlt('README.md');
     await einklappen.seitenleisteVerborgen();
   });
 
@@ -84,7 +84,7 @@ test.describe('Anschluss an Nächste ungeprüfte und Fokus (B3404)', () => {
 
     await einklappen.ersteUngepruefteOeffnen();
 
-    await einklappen.diffZeigt('README.md');
+    await einklappen.diffZeigt('src/a.txt');
     await einklappen.seitenleisteVerborgen();
     await einklappen.eingeklappt();
   });
@@ -93,7 +93,7 @@ test.describe('Anschluss an Nächste ungeprüfte und Fokus (B3404)', () => {
     await einklappen.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });
     await einklappen.knopfBetatigen();
     await einklappen.druecke('u');
-    await einklappen.diffZeigt('README.md');
+    await einklappen.diffZeigt('src/a.txt');
     const pfadVorher = await einklappen.diffPfad();
 
     await einklappen.alleHakenSetzen();
