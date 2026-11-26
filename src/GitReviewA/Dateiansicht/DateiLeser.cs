@@ -61,11 +61,6 @@ internal sealed class DateiLeser : IDateiLeser
         {
             return Lesergebnis.Abgelehnt(Quellengrund.IstEinVerzeichnis);
         }
-        var echterPfad = Unixdatei.EchterPfad(angabe);
-        if (echterPfad is null)
-        {
-            return Lesergebnis.Abgelehnt(Quellengrund.DateiNichtGefunden);
-        }
         vorDemOeffnen?.Invoke(angabe);
         var deskriptor = Unixdatei.Oeffnen(angabe, out var fehler);
         if (deskriptor < 0)
@@ -84,6 +79,7 @@ internal sealed class DateiLeser : IDateiLeser
             {
                 return Lesergebnis.Abgelehnt(artGrund);
             }
+            var echterPfad = Unixdatei.PfadDesHandles(deskriptor, angabe);
             return LiesBytes(angabe, echterPfad, deskriptor, grenze);
         }
         finally

@@ -214,6 +214,31 @@ public class DateiLeserTests
     }
 
     [Test]
+    public void Wenn_der_Ordnerlink_zwischen_Pruefung_und_Oeffnen_zeigt_dann_kommt_der_Pfad_aus_dem_geoeffneten_Handle()
+    {
+        using var d = OrdnerD.Anlegen();
+        var zielEins = Path.Combine(d.Ordner, "ziel-eins");
+        var zielZwei = Path.Combine(d.Ordner, "ziel-zwei");
+        Directory.CreateDirectory(zielEins);
+        Directory.CreateDirectory(zielZwei);
+        File.WriteAllText(Path.Combine(zielEins, "wechsel.sql"), "INHALT-EINS\n");
+        File.WriteAllText(Path.Combine(zielZwei, "wechsel.sql"), "INHALT-ZWEI\n");
+        var link = Path.Combine(d.Ordner, "wechselordner");
+        File.CreateSymbolicLink(link, zielEins);
+        var haken = new DateiLeser(new Quellenbuchung(), _ =>
+        {
+            File.Delete(link);
+            File.CreateSymbolicLink(link, zielZwei);
+        });
+
+        var ergebnis = haken.Lies(Path.Combine(link, "wechsel.sql"), Grenze);
+
+        Assert.That(ergebnis.IstGelesen, Is.True);
+        Assert.That(ergebnis.Lesung?.Bytes, Is.EqualTo(File.ReadAllBytes(Path.Combine(zielZwei, "wechsel.sql"))));
+        Assert.That(ergebnis.Lesung?.EchterPfad, Is.EqualTo(Path.Combine(zielZwei, "wechsel.sql")));
+    }
+
+    [Test]
     public void Wenn_die_Datei_zwischen_Pruefung_und_Oeffnen_durch_einen_Link_ersetzt_wird_dann_abgelehnt_ohne_Zielinhalt()
     {
         using var d = OrdnerD.Anlegen();

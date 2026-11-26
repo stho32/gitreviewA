@@ -1,4 +1,6 @@
+using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace GitReviewA.Dateiansicht;
 
@@ -15,7 +17,8 @@ internal enum Dateiart
 /// <summary>
 /// Der Unix-Weg der Dateiprüfung (Missing-Docs R00043, vor dem Bau geprobt): öffnen ohne dem letzten Link zu folgen
 /// (<c>O_NOFOLLOW</c>), ohne bei einer FIFO zu hängen (<c>O_NONBLOCK</c>), die Art am Handle (<c>fstat</c>) und der echte Pfad
-/// über <c>realpath</c>. Genau eine Handlung Prüfen und Öffnen: was nach dem Öffnen am Handle steht, gilt.
+/// aus demselben Handle (<c>/proc/self/fd/&lt;n&gt;</c> bzw. <c>F_GETPATH</c>). Genau eine Handlung Prüfen und Öffnen: was nach dem
+/// Öffnen am Handle steht, gilt.
 /// </summary>
 internal static class Unixdatei
 {
@@ -35,6 +38,8 @@ internal static class Unixdatei
     private const int FehlerEnametoolong = 36;
     private const int FehlerEloop = 40;
     private const int FehlerEintr = 4;
+
+    private const int FGetpathMac = 50;
 
     private const int SIfmt = 0xF000;
     private const int SIfifo = 0x1000;
@@ -63,7 +68,7 @@ internal static class Unixdatei
         }
     }
 
-    /// <summary>Der vom Betriebssystem aufgelöste absolute Pfad; <c>null</c>, wenn der Pfad nicht auflösbar ist (zu lang, fehlt).</summary>
+    /// <summary>Der vom Betriebssystem aufgelöste Pfad; <c>null</c>, wenn der Pfad nicht auflösbar ist (zu lang, fehlt).</summary>
     public static string? EchterPfad(string pfad)
     {
         var puffer = Marshal.AllocHGlobal(Pfadpuffergroesse);
@@ -76,6 +81,17 @@ internal static class Unixdatei
         {
             Marshal.FreeHGlobal(puffer);
         }
+    }
+
+    /// <summary>
+    /// Der vom Betriebssystem aufgelöste Pfad des <b>geöffneten</b> Handles — die Quelle für den Kopf (R00043, P3/T1: zwischen
+    /// Prüfung und Öffnen kann sich die Angabe ändern, das Handle nicht). Nur wo das Betriebssystem den Pfad nicht nennt, löst
+    /// <paramref name="angabe"/> ihn auf.
+    /// </summary>
+    public static string PfadDesHandles(int deskriptor, string angabe)
+    {
+        var ausHandle = OperatingSystem.IsMacOS() ? PfadAusFcntl(deskriptor) : PfadAusProcHandle(deskriptor);
+        return ausHandle ?? EchterPfad(angabe) ?? angabe;
     }
 
     /// <summary>Öffnet ohne Folgen und ohne Blockieren; liefert den Deskriptor und im Fehlerfall die errno.</summary>
@@ -150,6 +166,34 @@ internal static class Unixdatei
         };
     }
 
+    /// <summary>Der Pfad des offenen Handles aus <c>/proc/self/fd/&lt;n&gt;</c> (Linux); <c>null</c>, wenn das Betriebssystem ihn nicht nennt.</summary>
+    private static string? PfadAusProcHandle(int deskriptor)
+    {
+        var verweis = $"/proc/self/fd/{deskriptor.ToString(CultureInfo.InvariantCulture)}";
+        var puffer = new byte[Pfadpuffergroesse];
+        var gelesen = readlink(verweis, puffer, (nuint)puffer.Length);
+        if (gelesen <= 0)
+        {
+            return null;
+        }
+        var pfad = Encoding.UTF8.GetString(puffer, 0, (int)gelesen);
+        // Eine nach dem Öffnen gelöschte Datei trägt im Verweis den Zusatz „ (deleted)“; der Kopf nennt den Pfad ohne ihn.
+        const string geloescht = " (deleted)";
+        return pfad.EndsWith(geloescht, StringComparison.Ordinal) ? pfad[..^geloescht.Length] : pfad;
+    }
+
+    /// <summary>Der Pfad des offenen Handles aus <c>F_GETPATH</c> (macOS); <c>null</c>, wenn der Aufruf scheitert.</summary>
+    private static string? PfadAusFcntl(int deskriptor)
+    {
+        var puffer = new byte[Pfadpuffergroesse];
+        if (fcntl(deskriptor, FGetpathMac, puffer) == -1)
+        {
+            return null;
+        }
+        var ende = Array.IndexOf(puffer, (byte)0);
+        return ende <= 0 ? null : Encoding.UTF8.GetString(puffer, 0, ende);
+    }
+
     private static int Oeffnungsflags()
     {
         if (OperatingSystem.IsMacOS())
@@ -196,4 +240,10 @@ internal static class Unixdatei
 
     [DllImport("libc", EntryPoint = "realpath", SetLastError = true)]
     private static extern IntPtr realpath(string pfad, IntPtr puffer);
+
+    [DllImport("libc", EntryPoint = "readlink", SetLastError = true)]
+    private static extern nint readlink(string pfad, byte[] puffer, nuint groesse);
+
+    [DllImport("libc", EntryPoint = "fcntl", SetLastError = true)]
+    private static extern int fcntl(int deskriptor, int befehl, byte[] puffer);
 }
