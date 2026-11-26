@@ -1,8 +1,8 @@
 'use strict';
 // Spezifikation R00040 „Dateiliste nach Gruppen“: Navigation in der gezeigten, gruppierten Reihenfolge (Kriterium 6).
-// `j`/`k` gehen die gezeigten Zeilen der Reihe nach (sie folgen der DOM-Reihenfolge der Gruppen); „Nächste ungeprüfte“ (`u`)
-// liest dieselbe Reihenfolge aus `gruppen-werte.js` und läuft mit Umlauf. Ebene: Integration der Oberfläche gegen das laufende
-// Programm; der Tastaturfall ist Browser-Eigenes (Playwright).
+// `j`/`k` gehen die gezeigten Zeilen der Reihe nach (sie folgen der DOM-Reihenfolge der Gruppen) und laufen an den Enden um
+// (PO Zeile 197); „Nächste ungeprüfte“ (`u`) liest dieselbe Reihenfolge aus `gruppen-werte.js` und läuft mit Umlauf. Ebene:
+// Integration der Oberfläche gegen das laufende Programm; der Tastaturfall ist Browser-Eigenes (Playwright).
 const { test } = require('../dsl/gruppen.js');
 
 test.describe('Navigation in Gruppenreihenfolge', () => {
@@ -37,6 +37,42 @@ test.describe('Navigation in Gruppenreihenfolge', () => {
     await gruppen.gewaehlt('src/app.js');
 
     await gruppen.druecke('k');
+    await gruppen.gewaehlt('src/a.txt');
+  });
+
+  test('Kriterium 6: j läuft an den Enden um — von der letzten Doku-Datei zur ersten Code-Datei und mit k zurück (PO Zeile 197)', async ({ gruppen }) => {
+    await gruppen.starten({ vorbereitung: 'Repo G' });
+    await gruppen.dateiAnsehen('docs/api.md');
+
+    await gruppen.druecke('j');
+    await gruppen.gewaehlt('src/Contest.cs');
+    await gruppen.fokusAufDateizeile('src/Contest.cs');
+
+    await gruppen.druecke('k');
+    await gruppen.gewaehlt('docs/api.md');
+    await gruppen.fokusAufDateizeile('docs/api.md');
+
+    // Zweiter Zyklus: derselbe Umlauf noch einmal, ohne Nachziehen von Wahl oder Fokus.
+    await gruppen.druecke('j');
+    await gruppen.gewaehlt('src/Contest.cs');
+    await gruppen.fokusAufDateizeile('src/Contest.cs');
+
+    await gruppen.druecke('k');
+    await gruppen.gewaehlt('docs/api.md');
+    await gruppen.fokusAufDateizeile('docs/api.md');
+  });
+
+  test('Kriterium 6: der Umlauf von j und k geht nur über die gezeigten Zeilen (ausgeblendete zählen nicht)', async ({ gruppen }) => {
+    await gruppen.starten({ vorbereitung: 'Repo G' });
+    await gruppen.musterEingeben('docs/api.md');
+    await gruppen.musterEingeben('src/Contest.cs');
+    await gruppen.dateizeilenReihe(['src/a.txt', 'src/app.js', 'tests/README.md', 'tests/app.test.js', 'web/haken-werte.spec.js', 'README.md']);
+
+    await gruppen.dateiAnsehen('src/a.txt');
+    await gruppen.druecke('k');
+    await gruppen.gewaehlt('README.md');
+
+    await gruppen.druecke('j');
     await gruppen.gewaehlt('src/a.txt');
   });
 

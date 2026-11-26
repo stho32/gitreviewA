@@ -89,3 +89,4 @@ Nie vom User erfragen.
 | 2026-11-26 | R00040 Dateiliste nach Gruppen | B3902 Gruppen in der Liste | unklar | 2-4h | 0,25h | 0,25h | autonom |
 | 2026-11-26 | R00040 Dateiliste nach Gruppen | B3904 Navigation in Gruppenreihenfolge | unklar | 2-4h | 0,05h | 0,05h | autonom |
 | 2026-11-26 | R00040 Dateiliste nach Gruppen | B3905 Tests und Wegwerf-Repos | unklar | 2-4h | 0,05h | 0,05h | autonom |
+| 2026-11-26 | R00040 Dateiliste nach Gruppen | Nacharbeit Code-Review B1: Umlauf fuer `j`/`k` (Test zuerst) | Bug-Fix | – | 0,2h | – | autonom |

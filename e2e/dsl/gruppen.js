@@ -76,6 +76,7 @@ function gruppenSprache(gr, page) {
     springen: () => naechsteSeite.springen(page),
     druecke: taste => tastaturSeite.taste(page, taste),
     gewaehlt: pfad => naechsteSeite.pruefeGewaehlt(page, pfad),
+    fokusAufDateizeile: pfad => tastaturSeite.pruefeFokusDateizeile(page, pfad),
     commitAnsehen: name => seite.commitWaehlen(page, kurz(name)),
     waehlerMenue: erwartet => seite.pruefeWaehlerMenue(page, erwartet),
     hakenUeberSchnittstelle: (commitName, pfad) => gr.hakenAnlegen(lauf, { commit: hash(commitName), datei: pfad, abgehakt: true }),

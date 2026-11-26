@@ -123,7 +123,8 @@
 
   /* ── Dateiliste: j/k, u, x, m, [ ] (B2902) ── */
 
-  /** `j`/`k` gehen von der Wahl (oder der fokussierten Zeile) eine Zeile weiter und wählen sie; an den Enden bleiben sie stehen. */
+  /** `j`/`k` gehen von der Wahl (oder der fokussierten Zeile) eine Zeile weiter und wählen sie; an den Enden läuft die Wahl über
+      die gezeigten Zeilen um (R00040, PO Zeile 197). Ausgeblendete Dateien stehen nicht in der Liste und werden übersprungen. */
   function schrittDatei(schritt) {
     const zeilen = dateizeilen();
     if (zeilen.length === 0) {
@@ -140,8 +141,9 @@
     if (stelle < 0) {
       stelle = schritt > 0 ? -1 : zeilen.length;
     }
-    const ziel = stelle + schritt;
-    if (ziel < 0 || ziel >= zeilen.length) {
+    const ziel = (stelle + schritt + zeilen.length) % zeilen.length;
+    if (ziel === stelle) {
+      // Nur eine Zeile gezeigt: der Umlauf führt auf dieselbe Zeile — sie bleibt gewählt, ohne erneut geladen zu werden.
       return false;
     }
     waehleDateizeile(zeilen[ziel]);
