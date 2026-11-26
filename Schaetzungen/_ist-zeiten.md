@@ -159,3 +159,6 @@ Nie vom User erfragen.
 | 2026-11-26 | R00041 Abschlussschritt vor Beenden | I0042 B4004 Weg zur Datei | Standard | 2h | 0,4h | 0,4h | autonom |
 | 2026-11-26 | R00041 Abschlussschritt vor Beenden | I0042 B4005 Tests und Wegwerf-Repos | unklar | 2-4h | 0,6h | 0,6h | autonom |
 | 2026-11-26 | R00041 Abschlussschritt vor Beenden | Nacharbeit Code-Review A2/A3 + PO 270: Suche als dritter Ausblendgrund, Schalter-Sicht beim Weg zur Datei, Namensmarken-Test | Bug-Fix | – | 0,3h | – | autonom |
+| 2026-11-26 | R00051 Commit-Leiste kürzt lange Nachrichten sichtbar | I0051 B4701 Eine Kürzungsregel für Leiste und Streifen | Standard | 2h | 0,8h | 0,8h | autonom |
+| 2026-11-26 | R00051 Commit-Leiste kürzt lange Nachrichten sichtbar | I0051 B4702 Anzeigewerte der Leiste gekürzt | Standard | 2h | 0,2h | 0,2h | autonom |
+| 2026-11-26 | R00051 Commit-Leiste kürzt lange Nachrichten sichtbar | I0051 B4703 Tests und Wegwerf-Repo K | unklar | 2-4h | 0,8h | 0,8h | autonom |
