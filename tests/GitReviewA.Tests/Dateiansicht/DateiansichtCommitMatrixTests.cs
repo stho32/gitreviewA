@@ -25,6 +25,8 @@ public class DateiansichtCommitMatrixTests
     [TestCase("sql/a.sql/", "Pfad im Commit nicht gefunden")]
     [TestCase("sql/./a.sql", "Pfad im Commit nicht gefunden")]
     [TestCase("(top)sql/a.sql", "Pfad im Commit nicht gefunden")]
+    [TestCase("!sql/b.sql", "Pfad im Commit nicht gefunden")]
+    [TestCase("(glob)sql/*.sql", "Pfad im Commit nicht gefunden")]
     [TestCase("*.sql", "Pfad im Commit nicht gefunden")]
     public async Task Wenn_eine_Commitquelle_nicht_zeigbar_ist_dann_Exit_2_mit_genau_einer_Zeile(string pfad, string grund)
     {
@@ -106,6 +108,24 @@ public class DateiansichtCommitMatrixTests
 
         Assert.That(ende, Is.EqualTo(2));
         Assert.That(lauf.Fehler, Does.Contain("vollen Hash angeben"));
+    }
+
+    [Test]
+    public async Task Wenn_zwei_Commits_sich_ein_4_Hex_Praefix_teilen_dann_mehrdeutig_auch_ohne_Tag_oder_Zweig()
+    {
+        using var repo = WegwerfRepo.MitVielenCommits(1000);
+        var gruppe = repo.Hashes.GroupBy(hash => hash[..4]).First(gruppe => gruppe.Count() >= 2);
+        var praefix = gruppe.Key;
+        using var lauf = await Dateiansichtprozess.StarteAsync(repo.Ordner, "--dateien", $"{praefix}:datei.txt", "--kein-browser");
+
+        var ende = await lauf.WarteAufEndeAsync();
+
+        Assert.That(ende, Is.EqualTo(2));
+        Assert.That(lauf.Ausgabe, Is.Empty);
+        Assert.That(lauf.Fehler, Does.Contain("mehrdeutig"));
+        Assert.That(lauf.Fehler, Does.Contain("mehrere Commits"));
+        Assert.That(lauf.Fehler, Does.Contain("vollen Hash angeben"));
+        Assert.That(NichtLeereZeilen(lauf.Fehler), Is.EqualTo(1));
     }
 
     [Test]
@@ -255,6 +275,28 @@ public class DateiansichtCommitMatrixTests
         Assert.That(ausgang.Fehler, Has.Count.EqualTo(1));
         Assert.That(ausgang.Fehler[0].Grund?.Art, Is.EqualTo(Quellengrundart.ZusammenZuGross));
         Assert.That(QuellengrundMeldungen.Meldung(ausgang.Fehler[0].Grund!), Is.EqualTo("zusammen zu groß (über 32 MiB)"));
+    }
+
+    [Test]
+    public async Task Wenn_der_Pfad_im_Commit_ein_grosser_Baum_ist_dann_Exit_2_ohne_Liste()
+    {
+        using var repo = WegwerfRepo.OhneCommits();
+        var big = Path.Combine(repo.Ordner, "big");
+        Directory.CreateDirectory(big);
+        for (var i = 0; i < 3000; i++)
+        {
+            File.WriteAllText(Path.Combine(big, $"eintrag-{i:D4}.txt"), "x");
+        }
+        var hash = repo.Committe("gross", "Alex Beispiel", "2026-01-01T00:00:00+00:00", string.Empty);
+        using var lauf = await Dateiansichtprozess.StarteAsync(repo.Ordner, "--dateien", $"{hash}:big/", "--kein-browser");
+
+        var ende = await lauf.WarteAufEndeAsync();
+
+        Assert.That(ende, Is.EqualTo(2));
+        Assert.That(lauf.Ausgabe, Is.Empty);
+        Assert.That(lauf.Fehler, Does.Contain("ist im Commit ein Verzeichnis"));
+        Assert.That(lauf.Fehler, Does.Not.Contain("eintrag-0000"), "der Verzeichnisinhalt wird nicht aufgelistet");
+        Assert.That(NichtLeereZeilen(lauf.Fehler), Is.EqualTo(1));
     }
 
     private static void Schreib(string ordner, string name, byte[] inhalt)

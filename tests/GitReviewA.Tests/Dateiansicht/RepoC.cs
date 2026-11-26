@@ -46,6 +46,9 @@ internal sealed class RepoC : IDisposable
             Directory.CreateDirectory(Path.Combine(repo.Ordner, "sql", "alt"));
             Directory.CreateDirectory(Path.Combine(repo.Ordner, "bin"));
             File.WriteAllText(Path.Combine(repo.Ordner, "sql", "a.sql"), "SELECT 1;\n");
+            File.WriteAllText(Path.Combine(repo.Ordner, "sql", "ä.sql"), "SELECT 7;\n");
+            File.WriteAllText(Path.Combine(repo.Ordner, "sql", "a\"b.sql"), "SELECT 8;\n");
+            File.WriteAllText(Path.Combine(repo.Ordner, "sql", "a\tb.sql"), "SELECT 9;\n");
             File.WriteAllText(Path.Combine(repo.Ordner, "sql", "alt", "b.sql"), "x\n");
             File.WriteAllBytes(Path.Combine(repo.Ordner, "sql", "gross.bin"), [(byte)'A', 0x00, (byte)'B']);
             File.WriteAllText(Path.Combine(repo.Ordner, "bin", "run.sh"), "#!/bin/sh\necho hallo\n");

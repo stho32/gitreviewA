@@ -96,6 +96,7 @@ public class DateiansichtEndpunktTests
         Assert.That(datei.GetProperty("nummer").GetInt32(), Is.EqualTo(0));
         Assert.That(datei.GetProperty("anzeigename").GetString(), Is.EqualTo(d.Pfad("a.sql")));
         Assert.That(datei.GetProperty("echterPfad").GetString(), Is.EqualTo(d.Pfad("a.sql")));
+        Assert.That(datei.GetProperty("sprachpfad").GetString(), Is.EqualTo(d.Pfad("a.sql")));
         Assert.That(datei.GetProperty("groesse").GetInt32(), Is.EqualTo(36));
         Assert.That(datei.GetProperty("zeilen").GetInt32(), Is.EqualTo(3));
         Assert.That(datei.GetProperty("kodierung").GetString(), Is.EqualTo("UTF-8"));

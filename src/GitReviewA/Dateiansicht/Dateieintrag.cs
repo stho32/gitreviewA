@@ -6,7 +6,7 @@ namespace GitReviewA.Dateiansicht;
 /// Eine Datei der Dateiansicht, wie sie der Browser nennt: nur die Nummer, nie ein Pfad. Anzeigename und echter Pfad tragen
 /// Marken für unsichtbare Zeichen (Lehre #17); der Text bleibt roh — kopiert wird die Datei, nicht die Anzeige.
 /// </summary>
-internal sealed record Dateieintrag(int Nummer, string Angabe, string Anzeigename, string EchterPfad, Dateitext Text)
+internal sealed record Dateieintrag(int Nummer, string Angabe, string Anzeigename, string EchterPfad, string Sprachpfad, Dateitext Text)
 {
     /// <summary>So viele UTF-16-Einheiten zeigt eine Zeile höchstens; der Rest wird kopiert, aber nicht gezeigt.</summary>
     public const int HoechstZeichenJeZeile = 10_000;
@@ -16,26 +16,31 @@ internal sealed record Dateieintrag(int Nummer, string Angabe, string Anzeigenam
 
     public static Dateieintrag Aus(int nummer, Dateilesung lesung, Dateitext text)
     {
+        var pfad = UnsichtbareZeichen.AlsMarken(lesung.EchterPfad);
         return new Dateieintrag(
             nummer,
             lesung.Angabe,
             UnsichtbareZeichen.AlsMarken(lesung.Angabe),
-            UnsichtbareZeichen.AlsMarken(lesung.EchterPfad),
+            pfad,
+            pfad,
             text);
     }
 
     /// <summary>
     /// Eine Datei aus einem Commit (R00046): der Anzeigename ist `<Kurzhash>:<Pfad>` (Pfad mit Marken), der Kopf nennt statt
-    /// des echten Pfads den **vollen Hash** — die Bytes sind der Blob, den git ohne Umwandlung liefert.
+    /// des echten Pfads den **vollen Hash** — die Bytes sind der Blob, den git ohne Umwandlung liefert. `EchterPfad` trägt
+    /// den Hash, `Sprachpfad` den Pfad im Commit: die Sprachwahl liest nie den Hash, der Kopf nie den Pfad.
     /// </summary>
     public static Dateieintrag AusCommit(int nummer, string vollerHash, string pfad, Dateitext text)
     {
         var kurz = vollerHash[..7];
+        var markierterPfad = UnsichtbareZeichen.AlsMarken(pfad);
         return new Dateieintrag(
             nummer,
             $"{vollerHash}:{pfad}",
-            $"{kurz}:{UnsichtbareZeichen.AlsMarken(pfad)}",
+            $"{kurz}:{markierterPfad}",
             vollerHash,
+            markierterPfad,
             text);
     }
 

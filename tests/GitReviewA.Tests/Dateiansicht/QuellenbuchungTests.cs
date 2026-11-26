@@ -77,7 +77,7 @@ public class QuellenbuchungTests
 
     private static int GekuerzteZeilen(string text)
     {
-        var eintrag = new Dateieintrag(0, "a.sql", "a.sql", "/tmp/a.sql", new Dateitext(text, text.Length, Kodierung.Utf8, Zeilenende.Lf, 1));
+        var eintrag = new Dateieintrag(0, "a.sql", "a.sql", "/tmp/a.sql", "/tmp/a.sql", new Dateitext(text, text.Length, Kodierung.Utf8, Zeilenende.Lf, 1));
         return eintrag.GekuerzteZeilen;
     }
 }

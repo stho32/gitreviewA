@@ -10,7 +10,7 @@ internal static class HashpraefixPruefer
 {
     /// <summary>Der Wortlaut der Mehrdeutigkeit — eine Stelle für Review-Auswahl und Commitquelle (R00046).</summary>
     public const string Mehrdeutigmeldung =
-        "Auswahl mehrdeutig: ein Hash-Präfix heißt wie ein Tag oder Zweig des Repos, und git würde einen anderen Commit zeigen — bitte den vollen Hash angeben.";
+        "Auswahl mehrdeutig: das Hash-Präfix trifft mehrere Commits oder heißt wie ein Tag oder Zweig des Repos, und git würde einen anderen Commit zeigen — bitte den vollen Hash angeben.";
 
     /// <summary>Ein einzelner aufgelöster Commit: die Eingabe muss ein Präfix des vollen Hashs sein (Lehre #2, R00046).</summary>
     public static bool PraefixPasst(string eingabe, string vollerHash)

@@ -23,7 +23,8 @@ public class DateiansichtCommitTests
         Assert.That(ausgang.IstErfolg, Is.True);
         var eintrag = ausgang.Stand?[0] ?? throw new InvalidOperationException();
         Assert.That(eintrag.Anzeigename, Is.EqualTo($"{c.C1[..7]}:sql/a.sql"));
-        Assert.That(eintrag.EchterPfad, Is.EqualTo(c.C1));
+        Assert.That(eintrag.EchterPfad, Is.EqualTo(c.C1), "der Kopf nennt den vollen Hash");
+        Assert.That(eintrag.Sprachpfad, Is.EqualTo("sql/a.sql"), "die Sprachwahl nutzt den Pfad im Commit");
         Assert.That(eintrag.Text.Text, Is.EqualTo("SELECT 1;\n"));
         Assert.That(eintrag.Text.Groesse, Is.EqualTo(10));
         Assert.That(eintrag.Text.Zeilen, Is.EqualTo(1));
@@ -128,6 +129,24 @@ public class DateiansichtCommitTests
 
         Assert.That(ausgang.IstErfolg, Is.True);
         Assert.That(ausgang.Stand?[0].Anzeigename, Is.EqualTo($"{c.C1[..7]}:x⟨U+202E⟩.sql"));
+    }
+
+    [Test]
+    public void Wenn_der_Name_Umlaut_Anfuehrungszeichen_oder_Tab_traegt_dann_ist_die_Commitquelle_zeigbar()
+    {
+        using var c = RepoC.Anlegen();
+
+        var ausgang = Starte(c, $"{c.C1}:sql/ä.sql", $"{c.C1}:sql/a\"b.sql", $"{c.C1}:sql/a\tb.sql");
+
+        Assert.That(ausgang.IstErfolg, Is.True);
+        var stand = ausgang.Stand ?? throw new InvalidOperationException();
+        Assert.That(stand.Anzahl, Is.EqualTo(3));
+        Assert.That(stand[0].Text.Text, Is.EqualTo("SELECT 7;\n"));
+        Assert.That(stand[1].Text.Text, Is.EqualTo("SELECT 8;\n"));
+        Assert.That(stand[2].Text.Text, Is.EqualTo("SELECT 9;\n"));
+        Assert.That(stand[0].Anzeigename, Is.EqualTo($"{c.C1[..7]}:sql/ä.sql"));
+        Assert.That(stand[1].Anzeigename, Is.EqualTo($"{c.C1[..7]}:sql/a\"b.sql"));
+        Assert.That(stand[2].Anzeigename, Is.EqualTo($"{c.C1[..7]}:sql/a\tb.sql"));
     }
 
     [Test]

@@ -87,6 +87,7 @@ public class DateiansichtStartInteractorTests
         var ausgang = InOrdner(d, () => Starte("ordnerlink/a.sql"));
 
         Assert.That(ausgang.Stand?[0].EchterPfad, Is.EqualTo(d.Pfad("a.sql")));
+        Assert.That(ausgang.Stand?[0].Sprachpfad, Is.EqualTo(d.Pfad("a.sql")));
         Assert.That(ausgang.Stand?[0].Anzeigename, Is.EqualTo("ordnerlink/a.sql"));
     }
 
@@ -235,6 +236,7 @@ public class DateiansichtStartInteractorTests
         Assert.That(stand[1].Anzeigename, Is.EqualTo("./a.sql"));
         Assert.That(stand[0].EchterPfad, Is.EqualTo(stand[1].EchterPfad));
         Assert.That(stand[0].EchterPfad, Is.EqualTo(d.Pfad("a.sql")));
+        Assert.That(stand[0].Sprachpfad, Is.EqualTo(d.Pfad("a.sql")));
     }
 
     [Test]

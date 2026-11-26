@@ -1,6 +1,7 @@
 'use strict';
 // R00046 Kriterium 1: eine Commitquelle zeigt den Stand aus dem Commit; der Anzeigename ist `<Kurzhash>:<Pfad>`, der Kopf
 // nennt den vollen Hash, und „Datei kopieren“ legt genau die Bytes des Blobs ab (nicht c2, nicht den Arbeitsbaum).
+const path = require('path');
 const { test, expect } = require('@playwright/test');
 const cTreiber = require('../treiber/dateiansicht-repo-c.js');
 
@@ -39,7 +40,7 @@ test.describe('Dateiansicht Commitquelle', () => {
   });
 
   test('Kriterium 5: aus dem Unterordner sql/ zeigt <c1>:./a.sql dieselbe Datei sql/a.sql', async ({ page }) => {
-    const lauf = await cTreiber.starten(c, `${c.c1}:./a.sql`, require('path').join(c.ordner, 'sql'));
+    const lauf = await cTreiber.starten(c, `${c.c1}:./a.sql`, path.join(c.ordner, 'sql'));
     try {
       await cTreiber.oeffnen(page, lauf);
 
@@ -48,5 +49,28 @@ test.describe('Dateiansicht Commitquelle', () => {
     } finally {
       await cTreiber.beenden(lauf);
     }
+  });
+
+  /** B1 (Nacharbeit): die Commitquelle wird wie eine Datei vom Datenträger gefärbt; der Pfad im Commit wählt die Sprache. */
+  async function farbprobe(page, angabe, startordner) {
+    const lauf = await cTreiber.starten(c, angabe, startordner);
+    try {
+      await cTreiber.oeffnen(page, lauf);
+      await expect.poll(() => page.locator('#da-inhalt .tk-keyword').first().textContent()).toBe('SELECT');
+    } finally {
+      await cTreiber.beenden(lauf);
+    }
+  }
+
+  test('B1: <c1>:sql/a.sql wird wie die Datei vom Datenträger gefärbt', async ({ page }) => {
+    await farbprobe(page, `${c.c1}:sql/a.sql`);
+  });
+
+  test('B1: <c1>:./a.sql aus dem Unterordner sql/ wird gefärbt', async ({ page }) => {
+    await farbprobe(page, `${c.c1}:./a.sql`, path.join(c.ordner, 'sql'));
+  });
+
+  test('B1: <c1>:x⟨U+202E⟩.sql wird gefärbt', async ({ page }) => {
+    await farbprobe(page, `${c.c1}:x\u202e.sql`);
   });
 });

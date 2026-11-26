@@ -91,6 +91,7 @@ internal static class DateiansichtEndpunkt
             eintrag.Nummer,
             eintrag.Anzeigename,
             eintrag.EchterPfad,
+            eintrag.Sprachpfad,
             eintrag.Text.Groesse,
             eintrag.Text.Zeilen,
             eintrag.Text.Kodierungstext,

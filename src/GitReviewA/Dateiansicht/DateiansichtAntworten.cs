@@ -1,12 +1,13 @@
 namespace GitReviewA.Dateiansicht;
 
-/// <summary>Die Liste der Dateiansicht: je Datei Nummer, Anzeigename (mit Marken), echter Pfad (mit Marken), Größe, Zeilen, Kodierung, Zeilenende.</summary>
+/// <summary>Die Liste der Dateiansicht: je Datei Nummer, Anzeigename (mit Marken), Kopfwert (echter Pfad bzw. voller Hash), Sprachpfad (mit Marken), Größe, Zeilen, Kodierung, Zeilenende.</summary>
 internal sealed record DateiansichtlisteAntwort(IReadOnlyList<DateieintragAntwort> Dateien);
 
 internal sealed record DateieintragAntwort(
     int Nummer,
     string Anzeigename,
     string EchterPfad,
+    string Sprachpfad,
     int Groesse,
     int Zeilen,
     string Kodierung,

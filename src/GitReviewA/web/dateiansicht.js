@@ -107,7 +107,7 @@
       zustand.zeilen = null;
       zustand.stuecke = null;
       zustand.aufgedeckt = false;
-      zustand.sprache = window.spracheZuPfad(zustand.stand.echterPfad);
+      zustand.sprache = window.spracheZuPfad(zustand.stand.sprachpfad);
       zeichneKopf(zustand.stand);
       zeichneInhalt();
       faerbe();
