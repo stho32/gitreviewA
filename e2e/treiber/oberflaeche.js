@@ -225,16 +225,22 @@ function beendenDialogFehler(page) {
   return page.locator('#beenden-fehler');
 }
 
+/** Wartet, bis der Dialog sichtbar ist — über `waitForSelector`, nicht über `expect().toBeVisible()`: auf einer Seite mit
+    20 000 Diff-Zeilen und 500 Anmerkungen verhungert das rAF-Polling von `expect` und sieht den längst offenen Dialog nicht. */
+async function warteAufBeendenDialog(page, fristMs = 10000) {
+  await page.waitForSelector('#beenden-dialog', { state: 'visible', timeout: fristMs });
+}
+
 /** Öffnet den Dialog über den Knopf „Beenden“ und wartet, bis er steht (nicht bestätigen). */
 async function beendenDialogOeffnen(page) {
   await beendenKnopf(page).click({ timeout: 5000 });
-  await expect(beendenDialog(page)).toBeVisible();
+  await warteAufBeendenDialog(page);
 }
 
 /** Öffnet den Dialog über den Knopf „Abbrechen“ und wartet, bis er steht. */
 async function abbrechenDialogOeffnen(page) {
   await abbrechenKnopf(page).click({ timeout: 5000 });
-  await expect(beendenDialog(page)).toBeVisible();
+  await warteAufBeendenDialog(page);
 }
 
 /** Betätigt den Knopf im Dialog über seinen sichtbaren Namen („Zurück (Esc)“, „Beenden (Enter)“, „Abbrechen“). */
@@ -245,7 +251,7 @@ async function beendenDialogBestaetigen(page, name) {
 /** „Beenden“ und die Bestätigung im Dialog an **einer** Stelle (R00050, B4605): bestehende Specs klicken wie bisher. */
 async function beendenBetaetigen(page) {
   await beendenKnopf(page).click({ timeout: 5000 });
-  await expect(beendenDialog(page)).toBeVisible();
+  await warteAufBeendenDialog(page);
   await beendenDialogKnopf(page, 'Beenden (Enter)').click({ timeout: 5000 });
 }
 
@@ -650,7 +656,7 @@ module.exports = {
   sucheFeld, sucheZaehler, sucheFehler, sucheSuchen, sucheWeiter, sucheZurueck, sucheMarken, sucheMarkenLesen,
   dateiwahlenSammeln, gesammelteDateiwahlen, formatierungsElementeZaehlen,
   beendenKnopf, abbrechenKnopf, beendenDialog, beendenDialogTitel, beendenDialogZeilen, beendenDialogKnopf, beendenDialogFehler,
-  beendenDialogOeffnen, abbrechenDialogOeffnen, beendenDialogBestaetigen,
+  beendenDialogOeffnen, abbrechenDialogOeffnen, beendenDialogBestaetigen, warteAufBeendenDialog,
   beendenBetaetigen, beendenBetaetigenBinnen, aufgabenSammeln, pruefeAufgabenNachAnzeige, pruefeAufgabenZaehler, beendetMeldung, beendenFehler, beendenScheitertMit, modusWaehlen, neuLaden, fensterSetzen,
   kopfZahlen, fortschrittZaehler, commitZeileZusammenfassung, commitZeileText, pruefeKopfZahlen, pruefeFortschritt, pruefeCommitZeileZusammenfassung,
   pruefeCommitZeileEnthaelt, pruefeCommitZeileEnthaeltNicht, zusammenAntwortVerzoegern, zusammenAntwortScheitert,
