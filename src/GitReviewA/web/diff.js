@@ -4,7 +4,9 @@
    mit Nummer neu und jeder Abschnittskopf tragen einen Link nach VS Code, der Verweis „In VS Code“ im Kopf zeigt auf die gewählte
    Zeile (R00021); das Ziel kommt als Attribut aus `sprung-geladen`, nie aus fremdem Text. Der Umschalter „Leerraum“ stellt den
    Vergleich um (`-w`), die Lücken von „nur Änderungen“ deckt ein Bedienelement schrittweise oder ganz auf (R00026) — die Zeilen dazu
-   kommen aus der Ansicht „ganze Datei“, die je Datei höchstens einmal und erst auf die erste Betätigung gelesen wird.
+   kommen aus der Ansicht „ganze Datei“, die je Stelle höchstens einmal und erst auf die erste Betätigung gelesen wird. Dieselben
+   Lücken trägt „Zusammen“ (Karte #44): der Netto-Diff der lückenlosen Kette und, ohne Kette, jeder Commit-Abschnitt im Stand seines
+   Commits (`api/zusammen/diff` bzw. `api/commits/<hash>/diff`).
    Zeilenaufbau nach kanbanD web/diff.js (zeileHtml), aber als DOM-Knoten mit textContent: Diff-Text, Pfade und Hunk-Titel sind fremder Text.
    Syntaxfarben (R00007) kommen als Auflage nach dem Zeichnen: Prism rechnet im Worker (faerben.js) und liefert nur Zahlen. */
 (function () {
@@ -32,8 +34,12 @@
       `anzeige`: zählt jeden neuen Inhalt des Bereichs — eine Färbung gilt nur für die Anzeige, für die sie gestellt wurde;
       `sprung`: das Ziel der gewählten Datei aus `sprung-geladen` (null, solange keine Antwort da ist); `gezeichnet`: Commit, Pfad und
       Zeilen der zuletzt gezeichneten Ansicht (samt aufgedeckten Lücken; null ohne Wahl) — daran hängt, ob ein Ziel noch gilt;
-      `gewaehlteZeile`: die angeklickte Zeile neu, sonst null. */
-  const zustand = { letzteLadung: 0, datei: null, alsText: false, diffansicht: 'aenderungen', leerraum: 'beachten', umbruch: umbruchWerte.startstellung(), zugeklappt: null, anzeige: 0, sprung: null, gezeichnet: null, gewaehlteZeile: null, anzeigeDaten: null, ganz: null, gesamt: null, aufgedeckt: {}, lueckenfehler: {}, ganzLaeuft: null, neuerInhalt: false };
+      `gewaehlteZeile`: die angeklickte Zeile neu, sonst null;
+      `anzeigeDaten`: die Bereiche der gezeigten Lücken-Ansicht (Netto und „Einzeln“ eine Stelle, ohne Kette ein Bereich je Commit)
+      samt Antwort und Zeilen — daran hängt das Aufdecken; `ganz`: je Stelle die einmal gelesene ganze Datei samt ihrer Gesamtzeilenzahl;
+      `laeuft`: der laufende Lesevorgang je Stelle; `aufgedeckt`: die Zahl der aufgedeckten Zeilen je Lücke; `lueckenfehler`: die Meldung
+      einer Lücke, deren ganze Datei nicht gelesen werden konnte (alles nur im Speicher der Seite, R00026). */
+  const zustand = { letzteLadung: 0, datei: null, alsText: false, diffansicht: 'aenderungen', leerraum: 'beachten', umbruch: umbruchWerte.startstellung(), zugeklappt: null, anzeige: 0, sprung: null, gezeichnet: null, gewaehlteZeile: null, anzeigeDaten: null, ganz: {}, laeuft: {}, aufgedeckt: {}, lueckenfehler: {}, neuerInhalt: false };
 
   function init() {
     const ansicht = ansichtElemente();
@@ -170,11 +176,10 @@
     // setzt den Bildlauf zurück — ein Neuzeichnen derselben Stelle (Lücke aufklappen) lässt ihn stehen.
     zustand.neuerInhalt = true;
     // Neue Wahl, neue Lücken: der Zustand je Lücke lebt nur für die gezeigte Stelle (R00026).
-    zustand.ganz = null;
-    zustand.gesamt = null;
+    zustand.ganz = {};
+    zustand.laeuft = {};
     zustand.aufgedeckt = {};
     zustand.lueckenfehler = {};
-    zustand.ganzLaeuft = null;
     const vorherGezeichnet = zustand.gezeichnet;
     zustand.gezeichnet = { commit: datei.commit, pfad: datei.pfad, zeilen: [] };
     const istDieselbeStelle = vorherGezeichnet !== null && vorherGezeichnet.commit === datei.commit && vorherGezeichnet.pfad === datei.pfad;
@@ -372,20 +377,29 @@
   }
 
   /** „nur Änderungen“ zeigt die Lücken vor dem ersten, zwischen zwei und nach dem letzten Abschnitt (R00026);
-      „ganze Datei“ zeigt alles — dort gibt es keine Lücken. */
+      „ganze Datei“ zeigt alles — dort gibt es keine Lücken. Netto und „Einzeln“ sind eine Stelle (Commit, Pfad, Leerraum),
+      ihr Diff wird als ein Bereich geführt; dieselbe Rechnung trägt ohne Kette jeder Commit-Abschnitt (`zeichneAbschnitte`). */
   function zeichneAnsicht(ansicht, antwort, zeilen, diffansicht) {
-    const kenntLuecken = diffansicht !== 'ganz';
-    if (!kenntLuecken) {
+    const ort = ortVon(zustand.datei.commit, antwort.pfad);
+    if (diffansicht === 'ganz') {
       zustand.anzeigeDaten = null;
       zeichneZeilen(ansicht, antwort, zeilen);
       return;
     }
-    zustand.anzeigeDaten = { antwort, zeilen };
-    zeichneZeilen(ansicht, antwort, zeilen, luecken(zeilen, zustand.gesamt));
+    const bereich = { ort, modus: zustand.datei.modus, commit: zustand.datei.commit, pfad: antwort.pfad, zeilen };
+    zustand.anzeigeDaten = { bereiche: [bereich], antwort };
+    zeichneZeilen(ansicht, antwort, zeilen, lueckenDerAnsicht(zeilen, ort));
+  }
+
+  /** Der Ort einer Ansicht: Commit, Pfad und Leerraum-Stellung. An ihm hängen die Lücken und die einmal gelesene ganze Datei
+      (R00026); denselben Ort trägt in „Zusammen“ der Netto-Diff und — je Commit — jeder Abschnitt ohne Kette (Karte #44). */
+  function ortVon(commit, pfad) {
+    return `${commit}|${pfad}|${zustand.leerraum}`;
   }
 
   /** „Zusammen“: netto ein Diff über die ganze Auswahl; ohne Kette je Commit ein Abschnitt mit eigener Beschriftung.
-      Die Herkunft setzt jeder Zweig nach dem Zeichnen, weil `zeigeMeldung` den Kopf bei jedem neuen Inhalt leert. */
+      Die Herkunft setzt jeder Zweig nach dem Zeichnen, weil `zeigeMeldung` den Kopf bei jedem neuen Inhalt leert.
+      Der Netto-Zweig nutzt für „nur Änderungen“ dieselbe Lücken-Ansicht wie „Einzeln“ (Karte #44). */
   function zeichneZusammenAntwort(ansicht, antwort, alsText, diffansicht) {
     if (antwort.netto) {
       const herkunft = `netto aus ${kurzListe(antwort.commits)}`;
@@ -405,7 +419,7 @@
         ansicht.herkunftElement.textContent = herkunft;
         return;
       }
-      zeichneZeilen(ansicht, antwort, zeilen);
+      zeichneAnsicht(ansicht, antwort, zeilen, diffansicht);
       ansicht.herkunftElement.textContent = herkunft;
       return;
     }
@@ -436,9 +450,6 @@
     return '';
   }
 
-  /** Ohne Kette: ein Abschnitt je Commit, mit Kurz-Hash und Betreff beschriftet; jede Abschnittsfläche meldet sich für Anmerkungen.
-      Eine Binärdatei trägt hier ihr Bild (R00024 gilt je Commit); ein Abschnitt über der Zuklappgrenze bleibt zugeklappt, bis der
-      Mensch „Trotzdem laden“ wählt — dieselbe Regel wie netto (R00017). */
   /** Der Name der Diff-Fläche: der Anzeigename des Pfads, unsichtbare Zeichen als Marke — nie der rohe Pfad (H1, R00014). */
   function bereichsname(antwort) {
     return `Änderungen in ${sichtbarerName(antwort.pfad)}`;
@@ -448,11 +459,17 @@
     return window.sichtbarerName ? window.sichtbarerName(pfad) : pfad;
   }
 
+  /** Ohne Kette: ein Abschnitt je Commit, mit Kurz-Hash und Betreff beschriftet; jede Abschnittsfläche meldet sich für Anmerkungen.
+      Eine Binärdatei trägt hier ihr Bild (R00024 gilt je Commit); ein Abschnitt über der Zuklappgrenze bleibt zugeklappt, bis der
+      Mensch „Trotzdem laden“ wählt — dieselbe Regel wie netto (R00017). In „nur Änderungen“ trägt jeder Abschnitt seine eigenen
+      Lücken im Stand seines Commits (R00026, Karte #44); „ganze Datei“ zeigt alles. */
   function zeichneAbschnitte(ansicht, antwort, abschnitte, alsText, diffansicht) {
     zeigeMeldung(ansicht, '', false);
     ansicht.herkunftElement.textContent = 'je Commit, nicht netto — Es fehlen Commits der Auswahl';
+    const mitLuecken = diffansicht !== 'ganz';
     const sammel = document.createDocumentFragment();
     const bereiche = [];
+    const anzeigeBereiche = [];
     for (const abschnitt of abschnitte) {
       const bereichElement = document.createElement('div');
       bereichElement.className = 'diff-abschnitt';
@@ -469,12 +486,19 @@
         if (zeilen.length === 0) {
           bereichElement.append(abschnittHinweis(KEINE_ZEILENAENDERUNGEN));
         } else {
-          zeichneAbschnitt(ansicht, antwort, abschnitt, zeilen, bereichElement);
+          // Der Ort des Abschnitts: sein eigener Commit und der Name der Datei in diesem Commit; ihre ganze Datei
+          // liest der Einzel-Endpunkt (`api/commits/<hash>/diff`), im Stand dieses Commits.
+          const ort = mitLuecken ? ortVon(abschnitt.commit, abschnitt.pfad) : null;
+          if (ort !== null) {
+            anzeigeBereiche.push({ ort, modus: 'einzeln', commit: abschnitt.commit, pfad: abschnitt.pfad, zeilen });
+          }
+          zeichneAbschnitt(ansicht, antwort, abschnitt, zeilen, bereichElement, ort);
         }
       }
       sammel.append(bereichElement);
       bereiche.push({ commit: abschnitt.commit, betreff: betreff, bereichElement });
     }
+    zustand.anzeigeDaten = mitLuecken ? { bereiche: anzeigeBereiche, antwort, abschnitte, alsText } : null;
     ansicht.rollElement.setAttribute('aria-label', bereichsname(antwort));
     ansicht.rollElement.replaceChildren(sammel);
     ansicht.rollElement.hidden = false;
@@ -490,10 +514,10 @@
   }
 
   /** Über der Grenze: Hinweis mit der Zahl und der Knopf, der die bereits empfangenen Zeilen dieses Abschnitts zeichnet. */
-  function zeichneAbschnitt(ansicht, antwort, abschnitt, zeilen, bereichElement) {
+  function zeichneAbschnitt(ansicht, antwort, abschnitt, zeilen, bereichElement, ort) {
     const zuLangGrund = zuLang(zeilen);
     if (!zuLangGrund) {
-      zeichneAbschnittszeilen(antwort, zeilen, bereichElement);
+      zeichneAbschnittszeilen(antwort, zeilen, bereichElement, ort);
       return;
     }
     const hinweis = abschnittHinweis(`Sehr lang: ${zuLangGrund.anzahl.toLocaleString('de-DE')} ${zuLangGrund.einheit} — zugeklappt`);
@@ -504,15 +528,17 @@
     knopf.addEventListener('click', () => {
       hinweis.remove();
       knopf.remove();
-      zeichneAbschnittszeilen(antwort, zeilen, bereichElement);
+      zeichneAbschnittszeilen(antwort, zeilen, bereichElement, ort);
       faerbeAbschnitt(ansicht, antwort.pfad, abschnitt, bereichElement);
     });
     bereichElement.append(hinweis, knopf);
   }
 
-  function zeichneAbschnittszeilen(antwort, zeilen, bereichElement) {
-    for (const block of bloecke(zeilen)) {
-      bereichElement.append(blockElement(block, bereichsname(antwort)));
+  /** Die Zeilen eines Abschnitts samt seinen Lücken (`ort` null in „ganze Datei“) — dieselbe Aufteilung wie einspaltig. */
+  function zeichneAbschnittszeilen(antwort, zeilen, bereichElement, ort) {
+    const lueckenliste = ort === null ? null : lueckenDerAnsicht(zeilen, ort);
+    for (const block of blockelemente(anzeigeTeile(zeilen, lueckenliste), bereichsname(antwort))) {
+      bereichElement.append(block);
     }
   }
 
@@ -831,6 +857,19 @@
     return teile;
   }
 
+  /** Die Lücken einer Ansicht: „nur Änderungen“ zeigt sie vor dem ersten, zwischen zwei und nach dem letzten Abschnitt (R00026).
+      Die Rechnung selbst ist die von „Einzeln“ (`luecken-werte.js`) — dieselbe trägt jeder Commit-Abschnitt von „Zusammen“
+      (Karte #44); jede Lücke kennt ihre Stelle (Commit, Pfad, Leerraum). `gesamt` steht erst, wenn die ganze Datei dieser Stelle
+      gelesen ist; vorher fehlt die letzte Lücke (R00026, Missing-Docs). */
+  function lueckenDerAnsicht(zeilen, ort) {
+    return luecken(zeilen, gesamtVon(ort)).map(luecke => ({ ...luecke, ort }));
+  }
+
+  function gesamtVon(ort) {
+    const gelesen = zustand.ganz[ort];
+    return gelesen === undefined ? null : gelesen.gesamt;
+  }
+
   /** Wie viele Zeilen dieser Lücke schon aufgedeckt sind (nur im Speicher der Seite, R00026). */
   function aufgedecktVon(luecke) {
     const bisher = zustand.aufgedeckt[lueckenschluessel(luecke)];
@@ -844,18 +883,19 @@
     return rest(luecke, aufgedecktVon(luecke));
   }
 
-  /** Die aufgedeckten Zeilen der Lücke aus der ganzen Datei; ohne gelesene ganze Datei ist nichts aufgedeckt. */
+  /** Die aufgedeckten Zeilen der Lücke aus der ganzen Datei ihres Ortes; ohne gelesene ganze Datei ist nichts aufgedeckt. */
   function aufgedeckteZeilen(luecke) {
     const anzahl = aufgedecktVon(luecke);
-    if (anzahl === 0 || zustand.ganz === null) {
+    const gelesen = zustand.ganz[luecke.ort];
+    if (anzahl === 0 || gelesen === undefined) {
       return [];
     }
-    return aufgedeckt(luecke, anzahl, zustand.ganz.zeilen);
+    return aufgedeckt(luecke, anzahl, gelesen.zeilen);
   }
 
-  /** Eine Lücke ist über ihre Nummernspanne neu benannt: sie bleibt dieselbe, solange die Stelle gezeigt wird. */
+  /** Eine Lücke ist über ihren Ort und ihre Nummer neu benannt: sie bleibt dieselbe, solange der Ort gezeigt wird. */
   function lueckenschluessel(luecke) {
-    return String(luecke.neuVon);
+    return `${luecke.ort}|${luecke.neuVon}`;
   }
 
   /** Das Bedienelement einer Lücke: die Zahl der verborgenen Zeilen und je ein Knopf für den nächsten Schritt und „ganz“;
@@ -904,18 +944,22 @@
       return;
     }
     const daten = zustand.anzeigeDaten;
-    const luecke = lueckeZumSchluessel(daten, knopfElement.dataset.luecke);
-    if (!luecke || zustand.datei === null) {
+    if (daten === null || zustand.datei === null) {
       return;
     }
-    const ergebnis = await holeGanzeDatei(ansicht);
+    const gefunden = lueckeZumSchluessel(daten, knopfElement.dataset.luecke);
+    if (gefunden === null) {
+      return;
+    }
+    const { luecke, bereich } = gefunden;
+    const ergebnis = await holeGanzeDatei(bereich);
     if (zustand.anzeigeDaten !== daten) {
       return;
     }
     if (!ergebnis.ganz) {
       if (ergebnis.fehler) {
         zustand.lueckenfehler[lueckenschluessel(luecke)] = ergebnis.fehler;
-        zeichneAnsicht(ansicht, daten.antwort, daten.zeilen, 'aenderungen');
+        zeichneErneut(ansicht, daten);
       }
       return;
     }
@@ -923,56 +967,72 @@
     const bisher = aufgedecktVon(luecke);
     const anzahl = knopfElement.dataset.ganz === 'wahr' ? luecke.zahl : naechsterSchritt(luecke, bisher);
     zustand.aufgedeckt[lueckenschluessel(luecke)] = anzahl;
-    zeichneAnsicht(ansicht, daten.antwort, daten.zeilen, 'aenderungen');
+    zeichneErneut(ansicht, daten);
   }
 
+  /** Die Lücke zum Schlüssel des Knopfes samt ihrem Bereich: der Ort im Schlüssel grenzt sie gegen die anderen Bereiche ab
+      (Netto und „Einzeln“ führen einen Bereich, ohne Kette je Commit einen). */
   function lueckeZumSchluessel(daten, schluessel) {
-    if (!daten) {
-      return null;
+    for (const bereich of daten.bereiche) {
+      if (!schluessel.startsWith(`${bereich.ort}|`)) {
+        continue;
+      }
+      const gefunden = lueckenDerAnsicht(bereich.zeilen, bereich.ort).find(luecke => lueckenschluessel(luecke) === schluessel);
+      if (gefunden) {
+        return { luecke: gefunden, bereich };
+      }
     }
-    const gefunden = luecken(daten.zeilen, zustand.gesamt).filter(luecke => lueckenschluessel(luecke) === schluessel);
-    if (gefunden.length === 0) {
-      return null;
-    }
-    return gefunden[0];
+    return null;
   }
 
-  /** Die Zeilen der ganzen Datei der gezeigten Stelle: höchstens einmal je Datei und Leerraum-Stellung, erst auf die erste
-      Aufklapp-Betätigung (R00026). Eine späte Antwort einer früheren Wahl wird verworfen; ein laufender Lesevorgang wird geteilt,
-      damit ein zweiter Klick dieselbe Datei nicht ein zweites Mal liest. Liefert `{ganz}` oder `{fehler}` (bzw. `{verworfen}`). */
-  async function holeGanzeDatei(ansicht) {
-    const schluessel = dateischluessel();
-    if (zustand.ganz !== null && zustand.ganz.schluessel === schluessel) {
-      return { ganz: zustand.ganz };
+  /** Zeichnet die gezeigte Lücken-Ansicht nach dem Aufdecken oder einem Fehler neu — ohne neuen Lesevorgang des Diffs.
+      Netto und „Einzeln“ sind ein Bereich, ohne Kette zeichnet jeder Abschnitt seine eigenen Lücken (Karte #44). */
+  function zeichneErneut(ansicht, daten) {
+    if (daten.abschnitte) {
+      zeichneAbschnitte(ansicht, daten.antwort, daten.abschnitte, daten.alsText, zustand.diffansicht);
+      return;
     }
-    const laufend = zustand.ganzLaeuft;
-    if (laufend !== null && laufend.schluessel === schluessel) {
-      return laufend.versprechen;
+    zeichneAnsicht(ansicht, daten.antwort, daten.bereiche[0].zeilen, zustand.diffansicht);
+  }
+
+  /** Die Zeilen der ganzen Datei des Ortes eines Bereichs: höchstens einmal je Ort und erst auf die erste Aufklapp-Betätigung
+      (R00026). Eine späte Antwort einer früheren Wahl wird verworfen; ein laufender Lesevorgang wird geteilt, damit ein zweiter
+      Klick dieselbe Datei nicht ein zweites Mal liest. Liefert `{ganz}` oder `{fehler}` (bzw. `{verworfen}`). */
+  async function holeGanzeDatei(bereich) {
+    const ort = bereich.ort;
+    const gemerkt = zustand.ganz[ort];
+    if (gemerkt !== undefined) {
+      return { ganz: gemerkt };
     }
-    const versprechen = ganzeDateiLesen(schluessel);
-    zustand.ganzLaeuft = { schluessel, versprechen };
+    const laufend = zustand.laeuft[ort];
+    if (laufend !== undefined) {
+      return laufend;
+    }
+    const versprechen = ganzeDateiLesen(bereich);
+    zustand.laeuft[ort] = versprechen;
     try {
       return await versprechen;
     } finally {
-      if (zustand.ganzLaeuft !== null && zustand.ganzLaeuft.versprechen === versprechen) {
-        zustand.ganzLaeuft = null;
+      if (zustand.laeuft[ort] === versprechen) {
+        delete zustand.laeuft[ort];
       }
     }
   }
 
-  /** Liest die ganze Datei der Stelle `schluessel`; ohne spätere Wahl. Bei Erfolg merkt sie `ganz` und `gesamt`, sonst bleibt
-      `ganz` leer — ein erneuter Versuch liest wieder (R00026). */
-  async function ganzeDateiLesen(schluessel) {
+  /** Liest die ganze Datei des Ortes: netto über den Zusammen-Endpunkt (Stand der Auswahl), sonst über den Commit des Bereichs
+      (ohne Kette steht jeder Abschnitt im Stand seines Commits, Karte #44). Bei Erfolg merkt sie die Zeilen samt
+      Gesamtzeilenzahl, sonst bleibt der Ort leer — ein erneuter Versuch liest wieder (R00026). */
+  async function ganzeDateiLesen(bereich) {
     let antwort;
     try {
-      antwort = await diffAbrufen(zustand.datei, false, 'ganz', zustand.leerraum);
+      antwort = await diffAbrufen({ modus: bereich.modus, commit: bereich.commit, pfad: bereich.pfad }, false, 'ganz', zustand.leerraum);
     } catch (fehler) {
-      if (schluessel === dateischluessel()) {
+      if (ortGezeigt(bereich.ort)) {
         return { fehler: fehlertextZu(fehler) };
       }
       return { verworfen: true };
     }
-    if (schluessel !== dateischluessel()) {
+    if (!ortGezeigt(bereich.ort)) {
       return { verworfen: true };
     }
     if (antwort.zuGross) {
@@ -982,17 +1042,15 @@
       return { fehler: DIFF_NICHT_GELESEN };
     }
     const ganzeZeilen = ganzeDateiZeilen(antwort.patch);
-    zustand.ganz = { schluessel, zeilen: ganzeZeilen };
-    zustand.gesamt = gesamtzeilen(ganzeZeilen);
-    return { ganz: zustand.ganz };
+    const gelesen = { zeilen: ganzeZeilen, gesamt: gesamtzeilen(ganzeZeilen) };
+    zustand.ganz[bereich.ort] = gelesen;
+    return { ganz: gelesen };
   }
 
-  /** Die Stelle, für die eine ganze Datei gelesen wird: Datei, Commit und Leerraum-Stellung. */
-  function dateischluessel() {
-    if (zustand.datei === null) {
-      return '';
-    }
-    return `${zustand.datei.commit}|${zustand.datei.pfad}|${zustand.leerraum}`;
+  /** Ob der Ort zur gezeigten Ansicht gehört — sonst trifft eine späte Antwort eine neue Ansicht (R00026). */
+  function ortGezeigt(ort) {
+    const daten = zustand.anzeigeDaten;
+    return daten !== null && daten.bereiche.some(bereich => bereich.ort === ort);
   }
 
   /** Neuer Inhalt beginnt oben (R00033): der Diff springt bei Datei-, Commit-, Modus- und Ansichtswechsel an den Anfang.
