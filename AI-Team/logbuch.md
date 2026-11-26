@@ -536,3 +536,12 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Ursprünglich „0,7-s-Ziel zu knapp → Zeilenaufbau beschleunigen“ (PO); nach der Betreiber-Vorgabe „keine harten Performance-Bedingungen“ umgewidmet: Optimierungslauf gestoppt, ungeprüfter Commit verworfen, R00047 + I0048 (planer Flash), Vision angeglichen, Bau 28 min — 21 Specs auf zwei Schranken (5 s Anzeige, 2 s Einfrieren) an einer Stelle, Sonde gegen Rest-Zahlen, 4 Mutanten rot, keine Produktänderung. Karte gesamt 1,86 $ (davon 0,92 $ für den abgebrochenen Optimierungslauf).
 - Lehre: Enge Zeitziele ohne Nutzerbedarf haben über zwei Tage die meisten roten Gates erzeugt. Mit groben Schranken lief das erste volle Gate seit Langem ohne einen Zeit-Wackler.
 - Gate: NUnit 1648/1648 zweimal, Playwright 944/944 zweimal.
+| 2026-11-26 | #48 | Nacharbeit | entwickler | bestanden | 1 h 6 min | opencode: B1–B3 rot→grün; Pfadprüfungen der Treiber auf zugänglichen Namen umgestellt · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 48-entwickler-2 · 0,34 $ · Karte gesamt 1,25 $ |
+| 2026-11-26 | #48 | Reviews | code-reviewer | bestanden | 3 min | opencode: B1–B3 behoben, Pfadprüfungen nicht abgeschwächt (Mutanten rot) · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 48-code-reviewer-2 · 0,031 $ · Karte gesamt 1,28 $ |
+| 2026-11-26 | #58 | Entwicklung | entwickler | bestanden | 28 min | opencode: 2 Produktfehler (Linksetzer nebeneinander, Commit-Zeile beim Laden) + 1 Treiber-Rennen, je Test rot→grün · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 58-entwickler-2 · 0,47 $ · Karte gesamt 0,67 $ |
+| 2026-11-26 | #48 | Entwicklertest | entwicklertester | befund | 16 min | opencode: Muss Herkunft im Kopf bei 1280 px auf ‚ne…' gekürzt (Rückschritt aus 5ee905f) · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 48-entwicklertester-1 · 0,16 $ · Karte gesamt 1,44 $ |
+
+## Retrospektive #58 Wackler nebeneinander, Tastatur, Commit-Zeile (2026-11-26)
+- Erster Lauf wegen künstlicher Last angehalten (mein Auftrag „mit schweren Specs fahren“, Last 18 — Lehre in AI-Team/gelerntes.md); zweiter Lauf ohne Last: Ursachen im Code gesucht, **zwei Produktfehler** (später Sprung-Link im Zweispalt-Modus; Commit-Zeile während des Ladens) und ein Treiber-Rennen behoben, je deterministischer Test mit verzögerter Antwort vorher rot. Karte gesamt 0,67 $.
+- Lehre: Von sechs gemessenen Wacklern (#56, #58) waren drei echte Produktfehler — Wackler sind Signale, kein Rauschen.
+- Gate: NUnit 1648/1648, Playwright 946/946 zweimal.
