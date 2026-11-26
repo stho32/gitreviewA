@@ -145,3 +145,4 @@ Nie vom User erfragen.
 | 2026-11-26 | R00038 Absicht der KI über dem Diff | I0039 B3703 Anschluss an Wahl und Ansichten | Standard | 2h | 0,2h | 0,2h | autonom |
 | 2026-11-26 | R00038 Absicht der KI über dem Diff | I0039 B3705 Block im Rollbereich über alle Zeichenwege | unklar | 2-4h | 0,6h | 0,6h | autonom |
 | 2026-11-26 | R00038 Absicht der KI über dem Diff | I0039 B3704 Tests und Wegwerf-Repos | unklar | 2-4h | 0,8h | 0,8h | autonom |
+| 2026-11-26 | R00050 Beenden und Abbrechen im Kopf | I0028 B4601 Dialog bestimmen | Standard | 2h | 0,4h | 0,4h | autonom |
