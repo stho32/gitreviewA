@@ -335,6 +335,76 @@ function tabWeiterSichtbar(page) {
   });
 }
 
+/** Der Bildlauf der Ergebnis-Spalte und ihr Überhang (eigener Rollbereich, R00037/R00042). */
+function rollstandSpalte(page) {
+  return page.evaluate(() => {
+    const element = document.getElementById('ergebnis');
+    if (!element) {
+      return null;
+    }
+    return {
+      scrollTop: element.scrollTop,
+      scrollHeight: element.scrollHeight,
+      clientHeight: element.clientHeight,
+      scrollWidth: element.scrollWidth,
+      clientWidth: element.clientWidth,
+      ueberhang: element.scrollHeight - element.clientHeight,
+      ueberhangX: element.scrollWidth - element.clientWidth,
+      overflowY: getComputedStyle(element).overflowY,
+    };
+  });
+}
+
+/** Den Bildlauf der Ergebnis-Spalte setzen (Vorbereitung einer Prüfung). */
+function setzeSpaltenVersatz(page, wert) {
+  return page.evaluate(w => {
+    document.getElementById('ergebnis').scrollTop = w;
+  }, wert);
+}
+
+/** Die Ergebnis-Spalte ist ein eigener Rollbereich (senkrechter Überhang, eigene Bildlaufleiste). */
+async function pruefeSpalteRollbereich(page) {
+  const stand = await rollstandSpalte(page);
+  expect(stand, 'Ergebnis-Spalte vorhanden').not.toBeNull();
+  expect(stand.ueberhang, `Ergebnis-Spalte: Überhang (scrollHeight ${stand.scrollHeight}, clientHeight ${stand.clientHeight})`).toBeGreaterThan(0);
+  expect(stand.overflowY, 'Ergebnis-Spalte: senkrechte Überlauf-Regel').toMatch(/^(auto|scroll)$/);
+}
+
+/** Den Stand der Ergebnis-Spalte setzen (wie ihn der Server liefert) — nur für die Vorbereitung großer Inhalte. */
+function spalteZeige(page, text) {
+  return page.evaluate(t => window.gitreviewaErgebnisSpalte.zeige(t), text);
+}
+
+/** Die Zahl der Diff-Zeilenknoten (Positivkontrolle: der Zug lief über eine wirklich große Datei). */
+function diffKnoten(page) {
+  return page.evaluate(() => document.querySelectorAll('#diff .df-sc tr[data-art]').length);
+}
+
+/**
+ * Misst die längste Aufgabe des Hauptfadens während eines echten Zugs am rechten Trenner (Einfrier-Schranke R00047). Der
+ * Beobachter wird vor dem Zug eingerichtet und danach ausgelesen; die Rückgabe ist die Liste der Aufgabendauern.
+ */
+async function messeZugLangAufgabe(page, deltaX, { schritte = 20 } = {}) {
+  await page.evaluate(() => {
+    window.__grAufgaben = [];
+    window.__grBeobachter = new PerformanceObserver(liste => {
+      for (const eintrag of liste.getEntries()) {
+        window.__grAufgaben.push(eintrag.duration);
+      }
+    });
+    window.__grBeobachter.observe({ type: 'longtask' });
+  });
+  await rechtesZiehen(page, deltaX, { schritte });
+  return page.evaluate(() => {
+    window.__grBeobachter.takeRecords().forEach(eintrag => window.__grAufgaben.push(eintrag.duration));
+    window.__grBeobachter.disconnect();
+    const aufgaben = window.__grAufgaben;
+    delete window.__grAufgaben;
+    delete window.__grBeobachter;
+    return aufgaben;
+  });
+}
+
 module.exports = {
   SEITENLEISTE, TRENNER, DIFF, RECHTS_TRENNER, ERGEBNIS, ERGEBNIS_KNOPF,
   breiteDerSeitenleiste, pruefeBreite, trennerAngaben, trennerVorhanden, warteAufGroesse, fokusAufTrenner,
@@ -344,4 +414,5 @@ module.exports = {
   rechtesZiehen, rechtesDoppelklick, fokussiereRechtenTrenner, pruefeRechterTrennerAria, lageRechts, warteAufSpalte,
   spaltenKnopfAngaben, spaltenKnopfBetatigen, pruefeErgebnisSpalteSichtbar, pruefeErgebnisSpalteVerborgen,
   pruefeSpaltenKnopfFokus, tabWeiterSichtbar,
+  rollstandSpalte, setzeSpaltenVersatz, pruefeSpalteRollbereich, spalteZeige, diffKnoten, messeZugLangAufgabe,
 };

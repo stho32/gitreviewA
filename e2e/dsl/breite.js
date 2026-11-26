@@ -5,6 +5,7 @@
 const { test: basis, expect } = require('./seitenleiste.js');
 const trenner = require('../treiber/trenner-oberflaeche.js');
 const einklappenSeite = require('../treiber/einklappen-oberflaeche.js');
+const diffSeite = require('../treiber/diff-oberflaeche.js');
 const oberflaeche = require('../treiber/oberflaeche.js');
 const anmerkungSeite = require('../treiber/anmerkungen-oberflaeche.js');
 
@@ -63,6 +64,20 @@ function breiteSprache(seit, page) {
     tabWeiter: () => trenner.tabWeiterSichtbar(page),
     seitenleisteVerborgen: () => einklappenSeite.pruefeSeitenleisteVerborgen(page),
     seitenleisteSichtbar: () => einklappenSeite.pruefeSeitenleisteSichtbar(page),
+
+    /* ── Die Ergebnis-Spalte als Rollbereich und großer Inhalt (R00042, B4105) ── */
+    spaltenStand: () => trenner.rollstandSpalte(page),
+    setzeSpaltenVersatz: wert => trenner.setzeSpaltenVersatz(page, wert),
+    spalteIstRollbereich: () => trenner.pruefeSpalteRollbereich(page),
+    spalteZeige: text => trenner.spalteZeige(page, text),
+    setzeSpaltenBreite: wert => page.evaluate(b => window.gitreviewaErgebnisBreite.setzen(b), wert),
+    diffKnoten: () => trenner.diffKnoten(page),
+    messeZugLangAufgabe: (deltaX, optionen) => trenner.messeZugLangAufgabe(page, deltaX, optionen),
+    dateiAnmerkungenAnlegen: (anzahl, text) => anmerkungSeite.dateiAnmerkungenAnlegen(page, anzahl, text),
+
+    /* ── Der Diff-Kopf bei schmalem Diff (R00039, Messhilfen wiederverwendet) ── */
+    leistenmass: () => diffSeite.leistenmass(page),
+    herkunftmass: () => diffSeite.herkunftmass(page),
 
     /* ── Neuladen ── */
     neuLaden: async () => {

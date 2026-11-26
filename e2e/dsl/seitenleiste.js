@@ -23,6 +23,7 @@ const VORBEREITUNGEN = {
   'Repo S zwei Commits': { anlegen: repos.repoS, commits: ['s1', 's2'] },
   'Repo L': { anlegen: repos.repoL, commits: ['l2'] },
   'Repo Z': { anlegen: repos.repoZ, commits: ['z1', 'z3'] },
+  'Repo U': { anlegen: repos.repoU, commits: ['u'] },
 };
 
 function seitenleisteSprache(gr, page) {
