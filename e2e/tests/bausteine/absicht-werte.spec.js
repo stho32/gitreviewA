@@ -60,10 +60,31 @@ test.describe('Baustein Absicht-Werte', () => {
     expect(commitsDerDatei('zusammen', { modus: 'zusammen', pfad: 'src/a.txt', commit: HASH_Z3 }, stellenDerDatei(DATEIEN, 'src/a.txt'), [])).toEqual([]);
     expect(commitsDerDatei('einzeln', { modus: 'einzeln', pfad: 'src/a.txt', commit: 'nicht-in-der-leiste' }, [], COMMITS)).toEqual([]);
   });
+
+  test('Kriterium 7: eine Umbenennung nennt beide Commits, weil die Stellen des Servers verkettet sind', () => {
+    // `n1` legt `alt.txt` an, `n2` benennt sie in `neu.txt` um und ändert sie: die Netto-Liste führt die Datei unter
+    // `neu.txt` mit beiden Stellen — die Verkettung prüft I0010, hier wird nur gerechnet.
+    const dateien = [{ pfad: 'neu.txt', stellen: [{ commit: HASH_Z1, pfad: 'alt.txt' }, { commit: HASH_Z2, pfad: 'neu.txt' }] }];
+    const commits = [
+      { hash: HASH_Z1, kurzHash: '13ba46c', betreff: 'Anlegen', rumpf: '' },
+      { hash: HASH_Z2, kurzHash: 'dd13577', betreff: 'Umbenannt und geändert', rumpf: '' },
+      { hash: HASH_Z3, kurzHash: '8f0c1d2', betreff: 'Unbeteiligt', rumpf: '' },
+    ];
+
+    expect(commitsDerDatei('zusammen', { modus: 'zusammen', pfad: 'neu.txt', commit: HASH_Z2 }, stellenDerDatei(dateien, 'neu.txt'), commits).map(commit => commit.kurzHash))
+      .toEqual(['13ba46c', 'dd13577']);
+  });
+
+  test('soll einen Namen mit Rohbyte-Marke über seinen Anzeigenamen finden', () => {
+    const dateien = [{ pfad: 'f⟨0xFF⟩.txt', stellen: [{ commit: HASH_Z1, pfad: 'f\u00ff.txt' }] }];
+
+    expect(stellenDerDatei(dateien, 'f⟨0xFF⟩.txt')).toEqual([{ commit: HASH_Z1, pfad: 'f\u00ff.txt' }]);
+    expect(commitsDerDatei('zusammen', { modus: 'zusammen', pfad: 'f⟨0xFF⟩.txt', commit: HASH_Z1 }, stellenDerDatei(dateien, 'f⟨0xFF⟩.txt'), COMMITS).map(commit => commit.kurzHash))
+      .toEqual(['13ba46c']);
+  });
 });
 
-test.describe('Baustein Absicht-Werte — sichtbare Commits', () => {
-  /** `anzahl` Commits mit laufender Nummer als Kurz-Hash. */
+test.describe('Baustein Absicht-Werte — sichtbare Commits', () => {  /** `anzahl` Commits mit laufender Nummer als Kurz-Hash. */
   function commits(anzahl) {
     return Array.from({ length: anzahl }, (_, index) => ({ hash: `h${index}`, kurzHash: `k${index}`, betreff: `Betreff ${index}`, rumpf: '' }));
   }

@@ -16,23 +16,27 @@ const VORBEREITUNGEN = {
   Rumpf: { anlegen: repos.repoMitRumpf, commits: ['p', 'q', 'r'] },
   'Repo A': { anlegen: repos.repoA, commits: ['q', 'p'] },
   'Große Diffs': { anlegen: repos.repoGross, commits: ['w'] },
+  'Repo M': { anlegen: repos.repoAbsicht, commits: ['m1', 'm2', 'm3', 'm4', 'm5', 'm6'] },
+  Umbenennung: { anlegen: repos.repoUmbenennung, commits: ['n1', 'n2'] },
 };
 
 function absichtSprache(gr, page) {
   let repo;
   let lauf;
+  let dialogePruefen;
 
   const hash = name => repo.hashes[name];
   const kurz = name => hash(name).slice(0, 7);
 
-  /** Startet gitreviewA im Repo der Vorbereitung und öffnet die Seite; `modus` wählt den Startmodus. */
-  async function starten({ vorbereitung = 'Repo Z', commits, modus = 'zusammen', seiteOeffnen = true } = {}) {
+  /** Startet gitreviewA im Repo der Vorbereitung und öffnet die Seite; `modus` wählt den Startmodus, `fenster` die Größe. */
+  async function starten({ vorbereitung = 'Repo Z', commits, modus = 'zusammen', seiteOeffnen = true, fenster = FENSTER } = {}) {
     const art = VORBEREITUNGEN[vorbereitung];
     repo = art.anlegen(path.join(gr.eigenerOrdner(), 'repo'));
     const namen = commits || art.commits;
     lauf = await gr.gitreviewAStarten(repo, namen.map(hash));
     if (seiteOeffnen) {
-      await page.setViewportSize(FENSTER);
+      await page.setViewportSize(fenster);
+      dialogePruefen = seite.dialogeZaehlen(page);
       await gr.oberflaecheOeffnen(page, lauf, modus);
     }
     return lauf;
@@ -59,6 +63,7 @@ function absichtSprache(gr, page) {
     mehrKnopfText: () => blockSeite.mehrText(page),
     weitereAufklappen: () => blockSeite.mehrBetatigen(page),
     nachrichtAufklappen: commit => blockSeite.nachrichtAufklappen(page, kurz(commit)),
+    nachrichtKnopfAnzahl: commit => blockSeite.nachrichtKnopfAnzahl(page, kurz(commit)),
     nachrichtZuklappen: commit => blockSeite.nachrichtZuklappen(page, kurz(commit)),
     nachrichtIst: (commit, offen) => blockSeite.nachrichtZustand(page, kurz(commit), offen),
     rumpfStehtImDom: commit => blockSeite.rumpfStehtImDom(page, kurz(commit)),
@@ -68,6 +73,13 @@ function absichtSprache(gr, page) {
     masse: () => blockSeite.masseLesen(page),
     bildlaufSetzen: versatz => blockSeite.bildlaufSetzen(page, versatz),
     blockStehtUeberDemInhalt: () => blockSeite.blockStehtUeberDemInhalt(page),
+    fremdElementeImBlock: () => blockSeite.fremdElementeImBlock(page),
+    zeilenmasse: () => blockSeite.zeilenmasse(page),
+    ersteDiffzeileSichtbar: () => blockSeite.ersteDiffzeileSichtbar(page),
+    diffFakeStellen: pfad => blockSeite.diffFakeStellen(page, pfad),
+    zustand: () => blockSeite.zustandLesen(page),
+    /** Der Browser hat keinen Dialog geöffnet (DOM-Sicherheit, R00038 Kriterium 5). */
+    keineDialoge: () => dialogePruefen(),
 
     /** Die Herkunft im Diff-Kopf (R00012): „netto aus …“ bzw. „je Commit, nicht netto — …“. */
     herkunft: text => diffSeite.pruefeHerkunft(page, text),

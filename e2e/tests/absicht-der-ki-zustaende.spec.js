@@ -78,6 +78,47 @@ test.describe('Absicht der KI in jedem Zustand mit gewählter Datei', () => {
     await absicht.blockStehtUeberDemInhalt();
   });
 
+  test('Kriterium 9: eine Binärdatei zeigt unter der Meldung den Block mit m6', async ({ absicht }) => {
+    await absicht.starten({ vorbereitung: 'Repo M' });
+
+    await absicht.dateiAnsehen('bild.bin');
+
+    await absicht.diffMeldet('bild.bin', 'Binärdatei — enthält Null-Bytes');
+    await absicht.blockZeigt(['m6']);
+    await absicht.blockIstErstesKind();
+    await absicht.blockStehtUeberDemInhalt();
+  });
+
+  test('Kriterium 9: das Bild steht hinter dem Block', async ({ absicht }) => {
+    await absicht.starten({ vorbereitung: 'Repo M' });
+    await absicht.bildAntwortErsetzen({ pfad: 'x.txt', seite: 'nachher', base64: PNG_1 });
+    const fake = await absicht.diffFakeStellen('x.txt');
+    fake.setzen(200, { pfad: 'x.txt', status: 'M', alterPfad: null, netto: true, commits: [], art: 'binaer', grund: 'nullbytes', patch: null, abschnitte: [] });
+
+    await absicht.dateiAnsehen('x.txt');
+
+    await expect.poll(async () => (await absicht.zustand()).bilder, 'Bilder im Rollbereich').toBe(1);
+    await absicht.blockZeigt(['m1', 'm2', 'm3', 'm4', 'm5']);
+    expect(await absicht.mehrKnopfText()).toBe('1 weitere');
+    await absicht.blockIstErstesKind();
+    await absicht.blockStehtUeberDemInhalt();
+  });
+
+  test('Kriterium 9: der Fake tastet jeden Zustand mit gewählter Datei ab — überall dieselbe Liste', async ({ absicht }) => {
+    await absicht.starten({ vorbereitung: 'Repo M' });
+    const fake = await absicht.diffFakeStellen('x.txt');
+
+    for (const zustand of zustaende(absicht.hash('m6'))) {
+      fake.setzen(zustand.status, zustand.koerper);
+      await absicht.dateiAnsehen('x.txt');
+
+      await expect.poll(() => absicht.zustand(), `Zustand „${zustand.name}“`).toMatchObject(zustand.erwartet);
+      await absicht.blockZeigt(['m1', 'm2', 'm3', 'm4', 'm5']);
+      expect(await absicht.mehrKnopfText(), `Knopf im Zustand „${zustand.name}“`).toBe('1 weitere');
+      await absicht.blockIstErstesKind();
+    }
+  });
+
   test('ohne Wahl ist der Rollbereich verborgen — kein Block ohne Datei', async ({ absicht }) => {
     await absicht.starten({ vorbereitung: 'Repo A' });
 
@@ -85,3 +126,26 @@ test.describe('Absicht der KI in jedem Zustand mit gewählter Datei', () => {
     expect(await absicht.rollbereichVerborgen(), 'Rollbereich ohne Wahl').toBe(true);
   });
 });
+
+/** Der Patch eines gewöhnlichen Diffs und einer über der Zuklappgrenze (R00017: 20 000 Zeilen). */
+const PATCH = '@@ -1,2 +1,3 @@\n m1-1\n m1-2\n+m2\n';
+const ZU_GROSS_PATCH = `@@ -1,20001 +1,20001 @@\n${' kontext\n'.repeat(20001)}`;
+
+/** Die Zustände mit gewählter Datei, die der Fake nacheinander liefert (R00038, Kriterium 9). */
+function zustaende(hashM6) {
+  const netto = koerper => ({ pfad: 'x.txt', status: 'M', alterPfad: null, netto: true, commits: [], grund: null, abschnitte: [], ...koerper });
+  return [
+    { name: 'Diff', status: 200, koerper: netto({ art: 'text', patch: PATCH }), erwartet: { meldung: '', zeilen: 4 } },
+    {
+      name: 'Abschnitte ohne Kette',
+      status: 200,
+      koerper: { pfad: 'x.txt', status: 'M', alterPfad: null, netto: false, commits: [], art: 'text', grund: null, patch: null, abschnitte: [{ commit: hashM6, pfad: 'x.txt', status: 'M', art: 'text', grund: null, patch: PATCH }] },
+      erwartet: { meldung: '', abschnitte: 1 },
+    },
+    { name: 'Binär', status: 200, koerper: netto({ art: 'binaer', grund: 'nullbytes', patch: null }), erwartet: { meldung: 'Binärdatei — enthält Null-Bytes' } },
+    { name: 'Keine Zeilenänderungen', status: 200, koerper: netto({ art: 'text', patch: '' }), erwartet: { meldung: 'Keine Zeilenänderungen' } },
+    { name: 'zu groß (zugeklappt)', status: 200, koerper: netto({ art: 'text', patch: ZU_GROSS_PATCH }), erwartet: { meldung: 'Sehr lang: 20.001 Zeilen — zugeklappt' } },
+    { name: 'Lesefehler', status: 500, koerper: null, erwartet: { meldung: 'Diff konnte nicht gelesen werden', meldungIstFehler: true } },
+    { name: 'gesperrte Datei', status: 422, koerper: null, erwartet: { meldung: 'Diff dieser Datei nicht lesbar (Name mit ungültigem Byte)', meldungIstFehler: true } },
+  ];
+}

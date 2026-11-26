@@ -321,6 +321,40 @@ function repoMitRumpf(ordner) {
   return { ordner, hashes: { p, q, r } };
 }
 
+/** Repo M (R00038, Kriterien 4, 5, 6, 8, 9): sechs Commits `m1` … `m6`, die je `x.txt` ändern — `m1` legt sie mit 20 Zeilen
+    `m1-1` … `m1-20` an, `m2` trägt einen Betreff aus 400 Zeichen, `m4` einen Rumpf mit HTML und unsichtbaren Zeichen,
+    `m6` einen Rumpf und dazu `bild.bin` (Bytes 0x00–0xFF). */
+function repoAbsicht(ordner) {
+  repoAnlegen(ordner);
+  const schreibeX = text => dateiSchreiben(ordner, 'x.txt', text);
+  const zwanzig = zeilen(20, nummer => `m1-${nummer}`);
+  schreibeX(zwanzig);
+  const m1 = commitAnlegen(ordner, { betreff: 'Schritt 1' });
+  schreibeX(`${zwanzig}m2\n`);
+  const m2 = commitAnlegen(ordner, { betreff: `Schritt 2 ${'x'.repeat(390)}` });
+  schreibeX(`${zwanzig}m2\nm3\n`);
+  const m3 = commitAnlegen(ordner, { betreff: 'Schritt 3' });
+  schreibeX(`${zwanzig}m2\nm3\nm4\n`);
+  const m4 = commitAnlegen(ordner, { betreff: 'Schritt 4', rumpf: '<b>fett</b> <img src=x onerror=alert(1)>\na\u202Eb\u200Bc\u{E0041}d' });
+  schreibeX(`${zwanzig}m2\nm3\nm4\nm5\n`);
+  const m5 = commitAnlegen(ordner, { betreff: 'Schritt 5' });
+  schreibeX(`${zwanzig}m2\nm3\nm4\nm5\nm6\n`);
+  fs.writeFileSync(path.join(ordner, 'bild.bin'), Buffer.from(Array.from({ length: 256 }, (_, byte) => byte)));
+  const m6 = commitAnlegen(ordner, { betreff: 'Schritt 6', rumpf: 'Bild ergänzt' });
+  return { ordner, hashes: { m1, m2, m3, m4, m5, m6 } };
+}
+
+/** Umbenennung (R00038, Kriterium 7): `n1` legt `alt.txt` an, `n2` benennt sie in `neu.txt` um und ändert eine Zeile. */
+function repoUmbenennung(ordner) {
+  repoAnlegen(ordner);
+  dateiSchreiben(ordner, 'alt.txt', 'a1\na2\na3\n');
+  const n1 = commitAnlegen(ordner, { betreff: 'Anlegen' });
+  git(ordner, 'mv', 'alt.txt', 'neu.txt');
+  dateiSchreiben(ordner, 'neu.txt', 'a1\nA2\na3\n');
+  const n2 = commitAnlegen(ordner, { betreff: 'Umbenannt und geändert' });
+  return { ordner, hashes: { n1, n2 } };
+}
+
 /** Repo Z (R00012): `z1` „Start“ legt `README.md` (`Lager`, `Beispiel`) und `src/a.txt` (`eins`, `zwei`, `drei`) an; `z2` „a ändern, b neu“
     ändert in `src/a.txt` `zwei` zu `ZWEI` und legt `src/b.txt` (`x`, `y`) an; `z3` „a und b ändern“ hängt in `src/a.txt` `vier` an und
     ändert in `src/b.txt` `y` zu `Y`. `z1 z2 z3` ist eine lückenlose Kette, `z1 z3` nicht. Netto über alle drei: `README.md` +2 −0,
@@ -533,4 +567,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoGruppen, repoP, repoV, repoG, repoKlammern, repoX, repoK, repoZ, repoZeilenbereich, repoQ, repoS, repoL, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, repoY, repoLangerPfad, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoGruppen, repoAbsicht, repoUmbenennung, repoP, repoV, repoG, repoKlammern, repoX, repoK, repoZ, repoZeilenbereich, repoQ, repoS, repoL, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, repoY, repoLangerPfad, markerVorhanden, diffProgrammOhneSchutzStarten };

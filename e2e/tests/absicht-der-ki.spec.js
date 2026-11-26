@@ -40,7 +40,7 @@ test.describe('Absicht der KI: Commits der Datei', () => {
     await absicht.blockZeigt(['z1']);
   });
 
-  test('die Commit-Angaben kommen aus der Liste der Leiste — die Seite holt sie nicht neu', async ({ absicht, page }) => {
+  test('die Commit-Angaben kommen aus der Liste der Leiste — die Seite holt sie nicht neu', async ({ absicht }) => {
     await absicht.starten({ vorbereitung: 'Repo Z' });
     const anfragen = absicht.anfragenSammeln();
     const vorher = anfragen.length;
@@ -49,6 +49,28 @@ test.describe('Absicht der KI: Commits der Datei', () => {
     await absicht.blockZeigt(['z1', 'z2', 'z3']);
 
     expect(anfragen.slice(vorher).filter(pfad => pfad === '/api/commits' || pfad === '/api/zusammen')).toEqual([]);
+  });
+
+  test('Kriterium 4: sechs Commits zeigen die ersten fünf und „1 weitere“; danach steht m6', async ({ absicht }) => {
+    await absicht.starten({ vorbereitung: 'Repo M' });
+
+    await absicht.dateiAnsehen('x.txt');
+
+    await absicht.blockZeigt(['m1', 'm2', 'm3', 'm4', 'm5']);
+    expect(await absicht.mehrKnopfText(), 'Knopf „k weitere“').toBe('1 weitere');
+
+    await absicht.weitereAufklappen();
+
+    await absicht.blockZeigt(['m1', 'm2', 'm3', 'm4', 'm5', 'm6']);
+    expect(await absicht.mehrKnopfText(), 'kein Knopf mehr').toBeNull();
+  });
+
+  test('Kriterium 7: eine Umbenennung nennt beide Commits der verketteten Stellen', async ({ absicht }) => {
+    await absicht.starten({ vorbereitung: 'Umbenennung' });
+
+    await absicht.dateiAnsehen('neu.txt');
+
+    await absicht.blockZeigt(['n1', 'n2']);
   });
 });
 
