@@ -45,13 +45,18 @@ test.describe('Abnahme-Probe des Entwicklertesters (B4903: Kriterien 1–3)', ()
     ['812 × 800, Spalte offen', SCHMAL, true],
     ['812 × 800, Spalte zu', SCHMAL, false],
   ]) {
-    test(`soll bei ${name} das Feld ganz im Diff halten, ohne waagerechten Bildlauf`, async ({ anm }) => {
+    test(`soll bei ${name} das Feld ganz im Diff halten, ohne waagerechten Bildlauf`, async ({ anm, page }) => {
       await anm.starten({ modus: 'zusammen' });
       await spaltenzustand(anm, fenster, spalteOffen);
 
       await anm.dateiAnsehen(DATEI);
+      // Kriterium 6: Öffnen, Tippen und Messen erzeugen keine Anfrage — der geöffnete Diff hat alles geladen.
+      let anfragen = 0;
+      page.on('request', () => { anfragen += 1; });
       await anm.zeileAnklicken({ neu: ZEILE });
+      const vorher = anfragen;
       const lage = await messung(anm, anm.feldname(DATEI, ZEILE));
+      expect(anfragen, 'Anfragen durch Öffnen und Messen').toBe(vorher);
 
       erwarteImDiff(lage, name);
       expect(lage.rollBildlauf, `scrollLeft des Rollbereichs (${name})`).toBe(0);
