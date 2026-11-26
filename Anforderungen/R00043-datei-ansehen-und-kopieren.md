@@ -8,7 +8,7 @@ datum: 2026-11-25
 
 ## Beschreibung
 
-`gitreviewA --dateien <pfad>` öffnet statt eines Reviews die **Dateiansicht**: eine Datei vom Datenträger steht ganz da, mit Zeilennummern, Syntaxhervorhebung und Umbruch. „Datei kopieren“ (Knopf und Kürzel `c`) legt ihren Text byte-genau in die Zwischenablage, ohne Zeilennummern, mit sichtbarer Bestätigung und einem Ersatzweg, wenn der Browser die Zwischenablage verweigert. Lässt sich die Datei nicht zeigen (fehlt, nicht lesbar, Verzeichnis, Link, keine reguläre Datei, binär, zu groß, nicht UTF-8), nennt gitreviewA den Grund auf stderr und endet vor dem Serverstart mit Exit 2. Die Dateiansicht hat kein Ergebnis: stdout bleibt leer, „Schließen“ endet mit Exit 0, Strg+C oder Signal mit „Review abgebrochen“ und Exit 130.
+`gitreviewA --dateien <pfad>` öffnet statt eines Reviews die **Dateiansicht**: eine Datei vom Datenträger steht ganz da, mit Zeilennummern, Syntaxhervorhebung und Umbruch. „Datei kopieren“ (Knopf und Kürzel `c`) legt ihren Text byte-genau in die Zwischenablage, ohne Zeilennummern, mit sichtbarer Bestätigung und einem Ersatzweg, wenn der Browser die Zwischenablage verweigert. Lässt sich die Datei nicht zeigen (fehlt, nicht lesbar, Verzeichnis, Link, keine reguläre Datei, binär, zu groß, nicht UTF-8), nennt gitreviewA den Grund auf stderr und endet vor dem Serverstart mit Exit 2. Die Dateiansicht hat kein Ergebnis: stdout bleibt leer, „Schließen“ endet mit Exit 0, Strg+C oder Signal mit „Dateiansicht abgebrochen“ und Exit 130 (PO 2026-11-26, `AI-Team/po-entscheidungen.md` Zeile 275: der Review behält wörtlich „Review abgebrochen“, die Dateiansicht nennt ihre eigene Laufart).
 
 Zahlt ein auf: [Vision](R00000-vision.md) — „Einzelne Dateien ansehen und kopieren“ (Betreiber 2026-11-25: „Außerdem brauch ich noch irgendwas um nur einzelne Dateien anzusehen. Zum Beispiel habe ich öfter das Problem, dass man eine oder mehrere SQL Dateien ausführen soll. Die könnte man mit dem Review Tool anzeigen. Man müsste natürlich den Inhalt ganz oder teilweise kopieren können.“).
 
@@ -36,7 +36,7 @@ Eine KI schreibt eine SQL-Datei und sagt „bitte ausführen“. Heute öffnet d
 - **Kopf**: Angabe, echter Pfad, Größe in Bytes, Zeilenzahl, Kodierung, Zeilenende (LF, CRLF, gemischt, keins), Knopf „Datei kopieren“, Knopf „Schließen“; höchstens zwei Zeilen hoch, längere Pfade in der Mitte gekürzt mit „…“, der volle Pfad als zugänglicher Name.
 - **Datei kopieren**: Knopf und Kürzel `c` (außerhalb von Feldern, ohne Strg/Alt/Meta, Eintrag im Katalog von R00030 mit Laufart) schreiben den Text der Datei in die Zwischenablage — byte-genau: die UTF-8-Bytes des Kopierten gleichen den Bytes der Datei nach einer BOM, samt CRLF und fehlendem Schluss-Zeilenumbruch; nie Zeilennummern, nie Marken, nie die gekürzte Anzeige. Bestätigung „Datei kopiert (n Zeilen)“ als höfliche Live-Region; bei leerer Datei ist der Knopf gesperrt mit Grund.
 - **Ersatzweg**: fehlt die Zwischenablage oder verweigert der Browser sie, steht „Zwischenablage verweigert — Strg+C kopiert die Datei“, die Datei ist als Kopierziel markiert, und Strg+C legt denselben Text ab (Kopier-Ereignis des Browsers, das ohne Berechtigung schreiben darf). Der Inhalt erscheint dafür in keinem zweiten Feld.
-- **Ende**: „Schließen“ (ohne Nachfrage, es geht nichts verloren) beendet den Lauf mit Exit 0, stdout 0 Bytes, die Seite zeigt „Dateiansicht geschlossen“. Strg+C oder Signal: stdout leer, „Review abgebrochen“ auf stderr (Wortlaut der Vision), Exit 130. Ein geschlossener Tab beendet nichts.
+- **Ende**: „Schließen“ (ohne Nachfrage, es geht nichts verloren) beendet den Lauf mit Exit 0, stdout 0 Bytes, die Seite zeigt „Dateiansicht geschlossen“. Strg+C oder Signal: stdout leer, „Dateiansicht abgebrochen“ auf stderr (Wortlaut der Vision, PO 2026-11-26, Zeile 275), Exit 130, Stufe Warnung. Ein geschlossener Tab beendet nichts. Der Review behält wörtlich „Review abgebrochen“ (R00005, R00050) — die Abbruchzeile nennt je Laufart, was abgebrochen wurde; keine zweite Zeichenliste, kein Umbau am Abbruch.
 
 ## Nicht-funktionale Anforderungen
 
@@ -51,7 +51,7 @@ Eine KI schreibt eine SQL-Datei und sagt „bitte ausführen“. Heute öffnet d
 Vorbereitung: **Ordner D** außerhalb jedes Repositories, angelegt mit dem Skript in `user-stories/R00043.md` (u. a. `a.sql` 3 Zeilen LF, `crlf.sql`, `ohne-ende.sql`, `bom.sql`, `leer.sql`, `latin1.sql`, `utf16.sql`, `bin.dat`, `lang.sql` 30 000 Zeilen, `breit.sql` eine Zeile mit 50 000 Zeichen, `grenze.sql` genau 8 388 608 Bytes, `ueber.sql` 8 388 609 Bytes, `trojan.sql`, `xss.sql`). Aufruf `gitreviewA --dateien <angabe> --kein-browser`, im Browser 1280 × 800.
 
 ### Aufruf und Ende
-- [ ] 1. Gegeben Ordner D, wenn man `--dateien a.sql` startet, dann läuft der Server, `GET /api/dateiansicht` nennt genau eine Datei (Nummer 0, 3 Zeilen, UTF-8, LF), und nach „Schließen“ endet der Prozess mit Exit 0, stdout hat 0 Bytes. Mit Strg+C (Start über `bash -c '… &'`, Lehre #21) oder SIGTERM statt „Schließen“: stdout 0 Bytes, „Review abgebrochen“ auf stderr, Exit 130. *Ebene: Integration (Programm als Prozess).*
+- [ ] 1. Gegeben Ordner D, wenn man `--dateien a.sql` startet, dann läuft der Server, `GET /api/dateiansicht` nennt genau eine Datei (Nummer 0, 3 Zeilen, UTF-8, LF), und nach „Schließen“ endet der Prozess mit Exit 0, stdout hat 0 Bytes. Mit Strg+C (Start über `bash -c '… &'`, Lehre #21) oder SIGTERM statt „Schließen“: stdout 0 Bytes, „Dateiansicht abgebrochen“ auf stderr, Exit 130. *Ebene: Integration (Programm als Prozess).*
 - [ ] 2. Gegeben ein Repository mit Commit `a`, wenn man `--dateien a.sql <a>`, `--dateien a.sql -`, `--dateien a.sql --ignore '*.md'` oder `--dateien` allein startet, dann je Exit 2, eine Meldung auf stderr, kein Server, stdout 0 Bytes; `gitreviewA <a>` ohne `--dateien` startet unverändert den Review. *Ebene: Unit (Aufrufleser) und Integration.*
 
 ### Gründe beim Start (Angriffsmatrix, Teil Datenträger)
@@ -198,3 +198,10 @@ Auslöser ist der Satz des Betreibers, dass er SQL-Dateien ausführen soll und d
 ### Spätere Ausbaustufe — UTF-16 (nicht Umfang)
 
 Kein Umfang dieser Karte (Umfang: keine Ausbaustufen). Auslöser (PO Zeile 209): **der Betreiber nennt eine solche Datei**. Dann zuerst UTF-16 mit BOM (eindeutig erkennbar), Latin-1 nie raten. Bis dahin bleibt der Wortlaut „UTF-16 wird nicht unterstützt“ mit Exit 2 (Prüfung beim Start, Kriterium 3); die Datei auf dem Datenträger bleibt unberührt.
+
+## Änderungshistorie
+
+| Datum | Änderung | Grund |
+|---|---|---|
+| 2026-11-26 | Abbruchzeile der Laufart angepasst: Beschreibung, Funktionale Anforderungen „Ende“ und Kriterium 1 nennen statt „Review abgebrochen“ jetzt „Dateiansicht abgebrochen“; der Review behält seinen Wortlaut | PO-Entscheidung Karte #63, `AI-Team/po-entscheidungen.md` Zeile 275; Befund 3 des Entwicklertests (`.factory/laeufe/63-entwicklertester-1.md`). Kein Nutzer sieht in der Dateiansicht das Wort „Review“ (Endseite „Dateiansicht geschlossen“); der Review-Wortlaut ist die Schnittstelle für auswertende Aufrufer (R00005) und bleibt. Keine Richtungsänderung, nur der Wortlaut; der Code folgt (Abbruchmeldung je Laufart aus dem Aufrufleser, Test auf beide Wortlaute) |
+
