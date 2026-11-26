@@ -10,6 +10,12 @@ const LISTEN_MELDUNG = `${LISTE} .dateien-meldung`;
 const HINWEIS = `${LISTE} .abgehakte-hinweis`;
 const ZAEHLER = '#kopf-fortschritt .ausblenden-zaehler';
 const DATEIZEILE = '#datei-zeilen .datei-zeile';
+/* R00052: die Seitenleiste (ihr Innenbereich trägt das Feld), die Suchzeile mit ihrer Feldzeile und der Einklapp-Knopf im
+   Streifen an der Grenze (R00035). */
+const SEITENLEISTE = '#seitenleiste';
+const SUCHZEILE = `${LISTE} .dateisuche`;
+const FELDZEILE = `${LISTE} .dateisuche-feld`;
+const EINKLAPPEN = '.gr-streifen .gr-einklappen';
 
 function feld(page) {
   return page.locator(FELD);
@@ -104,8 +110,57 @@ async function pruefeCommitZaehler(page, text) {
   await expect(page.locator('#waehler-auswahl option:checked')).toHaveText(new RegExp(`${text}$`));
 }
 
+/** Die Messung der Abnahme-Probe (R00052, Kriterien 1–3) in einem Zug: Feld, Suchzeile, Feldzeile und Einklapp-Knopf mit
+    `getBoundingClientRect`, die Innenkante der Seitenleiste (Polsterung abgezogen) und was `elementFromPoint` an der rechten
+    Feldkante trifft — das Feld selbst oder der Knopf darüber. */
+function lage(page) {
+  return page.evaluate(([leisteSel, suchSel, feldzeileSel, feldSel, knopfSel]) => {
+    const leiste = document.querySelector(leisteSel);
+    const suchzeile = document.querySelector(suchSel);
+    const feldzeile = document.querySelector(feldzeileSel);
+    const feld = document.querySelector(feldSel);
+    const knopf = document.querySelector(knopfSel);
+    if (!leiste || !suchzeile || !feldzeile || !feld || !knopf) {
+      return null;
+    }
+    const rechteck = element => {
+      const r = element.getBoundingClientRect();
+      return { links: Math.round(r.left), rechts: Math.round(r.right), breite: Math.round(r.width) };
+    };
+    const polster = getComputedStyle(leiste);
+    const aussen = leiste.getBoundingClientRect();
+    const f = feld.getBoundingClientRect();
+    const mitte = f.top + f.height / 2;
+    const treffer = document.elementFromPoint(f.right - 4, mitte);
+    const amFeld = element => element !== null && (element === feld || feld.contains(element));
+    const beschreibe = element => (element ? `${element.tagName.toLowerCase()}.${typeof element.className === 'string' ? element.className.replace(/\s+/g, '.') : ''}` : 'nichts');
+    return {
+      leiste: {
+        links: Math.round(aussen.left),
+        rechts: Math.round(aussen.right),
+        innenLinks: Math.round(aussen.left + parseFloat(polster.paddingLeft)),
+        innenRechts: Math.round(aussen.right - parseFloat(polster.paddingRight)),
+      },
+      suchzeile: rechteck(suchzeile),
+      feldzeile: rechteck(feldzeile),
+      feld: rechteck(feld),
+      knopf: rechteck(knopf),
+      trefferFeld: amFeld(treffer),
+      treffer: beschreibe(treffer),
+      kanteAmFeld: amFeld(document.elementFromPoint(f.right - 1, mitte)),
+    };
+  }, [SEITENLEISTE, SUCHZEILE, FELDZEILE, FELD, EINKLAPPEN]);
+}
+
+/** Klickt an die rechte Feldkante (4 px innen, senkrechte Mitte) — die Stelle, an der heute der Knopf liegt. */
+async function klickAnDieRechteFeldkante(page) {
+  const box = await feld(page).boundingBox();
+  await page.mouse.click(box.x + box.width - 4, box.y + box.height / 2);
+}
+
 module.exports = {
   feld, sucheEingeben, sucheLeeren, sucheInhalt, sucheMeldung, pruefeSucheMeldung, pruefeLeerfall,
   zaehlerText, pruefeZaehler, pruefeHinweis, pruefeFeldbeschriftung, pruefeKuerzelHinweis,
   pruefeFokusImSuchfeld, pruefeFokusAufDateizeile, anfragenZaehlen, zeitBisSuchmeldung, tabBisFeld, pruefeCommitZaehler,
+  lage, klickAnDieRechteFeldkante,
 };

@@ -12,6 +12,7 @@ const naechsteSeite = require('../treiber/naechste-oberflaeche.js');
 const suchSeite = require('../treiber/dateisuche-oberflaeche.js');
 const tastaturSeite = require('../treiber/tastatur-oberflaeche.js');
 const einkl = require('../treiber/einklappen-oberflaeche.js');
+const trenner = require('../treiber/trenner-oberflaeche.js');
 const beobachtung = require('../treiber/beobachtung.js');
 const diffRepos = require('../treiber/diff-repos.js');
 const { git, dateiSchreiben, commitAnlegen } = require('../treiber/wegwerf-repo.js');
@@ -123,6 +124,30 @@ function dateisucheSprache(gr, page) {
     commitZaehler: text => suchSeite.pruefeCommitZaehler(page, text),
     zeitBisSuchmeldung: (text, startMs) => suchSeite.zeitBisSuchmeldung(page, text, startMs),
     aufZeilen: anzahl => seite.aufDateizeilenWarten(page, anzahl),
+    /* ── Lage des Feldes im Kopf der Seitenleiste (R00052, Kriterien 1–3) ── */
+    /** Feld, Suchzeile, Feldzeile, Knopf und Seitenleisten-Innenkante mit `getBoundingClientRect`, der Treffer an der rechten
+        Feldkante mit `elementFromPoint`. */
+    lage: () => suchSeite.lage(page),
+    klickAnDieRechteFeldkante: () => suchSeite.klickAnDieRechteFeldkante(page),
+    /** „Fenster“ setzt die Größe des Browsers und wartet, bis der Aufbau sie trägt (die Mediengrenze greift beim Zeichnen). */
+    fensterSetzen: async fenster => {
+      await page.setViewportSize(fenster);
+      await trenner.warteAufGroesse(page);
+      await trenner.warteAufSpalte(page);
+    },
+    /** Die Breite der Seitenleiste, wie der Trennzug sie führt (R00034). */
+    seitenleistenBreite: async () => Number((await trenner.trennerAngaben(page)).jetzt),
+    /** Zieht den Trenner auf die Ziobreite (240–640 px, R00034) und wartet, bis der Trennzug sie führt. */
+    seitenleisteZiehenAuf: async ziel => {
+      const jetzt = Number((await trenner.trennerAngaben(page)).jetzt);
+      await trenner.ziehen(page, ziel - jetzt);
+      await expect.poll(async () => Number((await trenner.trennerAngaben(page)).jetzt), `Breite der Seitenleiste ${ziel}`).toBe(ziel);
+    },
+    /** Die Ergebnis-Spalte einklappen (R00037/R00042) — sie gibt sonst bei 1280 px die breiteste Seitenleiste nicht frei. */
+    ergebnisSpalteEinklappen: () => trenner.spaltenKnopfBetatigen(page),
+    ergebnisSpalteVerborgen: () => trenner.pruefeErgebnisSpalteVerborgen(page),
+    /** `aria-expanded` des Einklapp-Knopfes (R00035): „true“ = die Seitenleiste ist ausgeklappt. */
+    einklappKnopfErweitert: () => einkl.knopfAngaben(page).then(angaben => angaben.erweitert),
     gitAufrufe: () => (zaehlerGit ? zaehlerGit.aufrufe() : []),
     beendenAnfordern: () => gr.beendenAnfordern(lauf),
     beendenUndErgebnisLesen: async () => {
