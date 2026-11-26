@@ -96,3 +96,4 @@ Nie vom User erfragen.
 | 2026-11-26 | Wackler #58 (R00012/R00023/R00030) | Vier Wackler messen, zwei Produktfehler beheben | Bug-Fix | – | 1,0h | – | autonom |
 | 2026-11-26 | R00039 Werkzeugleiste einzeilig | I0040 B3801–B3804 (Menü, Leiste, Tastatur, Abnahme) | unklar | 8-16h | 1,2h | – | autonom |
 | 2026-11-26 | R00039 Werkzeugleiste einzeilig | Nacharbeit Code-Review B1–B3 (Leistenhöhe und Knopf-Innenlage, Pfadkürzung nach Größenänderung, Katalogziel je Laufart) | Bug-Fix | – | 0,6h | – | autonom |
+| 2026-11-26 | R00039 Werkzeugleiste einzeilig | Nacharbeit Entwicklertest: Herkunft nicht still kürzen (voller Text in `title` und Name); Sichtbarkeitsgrenze belegt | Bug-Fix | – | 0,7h | – | autonom |
