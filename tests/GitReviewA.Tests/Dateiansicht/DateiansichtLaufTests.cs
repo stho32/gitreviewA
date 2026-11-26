@@ -39,7 +39,7 @@ public class DateiansichtLaufTests
     }
 
     [Test]
-    public async Task Wenn_ein_Beendigungssignal_kommt_dann_130_und_Review_abgebrochen_ohne_stdout()
+    public async Task Wenn_ein_Beendigungssignal_kommt_dann_130_und_Dateiansicht_abgebrochen_ohne_stdout()
     {
         using var d = OrdnerD.Anlegen();
         using var lauf = await Dateiansichtprozess.StarteAsync(d.Ordner, "--dateien", "a.sql", "--kein-browser", "--port", "0");
@@ -50,7 +50,10 @@ public class DateiansichtLaufTests
 
         Assert.That(ende, Is.EqualTo(130));
         Assert.That(lauf.Ausgabe, Is.Empty);
-        Assert.That(lauf.Fehler, Does.Contain("Review abgebrochen"));
+        Assert.That(lauf.Fehler, Does.Contain("WARNUNG [Abbruch] Dateiansicht abgebrochen"));
+        // Die Abbruchzeile nennt die Laufart (PO 275) und steht genau einmal; das Wort „Review“ gehört nicht in diese Laufart.
+        Assert.That(Abbruchzeilen(lauf.Fehler), Is.EqualTo(1));
+        Assert.That(lauf.Fehler, Does.Not.Contain("Review abgebrochen"));
     }
 
     [Test]
@@ -240,7 +243,7 @@ public class DateiansichtLaufTests
     }
 
     [Test]
-    public async Task Wenn_der_Lauf_im_Hintergrund_gestartet_und_mit_StrgC_abgebrochen_wird_dann_130_und_Review_abgebrochen()
+    public async Task Wenn_der_Lauf_im_Hintergrund_gestartet_und_mit_StrgC_abgebrochen_wird_dann_130_und_Dateiansicht_abgebrochen()
     {
         using var d = OrdnerD.Anlegen();
         var dll = typeof(GitReviewA.Aufruf.Aufrufleser).Assembly.Location;
@@ -267,7 +270,9 @@ public class DateiansichtLaufTests
         var fehler = await File.ReadAllTextAsync(fehlerdatei);
         var code = (await File.ReadAllTextAsync(codedatei)).Trim();
         Assert.That(code, Is.EqualTo("130"));
-        Assert.That(fehler, Does.Contain("Review abgebrochen"));
+        Assert.That(fehler, Does.Contain("WARNUNG [Abbruch] Dateiansicht abgebrochen"));
+        Assert.That(Abbruchzeilen(fehler), Is.EqualTo(1));
+        Assert.That(fehler, Does.Not.Contain("Review abgebrochen"));
         Assert.That(bash.StandardOutput.ReadToEnd(), Is.Empty);
     }
 
@@ -377,6 +382,12 @@ public class DateiansichtLaufTests
         var pfad = which?.StandardOutput.ReadToEnd().Trim() ?? "dotnet";
         which?.WaitForExit();
         return pfad;
+    }
+
+    /// <summary>Die Abbruchzeilen einer Laufart: Zeilen mit „[Abbruch]“ und „abgebrochen“ — genau eine erwartet die Abnahme.</summary>
+    private static int Abbruchzeilen(string fehler)
+    {
+        return fehler.Split('\n').Count(zeile => zeile.Contains("[Abbruch]", StringComparison.Ordinal) && zeile.Contains("abgebrochen", StringComparison.Ordinal));
     }
 
     private static int Fehlerzeilen(string fehler)

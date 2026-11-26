@@ -34,7 +34,7 @@ internal static class Program
         {
             var dateiprotokoll = NeuesProtokoll(dateiaufruf.Mindeststufe);
             return await LaufeMitEinerFehlerzeileAsync(
-                () => LaufeDateiansichtAsync(dateiaufruf, abbruchsignale, dateiprotokoll),
+                () => LaufeDateiansichtAsync(dateiaufruf, aufruf.Laufart, abbruchsignale, dateiprotokoll),
                 dateiprotokoll);
         }
         var startauftrag = aufruf.Startauftrag
@@ -48,7 +48,7 @@ internal static class Program
             return folge.Fehler.ExitCode;
         }
         return await LaufeMitEinerFehlerzeileAsync(
-            () => LaufeBisZumEnde(startauftrag, folge.Commits, folge.Arbeitsbaumwurzel, abbruchsignale, protokoll),
+            () => LaufeBisZumEnde(startauftrag, aufruf.Laufart, folge.Commits, folge.Arbeitsbaumwurzel, abbruchsignale, protokoll),
             protokoll);
     }
 
@@ -82,9 +82,9 @@ internal static class Program
 
     /// <summary>
     /// Der Lauf der Dateiansicht (R00043, B4204): Gründe vor dem Serverstart als eine Zeile je Angabe, sonst Server und Warten.
-    /// „Schließen“ endet mit Exit 0, ein Signal oder ein anderes Ende mit „Review abgebrochen“ und Exit 130; stdout bleibt leer.
+    /// „Schließen“ endet mit Exit 0, ein Signal oder ein anderes Ende mit „Dateiansicht abgebrochen“ und Exit 130; stdout bleibt leer.
     /// </summary>
-    private static async Task<int> LaufeDateiansichtAsync(Dateiaufruf aufruf, Abbruchsignale abbruchsignale, StderrProtokoll protokoll)
+    private static async Task<int> LaufeDateiansichtAsync(Dateiaufruf aufruf, Laufart laufart, Abbruchsignale abbruchsignale, StderrProtokoll protokoll)
     {
         const int ExitAbgebrochen = 130;
         const int HoechsteGrundzeilenlaenge = 300;
@@ -109,7 +109,7 @@ internal static class Program
         }
         if (abbruchsignale.IstAbbruchAngefordert)
         {
-            protokoll.Melde(Protokollstufe.Warnung, "Abbruch", "Review abgebrochen");
+            Abbruchzeile.Melde(protokoll, laufart);
             return ExitAbgebrochen;
         }
         var stand = ausgang.Stand ?? throw new InvalidOperationException("Erfolg ohne Stand");
@@ -124,7 +124,7 @@ internal static class Program
         {
             return 0;
         }
-        protokoll.Melde(Protokollstufe.Warnung, "Abbruch", "Review abgebrochen");
+        Abbruchzeile.Melde(protokoll, laufart);
         return ExitAbgebrochen;
     }
 
@@ -147,7 +147,7 @@ internal static class Program
         }
     }
 
-    private static async Task<int> LaufeBisZumEnde(Startauftrag startauftrag, Commitzeilen commits, string arbeitsbaumwurzel, Abbruchsignale abbruchsignale, StderrProtokoll protokoll)
+    private static async Task<int> LaufeBisZumEnde(Startauftrag startauftrag, Laufart laufart, Commitzeilen commits, string arbeitsbaumwurzel, Abbruchsignale abbruchsignale, StderrProtokoll protokoll)
     {
         var uebersichtsquelle = new GitUebersichtsquelle(commits, arbeitsbaumwurzel);
         var zusammenquelle = new GitZusammenquelle(commits, arbeitsbaumwurzel);
@@ -159,7 +159,7 @@ internal static class Program
         }
         await WartenBisBeendetOderAbgebrochen(server, abbruchsignale);
         var ausgang = AbbruchEntscheidung.Entscheide(server.Laufende.Zustand);
-        GibErgebnisOderAbbruchAus(ausgang, server, protokoll);
+        GibErgebnisOderAbbruchAus(ausgang, server, laufart, protokoll);
         return ausgang.ExitCode;
     }
 
@@ -173,11 +173,11 @@ internal static class Program
         await server.WartenBisBeendetAsync();
     }
 
-    private static void GibErgebnisOderAbbruchAus(Laufausgang ausgang, Webserver server, StderrProtokoll protokoll)
+    private static void GibErgebnisOderAbbruchAus(Laufausgang ausgang, Webserver server, Laufart laufart, StderrProtokoll protokoll)
     {
         if (ausgang.IstAbgebrochen)
         {
-            protokoll.Melde(Protokollstufe.Warnung, "Abbruch", "Review abgebrochen");
+            Abbruchzeile.Melde(protokoll, laufart);
             return;
         }
         var kopie = server.Ergebnis.Erzeuge();
