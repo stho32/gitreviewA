@@ -240,8 +240,14 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .anm-kopf-fehler{margin-inline-start:var(--kd-s2);font-size:12px;color:var(--kd-status-error-ink)}
 .anm-kopf-fehler:empty{display:none}
 /* Die Anmerkungs- und Feldzeilen duerfen die Breite des Diff-Blocks (`--bb`) nicht sprengen (R00037): der Diff ist schmaler
-   geworden, die Ergebnis-Spalte nimmt Platz; ohne Grenze wuechse die Tabelle ueber den Block hinaus. */
+   geworden, die Ergebnis-Spalte nimmt Platz; ohne Grenze wuechse die Tabelle ueber den Block hinaus.
+   Kein Inhalt der Zelle darf dabei eine Mindestbreite ueber der Behaelterbreite erzwingen (Karte #63, Befund 2): die Gruppen der
+   Zelle brechen um und schrumpfen, statt die Tabelle zu verbreitern. Die nicht umbruchfaehige Gruppe war der Anmerkungskopf
+   (Nummer, Art-Wort, „Ändern“/„Löschen“): bei 812 px und offener Ergebnis-Spalte erzwang er 183 px Mindestbreite, das Feld ragte
+   14 px ueber `.df-sc`. Keine Regel je Fensterbreite. */
 .dz .anm-zelle{max-inline-size:var(--bb,100%)}
+.anm-kopf{flex-wrap:wrap}
+.anm-rechts{flex-wrap:wrap}
 .anm-art{min-inline-size:0}
 .anm-eingabe{inline-size:100%;box-sizing:border-box;min-inline-size:0}
 .anm-stelle{margin-block-start:var(--kd-s1);font:11px/1.4 var(--kd-mono);color:var(--kd-muted);overflow-wrap:anywhere}
