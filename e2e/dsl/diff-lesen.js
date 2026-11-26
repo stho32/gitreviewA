@@ -182,7 +182,7 @@ function diffSprache(gr, page) {
       await seite.pruefeKeineFormatierung(page);
       await dialogePruefen();
     },
-    antwortVerzoegern: pfad => diffSeite.diffAntwortVerzoegern(page, pfad),
+    antwortVerzoegern: (pfad, ms) => diffSeite.diffAntwortVerzoegern(page, pfad, null, ms),
     ganzeDateiVerzoegern: pfad => diffSeite.diffAntwortVerzoegern(page, pfad, 'ganz'),
     /** Der Server meldet für `pfad` den Ausgang „zu groß“ mit `meldung` (über der Ausgabegrenze); `umfang` grenzt ein. */
     antwortZuGross: (pfad, meldung, umfang = null) => diffSeite.diffAntwortZuGross(page, pfad, meldung, umfang),
@@ -242,6 +242,8 @@ function diffSprache(gr, page) {
     alsTextBleibtBedienbar: (datei, andereDatei, fristMs) => diffSeite.pruefeBedienbarNachAlsText(page, name => seite.dateiWaehlen(page, name), datei, andereDatei, fristMs),
     /** Zeile `neu` binnen der Anzeige-Schranke nach dem Klick auf `datei`; liefert den Messwert. */
     zeileRechtzeitigNachKlick: (datei, erwartet) => diffSeite.pruefeZeileBinnenNachKlick(page, () => seite.dateiWaehlen(page, datei), erwartet, anzeigeSchrankeMs),
+    /** Dieselbe ereignisgenaue Messung ohne Urteil — die Positivkontrolle der Anzeige-Schranke beurteilt sie selbst. */
+    zeileNachKlickGemessen: (datei, erwartet) => diffSeite.messeZeileNachKlick(page, () => seite.dateiWaehlen(page, datei), erwartet.neu),
   };
 }
 

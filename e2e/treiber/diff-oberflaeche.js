@@ -323,13 +323,13 @@ async function pruefeKontextzeileBinnen(page, aktion, { kontext, alt, neu }, fri
 }
 
 /** Hält die Antwort auf den Diff von `pfad` 1,5 s zurück; `eingetroffen` wartet, bis sie da ist und gezeichnet sein könnte. */
-async function diffAntwortVerzoegern(page, pfad, umfang = null) {
+async function diffAntwortVerzoegern(page, pfad, umfang = null, ms = VERZOEGERUNG_MS) {
   const istDiffVon = url => {
     const abfrage = new URL(url).searchParams;
     return url.includes('/diff?') && abfrage.get('pfad') === pfad && abfrage.get('umfang') === umfang;
   };
   await page.route(url => istDiffVon(url.toString()), async route => {
-    await new Promise(weiter => setTimeout(weiter, VERZOEGERUNG_MS));
+    await new Promise(weiter => setTimeout(weiter, ms));
     await route.continue();
   });
   const antwort = page.waitForResponse(response => istDiffVon(response.url()));
@@ -675,10 +675,11 @@ async function zugeklapptRechtzeitigNachAktion(page, aktion, pfad, meldung, fris
 }
 
 /** Wählt die Datei über `waehlen` und misst ereignisgenau im Browser vom Klick-Ereignis bis das Produkt das Zeichnen meldet
-    (`diff-gezeichnet`, mit der Zeile `neu` im Dokument); liefert den Messwert. Gemessen wird das Produkt, nicht der Rahmen:
-    die Bedienzeit des Testrahmens (Prüfung der Bedienbarkeit, Scrollen, Protokollweg) und die Bildrate einer Abfrage sind
-    kein Leistungsurteil. Das Klick-Ereignis ist derselbe Nullpunkt wie „nach dem Klick“ in der Zusage. */
-async function pruefeZeileBinnenNachKlick(page, waehlen, { kopf, plus, neu }, fristMs) {
+    (`diff-gezeichnet`, mit der Zeile `neu` im Dokument); liefert den Messwert ohne Urteil. Gemessen wird das Produkt, nicht der
+    Rahmen: die Bedienzeit des Testrahmens (Prüfung der Bedienbarkeit, Scrollen, Protokollweg) und die Bildrate einer Abfrage
+    sind kein Leistungsurteil. Das Klick-Ereignis ist derselbe Nullpunkt wie „nach dem Klick“ in der Zusage. Die
+    Positivkontrolle der Anzeige-Schranke beurteilt diesen Messwert selbst. */
+async function messeZeileNachKlick(page, waehlen, neu) {
   await page.evaluate(nummer => {
     const vorige = window.gitreviewaZeitmessung ? window.gitreviewaZeitmessung.lauf : 0;
     window.gitreviewaZeitmessung = { lauf: vorige + 1, klickUmMs: null, gezeichnetUmMs: null };
@@ -699,8 +700,13 @@ async function pruefeZeileBinnenNachKlick(page, waehlen, { kopf, plus, neu }, fr
     });
   }, neu);
   await waehlen();
-  await page.waitForFunction(() => window.gitreviewaZeitmessung.gezeichnetUmMs !== null, undefined, { polling: 'raf', timeout: 10000 });
-  const dauerMs = await page.evaluate(() => Math.round(window.gitreviewaZeitmessung.gezeichnetUmMs - window.gitreviewaZeitmessung.klickUmMs));
+  await page.waitForFunction(() => window.gitreviewaZeitmessung.gezeichnetUmMs !== null, undefined, { polling: 'raf', timeout: 20000 });
+  return page.evaluate(() => Math.round(window.gitreviewaZeitmessung.gezeichnetUmMs - window.gitreviewaZeitmessung.klickUmMs));
+}
+
+/** Wie `messeZeileNachKlick`, dazu das Urteil gegen `fristMs` und der Diff-Inhalt. */
+async function pruefeZeileBinnenNachKlick(page, waehlen, { kopf, plus, neu }, fristMs) {
+  const dauerMs = await messeZeileNachKlick(page, waehlen, neu);
   expect(dauerMs, `Zeile ${neu} nach ${dauerMs} ms`).toBeLessThanOrEqual(fristMs);
   await expect(page.locator(`${ZEILE}[data-art="kopf"]`).first()).toHaveText(kopf);
   await expect(page.locator(`${ZEILE}[data-neu="${neu}"] .c`)).toHaveText(`hinzugefügt: ${plus}`);
@@ -817,4 +823,5 @@ module.exports = {
   lueckenLesen, lueckeAufklappen, lueckeMeldet, pruefeZeilenMitEigenemLink, zeilenZaehlen, zeileVorhanden, zeilentextLesen,
   abschnittLueckenLesen, abschnittLueckeAufklappen, abschnittZeilenZaehlen, abschnittZeileVorhanden, abschnittZeilentextLesen,
   bildAnfragenBeobachten, bildAntwortErsetzen, bilderLesen, abschnittsbilderLesen, bildTitel, pruefeNurImgImBildbereich,
+  messeZeileNachKlick,
 };
