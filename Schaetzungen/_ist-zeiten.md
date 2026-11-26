@@ -154,3 +154,4 @@ Nie vom User erfragen.
 | 2026-11-26 | R00050 Beenden und Abbrechen im Kopf | Nacharbeit Code-Review B1: modaler Beenden-Dialog fängt `?`; Wächtertest Kriterium 10 (Signal + Abbruchanforderung) | Bug-Fix | – | 0,3h | – | autonom |
 | 2026-11-26 | R00050 Beenden und Abbrechen im Kopf | Nacharbeit Entwicklertest US-8: zweiter Tab zeigt nach dem Ende des Laufs den Endzustand statt „Failed to fetch“ (Kriterium 11, zweiter Satz) | Bug-Fix | – | 0,5h | – | autonom |
 | 2026-11-26 | R00041 Abschlussschritt vor Beenden | I0042 B4001 Angesehen festhalten | unklar | 2-4h | 0,2h | 0,2h | autonom |
+| 2026-11-26 | R00041 Abschlussschritt vor Beenden | I0042 B4002 Nicht angesehene bestimmen | Standard | 2h | 0,1h | 0,1h | autonom |
