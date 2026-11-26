@@ -185,6 +185,19 @@ public class GitLogAusgabeTests
         Assert.Throws<GitFehler>(() => GitLogAusgabe.Zerlegen(ausgabe));
     }
 
+    [Test]
+    [Description("E6: das Format trägt genau die vier NUL-Trenner und fünf Feldangaben, die der Zerleger kennt — eine Konstante für beide")]
+    public void Wenn_das_Format_die_Felder_trennt_dann_feldzahl_gleich_der_des_Zerlegers()
+    {
+        var trenner = GitLogAusgabe.Format.Split("%x00").Length - 1;
+        var ohneTrenner = GitLogAusgabe.Format.Replace("%x00", string.Empty, StringComparison.Ordinal);
+        var felder = ohneTrenner.Split('%').Length - 1;
+
+        Assert.That(GitLogAusgabe.Format, Does.Contain("--format="));
+        Assert.That(trenner, Is.EqualTo(4), "vier Trenner für fünf Felder");
+        Assert.That(felder, Is.EqualTo(5), "fünf Feldangaben (%H %an %aI %s %b)");
+    }
+
     private static string Ausgabe(params string[] datensaetze)
     {
         return string.Join('\0', datensaetze) + "\0";
