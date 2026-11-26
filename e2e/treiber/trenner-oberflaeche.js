@@ -272,11 +272,76 @@ async function warteAufSpalte(page) {
   ).toBe(true);
 }
 
+/* ── Die Ergebnis-Spalte und ihr Ausklapp-Knopf (R00042, B4104) ── */
+
+const ERGEBNIS_KNOPF = '#ergebnis-einklappen';
+
+/** Die Angaben des Ausklapp-Knopfes der Ergebnis-Spalte. */
+function spaltenKnopfAngaben(page) {
+  return page.evaluate(sel => {
+    const element = document.querySelector(sel);
+    if (!element) {
+      return null;
+    }
+    return {
+      erweitert: element.getAttribute('aria-expanded'),
+      gesperrt: element.getAttribute('aria-disabled'),
+      grund: element.getAttribute('title'),
+      fokussiert: document.activeElement === element,
+      sichtbar: element.getClientRects().length > 0,
+    };
+  }, ERGEBNIS_KNOPF);
+}
+
+/** Betätigt den Ausklapp-Knopf der Ergebnis-Spalte (Maus). */
+async function spaltenKnopfBetatigen(page) {
+  await page.locator(ERGEBNIS_KNOPF).click({ timeout: 5000 });
+}
+
+/** Die Ergebnis-Spalte steht sichtbar (ausgeklappt). */
+async function pruefeErgebnisSpalteSichtbar(page) {
+  await expect(page.locator(ERGEBNIS), 'Ergebnis-Spalte sichtbar').toBeVisible();
+  const angaben = await spaltenKnopfAngaben(page);
+  expect(angaben, 'Ausklapp-Knopf vorhanden').not.toBeNull();
+  expect(angaben.erweitert, 'aria-expanded').toBe('true');
+}
+
+/** Die Ergebnis-Spalte ist eingeklappt: `hidden`, der Knopf nennt „ausklappen“. */
+async function pruefeErgebnisSpalteVerborgen(page) {
+  await expect(page.locator(ERGEBNIS), 'Ergebnis-Spalte verborgen').toBeHidden();
+  const angaben = await spaltenKnopfAngaben(page);
+  expect(angaben, 'Ausklapp-Knopf vorhanden').not.toBeNull();
+  expect(angaben.erweitert, 'aria-expanded').toBe('false');
+}
+
+/** Der Fokus steht auf dem Ausklapp-Knopf der Ergebnis-Spalte (R00042, Kriterium 9: nie ins Leere). */
+async function pruefeSpaltenKnopfFokus(page) {
+  const angaben = await spaltenKnopfAngaben(page);
+  expect(angaben, 'Ausklapp-Knopf vorhanden').not.toBeNull();
+  expect(angaben.fokussiert, `der Fokus steht auf dem Ausklapp-Knopf — ${JSON.stringify(angaben)}`).toBe(true);
+}
+
+/** Der nächste Tab-Stopp nach dem aktuellen Fokus: sichtbar und kein verborgener Trenner (kein unsichtbarer Stopp). */
+function tabWeiterSichtbar(page) {
+  return page.evaluate(() => {
+    const element = document.activeElement;
+    return {
+      tag: element ? element.tagName : null,
+      kennung: element ? (element.id || '') : '',
+      sichtbar: element ? element.getClientRects().length > 0 : false,
+      istRechterTrenner: element ? element.classList.contains('gr-ergebnis-trenner') : false,
+      istRechteSpalte: element ? element.id === 'ergebnis' : false,
+    };
+  });
+}
+
 module.exports = {
-  SEITENLEISTE, TRENNER, DIFF, RECHTS_TRENNER, ERGEBNIS,
+  SEITENLEISTE, TRENNER, DIFF, RECHTS_TRENNER, ERGEBNIS, ERGEBNIS_KNOPF,
   breiteDerSeitenleiste, pruefeBreite, trennerAngaben, trennerVorhanden, warteAufGroesse, fokusAufTrenner,
   ziehen, doppelklick, fokussiereTrenner, fokusring, zaehleDiffAnfragen, lageSeitenleiste,
   pruefeTrennerVorhanden, pruefeTrennerAnDerGrenze, pruefeTrennerAria,
   breiteDerErgebnisSpalte, pruefeErgebnisBreite, rechterTrennerAngaben, rechterTrennerVorhanden,
   rechtesZiehen, rechtesDoppelklick, fokussiereRechtenTrenner, pruefeRechterTrennerAria, lageRechts, warteAufSpalte,
+  spaltenKnopfAngaben, spaltenKnopfBetatigen, pruefeErgebnisSpalteSichtbar, pruefeErgebnisSpalteVerborgen,
+  pruefeSpaltenKnopfFokus, tabWeiterSichtbar,
 };

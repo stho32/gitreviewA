@@ -4,6 +4,7 @@
 // das Neuladen. Die Treiber darunter kennen Seite, Prozess, git, Tasten und Selektoren.
 const { test: basis, expect } = require('./seitenleiste.js');
 const trenner = require('../treiber/trenner-oberflaeche.js');
+const einklappenSeite = require('../treiber/einklappen-oberflaeche.js');
 const oberflaeche = require('../treiber/oberflaeche.js');
 const anmerkungSeite = require('../treiber/anmerkungen-oberflaeche.js');
 
@@ -51,6 +52,17 @@ function breiteSprache(seit, page) {
     rechterTrennerAria: erwartet => trenner.pruefeRechterTrennerAria(page, erwartet),
     rechteLage: () => trenner.lageRechts(page),
     rechterValuenow: async () => Number((await trenner.rechterTrennerAngaben(page)).jetzt),
+
+    /* ── Die Ergebnis-Spalte ein-/ausklappen und ihr Knopf (R00042, B4104) ── */
+    spalteSichtbar: () => trenner.pruefeErgebnisSpalteSichtbar(page),
+    spalteVerborgen: () => trenner.pruefeErgebnisSpalteVerborgen(page),
+    spalteAusklappen: () => trenner.spaltenKnopfBetatigen(page),
+    spalteEinklappen: () => trenner.spaltenKnopfBetatigen(page),
+    spalteKnopf: () => trenner.spaltenKnopfAngaben(page),
+    fokusAufSpaltenKnopf: () => trenner.pruefeSpaltenKnopfFokus(page),
+    tabWeiter: () => trenner.tabWeiterSichtbar(page),
+    seitenleisteVerborgen: () => einklappenSeite.pruefeSeitenleisteVerborgen(page),
+    seitenleisteSichtbar: () => einklappenSeite.pruefeSeitenleisteSichtbar(page),
 
     /* ── Neuladen ── */
     neuLaden: async () => {

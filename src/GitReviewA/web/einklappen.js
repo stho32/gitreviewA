@@ -79,6 +79,8 @@
         medien.addEventListener('change', anwenden);
       }
       window.addEventListener('resize', anwenden);
+      // Eine Änderung der Breitenstellung (etwa der anderen Seite) wirkt auch auf diesen Bereich (B4104).
+      document.addEventListener('breiten-geaendert', anwenden);
       letzteStellung = eingeklappt();
       anwenden();
     }

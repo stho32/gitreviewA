@@ -70,6 +70,9 @@
     zustand.vorrang = seite === 'rechts' && !zustand.gezeigt.rechtsEin ? werte.VORRANG_RECHTS : null;
     rechne();
     anwenden();
+    // Die andere Seite kann durch dieselbe Rechnung ihre Stellung ändern (etwa die Spalte, wenn die Seitenleiste ausklappt):
+    // beide Bereiche wenden die neue Stellung an.
+    document.dispatchEvent(new CustomEvent('breiten-geaendert'));
     return zustand.gezeigt[schluessel];
   }
 
