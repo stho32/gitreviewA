@@ -13,6 +13,48 @@
     const abbrechen = document.getElementById('abbrechen');
     beenden.addEventListener('click', () => oeffne(werte().BEENDEN));
     abbrechen.addEventListener('click', () => oeffne(werte().ABBRECHEN));
+    document.addEventListener('abschluss-eintrag', ereignis => dateiZeigen(ereignis.detail));
+  }
+
+  /**
+   * Der Weg zur Datei aus einem Abschnitt (R00041, B4004): Ausblenden aufheben, bei Bedarf den Commit wechseln („Einzeln“
+   * zeigt die Stellen aller Commits), dann wählen. Der Dialog ist da schon geschlossen, der Lauf läuft weiter.
+   */
+  function dateiZeigen({ pfad, commit }) {
+    ausblendenAufheben(pfad);
+    if (commit && !istGezeigterCommit(commit) && window.gitreviewaDateiliste) {
+      window.gitreviewaDateiliste.waehleNachLaden(pfad);
+      window.gitreviewaCommits.waehle(commit);
+      return;
+    }
+    waehlen(pfad);
+  }
+
+  /** Muster (R00025) und der Schalter für Abgehakte (R00029) verdecken eine Datei; der Weg zur Datei hebt beides auf. */
+  function ausblendenAufheben(pfad) {
+    if (!window.gitreviewaAusblenden) {
+      return;
+    }
+    window.gitreviewaAusblenden.entferneMusterFuer(pfad);
+    if (!window.gitreviewaAusblenden.istSichtbar(pfad)) {
+      return;
+    }
+    if (window.gitreviewaAbgehakte && window.gitreviewaAbgehakte.istVerdeckt(pfad)) {
+      window.gitreviewaAbgehakte.ausschalten();
+    }
+  }
+
+  function waehlen(pfad) {
+    if (window.gitreviewaDateiliste) {
+      window.gitreviewaDateiliste.waehle(pfad);
+    }
+  }
+
+  function istGezeigterCommit(commit) {
+    if (!window.gitreviewaCommits) {
+      return true;
+    }
+    return window.gitreviewaCommits.gewaehlt() === commit;
   }
 
   function werte() {

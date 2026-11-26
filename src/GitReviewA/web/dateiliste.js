@@ -8,7 +8,7 @@
 
   const zustand = {
     modus: 'einzeln', commit: null, dateien: [], darstellung: 'flach', gewaehlterPfad: null, letzteLadung: 0,
-    uebernehmenAusstehend: false,
+    uebernehmenAusstehend: false, ausstehendeWahl: null,
   };
 
   function init() {
@@ -157,6 +157,16 @@
       meldeWahl(uebernommen);
     } else {
       meldeWahlAufgehoben();
+    }
+    waehleAusstehende(ansicht);
+  }
+
+  /** Eine Wahl, die auf diesen Ladevorgang wartete (R00041, B4004: der Eintrag gehört zu einem anderen Commit). */
+  function waehleAusstehende(ansicht) {
+    const pfad = zustand.ausstehendeWahl;
+    zustand.ausstehendeWahl = null;
+    if (pfad) {
+      waehle(pfad);
     }
   }
 
@@ -428,7 +438,25 @@
     gewaehlt: () => (zustand.gewaehlterPfad === null
       ? null
       : { modus: zustand.modus, pfad: zustand.gewaehlterPfad, commit: zustand.commit }),
+    /** Die Datei wählen, ohne auf einen Klick zu warten (R00041, B4004: der Eintrag im Abschlussdialog führt hierher);
+        `pfad` ist der Listenschlüssel. Liefert `false`, wenn die gezeigte Liste sie nicht führt. */
+    waehle,
+    /** Die Datei erst nach dem nächsten Laden wählen — für einen Eintrag aus einem anderen Commit (R00041, B4004). */
+    waehleNachLaden: pfad => { zustand.ausstehendeWahl = pfad; },
   };
+
+  function waehle(pfad) {
+    const datei = zustand.dateien.find(eintrag => eintrag.pfad === pfad);
+    if (!datei) {
+      return false;
+    }
+    zustand.gewaehlterPfad = datei.pfad;
+    for (const zeile of document.querySelectorAll('#datei-zeilen .datei-zeile')) {
+      zeile.setAttribute('aria-current', String(zeile.dataset.pfad === datei.pfad));
+    }
+    meldeWahl(datei);
+    return true;
+  }
 
   document.addEventListener('DOMContentLoaded', init);
 }());

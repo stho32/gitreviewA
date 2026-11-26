@@ -293,6 +293,8 @@
     hole: () => zustand.commits,
     gewaehlt: () => zustand.gewaehlt,
     kurzVon,
+    /** Einen Commit wählen, ohne auf einen Klick zu warten (R00041, B4004: der Eintrag führt zu seiner Stelle). */
+    waehle: waehleHash,
     /** Der Betreff in der Anzeigeform der Commit-Zeile (ohne Steuerzeichen), nie roh. */
     betreffVon: hash => window.betreffVon(zustand.commits, hash),
   };

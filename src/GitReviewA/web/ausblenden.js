@@ -109,7 +109,19 @@
     muster: () => zustand.muster,
     sichtbare: dateien => sichtbareDateien(dateien, zustand.muster),
     istSichtbar: pfad => anzahlAusgeblendet([{ pfad }], zustand.muster) === 0,
+    /** Die Muster entfernen, die diesen Pfad verdecken — der Weg zur Datei aus dem Abschlussdialog (R00041, B4004). */
+    entferneMusterFuer: pfad => entferneMusterFuer(pfad),
   };
+
+  function entferneMusterFuer(pfad) {
+    const behalten = zustand.muster.filter(muster => !window.passt(muster, pfad));
+    if (behalten.length === zustand.muster.length) {
+      return;
+    }
+    zustand.muster = behalten;
+    zeichneMuster(ansichtElemente());
+    meldeGeaendert();
+  }
 
   document.addEventListener('DOMContentLoaded', init);
 }());

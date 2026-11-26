@@ -28,13 +28,18 @@
         ausgeblendetSuche += 1;
         continue;
       }
-      if (schalter && eintrag.abgehakt && !eintrag.gesperrt) {
+      if (verdecktDurchHaken(eintrag, schalter)) {
         ausgeblendetAbgehakt += 1;
         continue;
       }
       sichtbare.push(eintrag);
     }
     return { sichtbare, ausgeblendetAbgehakt, ausgeblendetMuster, ausgeblendetSuche };
+  }
+
+  /** Ob der Schalter „Abgehakte ausblenden“ diesen Eintrag verdeckt; gesperrte Stellen (R00014) werden nie per Haken ausgeblendet. */
+  function verdecktDurchHaken(eintrag, schalter) {
+    return Boolean(schalter) && eintrag.abgehakt && !eintrag.gesperrt;
   }
 
   function trifftSuche(pfad, suche) {
@@ -91,5 +96,5 @@
     return 'Alle Dateien ausgeblendet';
   }
 
-  Object.assign(ziel, { sicht, zaehlertext, meldung });
+  Object.assign(ziel, { sicht, verdecktDurchHaken, zaehlertext, meldung });
 })(typeof module !== 'undefined' ? module.exports : (window.gitreviewaAbgehakteWerte = window.gitreviewaAbgehakteWerte || {}));

@@ -50,6 +50,18 @@
     }
   }
 
+  /** Ob der Schalter diese Datei gerade verdeckt — der Weg zur Datei hebt das auf (R00041, B4004), die Sicht rechnet dieselbe Regel. */
+  function istVerdeckt(pfad) {
+    if (!zustand.an) {
+      return false;
+    }
+    const datei = zustand.dateien.find(eintrag => eintrag.pfad === pfad);
+    if (!datei) {
+      return false;
+    }
+    return werte().verdecktDurchHaken(eintragFuer(datei, zustand.modus, zustand.commit), zustand.an);
+  }
+
   function meldeGeaendert() {
     document.dispatchEvent(new CustomEvent('abgehakte-geaendert'));
   }
@@ -109,6 +121,9 @@
   window.gitreviewaAbgehakte = {
     sicht,
     istAn: () => zustand.an,
+    istVerdeckt,
+    /** Den Schalter ausschalten — der Weg zur Datei aus dem Abschlussdialog (R00041, B4004). */
+    ausschalten: () => setzen(false),
   };
 
   document.addEventListener('DOMContentLoaded', init);

@@ -225,6 +225,36 @@ function beendenDialogFehler(page) {
   return page.locator('#beenden-fehler');
 }
 
+/** Der Abschnitt des Abschlussschritts (R00041, B4003): „nicht-angesehen“ oder „ergebnis“. */
+function beendenAbschnitt(page, art) {
+  return page.locator(`#beenden-dialog .beenden-abschnitt[data-art="${art}"]`);
+}
+
+function beendenAbschnittTitel(page, art) {
+  return beendenAbschnitt(page, art).locator('.beenden-abschnitt-titel');
+}
+
+/** Die Knöpfe der nicht angesehenen Einträge, in der Reihenfolge des Abschnitts. */
+function beendenEintraege(page) {
+  return page.locator('#beenden-dialog .beenden-eintrag');
+}
+
+function beendenAbschnittMehr(page) {
+  return page.locator('#beenden-dialog .beenden-abschnitt-mehr');
+}
+
+function beendenErgebnisText(page) {
+  return beendenAbschnitt(page, 'ergebnis').locator('.beenden-abschnitt-text');
+}
+
+/** Führt `handlung` aus und wartet, bis die Oberfläche die gezeigten Stellen gemeldet hat (R00041, B4001): erst danach kann
+    der Dialog den Ansichtsstand lesen. */
+async function angesehenMelden(page, handlung) {
+  const gemeldet = page.waitForResponse(antwort => antwort.url().endsWith('/api/angesehen') && antwort.request().method() === 'POST');
+  await handlung();
+  await gemeldet;
+}
+
 /** Wartet, bis der Dialog sichtbar ist — über `waitForSelector`, nicht über `expect().toBeVisible()`: auf einer Seite mit
     20 000 Diff-Zeilen und 500 Anmerkungen verhungert das rAF-Polling von `expect` und sieht den längst offenen Dialog nicht. */
 async function warteAufBeendenDialog(page, fristMs = 10000) {
@@ -656,6 +686,7 @@ module.exports = {
   sucheFeld, sucheZaehler, sucheFehler, sucheSuchen, sucheWeiter, sucheZurueck, sucheMarken, sucheMarkenLesen,
   dateiwahlenSammeln, gesammelteDateiwahlen, formatierungsElementeZaehlen,
   beendenKnopf, abbrechenKnopf, beendenDialog, beendenDialogTitel, beendenDialogZeilen, beendenDialogKnopf, beendenDialogFehler,
+  beendenAbschnitt, beendenAbschnittTitel, beendenEintraege, beendenAbschnittMehr, beendenErgebnisText, angesehenMelden,
   beendenDialogOeffnen, abbrechenDialogOeffnen, beendenDialogBestaetigen, warteAufBeendenDialog,
   beendenBetaetigen, beendenBetaetigenBinnen, aufgabenSammeln, pruefeAufgabenNachAnzeige, pruefeAufgabenZaehler, beendetMeldung, beendenFehler, beendenScheitertMit, modusWaehlen, neuLaden, fensterSetzen,
   kopfZahlen, fortschrittZaehler, commitZeileZusammenfassung, commitZeileText, pruefeKopfZahlen, pruefeFortschritt, pruefeCommitZeileZusammenfassung,
