@@ -30,7 +30,7 @@
     knopfElement.disabled = false;
   }
 
-  /** Liefert das Markdown-Ergebnis aus `GET /api/ergebnis`; die Seite zeigt es nie an. */
+  /** Liefert das Markdown-Ergebnis aus `GET /api/ergebnis`; die Seite zeigt es in der Ergebnis-Spalte an (R00037). */
   async function fordereErgebnisAn() {
     const antwort = await fetch('api/ergebnis', { headers: { Accept: 'application/json' } });
     const istErfolg = antwort.ok;
