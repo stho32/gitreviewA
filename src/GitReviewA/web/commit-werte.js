@@ -9,8 +9,13 @@
       und Hash oder Datum verdecken. */
   const ohneSteuerzeichen = text => text.replace(/[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, '');
 
-  /** ISO-Zeitpunkt → `TT.MM.JJJJ HH:MM` in der Ortszeit des Browsers; ein Wert, der kein Zeitpunkt ist, bleibt unverändert. */
+  /** ISO-Zeitpunkt → `TT.MM.JJJJ HH:MM` in der Ortszeit des Browsers; ein Wert, der kein Zeitpunkt ist, bleibt unverändert.
+      Ein leeres Datum zeigt „Datum nicht lesbar“: git gibt bei einem NUL im Autorkopf kein Datum aus (R00048 Kriterium 11),
+      und die Leiste darf dort keine leere Stelle und keinen Ersatztext wie `%aI` zeigen. */
   function datumText(iso) {
+    if (!iso) {
+      return 'Datum nicht lesbar';
+    }
     const ms = Date.parse(iso);
     if (Number.isNaN(ms)) {
       return iso;

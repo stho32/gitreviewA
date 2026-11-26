@@ -22,6 +22,17 @@ test.describe('Baustein Commit-Werte', () => {
     expect(datumText('kein Datum')).toBe('kein Datum');
   });
 
+  test('soll ein leeres Datum als „Datum nicht lesbar“ zeigen (R00048 Kriterium 11, L2)', () => {
+    expect(datumText('')).toBe('Datum nicht lesbar');
+
+    const werte = zeilenwerte({ kurzHash: 'a1b2c3d', autor: 'NUL Name', datum: '', betreff: 'NUL im Autorkopf', rumpf: '' });
+
+    expect(werte.datum).toBe('Datum nicht lesbar');
+    expect(werte.datumHinweis).toBe('');
+    expect(werte.autor).toBe('NUL Name');
+    expect(werte.betreff).toBe('NUL im Autorkopf');
+  });
+
   test('soll je Commit Kurz-Hash, Betreff, Autor, Datum mit Hinweis und Rumpf liefern', () => {
     const werte = zeilenwerte({ hash: 'c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f6', kurzHash: 'c3d4e5f', autor: 'Bernd', datum: 'kein Datum', betreff: 'B', rumpf: 'R' });
 
