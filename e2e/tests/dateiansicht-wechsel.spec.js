@@ -73,4 +73,52 @@ test.describe('Dateiansicht wechseln', () => {
       expect(text).toContain('SELECT 001;');
     });
   });
+
+  // Kriterium 5 (Code-Review A6): Markierung, „Bereich kopieren“ und Suchtreffer gehören der Datei. Nach dem Wechsel ist
+  // nichts von der vorigen Datei mehr da; die Suche zählt in der neuen Datei neu.
+  test('Kriterium 5: nach `j` sind Markierung, „Bereich kopieren“ und Suchtreffer der vorigen Datei weg', async ({ page }) => {
+    await mitLauf(['003.sql', '001.sql', '002.sql'], page, async () => {
+      await page.locator('#da-inhalt .da-zeile[data-nummer="1"] .da-nr').click();
+      await expect(page.locator('#da-markierung')).toHaveText('Zeile 1 markiert');
+      await expect(page.locator('#bereich-kopieren')).toBeEnabled();
+
+      await page.locator('#da-suche').fill('003');
+      await page.keyboard.press('Enter');
+      await expect(page.locator('.da-suche-zaehler')).toHaveText('1 von 2');
+
+      await page.locator('#da-suche').blur();
+      await page.keyboard.press('j');
+      await expect(page.locator('#da-name')).toHaveText('001.sql');
+
+      await expect(page.locator('#da-inhalt .da-zeile.da-markiert')).toHaveCount(0);
+      await expect(page.locator('#da-markierung')).toHaveText('');
+      await expect(page.locator('#bereich-kopieren')).toBeDisabled();
+      await expect(page.locator('#da-inhalt .suche-treffer')).toHaveCount(0);
+      await expect(page.locator('.da-suche-zaehler')).toHaveText('keine Treffer');
+
+      // Die Suche zählt in der neuen Datei neu: „001“ steht in 001.sql zweimal.
+      await page.locator('#da-suche').fill('001');
+      await page.keyboard.press('Enter');
+      await expect(page.locator('.da-suche-zaehler')).toHaveText('1 von 2');
+    });
+  });
+
+  test('Kriterium 5: auch der Klick auf eine andere Datei lässt Markierung und Suchtreffer nicht stehen', async ({ page }) => {
+    await mitLauf(['003.sql', '001.sql', '002.sql'], page, async () => {
+      await page.locator('#da-inhalt .da-zeile[data-nummer="2"] .da-nr').click();
+      await expect(page.locator('#da-markierung')).toHaveText('Zeile 2 markiert');
+
+      await page.locator('#da-suche').fill('003');
+      await page.keyboard.press('Enter');
+      await expect(page.locator('.da-suche-zaehler')).toHaveText('1 von 2');
+
+      await page.locator('#da-dateien .da-datei').nth(1).click();
+      await expect(page.locator('#da-name')).toHaveText('001.sql');
+
+      await expect(page.locator('#da-inhalt .da-zeile.da-markiert')).toHaveCount(0);
+      await expect(page.locator('#da-markierung')).toHaveText('');
+      await expect(page.locator('#bereich-kopieren')).toBeDisabled();
+      await expect(page.locator('.da-suche-zaehler')).toHaveText('keine Treffer');
+    });
+  });
 });
