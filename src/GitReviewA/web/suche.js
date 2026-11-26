@@ -297,11 +297,17 @@
     if (!wurzel) {
       return;
     }
+    // Die Laufart „Review“ erkennt sich am eigenen Suchfeld; die Dateiansicht trägt zwar ebenfalls ein `<main id="diff">`,
+    // meldet ihre Suche aber selbst an (I0045) — ohne diesen Anker gehört der Erkenner nicht ihr.
+    const eingabe = wurzel.querySelector('#diff-suche');
+    if (!eingabe) {
+      return;
+    }
     const bereich = wurzel.querySelector('.df-sc');
     anlegen({
       wurzel,
       bereich,
-      eingabe: wurzel.querySelector('#diff-suche'),
+      eingabe,
       zaehler: wurzel.querySelector('.diff-suche-zaehler'),
       fehler: wurzel.querySelector('#diff-suche-fehler'),
       zellen: () => textzellen(bereich),

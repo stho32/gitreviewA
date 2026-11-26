@@ -674,7 +674,10 @@
       zeigeGeschlossen();
     } catch (fehler) {
       knopf.disabled = false;
-      document.getElementById('da-status').textContent = `Schließen ist gescheitert: ${fehler.message}`;
+      const status = document.getElementById('da-status');
+      if (status) {
+        status.textContent = `Schließen ist gescheitert: ${fehler.message}`;
+      }
     }
   }
 
@@ -686,9 +689,19 @@
     meldung.setAttribute('role', 'status');
     meldung.textContent = 'Dateiansicht geschlossen';
     haupt.replaceChildren(meldung);
-    document.getElementById('datei-kopieren').disabled = true;
-    document.getElementById('bereich-kopieren').disabled = true;
-    document.getElementById('schliessen').disabled = true;
+    // `replaceChildren` nimmt Werkzeugleiste und Status aus dem DOM: nur noch vorhandene Knöpfe anfassen.
+    const dateiKnopf = document.getElementById('datei-kopieren');
+    if (dateiKnopf) {
+      dateiKnopf.disabled = true;
+    }
+    const bereichKnopf = document.getElementById('bereich-kopieren');
+    if (bereichKnopf) {
+      bereichKnopf.disabled = true;
+    }
+    const schliessenKnopf = document.getElementById('schliessen');
+    if (schliessenKnopf) {
+      schliessenKnopf.disabled = true;
+    }
   }
 
   /** Hinweis und `aria-keyshortcuts` am Bedienelement aus dem Katalog (R00030), gerendert an der einen Stelle (`hinweise.js`)
