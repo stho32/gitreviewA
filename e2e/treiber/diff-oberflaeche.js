@@ -51,25 +51,63 @@ async function pruefeMenueZustand(page, name, erwartet) {
 
 /* ── Werkzeugleiste mit fester Höhe (R00039, B3802) ── */
 
-/** Setzt die Breite des Diff-Bereichs (`#diff`) über Fensterbreite und Seitenleiste (640 px) und wartet, bis sie steht —
-    samt der Klasse `schmal` am Kopf, die `leiste.js` nach der Breite setzt. */
+/** Setzt die Breite des Diff-Bereichs (`#diff`) über Fensterbreite und Seitenleiste (640 px) und wartet, bis sie steht.
+    Die Ergebnis-Spalte (R00037) nimmt im zweispaltigen Aufbau 320 px ein; sie wird ausgeklappt, damit die Rechnung aufgeht
+    (Fenster = Seitenleiste 640 + Trenner 6 + Diff + Trenner 6 + Spalte 320). */
 async function setzeDiffBreite(page, breite) {
-  await page.setViewportSize({ width: breite + 646, height: 800 });
+  await page.setViewportSize({ width: breite + 972, height: 800 });
+  await page.evaluate(() => {
+    const ergebnis = window.gitreviewaEinklappen && window.gitreviewaEinklappen.ergebnis;
+    if (ergebnis && ergebnis.istEingeklappt()) {
+      ergebnis.umschalten();
+    }
+  });
   await page.evaluate(() => window.gitreviewaBreite.setzen(640));
   await expect.poll(() => page.evaluate(() => document.getElementById('diff').clientWidth), `Diff-Breite ${breite} px`).toBe(breite);
-  await expect.poll(() => page.evaluate(() => document.querySelector('#diff .diff-kopf').classList.contains('schmal')), `Leiste schmal (${breite} px)`).toBe(breite < 600);
 }
 
-/** Die Höhe des Diff-Kopfs und die Zeilenzahl der Leiste (1 oder 2): die Werkzeugzeile steht auf derselben Zeile wie der Pfad
-    oder darunter. */
+/** Die Höhe des Diff-Kopfs und die Zahl der sichtbaren Zeilenbänder (R00039, AK5): die Kinder des Kopfs werden nach ihrer
+    senkrechten Mitte zu Zeilen gruppiert (Toleranz 12 px), nicht nach ihrer Reihenfolge. Dazu der waagerechte Überlauf des
+    Kopfs und wie weit der Menüknopf über den Diff-Bereich hinausragt (beides 0 = alles im Bereich). */
 async function leistenmass(page) {
   return page.evaluate(() => {
     const kopf = document.querySelector('#diff .diff-kopf');
-    const pfad = kopf.querySelector('.diff-pfad');
-    const werkzeuge = kopf.querySelector('.diff-werkzeuge');
-    const p = pfad.getBoundingClientRect();
-    const w = werkzeuge.getBoundingClientRect();
-    return { hoehe: Math.round(kopf.getBoundingClientRect().height), zeilen: w.top >= p.bottom - 1 ? 2 : 1 };
+    const diff = document.getElementById('diff');
+    const knopf = document.getElementById('ansicht-knopf');
+    const sichtbar = [...kopf.children].filter(kind => kind.getClientRects().length > 0);
+    const mitte = element => {
+      const r = element.getBoundingClientRect();
+      return (r.top + r.bottom) / 2;
+    };
+    const reihen = [];
+    for (const kind of sichtbar) {
+      const m = mitte(kind);
+      if (!reihen.some(reihe => Math.abs(reihe - m) < 12)) {
+        reihen.push(m);
+      }
+    }
+    const diffRechts = diff.getBoundingClientRect().right;
+    return {
+      hoehe: Math.round(kopf.getBoundingClientRect().height),
+      zeilen: reihen.length,
+      ueberlauf: kopf.scrollWidth - kopf.clientWidth,
+      knopfAusserhalb: Math.max(0, Math.round(knopf.getBoundingClientRect().right - diffRechts)),
+    };
+  });
+}
+
+/** Der sichtbare Pfad: Textinhalt, Breite, ob er den Kasten überläuft (dann ist er hart abgeschnitten statt in der Mitte gekürzt)
+    und die volle Angabe in `aria-label` und `title`. */
+async function pfadmass(page) {
+  return page.evaluate(() => {
+    const pfad = document.querySelector('#diff .diff-pfad');
+    return {
+      text: pfad.textContent,
+      breite: Math.round(pfad.getBoundingClientRect().width),
+      ueberlauf: pfad.scrollWidth - pfad.clientWidth,
+      name: pfad.getAttribute('aria-label'),
+      titel: pfad.getAttribute('title'),
+    };
   });
 }
 
@@ -876,7 +914,7 @@ async function sprungAntwortScheitern(page, pfad, status = 500) {
 module.exports = {
   pruefeBedienbarNachAlsText, ansichtWaehlen, ansichtPerTastaturWechseln, pruefeAnsicht, zeilenfarbenLesen, pruefeZeilenfarben, pruefeKontextzeileBinnen,
   menueOeffnen, menueSchliessen, menueEintrag, menueWaehlen, pruefeMenueZustand, umbruchStellung,
-  setzeDiffBreite, leistenmass,
+  setzeDiffBreite, leistenmass, pfadmass,
   pruefeDiff, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, pruefeHerkunft, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, pruefeUmbruchStellung, pruefeUmschalter, pruefeUmschalterPerTabErreichbar, umbruchPerTastaturUmschalten, pruefeZeileUmbrochen, pruefeAbschnittZeileUmbrochen, diffAntwortVerzoegern,
   pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
   pruefeAbschnittZugeklappt, abschnittTrotzdemLaden, pruefeAbschnittZeile, pruefeAbschnittskopf,

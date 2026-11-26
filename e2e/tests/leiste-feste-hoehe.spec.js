@@ -8,7 +8,7 @@ const diffSeite = require('../treiber/diff-oberflaeche.js');
 const PFAD = '#diff .diff-pfad';
 
 test.describe('Leiste mit fester Höhe (R00039, B3802)', () => {
-  test('soll bei 600 px Diff-Breite eine Zeile und bei 400 px höchstens zwei Zeilen hoch sein', async ({ diff, page }) => {
+  test('soll bei 600 px Diff-Breite eine Zeile und bei 400 px höchstens zwei Zeilen hoch sein — ohne Überlauf', async ({ diff, page }) => {
     await diff.starten({ vorbereitung: 'Langer Pfad', modus: 'zusammen' });
     await diff.dateizeileAnsehen(diff.langerPfad());
     await expect(page.locator(PFAD)).toBeVisible();
@@ -16,25 +16,48 @@ test.describe('Leiste mit fester Höhe (R00039, B3802)', () => {
     await diffSeite.setzeDiffBreite(page, 600);
     const bei600 = await diffSeite.leistenmass(page);
     expect(bei600.zeilen, `bei 600 px eine Zeile (${JSON.stringify(bei600)})`).toBe(1);
+    expect(bei600.ueberlauf, `kein waagerechter Überlauf bei 600 px (${JSON.stringify(bei600)})`).toBeLessThanOrEqual(0);
+    expect(bei600.knopfAusserhalb, `Menüknopf im Diff-Bereich bei 600 px (${JSON.stringify(bei600)})`).toBe(0);
 
     await diffSeite.setzeDiffBreite(page, 400);
     const bei400 = await diffSeite.leistenmass(page);
     expect(bei400.zeilen, `bei 400 px höchstens zwei Zeilen (${JSON.stringify(bei400)})`).toBeLessThanOrEqual(2);
     expect(bei400.zeilen, `bei 400 px zwei Zeilen (${JSON.stringify(bei400)})`).toBe(2);
+    expect(bei400.ueberlauf, `kein waagerechter Überlauf bei 400 px (${JSON.stringify(bei400)})`).toBeLessThanOrEqual(0);
+    expect(bei400.knopfAusserhalb, `Menüknopf im Diff-Bereich bei 400 px (${JSON.stringify(bei400)})`).toBe(0);
   });
 
-  test('soll den langen Pfad in der Mitte kürzen und ganz im zugänglichen Namen nennen', async ({ diff, page }) => {
+  test('soll die Zeilenzahl auch nach einem Fensterwechsel von 1280 auf 400 halten', async ({ diff, page }) => {
+    await diff.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });
+    await diff.dateiAnsehen('src/a.txt');
+    const bei1280 = await diffSeite.leistenmass(page);
+    expect(bei1280.zeilen, `bei 1280 px eine Zeile (${JSON.stringify(bei1280)})`).toBe(1);
+
+    await diffSeite.setzeDiffBreite(page, 400);
+    const bei400 = await diffSeite.leistenmass(page);
+    expect(bei400.zeilen, `nach dem Fensterwechsel zwei Zeilen (${JSON.stringify(bei400)})`).toBe(2);
+    expect(bei400.ueberlauf, `kein waagerechter Überlauf nach dem Wechsel (${JSON.stringify(bei400)})`).toBeLessThanOrEqual(0);
+
+    await diffSeite.setzeDiffBreite(page, 600);
+    const zurueck = await diffSeite.leistenmass(page);
+    expect(zurueck.zeilen, `zurück bei 600 px eine Zeile (${JSON.stringify(zurueck)})`).toBe(1);
+  });
+
+  test('soll den langen Pfad in der Mitte kürzen, auch nach einer Größenänderung, und ganz im zugänglichen Namen nennen', async ({ diff, page }) => {
     await diff.starten({ vorbereitung: 'Langer Pfad', modus: 'zusammen' });
     await diff.dateizeileAnsehen(diff.langerPfad());
     await diffSeite.setzeDiffBreite(page, 400);
 
-    const sichtbar = await page.locator(PFAD).textContent();
-    expect(sichtbar, 'in der Mitte gekürzt').toContain('…');
-    expect(sichtbar.length, 'kürzer als der volle Pfad').toBeLessThan(diff.langerPfad().length);
+    const mass = await diffSeite.pfadmass(page);
+    expect(mass.text, `in der Mitte gekürzt (${JSON.stringify(mass)})`).toContain('…');
+    expect(mass.text, `Anfang bleibt (${JSON.stringify(mass)})`).toMatch(/^lang/);
+    expect(mass.text, `Ende bleibt (${JSON.stringify(mass)})`).toMatch(/txt$/);
+    expect(mass.text.length, `kürzer als der volle Pfad (${JSON.stringify(mass)})`).toBeLessThan(diff.langerPfad().length);
+    expect(mass.ueberlauf, `der gekürzte Text füllt den Kasten, ohne ihn zu überlaufen (${JSON.stringify(mass)})`).toBeLessThanOrEqual(1);
 
-    expect(await page.locator(PFAD).getAttribute('aria-label'), 'voller Pfad im Namen').toBe(diff.langerPfad());
-    expect(await page.locator(PFAD).getAttribute('title'), 'voller Pfad als Titel').toBe(diff.langerPfad());
-    expect(await page.locator(PFAD).getAttribute('aria-label'), 'Marke im Namen').toContain('⟨U+202E⟩');
+    expect(mass.name, 'voller Pfad im Namen').toBe(diff.langerPfad());
+    expect(mass.titel, 'voller Pfad als Titel').toBe(diff.langerPfad());
+    expect(mass.name, 'Marke im Namen').toContain('⟨U+202E⟩');
   });
 
   test('soll die erste Diff-Zeile unmittelbar unter der Leiste beginnen', async ({ diff, page }) => {
