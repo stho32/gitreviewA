@@ -24,9 +24,10 @@
    * Der Katalog: `taste` ist der Wert von `KeyboardEvent.key`, `anzeige` steht so in Hilfe und Statuszeile, `text` ist die
    * Beschreibung der Aktion. `nurEinzeln` gilt nur im Modus „Einzeln“; `ziel` nennt das Bedienelement, dessen Vorhandensein die
    * Aktion verfügbar macht und das den Hinweis (`<kbd>` und `aria-keyshortcuts`) trägt (die Karte des Bedienelements setzt es,
-   * ohne diese Schicht umzubauen); `imFeld` heißt: die Taste wirkt nur im Feld selbst und wird hier nie abgefangen. `kurz` ist
-   * der Text der Statuszeile. Eine Karte, die ein Bedienelement mit Kürzel baut, ergänzt ihren Eintrag hier — Hinweis und
-   * Verfügbarkeit folgen aus demselben `ziel`.
+   * ohne diese Schicht umzubauen); `zielJeLaufart` überschreibt `ziel` für eine Laufart (dasselbe Kürzel steht in der
+   * Dateiansicht an einem anderen Bedienelement, R00039); `imFeld` heißt: die Taste wirkt nur im Feld selbst und wird hier nie
+   * abgefangen. `kurz` ist der Text der Statuszeile. Eine Karte, die ein Bedienelement mit Kürzel baut, ergänzt ihren Eintrag
+   * hier — Hinweis und Verfügbarkeit folgen aus demselben `ziel`.
    */
   const EINTRAEGE = [
     { taste: '?', aktion: 'hilfe', bereich: ALLGEMEIN, text: 'diese Übersicht', anzeige: ['?'], kurz: 'alle Kürzel', ziel: '#hilfe-knopf' },
@@ -51,7 +52,7 @@
     { taste: '3', aktion: 'zeileAnmerkenIdee', bereich: DIFF, text: 'Zeile anmerken: Idee', anzeige: ['3'], ziel: '#diff .df-sc' },
     { taste: 's', aktion: 'ansichtWechseln', bereich: DIFF, text: 'nur Änderungen / ganze Datei (Ansicht ▾)', anzeige: ['s'], ziel: '#ansicht-knopf' },
     { taste: 'v', aktion: 'anordnungWechseln', bereich: DIFF, text: 'untereinander / nebeneinander (Ansicht ▾)', anzeige: ['v'], ziel: '#ansicht-knopf' },
-    { taste: 'w', aktion: 'umbruchWechseln', bereich: DIFF, text: 'Umbruch (Ansicht ▾)', anzeige: ['w'], ziel: '#ansicht-knopf' },
+    { taste: 'w', aktion: 'umbruchWechseln', bereich: DIFF, text: 'Umbruch (Ansicht ▾)', anzeige: ['w'], ziel: '#ansicht-knopf', zielJeLaufart: { [DATEIANSICHT]: '#da-umbruch' } },
     { taste: 'c', aktion: 'dateiKopieren', bereich: DIFF, text: 'Datei kopieren', anzeige: ['c'], kurz: 'Datei kopieren', laufart: DATEIANSICHT, ziel: '#datei-kopieren' },
     { taste: 'l', aktion: 'leerraumWechseln', bereich: DIFF, text: 'Leerraum (Ansicht ▾)', anzeige: ['l'], ziel: '#ansicht-knopf' },
     { taste: 'g', aktion: 'naechsteLuecke', bereich: DIFF, text: 'nächste Lücke', anzeige: ['g'] },
@@ -189,21 +190,31 @@
     return zeilen;
   }
 
+  /** Das Ziel eines Eintrags in dieser Lage: `zielJeLaufart` schlägt `ziel` (R00039 — dasselbe Kürzel, anderes Bedienelement). */
+  function zielFuer(eintrag, lage) {
+    const laufart = lage && lage.laufart;
+    if (laufart && eintrag.zielJeLaufart && eintrag.zielJeLaufart[laufart]) {
+      return eintrag.zielJeLaufart[laufart];
+    }
+    return eintrag.ziel || null;
+  }
+
   /**
-   * Hinweis und `aria-keyshortcuts` je Bedienelement: der Katalog nennt im `ziel` das Element; mehrere Einträge mit demselben
-   * Ziel teilen sich einen Hinweis. Ein später gebautes Bedienelement braucht nur seinen Katalogeintrag mit `ziel` — der
-   * Hinweis erscheint ohne zweite Liste.
+   * Hinweis und `aria-keyshortcuts` je Bedienelement: der Katalog nennt im `ziel` das Element (je Laufart, R00039); mehrere
+   * Einträge mit demselben Ziel teilen sich einen Hinweis. Ein später gebautes Bedienelement braucht nur seinen Katalogeintrag
+   * mit `ziel` — der Hinweis erscheint ohne zweite Liste.
    */
-  function hinweise() {
+  function hinweise(lage) {
     const nachZiel = new Map();
     for (const eintrag of EINTRAEGE) {
-      if (!eintrag.ziel) {
+      const ziel = zielFuer(eintrag, lage);
+      if (!ziel) {
         continue;
       }
-      if (!nachZiel.has(eintrag.ziel)) {
-        nachZiel.set(eintrag.ziel, []);
+      if (!nachZiel.has(ziel)) {
+        nachZiel.set(ziel, []);
       }
-      nachZiel.get(eintrag.ziel).push(eintrag);
+      nachZiel.get(ziel).push(eintrag);
     }
     return [...nachZiel].map(([ziel, eintraege]) => ({
       selektor: ziel,
@@ -267,6 +278,7 @@
     belegung,
     statuszeile,
     hinweise,
+    zielFuer,
     abschnittsanfaenge,
     naechsterAbschnitt,
   };

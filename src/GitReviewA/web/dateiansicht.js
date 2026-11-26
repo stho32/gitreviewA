@@ -330,14 +330,10 @@
     document.getElementById('schliessen').disabled = true;
   }
 
-  /** Hinweis und `aria-keyshortcuts` am Bedienelement aus dem Katalog (R00030): kein zweiter Ort für Tasten. */
+  /** Hinweis und `aria-keyshortcuts` am Bedienelement aus dem Katalog (R00030), gerendert an der einen Stelle (`hinweise.js`)
+      mit der Laufart „Dateiansicht“ — das Kürzel `w` steht hier am Umbruch-Schalter (R00039, B3). */
   function zeichneHinweise() {
-    for (const hinweis of tasten().hinweise()) {
-      const element = document.querySelector(hinweis.selektor);
-      if (element) {
-        element.setAttribute('aria-keyshortcuts', hinweis.aria);
-      }
-    }
+    window.gitreviewaHinweise.setzen(document, tasten().hinweise({ laufart: tasten().DATEIANSICHT }));
   }
 
   function zeigeMeldung(text) {

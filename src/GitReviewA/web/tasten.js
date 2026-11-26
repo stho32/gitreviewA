@@ -475,39 +475,10 @@
   /* ── Hinweise an den Bedienelementen (B2906) ── */
 
   /** Der Katalog legt an jedes Bedienelement seinen Hinweis (`<kbd aria-hidden>`) und `aria-keyshortcuts`; der Name bleibt.
-      Ein Ziel, dessen Inhalt neu gezeichnet wird (der Diff-Rollbereich), verliert seine `<kbd>`: fehlt eine, wird der Hinweis
-      neu gesetzt, statt sich auf das gemerkte Kennzeichen zu verlassen. */
+      Gerendert wird an einer Stelle (`hinweise.js`), hier mit der Laufart „Review“ — so gilt derselbe Hinweis für die
+      Dateiansicht (R00039, B3). */
   function zeichneHinweise() {
-    for (const hinweis of werte().hinweise()) {
-      for (const element of document.querySelectorAll(hinweis.selektor)) {
-        const behaelter = element.closest('label') || element;
-        if (element.dataset.tastenHinweis === hinweis.aria && hatAlleHinweistasten(behaelter, hinweis.anzeige)) {
-          continue;
-        }
-        element.dataset.tastenHinweis = hinweis.aria;
-        element.setAttribute('aria-keyshortcuts', hinweis.aria);
-        for (const altesKbd of behaelter.querySelectorAll('kbd.hinweis-taste')) {
-          altesKbd.remove();
-        }
-        hinweisTasten(hinweis.anzeige).forEach(kbd => behaelter.append(kbd));
-      }
-    }
-  }
-
-  function hatAlleHinweistasten(behaelter, anzeige) {
-    const tasten = [...behaelter.querySelectorAll('kbd.hinweis-taste')].map(kbd => kbd.textContent);
-    return anzeige.every(taste => tasten.includes(taste)) && tasten.length === anzeige.length;
-  }
-
-  /** Je Taste ein `<kbd>`; für Screenreader verborgen, damit der zugängliche Name des Bedienelements unverändert bleibt. */
-  function hinweisTasten(anzeige) {
-    return anzeige.map(taste => {
-      const kbd = document.createElement('kbd');
-      kbd.className = 'hinweis-taste';
-      kbd.setAttribute('aria-hidden', 'true');
-      kbd.textContent = taste;
-      return kbd;
-    });
+    window.gitreviewaHinweise.setzen(document, werte().hinweise({ laufart: werte().REVIEW }));
   }
 
   /* ── Statuszeile (B2904) ── */
