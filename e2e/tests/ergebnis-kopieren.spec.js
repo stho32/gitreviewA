@@ -32,7 +32,8 @@ test.describe('Befunde kopieren', () => {
 
     await expect(knopf).toBeVisible();
     await expect(knopf).toHaveAccessibleName('Ergebnis kopieren');
-    await expect(page.locator('.gr-kopfaktionen button')).toHaveText(['Ergebnis kopieren', 'Beenden']);
+    // R00050: der Kopf trägt drei Aktionen in dieser Reihenfolge; „Beenden“ trägt den Hinweis `q` als `<kbd>` im Namen.
+    expect(await page.locator('.gr-kopfaktionen button').evaluateAll(knoepfe => knoepfe.map(knopf => knopf.id))).toEqual(['ergebnis-kopieren', 'abbrechen', 'beenden']);
 
     const freigeben = await gr.ergebnisAntwortZurueckhalten(page);
     await knopf.click();

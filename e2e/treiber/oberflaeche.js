@@ -236,8 +236,11 @@ async function beendenDialogBestaetigen(page, name) {
   await beendenDialogKnopf(page, name).click({ timeout: 5000 });
 }
 
+/** „Beenden“ und die Bestätigung im Dialog an **einer** Stelle (R00050, B4605): bestehende Specs klicken wie bisher. */
 async function beendenBetaetigen(page) {
   await beendenKnopf(page).click({ timeout: 5000 });
+  await expect(beendenDialog(page)).toBeVisible();
+  await beendenDialogKnopf(page, 'Beenden (Enter)').click({ timeout: 5000 });
 }
 
 /** Betätigt „Beenden“ und misst bis zum Klick; die Frist gilt für die Bedienbarkeit der Seite nach der Anzeige. */
@@ -299,8 +302,9 @@ function beendetMeldung(page) {
   return page.getByText('Review beendet', { exact: true });
 }
 
+/** Die Fehlermeldung steht seit R00050 im offenen Dialog („dasselbe für Beenden“); eine Stelle für beide Arten. */
 function beendenFehler(page) {
-  return page.locator('#beenden-status');
+  return page.locator('#beenden-fehler');
 }
 
 /** Lässt die Beenden-Anforderung mit `status` scheitern, nach einer Verzögerung, die Zeichnen dazwischen erlaubt. */
