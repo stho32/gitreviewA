@@ -498,6 +498,31 @@ function repoGruppen(ordner) {
   return { ordner, hashes: { g1, g2 } };
 }
 
+/** Repo P der Dateisuche (R00049): `p1` „Anlegen“ legt acht Dateien an (Code 5, Tests 1, Doku 2), `p2` „Ändern“ ändert
+    `src/app.js` und `db/002_aendern.sql`. `zusatz` sind weitere Dateien des `p1`-Commits (der Fake der Kriterien 2 und 7). */
+function repoP(ordner, zusatz = {}) {
+  repoAnlegen(ordner);
+  const dateien = {
+    'README.md': 'readme\n',
+    'db/001_anlegen.sql': 'anlegen 1\n',
+    'db/002_aendern.sql': 'aendern 1\n',
+    'docs/api.md': 'api 1\n',
+    'src/app.js': 'app 1\n',
+    'src/data/app.sql': 'daten 1\n',
+    'src/util.js': 'util 1\n',
+    'tests/app.test.js': 'test 1\n',
+    ...zusatz,
+  };
+  for (const [pfad, inhalt] of Object.entries(dateien)) {
+    dateiSchreiben(ordner, pfad, inhalt);
+  }
+  const p1 = commitAnlegen(ordner, { betreff: 'Anlegen' });
+  dateiSchreiben(ordner, 'src/app.js', 'app 2\n');
+  dateiSchreiben(ordner, 'db/002_aendern.sql', 'aendern 2\n');
+  const p2 = commitAnlegen(ordner, { betreff: 'Ändern' });
+  return { ordner, hashes: { p1, p2 } };
+}
+
 function zufallsBytes(anzahl) {
   const bytes = Buffer.alloc(anzahl);
   let zustand = 12345;
@@ -508,4 +533,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoGruppen, repoV, repoG, repoKlammern, repoX, repoK, repoZ, repoZeilenbereich, repoQ, repoS, repoL, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, repoY, repoLangerPfad, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoGruppen, repoP, repoV, repoG, repoKlammern, repoX, repoK, repoZ, repoZeilenbereich, repoQ, repoS, repoL, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, repoY, repoLangerPfad, markerVorhanden, diffProgrammOhneSchutzStarten };
