@@ -1129,9 +1129,10 @@ internal static class GitLeser
 
     /// <summary>
     /// Der stderr-Text eines git-Aufrufs, auf <see cref="Hoechstlaenge"/> gekappt (L5): ein fremdes Repo kann beliebig viel auf
-    /// stderr schreiben; die Meldung bleibt eine Zeile und trägt keinen unbegrenzten fremden Text.
+    /// stderr schreiben; die Meldung bleibt eine Zeile und trägt keinen unbegrenzten fremden Text. `internal` für den Kappungs-Test
+    /// (H2): der Baustein ist ohne git-Prozess prüfbar.
     /// </summary>
-    private sealed class Fehlertext
+    internal sealed class Fehlertext
     {
         private const int Hoechstlaenge = 64 * 1024;
         private readonly StringBuilder bauer = new();
