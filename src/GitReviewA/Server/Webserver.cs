@@ -65,7 +65,11 @@ internal sealed class Webserver : IAsyncDisposable
         {
             anwendung.MapGet(SprungEndpunkt.Muster, SprungEndpunkt.Fuer(new SprungInteractor(commits, dateien, sprungquelle, protokoll)));
         }
-        var laufendeSchalter = laufende ?? new Laufende();
+        var laufendeSchalter = laufende;
+        if (laufendeSchalter is null)
+        {
+            laufendeSchalter = new Laufende();
+        }
         var ergebnis = BildeRueckkanal(anwendung, commits, anmerkungen, haken, dateiAbhaken, uebersicht, arbeitsordner, laufendeSchalter, protokoll);
         await anwendung.StartAsync();
         lauscherPort.Wert = Serverbau.TatsaechlicherPort(anwendung);

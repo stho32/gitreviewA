@@ -73,9 +73,20 @@
       return 'Keine Anmerkungen: die KI erhält ‚Keine Anmerkungen.‘';
     }
     const dateien = lage.anmerkungsdateien;
-    const anmerkungswort = anmerkungen === 1 ? '1 Anmerkung' : `${anmerkungen} Anmerkungen`;
-    const dateiwort = dateien === 1 ? '1 Datei' : `${dateien} Dateien`;
-    return `${anmerkungswort} in ${dateiwort} ${anmerkungen === 1 ? 'geht' : 'gehen'} auf stdout an die aufrufende KI.`;
+    const anmerkungswort = einzahlOderMehrzahl(anmerkungen, '1 Anmerkung', `${anmerkungen} Anmerkungen`);
+    const dateiwort = einzahlOderMehrzahl(dateien, '1 Datei', `${dateien} Dateien`);
+    let verb = 'gehen';
+    if (anmerkungen === 1) {
+      verb = 'geht';
+    }
+    return `${anmerkungswort} in ${dateiwort} ${verb} auf stdout an die aufrufende KI.`;
+  }
+
+  function einzahlOderMehrzahl(anzahl, einzahl, mehrzahl) {
+    if (anzahl === 1) {
+      return einzahl;
+    }
+    return mehrzahl;
   }
 
   /** u = m − abgehakt; gesperrte Dateien zählen als ungeprüft und werden hinter u genannt (Kriterien 3 und 4). */
@@ -89,10 +100,16 @@
     }
     const offen = dateien.gesamt - dateien.abgehakt;
     if (offen === 0) {
-      return dateien.gesamt === 1 ? 'Alle 1 Datei ist abgehakt.' : `Alle ${dateien.gesamt} Dateien sind abgehakt.`;
+      if (dateien.gesamt === 1) {
+        return 'Alle 1 Datei ist abgehakt.';
+      }
+      return `Alle ${dateien.gesamt} Dateien sind abgehakt.`;
     }
-    const offenwort = offen === 1 ? '1 von 1 Datei ist' : `${offen} von ${dateien.gesamt} Dateien sind`;
-    const gesperrt = dateien.nichtLesbar > 0 ? ` (${dateien.nichtLesbar} nicht lesbar)` : '';
+    const offenwort = einzahlOderMehrzahl(offen, '1 von 1 Datei ist', `${offen} von ${dateien.gesamt} Dateien sind`);
+    let gesperrt = '';
+    if (dateien.nichtLesbar > 0) {
+      gesperrt = ` (${dateien.nichtLesbar} nicht lesbar)`;
+    }
     return `${offenwort} nicht abgehakt${gesperrt}.`;
   }
 
@@ -106,8 +123,8 @@
       zeilen.push(NICHT_BESTIMMT.haken);
     }
     if (zeilen.length === 0 && (lage.anmerkungen > 0 || lage.haken > 0)) {
-      const anmerkungswort = lage.anmerkungen === 1 ? '1 Anmerkung' : `${lage.anmerkungen} Anmerkungen`;
-      const hakenwort = lage.haken === 1 ? '1 Haken' : `${lage.haken} Haken`;
+      const anmerkungswort = einzahlOderMehrzahl(lage.anmerkungen, '1 Anmerkung', `${lage.anmerkungen} Anmerkungen`);
+      const hakenwort = einzahlOderMehrzahl(lage.haken, '1 Haken', `${lage.haken} Haken`);
       zeilen.push(`Alle ${anmerkungswort} und ${hakenwort} gehen verloren.`);
     }
     zeilen.push('Die KI erhält kein Ergebnis (stdout bleibt leer, Exit 130).');
@@ -120,13 +137,24 @@
    * `fortschrittZusammen` mit demselben Stand und derselben Sperrregel wie der Zähler im Kopf (R00012/R00014).
    */
   function lageAusQuellen(quellen) {
-    const anmerkungen = quellen ? quellen.anmerkungen : null;
-    const hakenstand = quellen ? quellen.hakenstand : null;
-    const zusammenstand = quellen ? quellen.zusammenstand : null;
+    const quellenlage = quellen || {};
+    const anmerkungen = quellenlage.anmerkungen || null;
+    const hakenstand = quellenlage.hakenstand || null;
+    const zusammenstand = quellenlage.zusammenstand || null;
+    let anzahlAnmerkungen = null;
+    let anmerkungsdateien = null;
+    if (anmerkungen) {
+      anzahlAnmerkungen = anmerkungen.length;
+      anmerkungsdateien = dateienDerAnmerkungen(anmerkungen);
+    }
+    let anzahlHaken = null;
+    if (hakenstand && Number.isInteger(hakenstand.abgehakt)) {
+      anzahlHaken = hakenstand.abgehakt;
+    }
     return {
-      anmerkungen: anmerkungen ? anmerkungen.length : null,
-      anmerkungsdateien: anmerkungen ? dateienDerAnmerkungen(anmerkungen) : null,
-      haken: hakenstand && Number.isInteger(hakenstand.abgehakt) ? hakenstand.abgehakt : null,
+      anmerkungen: anzahlAnmerkungen,
+      anmerkungsdateien,
+      haken: anzahlHaken,
       dateien: zaehleDateien(hakenstand, zusammenstand),
     };
   }

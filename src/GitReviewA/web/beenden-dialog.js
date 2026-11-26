@@ -21,7 +21,10 @@
    * Der Vorgabeknopf der Beschreibung bekommt den Fokus („Beenden“ bestätigt, „Abbrechen“ steht auf „Zurück“).
    */
   function oeffnen(ausloeser, beschreibung, beiBestaetigen) {
-    zustand.ausloeser = ausloeser && ausloeser !== document.body ? ausloeser : null;
+    zustand.ausloeser = null;
+    if (ausloeser && ausloeser !== document.body) {
+      zustand.ausloeser = ausloeser;
+    }
     zustand.beschreibung = beschreibung;
     zustand.beiBestaetigen = beiBestaetigen;
     zeichne(beschreibung);
@@ -52,7 +55,10 @@
   }
 
   function fokusVorgabe() {
-    const vorgabe = zustand.beschreibung.vorgabe === 'bestaetigen' ? bestaetigenKnopf() : zurueckKnopf();
+    let vorgabe = zurueckKnopf();
+    if (zustand.beschreibung.vorgabe === 'bestaetigen') {
+      vorgabe = bestaetigenKnopf();
+    }
     vorgabe.focus();
   }
 
@@ -150,7 +156,10 @@
     }
     ereignis.preventDefault();
     const stelle = anlaufpunkte.indexOf(document.activeElement);
-    const schritt = ereignis.shiftKey ? -1 : 1;
+    let schritt = 1;
+    if (ereignis.shiftKey) {
+      schritt = -1;
+    }
     const naechste = (stelle + schritt + anlaufpunkte.length) % anlaufpunkte.length;
     anlaufpunkte[naechste].focus();
   }

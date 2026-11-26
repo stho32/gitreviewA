@@ -28,7 +28,8 @@ internal static class BeendenEndpunkt
                 return;
             }
             var versuch = laufende.Versuche(Laufentscheidung.Beenden);
-            if (!versuch.Angenommen && versuch.Zustand == Laufentscheidung.Abbruch)
+            var istAbbruchSchonEntschieden = !versuch.Angenommen && versuch.Zustand == Laufentscheidung.Abbruch;
+            if (istAbbruchSchonEntschieden)
             {
                 await JsonAntwort.SendeAsync(kontext, StatusCodes.Status409Conflict, Abgebrochen);
                 return;
