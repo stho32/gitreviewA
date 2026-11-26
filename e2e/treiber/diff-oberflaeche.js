@@ -270,9 +270,41 @@ async function pruefeAufforderungZurWahl(page) {
   await expect(page.locator(ZEILE)).toHaveCount(0);
 }
 
+/** Maße der Herkunft: sichtbare Breite, waagerechter Überlauf und der volle Text in `aria-label`/`title`. */
+async function herkunftmass(page) {
+  return page.evaluate(() => {
+    const herkunft = document.querySelector('#diff .diff-herkunft');
+    return {
+      text: herkunft.textContent,
+      breite: Math.round(herkunft.getBoundingClientRect().width),
+      ueberlauf: herkunft.scrollWidth - herkunft.clientWidth,
+      name: herkunft.getAttribute('aria-label'),
+      titel: herkunft.getAttribute('title'),
+    };
+  });
+}
+
+/** Ein Element des Kopfs, dessen Text bei Platzmangel gekürzt wird (R00039): der sichtbare Text stimmt; ist er abgeschnitten,
+    muss der volle Text in `title` und im zugänglichen Namen stehen — `toHaveText` allein sieht die Kürzung nicht, es liest
+    `textContent`. */
+async function pruefeSichtbarenText(locator, text, bezeichnung) {
+  await expect(locator).toHaveText(text);
+  const mass = await locator.evaluate(element => ({
+    breite: Math.round(element.getBoundingClientRect().width),
+    ueberlauf: element.scrollWidth - element.clientWidth,
+    name: element.getAttribute('aria-label'),
+    titel: element.getAttribute('title'),
+  }));
+  if (mass.ueberlauf <= 1) {
+    return;
+  }
+  expect(mass.name, `voller Text im zugänglichen Namen (${bezeichnung}, ${JSON.stringify(mass)})`).toBe(text);
+  expect(mass.titel, `voller Text als Titel (${bezeichnung}, ${JSON.stringify(mass)})`).toBe(text);
+}
+
 /** Der Diff-Kopf nennt die Herkunft (R00012): „netto aus <Kurz-Hashes>“ bzw. „je Commit, nicht netto — <Grund>“. */
 async function pruefeHerkunft(page, text) {
-  await expect(page.locator(HERKUNFT)).toHaveText(text);
+  await pruefeSichtbarenText(page.locator(HERKUNFT), text, 'Herkunft');
 }
 
 async function umbruchUmschalten(page) {
@@ -881,11 +913,11 @@ async function pruefeSprungVerweis(page, href) {
 
 async function pruefeSprungGrund(page, text) {
   await expect(page.locator(SPRUNG_VERWEIS)).toBeHidden();
-  await expect(page.locator(SPRUNG_GRUND)).toHaveText(text);
+  await pruefeSichtbarenText(page.locator(SPRUNG_GRUND), text, 'Sprung-Grund');
 }
 
 async function pruefeSprungHinweis(page, text) {
-  await expect(page.locator(SPRUNG_HINWEIS)).toHaveText(text);
+  await pruefeSichtbarenText(page.locator(SPRUNG_HINWEIS), text, 'Sprung-Hinweis');
 }
 
 /** Hält die Antwort auf die Sprunganfrage für `pfad` `verzoegerungMs` zurück; `eingetroffen` wartet, bis sie da ist und gezeichnet sein könnte. */
@@ -920,8 +952,8 @@ async function sprungAntwortScheitern(page, pfad, status = 500) {
 module.exports = {
   pruefeBedienbarNachAlsText, ansichtWaehlen, ansichtPerTastaturWechseln, pruefeAnsicht, zeilenfarbenLesen, pruefeZeilenfarben, pruefeKontextzeileBinnen,
   menueOeffnen, menueSchliessen, menueEintrag, menueWaehlen, pruefeMenueZustand, umbruchStellung,
-  setzeDiffBreite, leistenmass, pfadmass,
-  pruefeDiff, pruefePfad, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, pruefeHerkunft, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, pruefeUmbruchStellung, pruefeUmschalter, pruefeUmschalterPerTabErreichbar, umbruchPerTastaturUmschalten, pruefeZeileUmbrochen, pruefeAbschnittZeileUmbrochen, diffAntwortVerzoegern,
+  setzeDiffBreite, leistenmass, pfadmass, herkunftmass,
+  pruefeDiff, pruefePfad, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, pruefeHerkunft, pruefeSichtbarenText, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, pruefeUmbruchStellung, pruefeUmschalter, pruefeUmschalterPerTabErreichbar, umbruchPerTastaturUmschalten, pruefeZeileUmbrochen, pruefeAbschnittZeileUmbrochen, diffAntwortVerzoegern,
   pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
   pruefeAbschnittZugeklappt, abschnittTrotzdemLaden, pruefeAbschnittZeile, pruefeAbschnittskopf,
   diffAntwortZuGross, ganzDateiErstScheitern, blockKnoten, warteAufFarbe, langeAufgabenBeimScrollen, zugeklapptRechtzeitigNachKlick, zugeklapptRechtzeitigNachAktion,
