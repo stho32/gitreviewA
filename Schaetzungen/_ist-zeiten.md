@@ -152,3 +152,4 @@ Nie vom User erfragen.
 | 2026-11-26 | R00050 Beenden und Abbrechen im Kopf | I0028 B4605 Bestehende Specs und Treiber umziehen | Standard | 2h | 0,5h | 0,5h | autonom |
 | 2026-11-26 | R00050 Beenden und Abbrechen im Kopf | I0028 B4606 Tests und Wegwerf-Repos | unklar | 2-4h | 1,2h | 1,2h | autonom |
 | 2026-11-26 | R00050 Beenden und Abbrechen im Kopf | Nacharbeit Code-Review B1: modaler Beenden-Dialog fängt `?`; Wächtertest Kriterium 10 (Signal + Abbruchanforderung) | Bug-Fix | – | 0,3h | – | autonom |
+| 2026-11-26 | R00050 Beenden und Abbrechen im Kopf | Nacharbeit Entwicklertest US-8: zweiter Tab zeigt nach dem Ende des Laufs den Endzustand statt „Failed to fetch“ (Kriterium 11, zweiter Satz) | Bug-Fix | – | 0,5h | – | autonom |

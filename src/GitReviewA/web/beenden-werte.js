@@ -21,6 +21,15 @@
     dateien: 'Dateien konnten nicht bestimmt werden',
   };
 
+  /**
+   * Der eine ehrliche Endzustand, wenn die Bestätigung keinen Server mehr erreicht (R00050, Kriterium 11): der Lauf ist
+   * zu Ende, nur dieses Fenster weiß es noch nicht. Für beide Arten dieselbe Beschreibung — eine Fehlermeldung wäre falsch.
+   */
+  const BEREITS_ZU_ENDE = {
+    titel: 'Der Lauf ist bereits zu Ende.',
+    hinweis: 'Das Ergebnis steht im Terminal bzw. im anderen Fenster. Dieses Fenster kann geschlossen werden.',
+  };
+
   function dialogBeschreibung(art, lage) {
     if (art === BEENDEN) {
       return beendenBeschreibung(lage || {});
@@ -197,5 +206,5 @@
     };
   }
 
-  Object.assign(ziel, { BEENDEN, ABBRECHEN, dialogBeschreibung, lageAusQuellen });
+  Object.assign(ziel, { BEENDEN, ABBRECHEN, BEREITS_ZU_ENDE, dialogBeschreibung, lageAusQuellen });
 })(typeof module !== 'undefined' ? module.exports : (window.gitreviewaBeendenWerte = window.gitreviewaBeendenWerte || {}));

@@ -71,18 +71,27 @@
   async function bestaetige(art) {
     dialog().zeigeFehler('');
     dialog().setzeBestaetigenGesperrt(true);
+    let ergebnis;
     try {
-      const antwort = await anfordern(art);
-      let zustand = antwort.zustand;
-      if (!zustand) {
-        zustand = endzustandDerArt(art);
-      }
-      zeigeEndzustand(zustand);
-      dialog().schliesse({ grund: 'endzustand' });
+      ergebnis = await anfordern(art);
     } catch (fehler) {
+      // Kein Server mehr (der Prozess ist schon zu Ende): das ist kein gescheitertes Beenden, sondern der Endzustand
+      // (R00050, Kriterium 11). Für beide Dialoge dieselbe eine Stelle.
+      if (fehler.netzfehler) {
+        zeigeEndzustand(werte().BEREITS_ZU_ENDE);
+        dialog().schliesse({ grund: 'endzustand' });
+        return;
+      }
       dialog().zeigeFehler(`${fehlerwort(art)} ist gescheitert: ${fehler.message}`);
       dialog().setzeBestaetigenGesperrt(false);
+      return;
     }
+    let zustand = ergebnis.zustand;
+    if (!zustand) {
+      zustand = endzustandDerArt(art);
+    }
+    zeigeEndzustand(endzustandBeschreibung(zustand));
+    dialog().schliesse({ grund: 'endzustand' });
   }
 
   function fehlerwort(art) {
@@ -105,11 +114,19 @@
     if (art === werte().ABBRECHEN) {
       pfad = 'api/abbrechen';
     }
-    const antwort = await fetch(pfad, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: '{}',
-    });
+    let antwort;
+    try {
+      antwort = await fetch(pfad, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: '{}',
+      });
+    } catch {
+      // Kein HTTP-Ausgang: der Server ist weg (Prozess schon beendet) oder die Verbindung brach ab — kein Antwortcode.
+      const netzfehler = new Error('keine Verbindung zum Server');
+      netzfehler.netzfehler = true;
+      throw netzfehler;
+    }
     let inhalt = {};
     try {
       inhalt = await antwort.json();
@@ -125,20 +142,24 @@
     return inhalt;
   }
 
-  /** Beide Endzustände ersetzen die Bedienung: „Ergebnis kopieren“, „Abbrechen“ und „Beenden“ verschwinden. */
-  function zeigeEndzustand(zustand) {
+  /** Der Endzustand zu einem angenommenen Zustand — die eine Stelle, die „beendet“ und „abgebrochen“ unterscheidet. */
+  function endzustandBeschreibung(zustand) {
     let art = werte().BEENDEN;
     if (zustand === 'abgebrochen') {
       art = werte().ABBRECHEN;
     }
-    const beschreibung = werte().dialogBeschreibung(art, werte().lageAusQuellen(null));
+    return werte().dialogBeschreibung(art, werte().lageAusQuellen(null)).endzustand;
+  }
+
+  /** Beide Endzustände ersetzen die Bedienung: „Ergebnis kopieren“, „Abbrechen“ und „Beenden“ verschwinden. */
+  function zeigeEndzustand(endzustand) {
     const meldungElement = document.createElement('p');
     meldungElement.className = 'gr-beendet';
     meldungElement.setAttribute('role', 'status');
-    meldungElement.textContent = beschreibung.endzustand.titel;
+    meldungElement.textContent = endzustand.titel;
     const hinweisElement = document.createElement('p');
     hinweisElement.className = 'gr-beendet-hinweis muted';
-    hinweisElement.textContent = beschreibung.endzustand.hinweis;
+    hinweisElement.textContent = endzustand.hinweis;
     for (const id of ['beenden', 'abbrechen', 'ergebnis-kopieren']) {
       document.getElementById(id)?.remove();
     }

@@ -4,7 +4,7 @@
 // Dazu die eine Zählrechnung: Dateien über `fortschrittZusammen`, Anmerkungen und Haken aus den Serverquellen.
 const { test, expect } = require('@playwright/test');
 const {
-  dialogBeschreibung, lageAusQuellen, BEENDEN, ABBRECHEN,
+  dialogBeschreibung, lageAusQuellen, BEENDEN, ABBRECHEN, BEREITS_ZU_ENDE,
 } = require('../../../src/GitReviewA/web/beenden-werte.js');
 
 function lage(zusatz = {}) {
@@ -164,5 +164,12 @@ test.describe('Baustein Beenden-Werte — die eine Zählrechnung (B4601)', () =>
 
     expect(ohneAnmerkungen).toEqual({ anmerkungen: null, anmerkungsdateien: null, haken: null, dateien: null });
     expect(dialogBeschreibung(ABBRECHEN, ohneAnmerkungen).zeilen).not.toContain('Alle 0 Anmerkungen und 0 Haken gehen verloren.');
+  });
+
+  // Kriterium 11, zweiter Satz: erreicht die Bestätigung keinen Server mehr, zeigt der Tab den Endzustand — für beide
+  // Dialoge dieselbe eine Beschreibung (`beenden.js` wertet die Antwort an der einen Stelle aus).
+  test('soll den Endzustand ohne Server für beide Dialoge gleich benennen', () => {
+    expect(`${BEREITS_ZU_ENDE.titel} ${BEREITS_ZU_ENDE.hinweis}`).toBe(
+      'Der Lauf ist bereits zu Ende. Das Ergebnis steht im Terminal bzw. im anderen Fenster. Dieses Fenster kann geschlossen werden.');
   });
 });

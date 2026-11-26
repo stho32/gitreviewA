@@ -1,8 +1,11 @@
 'use strict';
 // Abnahme R00050 „Beenden und Abbrechen im Kopf“ (B4606): die Akzeptanzkriterien über den Weg, den der Mensch geht.
 // Repo Z (z1 z2 z3), Repo N plus v (gesperrte Stellen), Commit g (2 000 Dateien); Fenster 1280 × 800 und 812 × 600.
-// Die Kriterien 2, 8, 9, 11 (je Richtung), 13 und 16 prüfen `beenden-dialog.spec.js` und `beenden-knoepfe.spec.js`;
-// die Endpunkte prüft `tests/GitReviewA.Tests/Beenden/AbbrechenEndpunktTests.cs`.
+// Die Kriterien 2, 8, 9, 13 und 16 prüfen `beenden-dialog.spec.js` und `beenden-knoepfe.spec.js`; die 409-Anzeige
+// (Kriterium 11, erster Teil) steht in `beenden-knoepfe.spec.js`, der zweite Tab nach dem Ende des Laufs in
+// `beenden-zwei-tabs.spec.js`, der gleichzeitige Fall als Integration in
+// `tests/GitReviewA.Tests/Beenden/BeendenGegenAbbruchTests.cs`; die Endpunkte prüft
+// `tests/GitReviewA.Tests/Beenden/AbbrechenEndpunktTests.cs`.
 const { test, expect } = require('../dsl/abbrechen.js');
 
 const KOPFAKTIONEN = '.gr-kopfaktionen > button';
@@ -160,29 +163,6 @@ test.describe('R00050 Beenden und Abbrechen im Kopf', () => {
     expect(gr.ergebnis(lauf)).toBe('');
     expect((await gr.abbrechenAnfordern(lauf)).status).toBe(200);
     await abbruch.sollOhneErgebnisAbgebrochenSein(lauf);
-  });
-
-  test('Kriterium 11: zwei Tabs — beide zeigen denselben geltenden Endzustand, der Prozess endet dazu passend', async ({ gr, context, page }) => {
-    const repo = gr.repoZ();
-    const lauf = await gr.gitreviewAStarten(repo, [repo.hashes.z1, repo.hashes.z2, repo.hashes.z3]);
-    await gr.oberflaecheOeffnen(page, lauf, 'zusammen');
-    const zweiterTab = await context.newPage();
-    await zweiterTab.goto(lauf.adresse);
-    await gr.abbrechenDialogOeffnen(page);
-    await expect(gr.beendenDialog(zweiterTab)).toBeHidden();
-    await zweiterTab.locator('#beenden').click();
-    await expect(gr.beendenDialog(zweiterTab)).toBeVisible();
-
-    await Promise.all([
-      gr.beendenDialogBestaetigen(page, 'Abbrechen'),
-      gr.beendenDialogBestaetigen(zweiterTab, 'Beenden (Enter)'),
-    ]);
-
-    const exitCode = await gr.aufEndeWarten(lauf, 10000);
-    const zustand = exitCode === 0 ? 'Review beendet' : 'Review abgebrochen';
-    expect([0, 130], `Exit-Code ${exitCode}`).toContain(exitCode);
-    await expect(page.getByText(zustand, { exact: true })).toBeVisible();
-    await expect(zweiterTab.getByText(zustand, { exact: true })).toBeVisible();
   });
 
   test('Kriterium 14: Neuladen schließt den Dialog ohne „Seite verlassen?“; die Anmerkung bleibt und Beenden liefert sie', async ({ gr, page }) => {
