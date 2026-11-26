@@ -599,3 +599,7 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Durchlauf: Bau 31 min; Code-Review Muss B1 (Commitquelle ungefärbt — ein Feld `EchterPfad` mit zwei Lesern: Kopf und Sprachwahl), Sollte A1; Security-Review Claude Sonnet ohne Muss (C1–C13, P14, G5 halten; 0 Marker nach ~45 Läufen mit Fallen-Konfiguration); Nacharbeit trennt `Sprachpfad`, Tests für A1 und C2-Kollision; Entwicklertest (SQL in zwei Commits) ohne Befund. Karte gesamt 1,29 $.
 - Lehre: Ein Feld mit zwei Bedeutungen fällt erst auf, wenn eine neue Quelle die beiden auseinanderzieht — eine Unterscheidung, ein Ort gilt auch für Datenfelder.
 - Gate: NUnit 1768/1768, Playwright 1055/1055 zweimal.
+| 2026-11-26 | #45 | Entwicklung | dokumentar | bestanden | 0 min | Claude Sonnet: LICENSE MIT, Herkunft 14 Dateien in README · claude · sonnet · Lauf 45-dokumentar-1 · 0,15 $ · Karte gesamt 0,15 $ |
+
+## Retrospektive #45 LICENSE (MIT) und Herkunft der kanbanD-Teile (2026-11-26)
+- dokumentar Claude Sonnet: `LICENSE` byte-gleich zu kanbanD (MIT, 2026 Stefan Hoffmann), README-Abschnitt „Lizenz und Herkunft“ mit 14 Dateien nach ihren Kopfkommentaren. 0,15 $. Nur Dokumente — Gate Build + NUnit, kein Release-Tag.
