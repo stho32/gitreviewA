@@ -46,6 +46,29 @@ function repoNMitV(ordner) {
   return { ordner, hashes: { ...repo.hashes, v: git(ordner, 'rev-parse', 'HEAD') } };
 }
 
+const SKRIPT_MARKEN = String.raw`set -e
+git init -q -b main
+printf 'eins\n' > $'a\u202e.txt'
+printf 'zwei\n' > $'b\u200b.txt'
+printf 'drei\n' > $'f\xff.txt'
+git add -A && git commit -q -m "Namen mit Marken"
+printf 'eins2\n' > $'a\u202e.txt'
+printf 'zwei2\n' > $'b\u200b.txt'
+printf 'drei2\n' > $'f\xff.txt'
+git add -A && git commit -q -m "Geändert"
+`;
+
+/**
+ * Repo M (R00041, A3): drei Namen, die im Dialog als Marke stehen müssen — U+202E (Richtung), U+200B (Nullbreite) und das
+ * ungültige Byte FF. `m1` legt sie an, `m2` ändert alle drei (zwei Commits, damit die Netto-Liste steht).
+ */
+function repoMitMarken(ordner) {
+  fs.mkdirSync(ordner, { recursive: true });
+  execFileSync('bash', ['-c', SKRIPT_MARKEN], { cwd: ordner, env: GIT_UMGEBUNG, stdio: ['ignore', 'ignore', 'pipe'] });
+  const hashes = { m1: git(ordner, 'rev-parse', 'HEAD~1'), m2: git(ordner, 'rev-parse', 'HEAD') };
+  return { ordner, hashes };
+}
+
 const SKRIPT_GLEICHER_NAME = String.raw`set -e
 git init -q -b main
 printf 'literal\n' > 'a⟨U+202E⟩.txt'
@@ -63,4 +86,4 @@ function repoMitGleichemAnzeigenamen(ordner) {
   return { ordner, hashes: { c1: git(ordner, 'rev-parse', 'HEAD') } };
 }
 
-module.exports = { repoN, repoNMitV, repoMitGleichemAnzeigenamen };
+module.exports = { repoN, repoNMitV, repoMitGleichemAnzeigenamen, repoMitMarken };

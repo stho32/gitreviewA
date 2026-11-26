@@ -158,3 +158,4 @@ Nie vom User erfragen.
 | 2026-11-26 | R00041 Abschlussschritt vor Beenden | I0042 B4003 Abschnitte im Dialog | unklar | 2-4h | 0,4h | 0,4h | autonom |
 | 2026-11-26 | R00041 Abschlussschritt vor Beenden | I0042 B4004 Weg zur Datei | Standard | 2h | 0,4h | 0,4h | autonom |
 | 2026-11-26 | R00041 Abschlussschritt vor Beenden | I0042 B4005 Tests und Wegwerf-Repos | unklar | 2-4h | 0,6h | 0,6h | autonom |
+| 2026-11-26 | R00041 Abschlussschritt vor Beenden | Nacharbeit Code-Review A2/A3 + PO 270: Suche als dritter Ausblendgrund, Schalter-Sicht beim Weg zur Datei, Namensmarken-Test | Bug-Fix | – | 0,3h | – | autonom |

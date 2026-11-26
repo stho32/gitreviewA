@@ -174,37 +174,51 @@
     return stelle => haken().stelleGesperrt(stelle.commit, stelle.schluessel);
   }
 
-  /** Ausgeblendet heißt hier: durch Muster (R00025) oder durch den Schalter für Abgehakte (R00029) verdeckt. */
+  /** Der Vermerk „ausgeblendet“ fragt dieselbe Sichtregel wie die Dateiliste (R00029/R00049) — Muster (R00025), Suche (R00049)
+      und der Schalter für Abgehakte, keine zweite Regel: ein Eintrag ist verdeckt, wenn die Regel ihn nicht sichtbar lässt. */
   function ausgeblendetFuer(modus, quellen) {
-    return punkt => istDurchMusterVerdeckt(punkt.schluessel) || istDurchHakenVerdeckt(modus, punkt, quellen);
+    if (!window.gitreviewaAbgehakteWerte) {
+      return () => false;
+    }
+    const gesperrt = gesperrtFuer(modus);
+    return punkt => {
+      const eintrag = { pfad: punkt.schluessel, abgehakt: istAbgehakt(modus, punkt, quellen), gesperrt: gesperrt(punkt) };
+      const sicht = abgehakteWerte().sicht([eintrag], muster(), schalter(), sucheTreffer());
+      return sicht.sichtbare.length === 0;
+    };
   }
 
-  function istDurchMusterVerdeckt(pfad) {
-    if (!window.gitreviewaAusblenden) {
-      return false;
-    }
-    return !window.gitreviewaAusblenden.istSichtbar(pfad);
-  }
-
-  function istDurchHakenVerdeckt(modus, punkt, quellen) {
-    if (!window.gitreviewaAbgehakte || !window.gitreviewaAbgehakte.istAn()) {
-      return false;
-    }
+  /** Ob der Haken-Stand den Eintrag verdeckt — dieselbe Rechnung wie in der Liste (R00012): in „Zusammen“ die Datei, in „Einzeln“ die Stelle. */
+  function istAbgehakt(modus, punkt, quellen) {
     if (modus === 'zusammen') {
-      return istDateiAbgehakt(punkt.schluessel, quellen.zusammenstand);
+      const datei = dateiAusListe(punkt.schluessel, quellen.zusammenstand);
+      return Boolean(datei) && haken().dateiAbgehakt(datei);
     }
     return haken().stelleAbgehakt(punkt.commit, punkt.schluessel);
   }
 
-  function istDateiAbgehakt(anzeigename, zusammenstand) {
+  function dateiAusListe(anzeigename, zusammenstand) {
     if (!zusammenstand || !Array.isArray(zusammenstand.dateien)) {
-      return false;
+      return null;
     }
-    const datei = zusammenstand.dateien.find(eintrag => eintrag.pfad === anzeigename);
-    if (!datei) {
-      return false;
-    }
-    return haken().dateiAbgehakt(datei);
+    return zusammenstand.dateien.find(eintrag => eintrag.pfad === anzeigename) || null;
+  }
+
+  function muster() {
+    return window.gitreviewaAusblenden ? window.gitreviewaAusblenden.muster() : [];
+  }
+
+  function schalter() {
+    return Boolean(window.gitreviewaAbgehakte && window.gitreviewaAbgehakte.istAn());
+  }
+
+  /** Die Treffermenge des laufenden Suchtextes (oder `null` ohne Suche) — dieselbe eine Suche, kein zweiter Lauf. */
+  function sucheTreffer() {
+    return window.gitreviewaDateisuche ? window.gitreviewaDateisuche.treffer() : null;
+  }
+
+  function abgehakteWerte() {
+    return window.gitreviewaAbgehakteWerte;
   }
 
   function haken() {

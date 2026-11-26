@@ -10,7 +10,7 @@
   function init() {
     const schalterElement = document.getElementById('ausblenden');
     if (schalterElement) {
-      schalterElement.checked = zustand.an;
+      zeichneSchalter();
       schalterElement.addEventListener('change', () => setzen(schalterElement.checked));
     }
     document.addEventListener('dateiliste-gezeichnet', ereignis => {
@@ -38,7 +38,16 @@
       return;
     }
     zustand.an = an;
+    zeichneSchalter();
     meldeGeaendert();
+  }
+
+  /** Der Schalter im Kopf ist eine Ansicht des Zustands — auch wenn der Weg zur Datei ihn ausschaltet (R00041, B4004). */
+  function zeichneSchalter() {
+    const schalterElement = document.getElementById('ausblenden');
+    if (schalterElement) {
+      schalterElement.checked = zustand.an;
+    }
   }
 
   /** Eine Änderung an Haken-Stand oder Schalter rechnet die Sicht neu; die Liste zeichnet `dateiliste.js` neu und meldet es.
