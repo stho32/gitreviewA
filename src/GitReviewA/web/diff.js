@@ -208,23 +208,36 @@
   }
 
   /** Bei jeder Breitenänderung des Pfads neu messen und kürzen (R00039, B3802): nur so bleibt der gekürzte Text im Kasten,
-      statt am Rand hart abgeschnitten zu werden — Fenster, ziehbare Seitenleiste und das Umbrechen der Leiste ändern die Breite. */
+      statt am Rand hart abgeschnitten zu werden — Fenster, ziehbare Seitenleiste und das Umbrechen der Leiste ändern die Breite.
+      Die Breite ändert sich auch, wenn ein anderer Text des Kopfs kommt oder geht (Herkunft, Sprunghinweis, Werkzeugzeile):
+      der `ResizeObserver` meldet das erst im nächsten Zeichenschritt, ein `MutationObserver` noch im selben Auftrag. */
   function beobachtePfad(pfadElement) {
-    if (typeof ResizeObserver !== 'function') {
-      return;
+    if (typeof ResizeObserver === 'function') {
+      new ResizeObserver(kuerzePfadNachBreite).observe(pfadElement);
     }
-    new ResizeObserver(() => {
-      if (pfadTeile) {
-        kuerzePfad(pfadElement, pfadTeile);
+    new MutationObserver(eintraege => {
+      if (eintraege.some(eintrag => !pfadElement.contains(eintrag.target))) {
+        kuerzePfadNachBreite();
       }
-    }).observe(pfadElement);
+    }).observe(pfadElement.parentElement, { childList: true, subtree: true, characterData: true });
+  }
+
+  /** Den Pfad für die jetzige Breite kürzen, sofern einer gesetzt ist. */
+  function kuerzePfadNachBreite() {
+    if (pfadTeile) {
+      kuerzePfad(ansicht.pfadElement, pfadTeile);
+    }
   }
 
   /** Bei Platzmangel den Pfad in der Mitte kürzen (R00039, B3802): die sichtbare Breite misst das Element; der volle Pfad steht
-      in `title` und im zugänglichen Namen. Marken bleiben in der gekürzten Form sichtbar, wenn sie im sichtbaren Teil liegen. */
+      in `title` und im zugänglichen Namen. Marken bleiben in der gekürzten Form sichtbar, wenn sie im sichtbaren Teil liegen.
+      `data-gekuerzt-fuer` hält fest, für welche Breite die Anzeige steht: die Breite des Pfads ändert sich auch ohne
+      Größenänderung des Bereichs (Herkunft, Werkzeugzeile), nachgezogen wird sie vom `ResizeObserver` — bis dahin trägt der
+      Kasten noch den Text der vorigen Breite. */
   function kuerzePfad(pfadElement, teile) {
     const gesamt = teile.reduce((summe, teil) => summe + teil.text.length, 0);
     if (gesamt === 0 || pfadElement.clientWidth === 0 || pfadElement.scrollWidth <= pfadElement.clientWidth) {
+      merkeKuerzungsbreite(pfadElement);
       return;
     }
     let unten = 1;
@@ -241,6 +254,12 @@
       }
     }
     pfadElement.replaceChildren(...kuerzeTeile(teile, beste).map(teilKnoten));
+    merkeKuerzungsbreite(pfadElement);
+  }
+
+  /** Die Breite, für die die Anzeige des Pfads steht: das Maß, an dem die Kürzung gemessen hat. */
+  function merkeKuerzungsbreite(pfadElement) {
+    pfadElement.dataset.gekuerztFuer = String(pfadElement.clientWidth);
   }
 
   /** Die jüngste Wahl gewinnt: eine Antwort zählt nur, wenn seit ihrer Anfrage keine andere Datei, kein anderer Commit, keine andere
