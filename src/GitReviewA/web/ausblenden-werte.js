@@ -4,13 +4,24 @@
   'use strict';
 
   /** Ein Muster ohne Schrägstrich trifft den Dateinamen jeder Ebene (wie .gitignore); mit Schrägstrich den ganzen Pfad von der Wurzel.
-      `*` gilt innerhalb eines Pfadsegments, `**` über Segmente hinweg, `?` ein Zeichen, `[abc]`/`[a-z]` eine Zeichenklasse; Groß und Klein unterschieden. */
-  function passt(muster, pfad) {
-    const teile = zerteileMuster(muster);
-    if (muster.includes('/')) {
-      return passtAuf(teile, pfad);
+      `*` gilt innerhalb eines Pfadsegments, `**` über Segmente hinweg, `?` ein Zeichen, `[abc]`/`[a-z]` eine Zeichenklasse; Groß und Klein unterschieden.
+      Die Angabe `{ ohneGrossKlein: true }` faltet Muster und Pfad vorher je Zeichen mit der einfachen Kleinschreibung der
+      Sprache (ohne Locale, R00049): `[A-Z]` und `[a-z]` sind dann gleich, `readme` trifft `README.md`. Ohne die Angabe
+      bleibt der Abgleich Zeichen für Zeichen wie bisher (R00025). */
+  function passt(muster, pfad, angabe) {
+    const ohneGrossKlein = Boolean(angabe && angabe.ohneGrossKlein);
+    const geprueftesMuster = ohneGrossKlein ? falte(muster) : muster;
+    const gepruefterPfad = ohneGrossKlein ? falte(pfad) : pfad;
+    const teile = zerteileMuster(geprueftesMuster);
+    if (geprueftesMuster.includes('/')) {
+      return passtAuf(teile, gepruefterPfad);
     }
-    return passtAuf(teile, letzterAbschnitt(pfad));
+    return passtAuf(teile, letzterAbschnitt(gepruefterPfad));
+  }
+
+  /** Die einfache Kleinschreibung je Zeichen (Codepunkt), ohne Locale: kein ß- und kein türkisches-i-Sonderfall. */
+  function falte(text) {
+    return Array.from(text, zeichen => zeichen.toLowerCase()).join('');
   }
 
   function sichtbareDateien(dateien, muster) {
