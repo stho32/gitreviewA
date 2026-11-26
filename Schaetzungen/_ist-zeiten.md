@@ -128,3 +128,11 @@ Nie vom User erfragen.
 | 2026-11-26 | R00049 Dateiliste durchsuchen | I0050 B4505 Anschluss an Liste, Gruppen und Navigation | unklar | 2-4h | 0,8h | 0,8h | autonom |
 | 2026-11-26 | R00049 Dateiliste durchsuchen | I0050 B4506 Kürzel f und eingeklappte Seitenleiste | Standard | 2h | 0,6h | 0,6h | autonom |
 | 2026-11-26 | R00049 Dateiliste durchsuchen | I0050 B4507 Tests und Wegwerf-Repo P | unklar | 2-4h | 1,0h | 1,0h | autonom |
+
+| 2026-11-26 | R00048 Commit-Angaben unverfälscht und begrenzt lesen | I0049 B4401 Commit-Felder nur an NUL trennen | Standard | 2h | 0,15h | 0,15h | autonom |
+| 2026-11-26 | R00048 Commit-Angaben unverfälscht und begrenzt lesen | I0049 B4405 Tests und Wegwerf-Repos F und W | unklar | 2-4h | 0,25h | 0,25h | autonom |
+| 2026-11-26 | R00048 Commit-Angaben unverfälscht und begrenzt lesen | I0049 B4402 Ein begrenzter Leseweg für jeden git-Aufruf | unklar | 2-4h | 0,3h | 0,3h | autonom |
+| 2026-11-26 | R00048 Commit-Angaben unverfälscht und begrenzt lesen | I0049 B4403 Zu große Commit-Angaben beim Start abweisen | Standard | 2h | 0,2h | 0,2h | autonom |
+| 2026-11-26 | R00048 Commit-Angaben unverfälscht und begrenzt lesen | I0049 B4406 Auswahl mehrerer Bereiche in zwei Lesungen | unklar | 2-4h | 0,15h | 0,15h | autonom |
+| 2026-11-26 | R00048 Commit-Angaben unverfälscht und begrenzt lesen | I0049 B4407 „Datum nicht lesbar“ in der Leiste | Standard | 2h | 0,1h | 0,1h | autonom |
+| 2026-11-26 | R00048 Commit-Angaben unverfälscht und begrenzt lesen | I0049 B4404 „zu groß“ in Dateiliste, Zusammen, Haken und Ergebnis | unklar | 2-4h | 0,3h | 0,3h | autonom |
