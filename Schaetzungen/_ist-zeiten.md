@@ -76,3 +76,5 @@ Nie vom User erfragen.
 | 2026-11-26 | R00043 Datei ansehen und kopieren | Lauf R00043 | Nacharbeit | — | — | 0,39h | autonom |
 
 | 2026-11-26 | Wackler #56 (Fokus, Lastprofil, WebserverTests) | Fokus im `zeichneDateikopf`, ereignisgenaue Zeitmessung, genaue Feldprüfung | unklar | – | 2,4h | – | autonom |
+
+| 2026-11-26 | R00037 Ergebnis-Spalte live | B3601 Auffrischregel | klar | 2h | 0,2h | 0,2h | autonom |
