@@ -157,3 +157,4 @@ Nie vom User erfragen.
 | 2026-11-26 | R00041 Abschlussschritt vor Beenden | I0042 B4002 Nicht angesehene bestimmen | Standard | 2h | 0,1h | 0,1h | autonom |
 | 2026-11-26 | R00041 Abschlussschritt vor Beenden | I0042 B4003 Abschnitte im Dialog | unklar | 2-4h | 0,4h | 0,4h | autonom |
 | 2026-11-26 | R00041 Abschlussschritt vor Beenden | I0042 B4004 Weg zur Datei | Standard | 2h | 0,4h | 0,4h | autonom |
+| 2026-11-26 | R00041 Abschlussschritt vor Beenden | I0042 B4005 Tests und Wegwerf-Repos | unklar | 2-4h | 0,6h | 0,6h | autonom |

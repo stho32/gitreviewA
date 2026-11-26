@@ -282,6 +282,23 @@ function welt() {
     return { status: antwort.status, ...jsonOderLeer(antwort.koerper) };
   }
 
+  /** `GET /api/angesehen` (R00041); `host` setzt einen fremden Host-Kopf. */
+  function angesehenAbfragen(lauf, { host, methode = 'GET' } = {}) {
+    return senden(lauf.adresse, '/api/angesehen', { methode, host });
+  }
+
+  /** Meldet die gezeigten Stellen an `POST /api/angesehen` (R00041); Optionen wie beim Haken-Treiber. */
+  async function angesehenAnfordern(lauf, stellen, { methode = 'POST', origin, host, inhaltstyp = JSON_INHALT, koerper } = {}) {
+    let rumpf = koerper;
+    if (rumpf === undefined) {
+      rumpf = JSON.stringify({ stellen });
+    }
+    const antwort = await senden(lauf.adresse, '/api/angesehen', {
+      methode, host, kopf: { Origin: origin, 'Content-Type': inhaltstypKopf(inhaltstyp) }, koerper: rumpf,
+    });
+    return { status: antwort.status, ...jsonOderLeer(antwort.koerper) };
+  }
+
   /** Fordert das Beenden an; Standard ist die Befehlszeile: POST, JSON `{}`, ohne Origin. */
   async function beendenAnfordern(lauf, { methode = 'POST', origin, host, inhaltstyp = JSON_INHALT } = {}) {
     let koerper;
@@ -358,6 +375,7 @@ function welt() {
     zustandAbfragen, commitsAbfragen, dateienAbfragen, commitsStatusOderNull, freierPort, startseiteAbfragen, stderrZeilen, portVon, hostDesLaufs,
     lauschendeAdressen, aufzeichnenderBrowser, gitAttrappe, aufraeumen,
     anmerkungAnlegen, anmerkungAendern, anmerkungLoeschen, beendenAnfordern, abbrechenAnfordern, anfrageHalbGesendet, beendenUndDauerMessen, fremdeSeite, ergebnis,
+    angesehenAbfragen, angesehenAnfordern,
     hakenAnlegen, ergebnisAbfragen,
     beendenBetaetigen: oberflaeche.beendenBetaetigen,
     beendenKnopf: oberflaeche.beendenKnopf,

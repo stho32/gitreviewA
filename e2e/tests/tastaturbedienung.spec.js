@@ -564,7 +564,7 @@ test.describe('R00030 Gesperrte Stelle und kein neuer Weg', () => {
     await tast.sperrgrund('README.md', 'Name nicht eindeutig');
   });
 
-  test('Hot Path per Tastatur: Datei wählen, Zeile anmerken, Beenden — stdout trägt nur das Ergebnis, kein neuer Endpunkt', async ({ tast }) => {
+  test('Hot Path per Tastatur: Datei wählen, Zeile anmerken, Beenden — stdout trägt nur das Ergebnis, nur bekannte Endpunkte', async ({ tast }) => {
     const anfragen = tast.anfragenBeobachten();
     await tast.starten();
     await tast.inDieDateiliste();
@@ -587,7 +587,7 @@ test.describe('R00030 Gesperrte Stelle und kein neuer Weg', () => {
 
     const bekannt = [/^\/api\/zustand$/, /^\/api\/commits$/, /^\/api\/commits\/[^/]+\/dateien$/, /^\/api\/commits\/[^/]+\/diff$/,
       /^\/api\/zusammen$/, /^\/api\/zusammen\/diff$/, /^\/api\/zusammen\/[^/]+\/diff$/, /^\/api\/haken$/, /^\/api\/anmerkungen$/, /^\/api\/anmerkungen\/\d+$/,
-      /^\/api\/ergebnis$/, /^\/api\/sprung$/, /^\/api\/commits\/[^/]+\/sprung$/, /^\/api\/beenden$/];
+      /^\/api\/ergebnis$/, /^\/api\/sprung$/, /^\/api\/commits\/[^/]+\/sprung$/, /^\/api\/angesehen$/, /^\/api\/beenden$/];
     for (const pfad of anfragen()) {
       expect(bekannt.some(muster => muster.test(pfad)), `bekannter Endpunkt: ${pfad}`).toBe(true);
     }
