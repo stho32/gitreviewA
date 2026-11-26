@@ -44,8 +44,13 @@
   /** Die einmal gelesenen Elemente des Bereichs; `init` setzt sie, die öffentlichen Setzer (Menü, Kürzel) lesen sie. */
   let ansicht = null;
 
+  /** Die sichtbaren Teile des zuletzt gesetzten Pfads (samt Marken). Die Leiste kürzt daraus bei jeder Breitenänderung neu
+      (R00039, B3802): eine Größenänderung — Fenster, Seitenleiste, Umbrechen der Leiste — ändert die Breite des Pfads. */
+  let pfadTeile = null;
+
   function init() {
     ansicht = ansichtElemente();
+    beobachtePfad(ansicht.pfadElement);
     zeichneUmbruch(ansicht);
     zeigeAufforderungZurWahl(ansicht);
     ansicht.alsTextElement.addEventListener('click', () => ladeDiff(ansicht, zustand.datei, true));
@@ -166,6 +171,7 @@
 
   function zeigeAufforderungZurWahl(ansicht) {
     ansicht.pfadElement.textContent = '';
+    pfadTeile = null;
     zustand.gezeichnet = null;
     zeigeMeldung(ansicht, HINWEIS_ZUR_WAHL, false);
   }
@@ -177,8 +183,22 @@
     const voll = teile.map(teil => teil.text).join('');
     ansicht.pfadElement.setAttribute('title', voll);
     ansicht.pfadElement.setAttribute('aria-label', voll);
+    pfadTeile = teile;
     ansicht.pfadElement.replaceChildren(...teile.map(teilKnoten));
     kuerzePfad(ansicht.pfadElement, teile);
+  }
+
+  /** Bei jeder Breitenänderung des Pfads neu messen und kürzen (R00039, B3802): nur so bleibt der gekürzte Text im Kasten,
+      statt am Rand hart abgeschnitten zu werden — Fenster, ziehbare Seitenleiste und das Umbrechen der Leiste ändern die Breite. */
+  function beobachtePfad(pfadElement) {
+    if (typeof ResizeObserver !== 'function') {
+      return;
+    }
+    new ResizeObserver(() => {
+      if (pfadTeile) {
+        kuerzePfad(pfadElement, pfadTeile);
+      }
+    }).observe(pfadElement);
   }
 
   /** Bei Platzmangel den Pfad in der Mitte kürzen (R00039, B3802): die sichtbare Breite misst das Element; der volle Pfad steht
