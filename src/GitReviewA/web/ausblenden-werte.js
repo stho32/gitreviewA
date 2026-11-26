@@ -9,17 +9,24 @@
       Sprache (ohne Locale, R00049): `[A-Z]` und `[a-z]` sind dann gleich, `readme` trifft `README.md`. Ohne die Angabe
       bleibt der Abgleich Zeichen für Zeichen wie bisher (R00025). */
   function passt(muster, pfad, angabe) {
+    return abgleichMitZellen(muster, pfad, angabe).passt;
+  }
+
+  /** Wie `passt`, meldet aber die durchlaufenen Zellen mit — die Arbeit, die dieser Abgleich wirklich tut, entsteht hier
+      und wird nicht in der Buchung abgeschrieben (R00049, Kriterium 11 „Arbeit ≤ Buchung“). */
+  function abgleichMitZellen(muster, pfad, angabe) {
     const ohneGrossKlein = Boolean(angabe && angabe.ohneGrossKlein);
     const geprueftesMuster = ohneGrossKlein ? falte(muster) : muster;
     const gepruefterPfad = ohneGrossKlein ? falte(pfad) : pfad;
     const teile = zerteileMuster(geprueftesMuster);
-    if (geprueftesMuster.includes('/')) {
-      return passtAuf(teile, gepruefterPfad);
-    }
-    return passtAuf(teile, letzterAbschnitt(gepruefterPfad));
+    const text = geprueftesMuster.includes('/') ? gepruefterPfad : letzterAbschnitt(gepruefterPfad);
+    const zellen = { anzahl: 0 };
+    const gepasst = passtAuf(teile, text, zellen);
+    return { passt: gepasst, zellen: zellen.anzahl };
   }
 
-  /** Die einfache Kleinschreibung je Zeichen (Codepunkt), ohne Locale: kein ß- und kein türkisches-i-Sonderfall. */
+  /** Die einfache Kleinschreibung je Zeichen (Codepunkt), ohne Locale: kein ß- und kein türkisches-i-Sonderfall.
+      Die **eine** Faltregel; die Dateisuche (R00049) liest sie von hier, statt sie nachzubauen. */
   function falte(text) {
     return Array.from(text, zeichen => zeichen.toLowerCase()).join('');
   }
@@ -144,11 +151,13 @@
     return { art: 'klasse', enthalten, bereiche };
   }
 
-  /** Ob die Teile den ganzen Text treffen; je Teil eine Zeile über alle Positionen, damit die Auswertung linear bleibt. */
-  function passtAuf(teile, text) {
+  /** Ob die Teile den ganzen Text treffen; je Teil eine Zeile über alle Positionen, damit die Auswertung linear bleibt.
+      `zellen` zählt die Positionen mit, die dabei durchlaufen werden — eine je Teil und Zeichen des Textes. */
+  function passtAuf(teile, text, zellen) {
     let vorher = new Array(text.length + 1).fill(false);
     vorher[0] = true;
     for (const teil of teile) {
+      zellen.anzahl += text.length + 1;
       vorher = naechsteZeile(teil, text, vorher);
     }
     return vorher[text.length];
@@ -228,5 +237,7 @@
     return teil.bereiche.some(bereich => code >= bereich[0] && code <= bereich[1]);
   }
 
-  Object.assign(ziel, { passt, sichtbareDateien, anzahlAusgeblendet, musterFehler, abgleichKosten });
+  Object.assign(ziel, {
+    passt, abgleichMitZellen, falte, sichtbareDateien, anzahlAusgeblendet, musterFehler, abgleichKosten,
+  });
 })(typeof module !== 'undefined' ? module.exports : window);

@@ -164,6 +164,26 @@ test.describe('Baustein Dateisuche-Werte: Aufwand und Buchung (Kriterium 11)', (
     expect(lauf.gebucht + jeEintrag).toBeGreaterThan(zuKlein);
   });
 
+  test('soll die Arbeit im Abgleich zählen, nicht aus der Buchung abschreiben (Abnahme A1)', () => {
+    // Ein Muster ohne `/` gleicht nur den Dateinamen ab — dort läuft die Arbeit; die Buchung rechnet den ganzen Pfad.
+    // Wird `arbeit` neben der Buchung abgeschrieben, sind beide gleich und diese Zusicherung ist nicht zu erfüllen.
+    const lauf = suchlauf('*.txt', [eintrag('tief/verschachtelt/p.txt')], BUDGET);
+
+    expect(lauf.arbeit).toBeLessThan(lauf.gebucht);
+  });
+
+  test('soll den vierten, noch passenden Eintrag nicht mehr vergleichen, wenn die Buchung das Budget reißt (Abnahme-Probe A1)', () => {
+    // 4 passende Einträge, Budget = 3 × Aufwand: der vierte passt, wird aber nicht mehr verglichen (Befund A1).
+    const vier = Array.from({ length: 4 }, (_, nummer) => eintrag(`treffer${nummer}.txt`));
+    const budget = 3 * aufwand('*.txt', 'treffer0.txt'.length);
+
+    const lauf = suchlauf('*.txt', vier, budget);
+
+    expect(lauf.treffer).toHaveLength(3);
+    expect(lauf.abgebrochen).toBe(true);
+    expect(lauf.arbeit).toBeLessThanOrEqual(lauf.gebucht);
+  });
+
   test('soll bei leerem Text nichts buchen (keine Suche)', () => {
     const lauf = suchlauf('', eintraege(5), BUDGET);
 
