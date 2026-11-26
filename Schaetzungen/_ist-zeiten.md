@@ -167,3 +167,4 @@ Nie vom User erfragen.
 | 2026-11-26 | R00052 Suchfeld unter Einklapp-Knopf | I0052 B4801 Feldbreite am Behälter | Standard | 2h | 0,2h | – | autonom |
 | 2026-11-26 | R00053 Anmerkungsfeld im Diff-Bereich | I0053 B4902/B4903 Rote Messproben (vier Faelle, vier Arten, Neuzeichnen) | Standard | 2-4h | 0,4h | – | autonom |
 | 2026-11-26 | R00053 Anmerkungsfeld im Diff-Bereich | I0053 B4901 Feldbreite am Behälter (max-inline-size:72ch) | Standard | 2h | 0,2h | – | autonom |
+| 2026-11-26 | R00053 Anmerkungsfeld im Diff-Bereich | I0053 B4904 Nacharbeit Befund 1 (Knopfzeile bricht um, lange Zeile) | Standard | 2h | 0,8h | – | autonom |
