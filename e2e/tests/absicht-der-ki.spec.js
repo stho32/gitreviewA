@@ -42,13 +42,91 @@ test.describe('Absicht der KI: Commits der Datei', () => {
 
   test('die Commit-Angaben kommen aus der Liste der Leiste — die Seite holt sie nicht neu', async ({ absicht, page }) => {
     await absicht.starten({ vorbereitung: 'Repo Z' });
-    const anfragen = [];
-    page.on('request', anfrage => anfragen.push(new URL(anfrage.url()).pathname));
+    const anfragen = absicht.anfragenSammeln();
     const vorher = anfragen.length;
 
     await absicht.dateiAnsehen('src/a.txt');
     await absicht.blockZeigt(['z1', 'z2', 'z3']);
 
     expect(anfragen.slice(vorher).filter(pfad => pfad === '/api/commits' || pfad === '/api/zusammen')).toEqual([]);
+  });
+});
+
+test.describe('Absicht der KI: Anschluss an Wahl und Ansichten', () => {
+  test('Kriterium 2: „Einzeln“ zeigt nur den gewählten Commit und bestimmt ihn beim Commit-Wechsel neu', async ({ absicht }) => {
+    await absicht.starten({ vorbereitung: 'Repo Z', modus: 'einzeln' });
+    await absicht.commitAnsehen('z2');
+
+    await absicht.dateiAnsehen('src/a.txt');
+
+    await absicht.blockZeigt(['z2']);
+
+    await absicht.commitAnsehen('z3');
+
+    await absicht.keinBlock();
+    await absicht.dateiAnsehen('src/a.txt');
+
+    await absicht.blockZeigt(['z3']);
+  });
+
+  test('Kriterium 3: ohne lückenlose Kette stehen z1 und z3 über dem ersten Abschnitt, der Kopf sagt den Grund', async ({ absicht }) => {
+    await absicht.starten({ vorbereitung: 'Repo Z', commits: ['z1', 'z3'] });
+
+    await absicht.dateiAnsehen('src/a.txt');
+
+    await absicht.blockZeigt(['z1', 'z3']);
+    await absicht.blockStehtUeberDerErstenZeile();
+    await absicht.herkunft('je Commit, nicht netto — Es fehlen Commits der Auswahl');
+  });
+
+  test('Kriterium 6: Ansicht, Anordnung, Umbruch, Leerraum und Suche lassen den Block und die offene Nachricht stehen', async ({ absicht }) => {
+    await absicht.starten({ vorbereitung: 'Rumpf' });
+    await absicht.dateiAnsehen('a.txt');
+    await absicht.blockZeigt(['p', 'q']);
+    await absicht.nachrichtAufklappen('q');
+    await absicht.nachrichtIst('q', true);
+    const anfragen = absicht.anfragenSammeln();
+    const vorher = anfragen.length;
+
+    await absicht.ansichtWaehlen('ganze Datei');
+    await absicht.blockZeigt(['p', 'q']);
+    await absicht.nachrichtIst('q', true);
+
+    await absicht.anordnungWaehlen('nebeneinander');
+    await absicht.blockZeigt(['p', 'q']);
+    await absicht.nachrichtIst('q', true);
+
+    await absicht.umbruchUmschalten();
+    await absicht.blockZeigt(['p', 'q']);
+    await absicht.nachrichtIst('q', true);
+
+    await absicht.leerraumUmschalten();
+    await absicht.blockZeigt(['p', 'q']);
+    await absicht.nachrichtIst('q', true);
+
+    await absicht.suchen('zwei');
+    await absicht.blockZeigt(['p', 'q']);
+    await absicht.nachrichtIst('q', true);
+    await absicht.blockIstErstesKind();
+
+    expect(anfragen.slice(vorher).filter(pfad => pfad === '/api/commits' || pfad === '/api/zusammen'), 'der Block löst keine Anfrage aus').toEqual([]);
+  });
+
+  test('Kriterium 6: ein Moduswechsel bestimmt den Block neu — die offene Nachricht ist danach zu', async ({ absicht }) => {
+    await absicht.starten({ vorbereitung: 'Rumpf' });
+    await absicht.dateiAnsehen('a.txt');
+    await absicht.blockZeigt(['p', 'q']);
+    await absicht.nachrichtAufklappen('q');
+    await absicht.nachrichtIst('q', true);
+
+    await absicht.modusWaehlen('einzeln');
+
+    await absicht.blockZeigt(['p']);
+    expect(await absicht.rumpfStehtImDom('q'), 'Rumpf von q im DOM').toBe(0);
+
+    await absicht.modusWaehlen('zusammen');
+
+    await absicht.blockZeigt(['p', 'q']);
+    await absicht.nachrichtIst('q', false);
   });
 });

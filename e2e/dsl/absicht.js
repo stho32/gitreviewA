@@ -5,6 +5,7 @@
 const path = require('path');
 const { test: basis, expect } = require('./gitreviewa.js');
 const seite = require('../treiber/oberflaeche.js');
+const diffSeite = require('../treiber/diff-oberflaeche.js');
 const blockSeite = require('../treiber/absicht-oberflaeche.js');
 const repos = require('../treiber/diff-repos.js');
 
@@ -12,6 +13,7 @@ const FENSTER = { width: 1280, height: 800 };
 
 const VORBEREITUNGEN = {
   'Repo Z': { anlegen: repos.repoZ, commits: ['z1', 'z2', 'z3'] },
+  Rumpf: { anlegen: repos.repoMitRumpf, commits: ['p', 'q', 'r'] },
 };
 
 function absichtSprache(gr, page) {
@@ -62,6 +64,23 @@ function absichtSprache(gr, page) {
     betreffmass: commit => blockSeite.betreffmass(page, kurz(commit)),
     masse: () => blockSeite.masseLesen(page),
     bildlaufSetzen: versatz => blockSeite.bildlaufSetzen(page, versatz),
+
+    /** Die Herkunft im Diff-Kopf (R00012): „netto aus …“ bzw. „je Commit, nicht netto — …“. */
+    herkunft: text => diffSeite.pruefeHerkunft(page, text),
+    /** Anzeige-Wechsel (R00008/R00023/R00026/R00032/R00027) und Lücken aufklappen (R00026). */
+    ansichtWaehlen: name => diffSeite.ansichtWaehlen(page, name),
+    anordnungWaehlen: name => diffSeite.menueWaehlen(page, name),
+    umbruchUmschalten: () => diffSeite.umbruchUmschalten(page),
+    leerraumUmschalten: () => diffSeite.leerraumUmschalten(page),
+    suchen: text => seite.sucheSuchen(page, text),
+    luecken: () => diffSeite.lueckenLesen(page),
+    lueckeAufklappen: (nummer, ganz = false) => diffSeite.lueckeAufklappen(page, nummer, ganz),
+    /** Zählt die Anfragen der Seite je Pfad — für „der Block löst keine Anfrage aus“ (R00038). */
+    anfragenSammeln: () => {
+      const gezaehlt = [];
+      page.on('request', anfrage => gezaehlt.push(new URL(anfrage.url()).pathname));
+      return gezaehlt;
+    },
   };
 }
 
