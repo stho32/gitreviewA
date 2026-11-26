@@ -132,6 +132,31 @@ function repoMitVielenCommitsAnlegen(anzahl) {
   return { ordner, hashes };
 }
 
+/** Repo K der User Story R00051: elf Commits, jeder ändert `k.txt` um eine Zeile; die Namen entsprechen der Story. */
+function repoKNachrichtenAnlegen() {
+  const ordner = leeresRepoAnlegen();
+  const x = anzahl => 'x'.repeat(anzahl);
+  const a = anzahl => 'a'.repeat(anzahl);
+  const anlegen = (name, betreff, rumpf, autor = 'Kim Beispiel') => {
+    dateiSchreiben(ordner, 'k.txt', `${name}\n`);
+    return commitAnlegen(ordner, { betreff, rumpf, autor });
+  };
+  const hashes = {
+    k25: anlegen('k25', 'Lang', x(25000)),
+    k19999: anlegen('k19999', 'Grenze 19999', x(19999)),
+    k20000: anlegen('k20000', 'Grenze 20000', x(20000)),
+    k20001: anlegen('k20001', 'Grenze 20001', x(20001)),
+    kemoji: anlegen('kemoji', 'Emoji', `${a(19999)}😀b`),
+    kemoji2: anlegen('kemoji2', 'Emoji genau', `${a(19999)}😀`),
+    kumlaut: anlegen('kumlaut', 'Umlaut', 'ä'.repeat(20001)),
+    kr: anlegen('kr', 'Richtung', `${a(19999)}\u202E${'b'.repeat(10)}`),
+    khtml: anlegen('khtml', 'Auszeichnung', `${x(19997)}<b>fett</b><img src=x onerror=alert(1)>`),
+    klang: anlegen('klang', 'B'.repeat(25000), 'kurz', 'A'.repeat(25000)),
+    kgross: anlegen('kgross', 'Riesig', x(8000000)),
+  };
+  return { ordner, hashes };
+}
+
 /** Entfernt die lose Objektdatei eines Commits (das Repo ist frisch, also nicht gepackt). */
 function commitObjektEntfernen(ordner, hash) {
   fs.rmSync(path.join(ordner, '.git', 'objects', hash.slice(0, 2), hash.slice(2)));
@@ -143,6 +168,6 @@ function repoEntfernen(ordner) {
 
 module.exports = {
   repoAnlegen, repoEntfernen, repoMitVorbereitungAnlegen, repoMitDateienAnlegen, repoMitFremdemTextAnlegen, repoMitVielenCommitsAnlegen, repoMitUnterordnerAnlegen,
-  leeresRepoAnlegen, dateiSchreiben, commitAnlegen, commitObjektEntfernen, repoKAnlegen,
+  leeresRepoAnlegen, dateiSchreiben, commitAnlegen, commitObjektEntfernen, repoKAnlegen, repoKNachrichtenAnlegen,
   git, GIT_UMGEBUNG,
 };

@@ -557,6 +557,11 @@ async function formatierungsElementeZaehlen(page) {
   return page.locator('main b, main strong, main i, main em, main script').count();
 }
 
+/** Elemente, die fremdes HTML sichtbar machen würde (fett, Skript), im Inhalt der Leiste. */
+async function fremdElementeInDerLeiste(page) {
+  return page.locator('#commit-liste b, #commit-liste strong, #commit-liste img, #commit-liste script, #commit-liste [onerror]').count();
+}
+
 /* ── Prüfungen ── */
 
 /** Die Leiste hat genau diese Zeilen in dieser Reihenfolge; je Zeile werden nur die genannten Angaben verglichen. */
@@ -684,7 +689,7 @@ module.exports = {
   ausblendenZaehler, pruefeAusblendenZaehler, ausblendenEingabe, ausblendenFehler, ausblendenMuster, musterEingeben, musterEntfernen,
   abgehakteSchalter, abgehakteSchalterBetatigen, pruefeAbgehakteSchalter, abgehakteHinweis,
   sucheFeld, sucheZaehler, sucheFehler, sucheSuchen, sucheWeiter, sucheZurueck, sucheMarken, sucheMarkenLesen,
-  dateiwahlenSammeln, gesammelteDateiwahlen, formatierungsElementeZaehlen,
+  dateiwahlenSammeln, gesammelteDateiwahlen, formatierungsElementeZaehlen, fremdElementeInDerLeiste,
   beendenKnopf, abbrechenKnopf, beendenDialog, beendenDialogTitel, beendenDialogZeilen, beendenDialogKnopf, beendenDialogFehler,
   beendenAbschnitt, beendenAbschnittTitel, beendenEintraege, beendenAbschnittMehr, beendenErgebnisText, angesehenMelden,
   beendenDialogOeffnen, abbrechenDialogOeffnen, beendenDialogBestaetigen, warteAufBeendenDialog,

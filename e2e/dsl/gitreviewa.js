@@ -45,6 +45,11 @@ function welt() {
     return gemerkt(repos.repoKAnlegen());
   }
 
+  /** Repo K der User Story R00051: elf Commits mit langen Nachrichten (Namen wie in der Story). */
+  function repoKNachrichten() {
+    return gemerkt(repos.repoKNachrichtenAnlegen());
+  }
+
   /** Ein anderswo angelegtes Repo, das beim Aufräumen mit entfernt wird. */
   function gemerktesRepo(repo) {
     return gemerkt(repo);
@@ -371,7 +376,7 @@ function welt() {
   }
 
   return {
-    repoMitCommits, repoK, gitreviewAStarten, gitreviewAImHintergrundStarten, gitreviewAAufrufen, aufrufBeendet, aufEndeWarten, laeuftNoch, bisSekundenNachStart, laufAbbrechen,
+    repoMitCommits, repoK, repoKNachrichten, gitreviewAStarten, gitreviewAImHintergrundStarten, gitreviewAAufrufen, aufrufBeendet, aufEndeWarten, laeuftNoch, bisSekundenNachStart, laufAbbrechen,
     zustandAbfragen, commitsAbfragen, dateienAbfragen, commitsStatusOderNull, freierPort, startseiteAbfragen, stderrZeilen, portVon, hostDesLaufs,
     lauschendeAdressen, aufzeichnenderBrowser, gitAttrappe, aufraeumen,
     anmerkungAnlegen, anmerkungAendern, anmerkungLoeschen, beendenAnfordern, abbrechenAnfordern, anfrageHalbGesendet, beendenUndDauerMessen, fremdeSeite, ergebnis,
