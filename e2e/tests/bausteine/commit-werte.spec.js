@@ -52,4 +52,41 @@ test.describe('Baustein Commit-Werte', () => {
     expect(betreffVon(commits, 'abc1234')).toBe('Start oberflaeche');
     expect(betreffVon(commits, 'fedcba9')).toBe('');
   });
+
+  test('Kriterium 7: Betreff, Autor und Rumpf werden auf 20 000 Zeichen gekürzt', () => {
+    const werte = zeilenwerte({
+      kurzHash: 'a',
+      betreff: 'B'.repeat(25000),
+      autor: 'A'.repeat(25000),
+      rumpf: 'r'.repeat(25000),
+      datum: '2026-01-01T00:00:00Z',
+    });
+
+    expect(werte.betreff).toBe(`${'B'.repeat(20000)}… (5000 Zeichen nicht gezeigt)`);
+    expect(werte.autor).toBe(`${'A'.repeat(20000)}… (5000 Zeichen nicht gezeigt)`);
+    expect(werte.rumpf).toBe(`${'r'.repeat(20000)}… (5000 Zeichen nicht gezeigt)`);
+  });
+
+  test('Kriterium 5: erst kürzen, dann Richtungszeichen entfernen — die Zahl n zählt das Zeichen mit', () => {
+    const werte = zeilenwerte({
+      kurzHash: 'a',
+      betreff: 'B',
+      autor: 'A',
+      rumpf: `${'a'.repeat(19999)}\u202E${'b'.repeat(10)}`,
+      datum: '2026-01-01T00:00:00Z',
+    });
+
+    expect(werte.rumpf).toBe(`${'a'.repeat(19999)}… (10 Zeichen nicht gezeigt)`);
+    expect(werte.rumpf).not.toContain('\u202E');
+  });
+
+  test('soll einen Rumpf aus nur Richtungszeichen als leer erkennen', () => {
+    expect(zeilenwerte({ kurzHash: 'a', betreff: 'B', autor: 'A', rumpf: '\u202E\u202D', datum: '2026-01-01T00:00:00Z' }).hatRumpf).toBe(false);
+  });
+
+  test('Kriterium 7: betreffVon kürzt den Betreff und entfernt Richtungszeichen', () => {
+    const commits = [{ hash: 'a', kurzHash: 'a', betreff: `${'B'.repeat(19999)}\u202E${'b'.repeat(10)}`, rumpf: 'r' }];
+
+    expect(betreffVon(commits, 'a')).toBe(`${'B'.repeat(19999)}… (10 Zeichen nicht gezeigt)`);
+  });
 });

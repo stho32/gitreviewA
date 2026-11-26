@@ -27,17 +27,19 @@
     return `${zweistellig(zeit.getDate())}.${zweistellig(zeit.getMonth() + 1)}.${zeit.getFullYear()} ${zweistellig(zeit.getHours())}:${zweistellig(zeit.getMinutes())}`;
   }
 
-  /** Alle Anzeigewerte einer Zeile; der volle Zeitpunkt mit der Zeitzone des Autors ist der Hinweistext am Datum. */
+  /** Alle Anzeigewerte einer Zeile; der volle Zeitpunkt mit der Zeitzone des Autors ist der Hinweistext am Datum.
+      Gekürzt wird vor dem DOM und vor dem Entfernen der Richtungszeichen, damit Leiste und Streifen dieselbe Zahl n
+      nennen (R00051, Kriterium 5). */
   function zeilenwerte(commit) {
-    const rumpf = ohneSteuerzeichen(commit.rumpf);
+    const rumpf = ohneSteuerzeichen(nachrichtText(commit.rumpf));
     return {
       kurz: commit.kurzHash,
-      betreff: ohneSteuerzeichen(commit.betreff),
-      autor: ohneSteuerzeichen(commit.autor),
+      betreff: ohneSteuerzeichen(nachrichtText(commit.betreff)),
+      autor: ohneSteuerzeichen(nachrichtText(commit.autor)),
       datum: datumText(commit.datum),
       datumHinweis: commit.datum,
       rumpf,
-      hatRumpf: rumpf.length > 0,
+      hatRumpf: ohneSteuerzeichen(commit.rumpf).length > 0,
     };
   }
 
@@ -45,7 +47,7 @@
       Jede andere Ansicht (etwa der Abschnittskopf ohne Kette) nimmt ihn hier, damit fremder Text nirgends roh erscheint. */
   function betreffVon(commits, hash) {
     const commit = commits.find(eintrag => eintrag.hash === hash);
-    return commit ? ohneSteuerzeichen(commit.betreff) : '';
+    return commit ? ohneSteuerzeichen(nachrichtText(commit.betreff)) : '';
   }
 
   Object.assign(ziel, { datumText, zeilenwerte, betreffVon, nachrichtText });
