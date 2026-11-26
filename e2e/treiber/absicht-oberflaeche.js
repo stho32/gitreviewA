@@ -33,6 +33,11 @@ async function keinBlock(page) {
   await expect.poll(() => block(page).count(), 'Absicht-Block').toBe(0);
 }
 
+/** Ob der Rollbereich verborgen ist (ohne Wahl und ohne Block, R00038). */
+async function rollbereichVerborgen(page) {
+  return page.locator(ROLLBEREICH).evaluate(element => element.hidden);
+}
+
 /** Der Block ist das erste Kind des Rollbereichs — über jeder Diff-Zeile und jeder Meldung. */
 async function blockIstErstesKind(page) {
   await expect.poll(() => page.evaluate(rollbereich => {
@@ -118,6 +123,23 @@ async function betreffmass(page, kurzHash) {
   });
 }
 
+/** Der Block ist das erste Kind des Rollbereichs und steht damit vor dem Inhalt (Bild, Abschnitte, Zeilen) — R00038. */
+async function blockStehtUeberDemInhalt(page) {
+  const ueber = await page.evaluate(rollbereich => {
+    const rollElement = document.querySelector(rollbereich);
+    const blockElement = rollElement.querySelector(':scope > .absicht');
+    if (!blockElement || rollElement.firstElementChild !== blockElement) {
+      return false;
+    }
+    const inhaltElement = rollElement.querySelector(':scope > :not(.absicht)');
+    if (inhaltElement === null) {
+      return true;
+    }
+    return Boolean(blockElement.compareDocumentPosition(inhaltElement) & Node.DOCUMENT_POSITION_FOLLOWING);
+  }, ROLLBEREICH);
+  expect(ueber, 'der Block steht über dem Inhalt des Rollbereichs').toBe(true);
+}
+
 /** Höhe des Diff-Kopfs, Höhe und Bildlauf des Rollbereichs und Höhe des Blocks. */
 async function masseLesen(page) {
   return page.evaluate(rollbereich => {
@@ -139,7 +161,7 @@ async function bildlaufSetzen(page, versatz) {
 }
 
 module.exports = {
-  zeilenLesen, zeilenSind, zeilenSindKurz, keinBlock, blockIstErstesKind, blockStehtUeberDerErstenZeile,
+  zeilenLesen, zeilenSind, zeilenSindKurz, keinBlock, rollbereichVerborgen, blockIstErstesKind, blockStehtUeberDerErstenZeile, blockStehtUeberDemInhalt,
   mehrKnopf, mehrText, mehrBetatigen, nachrichtKnopf, nachrichtAufklappen, nachrichtZuklappen, nachrichtZustand,
   rumpfStehtImDom, rumpfText, betreffTitel, betreffmass, masseLesen, bildlaufSetzen,
 };

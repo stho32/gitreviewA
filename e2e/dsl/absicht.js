@@ -14,6 +14,8 @@ const FENSTER = { width: 1280, height: 800 };
 const VORBEREITUNGEN = {
   'Repo Z': { anlegen: repos.repoZ, commits: ['z1', 'z2', 'z3'] },
   Rumpf: { anlegen: repos.repoMitRumpf, commits: ['p', 'q', 'r'] },
+  'Repo A': { anlegen: repos.repoA, commits: ['q', 'p'] },
+  'Große Diffs': { anlegen: repos.repoGross, commits: ['w'] },
 };
 
 function absichtSprache(gr, page) {
@@ -51,6 +53,7 @@ function absichtSprache(gr, page) {
     blockZeigt,
     blockZeigtMitBetreff: erwartet => blockSeite.zeilenSind(page, erwartet),
     keinBlock: () => blockSeite.keinBlock(page),
+    rollbereichVerborgen: () => blockSeite.rollbereichVerborgen(page),
     blockIstErstesKind: () => blockSeite.blockIstErstesKind(page),
     blockStehtUeberDerErstenZeile: () => blockSeite.blockStehtUeberDerErstenZeile(page),
     mehrKnopfText: () => blockSeite.mehrText(page),
@@ -64,9 +67,20 @@ function absichtSprache(gr, page) {
     betreffmass: commit => blockSeite.betreffmass(page, kurz(commit)),
     masse: () => blockSeite.masseLesen(page),
     bildlaufSetzen: versatz => blockSeite.bildlaufSetzen(page, versatz),
+    blockStehtUeberDemInhalt: () => blockSeite.blockStehtUeberDemInhalt(page),
 
     /** Die Herkunft im Diff-Kopf (R00012): „netto aus …“ bzw. „je Commit, nicht netto — …“. */
     herkunft: text => diffSeite.pruefeHerkunft(page, text),
+    /** Der Diff meldet `text` (Meldungszustand) bzw. als Fehler. */
+    diffMeldet: (pfad, text) => diffSeite.pruefeMeldung(page, pfad, text, false),
+    diffMeldetFehler: (pfad, text) => diffSeite.pruefeMeldung(page, pfad, text, true),
+    /** Wartet, bis die Dateiliste steht (die Dateien des Commits gelesen sind). */
+    dateilisteWarten: () => page.locator('#datei-zeilen .datei-zeile').first().waitFor(),
+    commitObjektEntfernen: name => gr.commitObjektEntfernen(repo, hash(name)),
+    /** Antworten des Diffs und der Bilder als Fake (Meldungs- und Bildzustände). */
+    diffAntwortErsetzen: optionen => diffSeite.diffAntwortErsetzen(page, optionen),
+    bildAntwortErsetzen: optionen => diffSeite.bildAntwortErsetzen(page, optionen),
+    bilderLesen: () => diffSeite.bilderLesen(page),
     /** Anzeige-Wechsel (R00008/R00023/R00026/R00032/R00027) und Lücken aufklappen (R00026). */
     ansichtWaehlen: name => diffSeite.ansichtWaehlen(page, name),
     anordnungWaehlen: name => diffSeite.menueWaehlen(page, name),

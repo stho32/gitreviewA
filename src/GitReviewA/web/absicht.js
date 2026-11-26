@@ -9,20 +9,19 @@
   const werte = window.gitreviewaAbsichtWerte;
 
   /** Der Block gehört der Wahl, nicht dem Zeichnen: er wird beim Wechsel von Datei, Modus und Commit neu gebaut (offene
-      Nachrichten sind danach zu) und beim Zeichnen des Diffs nur wieder als erstes Kind des Rollbereichs eingesetzt. */
+      Nachrichten sind danach zu). Das Einsetzen in den Rollbereich macht `diff.js` (R00038, B3705) — der Block ist dort das
+      erste Kind, damit ihn kein Zeichenweg verdrängt. */
   let wahl = null;
   let blockElement = null;
 
   function init() {
     document.addEventListener('datei-gewaehlt', ereignis => uebernimmWahl(ereignis.detail));
     document.addEventListener('wahl-aufgehoben', () => uebernimmWahl(null));
-    document.addEventListener('diff-gezeichnet', haengeEin);
   }
 
   function uebernimmWahl(neueWahl) {
     wahl = neueWahl;
     blockElement = neueWahl === null ? null : baueBlock(commitsDerWahl(neueWahl));
-    haengeEin();
   }
 
   function commitsDerWahl(wahl) {
@@ -37,18 +36,6 @@
     }
     const stand = window.gitreviewaZusammen ? window.gitreviewaZusammen.hole() : null;
     return stand === null ? [] : werte.stellenDerDatei(stand.dateien, wahl.pfad);
-  }
-
-  /** Der Block ist der erste Inhalt des Rollbereichs; ein Zeichnen des Diffs setzt ihn wieder dorthin. Ohne Datei ist er weg. */
-  function haengeEin() {
-    const rollElement = document.querySelector('#diff .df-sc');
-    if (!rollElement || blockElement === null) {
-      return;
-    }
-    if (rollElement.firstElementChild === blockElement) {
-      return;
-    }
-    rollElement.prepend(blockElement);
   }
 
   function baueBlock(commits) {
@@ -163,6 +150,11 @@
     zeileElement.append(knopfElement);
     return zeileElement;
   }
+
+  /** Der Block der aktuellen Wahl für `diff.js`: er setzt ihn als erstes Kind in den Rollbereich (R00038). */
+  window.gitreviewaAbsicht = {
+    block: () => blockElement,
+  };
 
   document.addEventListener('DOMContentLoaded', init);
 }());

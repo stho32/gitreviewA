@@ -345,6 +345,8 @@
     return DIFF_NICHT_GELESEN;
   }
 
+  /** Eine Meldung steht über dem Rollbereich; der Rollbereich zeigt dabei nur den Block „Absicht der KI“ und ist ohne ihn
+      verborgen (R00038). */
   function zeigeMeldung(ansicht, text, istFehler) {
     zustand.anzeige += 1;
     ansicht.farbschlange.aufraeumen();
@@ -352,8 +354,7 @@
     setzeHerkunft(ansicht, '');
     ansicht.meldungElement.textContent = text;
     ansicht.meldungElement.classList.toggle('fehler', istFehler);
-    ansicht.rollElement.replaceChildren();
-    ansicht.rollElement.hidden = true;
+    setzeRollinhalt(ansicht, []);
     ansicht.alsTextElement.hidden = true;
     ansicht.trotzdemLadenElement.hidden = true;
     ansicht.erneutLadenElement.hidden = !istFehler;
@@ -367,6 +368,23 @@
       stelle = { commit: zustand.datei.commit, pfad: zustand.datei.pfad };
     }
     document.dispatchEvent(new CustomEvent('diff-geleert', { detail: { stelle } }));
+  }
+
+  /** Der eine Weg, den Inhalt des Rollbereichs zu setzen (R00038): der Block „Absicht der KI“ bleibt sein erstes Kind und
+      scrollt mit dem Diff weg; ohne Block ist der Rollbereich verborgen (kein Inhalt). */
+  function setzeRollinhalt(ansicht, knoten) {
+    const absicht = absichtElement();
+    ansicht.rollElement.replaceChildren(...(absicht === null ? [] : [absicht]), ...knoten);
+    ansicht.rollElement.hidden = absicht === null;
+  }
+
+  /** Der Block „Absicht der KI“ der gewählten Datei (R00038); null ohne Wahl und ohne Commits. Er wird von `absicht.js`
+      je Wahl einmal gebaut — das Zeichnen setzt nur dasselbe Element wieder ein, damit offene Nachrichten offen bleiben. */
+  function absichtElement() {
+    if (!window.gitreviewaAbsicht) {
+      return null;
+    }
+    return window.gitreviewaAbsicht.block();
   }
 
   function zeichneAntwort(ansicht, antwort, alsText, diffansicht) {
@@ -408,9 +426,12 @@
   async function zeigeBildOder(ansicht, antwort, herkunft = '') {
     const ladung = zustand.letzteLadung;
     const istAktuell = () => ladung === zustand.letzteLadung;
+    // Die Bildfläche ist der zweite Inhalt des Rollbereichs: der Block „Absicht der KI“ bleibt darüber stehen (R00038).
+    const flaecheElement = document.createElement('div');
+    flaecheElement.className = 'bild-flaeche';
     const uebernommen = await window.gitreviewaBild.zeige({
       datei: bilddatei(antwort),
-      bereichselement: ansicht.rollElement,
+      bereichselement: flaecheElement,
       istAktuell,
       zeigeMeldung: (text, istFehler) => zeigeMeldung(ansicht, text, istFehler),
     });
@@ -419,6 +440,10 @@
     }
     setzeBildlaufAnDenAnfang(ansicht);
     if (uebernommen) {
+      // `bild.js` hat entweder Bilder gezeichnet oder selbst eine Meldung gesetzt; nur im ersten Fall gibt es Inhalt.
+      if (flaecheElement.childElementCount > 0) {
+        setzeRollinhalt(ansicht, [flaecheElement]);
+      }
       if (herkunft) {
         setzeHerkunft(ansicht, herkunft);
       }
@@ -598,8 +623,7 @@
     }
     zustand.anzeigeDaten = mitLuecken ? { bereiche: anzeigeBereiche, antwort, abschnitte, alsText } : null;
     ansicht.rollElement.setAttribute('aria-label', bereichsname(antwort));
-    ansicht.rollElement.replaceChildren(sammel);
-    ansicht.rollElement.hidden = false;
+    setzeRollinhalt(ansicht, [sammel]);
     faerbeAbschnitte(ansicht, antwort, abschnitte);
     meldeGezeichnet(ansicht, antwort.pfad, bereiche);
   }
@@ -733,8 +757,7 @@
       sammelElement.append(block);
     }
     ansicht.rollElement.setAttribute('aria-label', name);
-    ansicht.rollElement.replaceChildren(sammelElement);
-    ansicht.rollElement.hidden = false;
+    setzeRollinhalt(ansicht, [sammelElement]);
     setzeSprunglinks(ansicht);
     aktualisiereSprungkopf(ansicht);
     faerbeZeilen(ansicht, antwort, gezeichneteZeilen);
@@ -761,8 +784,7 @@
       zustand.gezeichnet.tabelle = aufbau.tabelle;
     }
     ansicht.rollElement.setAttribute('aria-label', name);
-    ansicht.rollElement.replaceChildren(aufbau.sammelElement);
-    ansicht.rollElement.hidden = false;
+    setzeRollinhalt(ansicht, [aufbau.sammelElement]);
     setzeSprunglinksNeben(ansicht, aufbau.tabelle, aufbau.zeilen);
     aktualisiereSprungkopf(ansicht);
     faerbeNeben(ansicht, antwort, aufbau.tabelle, aufbau.zeilen);
@@ -1164,7 +1186,8 @@
     ansicht.rollElement.scrollTop = 0;
   }
 
-  /** `ersterBlockElement` erkennt der Empfänger wieder: ist er nicht mehr im Dokument, ist dieser Diff verworfen. */
+  /** `ersterBlockElement` erkennt der Empfänger wieder: ist er nicht mehr im Dokument, ist dieser Diff verworfen. Der Block
+      „Absicht der KI“ zählt nicht — er bleibt über alle Zeichenwege dasselbe Element (R00038). */
   function meldeGezeichnet(ansicht, pfad, bereiche) {
     setzeBildlaufAnDenAnfang(ansicht);
     const detail = {
@@ -1173,7 +1196,7 @@
       pfad,
       ansicht: zustand.diffansicht,
       bereichElement: ansicht.rollElement,
-      ersterBlockElement: ansicht.rollElement.firstElementChild,
+      ersterBlockElement: ansicht.rollElement.querySelector(':scope > :not(.absicht)'),
     };
     if (bereiche) {
       detail.abschnitte = bereiche;
