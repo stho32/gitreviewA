@@ -4,7 +4,9 @@
 // vorhandenen `passt` aus R00025. R00025 selbst bleibt unverändert — die Gegenprobe steht am Ende.
 const { test, expect } = require('@playwright/test');
 const { passt } = require('../../../src/GitReviewA/web/ausblenden-werte.js');
-const { suchtextFehler, trifft } = require('../../../src/GitReviewA/web/dateisuche-werte.js');
+const {
+  suchtextFehler, trifft, aufwand, suchlauf, BUDGET,
+} = require('../../../src/GitReviewA/web/dateisuche-werte.js');
 
 /** Die acht Pfade von Repo P aus R00049 (Code 5, Tests 1, Doku 2). */
 const REPO_P = [
@@ -106,5 +108,67 @@ test.describe('Baustein Dateisuche-Werte: die Angabe am vorhandenen passt (Gegen
     expect(passt('src/[A-Z]pp.js', 'src/app.js', angabe)).toBe(true);
     expect(passt('src/*', 'src/data/app.sql', angabe)).toBe(false);
     expect(passt('*.txt', 'app.sql', angabe)).toBe(false);
+  });
+});
+
+/** Ein Eintrag des Suchlaufs: der Anzeigename des Pfades (die Marken setzt der Aufrufer). */
+const eintrag = anzeigename => ({ anzeigename });
+
+/** `anzahl` Einträge mit Anzeigenamen von genau `laenge` Zeichen. */
+function eintraege(anzahl, laenge = 20) {
+  return Array.from({ length: anzahl }, () => eintrag(`${'p'.repeat(laenge - 4)}.txt`));
+}
+
+test.describe('Baustein Dateisuche-Werte: Aufwand und Buchung (Kriterium 11)', () => {
+  test('soll je Pfad buchen: bei einer Teilzeichenkette die Pfadlänge + 1, beim Muster Teile × (Länge + 1)', () => {
+    expect(aufwand('app', 20)).toBe(21);
+    expect(aufwand('*.sql', 20)).toBe(105);
+    expect(aufwand('*a'.repeat(3), 0)).toBe(6);
+  });
+
+  test('soll vor jedem Abgleich buchen und nur Gebuchtes arbeiten (1, 10, 30 und 2 000 Pfade)', () => {
+    for (const anzahl of [1, 10, 30, 2000]) {
+      const lauf = suchlauf('*.txt', eintraege(anzahl), BUDGET);
+
+      expect(lauf.abgebrochen, `${anzahl} Pfade`).toBe(false);
+      expect(lauf.treffer.length, `${anzahl} Pfade`).toBe(anzahl);
+      expect(lauf.arbeit, `${anzahl} Pfade: Arbeit ≤ Buchung`).toBeLessThanOrEqual(lauf.gebucht);
+      expect(lauf.gebucht, `${anzahl} Pfade: Buchung ≤ Budget`).toBeLessThanOrEqual(BUDGET);
+      expect(lauf.gebucht, `${anzahl} Pfade`).toBe(anzahl * 5 * 21);
+    }
+  });
+
+  test('soll einen Pfad bis 4 096 Zeichen tragen', () => {
+    const langer = `tief/${'a'.repeat(4087)}.sql`;
+    expect(langer.length).toBe(4096);
+
+    const lauf = suchlauf('*.sql', [eintrag(langer)], BUDGET);
+
+    expect(lauf.treffer).toHaveLength(1);
+    expect(lauf.gebucht).toBe(5 * 4097);
+  });
+
+  test('soll über dem Budget abbrechen, ohne mehr zu buchen als erlaubt', () => {
+    const muster = '*a'.repeat(100);
+    const viele = eintraege(2000, 100);
+    const jeEintrag = aufwand(muster, 100);
+    const zuKlein = jeEintrag * 24;
+
+    const lauf = suchlauf(muster, viele, zuKlein);
+
+    expect(lauf.abgebrochen).toBe(true);
+    expect(lauf.gebucht).toBeLessThanOrEqual(zuKlein);
+    expect(lauf.arbeit).toBe(lauf.gebucht);
+    expect(lauf.treffer).toEqual([]);
+    // Der nächste Eintrag hätte das Budget gerissen: er wurde nicht mehr verglichen.
+    expect(lauf.gebucht + jeEintrag).toBeGreaterThan(zuKlein);
+  });
+
+  test('soll bei leerem Text nichts buchen (keine Suche)', () => {
+    const lauf = suchlauf('', eintraege(5), BUDGET);
+
+    expect(lauf.abgebrochen).toBe(false);
+    expect(lauf.gebucht).toBe(0);
+    expect(lauf.arbeit).toBe(0);
   });
 });

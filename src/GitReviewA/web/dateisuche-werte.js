@@ -51,5 +51,51 @@
     return Array.from(text, zeichen => zeichen.toLowerCase()).join('');
   }
 
-  Object.assign(ziel, { suchtextFehler, trifft, istMuster, falte });
+  /** Das Budget eines Suchlaufs in Zellen (R00049, Hypothese ungemessen: 2 000 Pfade × 100 Zeichen × 100 Teile). */
+  const BUDGET = 20000000;
+
+  /** Was ein geprüfter Pfad kostet: Teile des Musters × (Pfadlänge + 1), bei einer Teilzeichenkette Pfadlänge + 1.
+      **Die eine Stelle**, die Aufwand misst — gebucht wird genau dieser Wert, und gearbeitet wird nur Gebuchtes. */
+  function aufwand(text, pfadlaenge) {
+    if (istMuster(text)) {
+      return abgleichKosten(text, pfadlaenge);
+    }
+    return pfadlaenge + 1;
+  }
+
+  /**
+   * Der Suchlauf über die Einträge der gezeigten Liste: je Eintrag die Kosten buchen, dann abgleichen; überschreitet die
+   * Summe das Budget, bricht der Lauf ab (`abgebrochen`) und der Aufrufer lässt die Liste, wie der letzte gültige Text sie
+   * gemacht hat. `gebucht` ist die gebuchte Summe, `arbeit` das davon tatsächlich Gelesene — nie mehr als gebucht.
+   * Ein leerer Text ist keine Suche: dann wird nichts gebucht und nichts verglichen.
+   */
+  function suchlauf(text, eintraege, budget) {
+    if (text.trim().length === 0) {
+      return { treffer: eintraege.slice(), abgebrochen: false, gebucht: 0, arbeit: 0 };
+    }
+    const treffer = [];
+    let gebucht = 0;
+    let arbeit = 0;
+    for (const eintrag of eintraege) {
+      const kosten = aufwand(text, eintrag.anzeigename.length);
+      if (gebucht + kosten > budget) {
+        return { treffer, abgebrochen: true, gebucht, arbeit };
+      }
+      gebucht += kosten;
+      arbeit += kosten;
+      if (trifft(text, eintrag.anzeigename)) {
+        treffer.push(eintrag);
+      }
+    }
+    return { treffer, abgebrochen: false, gebucht, arbeit };
+  }
+
+  function abgleichKosten(muster, pfadlaenge) {
+    if (musterWerte) {
+      return musterWerte.abgleichKosten(muster, pfadlaenge);
+    }
+    return window.abgleichKosten(muster, pfadlaenge);
+  }
+
+  Object.assign(ziel, { suchtextFehler, trifft, istMuster, falte, aufwand, suchlauf, BUDGET });
 })(typeof module !== 'undefined' ? module.exports : (window.gitreviewaDateisucheWerte = window.gitreviewaDateisucheWerte || {}));

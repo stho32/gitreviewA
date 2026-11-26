@@ -28,6 +28,12 @@
     return dateien.filter(datei => !ausgeblendet(datei.pfad, muster));
   }
 
+  /** Die Aufwandsangabe eines Abgleichs in Zellen: die Teile des Musters mal (Pfadlänge + 1) — genau die Zahl, die `passtAuf`
+      je Teil an Positionen durchläuft. Der Suchlauf (R00049) bucht damit **vor** dem Abgleich und liest nur Gebuchtes. */
+  function abgleichKosten(muster, pfadlaenge) {
+    return zerteileMuster(muster).length * (pfadlaenge + 1);
+  }
+
   function anzahlAusgeblendet(dateien, muster) {
     return dateien.length - sichtbareDateien(dateien, muster).length;
   }
@@ -222,5 +228,5 @@
     return teil.bereiche.some(bereich => code >= bereich[0] && code <= bereich[1]);
   }
 
-  Object.assign(ziel, { passt, sichtbareDateien, anzahlAusgeblendet, musterFehler });
+  Object.assign(ziel, { passt, sichtbareDateien, anzahlAusgeblendet, musterFehler, abgleichKosten });
 })(typeof module !== 'undefined' ? module.exports : window);

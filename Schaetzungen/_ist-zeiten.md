@@ -122,3 +122,4 @@ Nie vom User erfragen.
 | 2026-11-26 | R00046 Datei aus einem Commit | I0047 B4264 Tests (Matrix, Marker, Grenze, Unterordner, E2E) | unklar | 2-4h | 0,8h | 0,8h | autonom |
 
 | 2026-11-26 | R00049 Dateiliste durchsuchen | I0050 B4501 Suchtext prüfen und Namen abgleichen | Standard | 2h | 0,3h | 0,3h | autonom |
+| 2026-11-26 | R00049 Dateiliste durchsuchen | I0050 B4502 Suchlauf mit Aufwandsgrenze | Standard | 2h | 0,3h | 0,3h | autonom |
