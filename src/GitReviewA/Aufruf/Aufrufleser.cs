@@ -64,14 +64,27 @@ internal static class Aufrufleser
                 var argument = new Auswahlargument(argumente[position], position + 1);
                 if (sammlung.IstDateiansicht)
                 {
-                    sammlung.Quellen.Add(argument);
+                    return NimmDateiangabe(argument, sammlung);
                 }
-                else
-                {
-                    sammlung.Auswahlargumente.Add(argument);
-                }
+                sammlung.Auswahlargumente.Add(argument);
                 return null;
         }
+    }
+
+    /// <summary>
+    /// Vor <c>--</c> ist ein Argument, das mit <c>-</c> beginnt und keine bekannte Option ist, ein Aufruffehler — sonst würde
+    /// <c>--dateien -x.sql</c> stillschweigend die Datei zeigen (R00043, Kriterium 3; Angriffsmatrix P10). <c>-</c> allein
+    /// bleibt der Review-Auswahl vorbehalten und fällt in die Prüfung „Review oder Dateiansicht, nicht beides“.
+    /// </summary>
+    private static string? NimmDateiangabe(Auswahlargument argument, Aufrufsammlung sammlung)
+    {
+        var istUnbekannteOption = argument.Text.StartsWith('-') && argument.Text != StdinArgument;
+        if (istUnbekannteOption)
+        {
+            return $"Argument {argument.Position} ist eine unbekannte Option: eine Angabe, die mit - beginnt, steht nach -- (gitreviewA --dateien -- -x.sql).";
+        }
+        sammlung.Quellen.Add(argument);
+        return null;
     }
 
     /// <summary>Nach <c>--</c> ist jedes Argument eine Angabe; in der Dateiansicht ist sie die gezeigte Datei, im Review eine Auswahl.</summary>

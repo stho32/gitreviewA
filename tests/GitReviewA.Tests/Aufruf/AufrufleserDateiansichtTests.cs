@@ -99,6 +99,18 @@ public class AufrufleserDateiansichtTests
         Assert.That(ergebnis.Fehlermeldung, Does.Contain("Review oder Dateiansicht, nicht beides"));
     }
 
+    [TestCase("-x.sql")]
+    [TestCase("--unbekannt")]
+    [TestCase("--dateien=a.sql")]
+    public void Wenn_dateien_eine_unbekannte_Option_nennt_dann_Fehler_mit_dem_Ausweg_ueber_den_Doppelstrich(string argument)
+    {
+        var ergebnis = Aufrufleser.Lesen(["--dateien", argument]);
+
+        Assert.That(ergebnis.IstGueltig, Is.False);
+        Assert.That(ergebnis.Fehlermeldung, Does.Contain("unbekannte Option"));
+        Assert.That(ergebnis.Fehlermeldung, Does.Contain("--dateien --"));
+    }
+
     [TestCase("unter/../a.sql")]
     [TestCase("ordnerlink/a.sql")]
     [TestCase("*.sql")]

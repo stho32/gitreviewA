@@ -69,6 +69,37 @@ public class DateiansichtLaufTests
     }
 
     [Test]
+    public async Task Wenn_dateien_mit_einer_Option_ohne_Doppelstrich_startet_dann_Exit_2_ohne_Server()
+    {
+        using var d = OrdnerD.Anlegen();
+        using var lauf = await Dateiansichtprozess.StarteAsync(d.Ordner, "--dateien", "-x.sql", "--kein-browser");
+
+        var ende = await lauf.WarteAufEndeAsync();
+
+        Assert.That(ende, Is.EqualTo(2));
+        Assert.That(lauf.Ausgabe, Is.Empty);
+        Assert.That(lauf.Fehler, Does.Contain("unbekannte Option"));
+        Assert.That(lauf.Fehler, Does.Not.Contain("http://127.0.0.1"));
+    }
+
+    [Test]
+    public async Task Wenn_nach_dem_Doppelstrich_eine_Datei_mit_Minus_steht_dann_zeigt_die_Dateiansicht_sie()
+    {
+        using var d = OrdnerD.Anlegen();
+        using var lauf = await Dateiansichtprozess.StarteAsync(d.Ordner, "--dateien", "--kein-browser", "--port", "0", "--", "-x.sql");
+
+        var text = await lauf.AbrufenAsync("api/dateiansicht/0");
+        var geschlossen = await lauf.SchliessenAsync();
+        var ende = await lauf.WarteAufEndeAsync();
+
+        using var dokument = JsonDocument.Parse(text.Koerper);
+        Assert.That(dokument.RootElement.GetProperty("text").GetString(), Is.EqualTo(File.ReadAllText(d.Pfad("-x.sql"))));
+        Assert.That((text.Status, geschlossen.Status), Is.EqualTo((200, 200)));
+        Assert.That(ende, Is.EqualTo(0));
+        Assert.That(lauf.Ausgabe, Is.Empty);
+    }
+
+    [Test]
     public async Task Wenn_ein_Hash_neben_dateien_steht_dann_Exit_2_ohne_Server()
     {
         using var d = OrdnerD.Anlegen();
