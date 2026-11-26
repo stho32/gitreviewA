@@ -95,6 +95,41 @@ internal sealed class WegwerfRepo : IDisposable
         File.WriteAllText(ziel.FullName, inhalt);
     }
 
+    /// <summary>
+    /// Committet den Stand des Arbeitsordners mit der Nachricht aus einer Datei (`git commit -F`) — für Messages, die nicht als
+    /// Argument gehen (Megabytes, NUL) oder die byte-genau dastehen sollen. Liefert den Hash.
+    /// </summary>
+    public string CommitteAusDatei(string nachrichtendatei, string autor, string datum)
+    {
+        Git("add", "-A");
+        var angaben = new Dictionary<string, string> { ["GIT_AUTHOR_NAME"] = autor, ["GIT_AUTHOR_DATE"] = datum, ["GIT_COMMITTER_DATE"] = datum };
+        Ausfuehren(["commit", "-q", "--allow-empty", "-F", nachrichtendatei], angaben);
+        return Git("rev-parse", "HEAD");
+    }
+
+    /// <summary>
+    /// Ein Commit-Objekt wörtlich schreiben (`git hash-object -t commit -w --literally`): so entstehen Köpfe und Messages, die
+    /// `git commit` nicht herstellt (NUL im Autorkopf oder in der Message). Der Inhalt kommt als Bytes.
+    /// </summary>
+    public string HashObjectLiterally(byte[] inhalt)
+    {
+        var datei = Path.Combine(Ordner, $".rohobjekt-{Guid.NewGuid():N}.txt");
+        File.WriteAllBytes(datei, inhalt);
+        try
+        {
+            return Git("hash-object", "-t", "commit", "-w", "--literally", datei);
+        }
+        finally
+        {
+            File.Delete(datei);
+        }
+    }
+
+    public void UpdateRef(string refname, string hash)
+    {
+        Git("update-ref", refname, hash);
+    }
+
     /// <summary>Ein Basis-Commit und darüber <paramref name="anzahl"/> leere Commits, per <c>git fast-import</c>; Zeiten eine Minute auseinander.</summary>
     public static WegwerfRepo MitVielenCommits(int anzahl)
     {
@@ -110,7 +145,7 @@ internal sealed class WegwerfRepo : IDisposable
                 var sekunde = ErsterZeitpunkt.AddMinutes(nummer).ToUnixTimeSeconds();
                 befehle.Append($"commit refs/heads/main\ncommitter Testperson <test@example.invalid> {sekunde} +0000\ndata {betreff.Length}\n{betreff}\n\n");
             }
-            repo.Ausfuehren(["fast-import", "--quiet"], new Dictionary<string, string>(), befehle.ToString());
+            repo.FastImport(befehle.ToString());
             repo.Hashes = repo.Git("rev-list", "--reverse", "HEAD").Split('\n');
             return repo;
         }
@@ -119,6 +154,12 @@ internal sealed class WegwerfRepo : IDisposable
             repo.Dispose();
             throw;
         }
+    }
+
+    /// <summary>Ein <c>git fast-import</c> mit vorgegebenem Strom — viele Commits ohne einen Prozess je Commit.</summary>
+    public void FastImport(string befehle)
+    {
+        Ausfuehren(["fast-import", "--quiet"], new Dictionary<string, string>(), befehle);
     }
 
     public string Git(params string[] argumente)
