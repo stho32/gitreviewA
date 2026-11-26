@@ -1,6 +1,7 @@
 'use strict';
 // Treiber Oberfläche der Zeilenanmerkungen (R00010): der einzige Ort, der Selektoren, Rollen und Antworten von /api/anmerkungen im Browser kennt.
 const { expect } = require('@playwright/test');
+const diffSeite = require('./diff-oberflaeche.js');
 
 const ROLLBEREICH = '#diff .df-sc';
 /** Der ganze Diff-Bereich: er trägt die Notiz- und Änderungsfelder der Zeilen (im Rollbereich) wie das „Datei anmerken“-Feld
@@ -221,9 +222,9 @@ async function bereichImAbschnittSpeichern(page, commit, name, text) {
   await expect(feldElement).toHaveCount(0);
 }
 
-/** Die Anordnung umstellen (untereinander | nebeneinander, R00023). */
+/** Die Anordnung umstellen (untereinander | nebeneinander, R00023) — über das Menü „Ansicht ▾“ (R00039). */
 async function anordnungWaehlen(page, wert) {
-  await page.locator(`#diff [data-anordnung="${wert}"]`).click();
+  await diffSeite.menueWaehlen(page, wert);
 }
 
 /** Die markierten Zeilen (Klasse `bereich`) als Nummern neu in Reihenfolge. */
@@ -385,8 +386,9 @@ async function pruefeKeinHinweisAusserhalb(page) {
 
 /** Fokus auf den Diff-Bereich per Tab vom Menüknopf „Ansicht ▾“ aus — der Bereich ist unter den nächsten Tab-Stopps (das Suchfeld, R00027, liegt davor). */
 async function inDenDiffTabben(page) {
+  await expect(page.locator(ROLLBEREICH)).toBeVisible();
   await page.locator('#ansicht-knopf').focus();
-  for (let versuch = 0; versuch < 5; versuch += 1) {
+  for (let versuch = 0; versuch < 8; versuch += 1) {
     await page.keyboard.press('Tab');
     const hatFokus = await page.locator(ROLLBEREICH).evaluate(element => element === document.activeElement);
     if (hatFokus) {
