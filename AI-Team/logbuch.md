@@ -688,3 +688,5 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Gate: NUnit 1880/1880 zweimal, Playwright 1242/1242 zweimal.
 | 2026-11-26 | #61 | Detailplanung | planer | bestanden | 5 min | I0051 B4701–B4703, R00051 11 Kriterien; Kürzung im Browser nach PO 257; Frage Betreff/Autor an PO · claude · opus · Lauf 61-planer-1 · 2,03 $ · Karte gesamt 2,03 $ |
 | 2026-11-26 | #61 | Detailplanung | product-owner | bestanden | 0 min | Betreff und Autor mitkürzen, Kriterium 7 bleibt; keine Server-Grenze (PO 257) · claude · sonnet · Lauf 61-product-owner-1 · 0,15 $ · Karte gesamt 2,18 $ |
+| 2026-11-26 | #63 | Detailplanung | entwicklertester | befund | 13 min | Punkt 1 und 2 Muss (Überdeckung 10 px, Anmerkungsfeld 123 px über den Diff), Punkt 3 Sollte (Wortlaut, PO) · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 63-entwicklertester-1 · 0,15 $ · Karte gesamt 0,15 $ |
+| 2026-11-26 | #63 | Detailplanung | product-owner | bestanden | 0 min | (a) Dateiansicht abgebrochen je Laufart, Review-Wortlaut unverändert; Vision und R00043 nachziehen · claude · sonnet · Lauf 63-product-owner-1 · 0,14 $ · Karte gesamt 0,29 $ |
