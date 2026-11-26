@@ -12,7 +12,7 @@ gitreviewA prüft sein Zeitverhalten nur noch gegen **grobe Schranken**: ein Erg
 
 Zahlt ein auf: [Vision](R00000-vision.md) — Leitplanke „Lastprofil“ (flüssig bis 200 Commits, 2 000 geänderte Dateien, 20 000 Diff-Zeilen je Datei, 500 Annotationen).
 
-**Widerspruch zur Vision, ausdrücklich:** die Vision nennt unter „Leitplanken → Lastprofil“ (Zeilen 113–117) engere Ziele („Oberfläche ≤ 2 s nach Aufruf, Dateiwechsel ≤ 200 ms typisch und ≤ 1 s an der Obergrenze, ‚Beenden‘ bis Ausgabe ≤ 1 s“). Diese Anforderung löst genau diese Zahlen ab. Die Vision ist **nicht** Teil dieser Anforderung und wird hier nicht geändert (Schreibrecht liegt bei `/vision`); sie geht als offene Frage an den `product-owner` (Vorschlag: `/vision fortschreiben`).
+**Vision angeglichen (2026-11-26):** die Vision nannte unter „Leitplanken → Lastprofil“ (Zeilen 113–117) engere Ziele („Oberfläche ≤ 2 s nach Aufruf, Dateiwechsel ≤ 200 ms typisch und ≤ 1 s an der Obergrenze, ‚Beenden‘ bis Ausgabe ≤ 1 s“). Diese Anforderung löst genau diese Zahlen ab; auf Entscheidung des `product-owner` (`AI-Team/po-entscheidungen.md`, letzte Zeile) hat der `planer` die Vision über `/vision fortschreiben` auf dieselben groben Schranken gezogen — der Widerspruch ist damit aufgelöst, die Vision bleibt sonst unverändert.
 
 ## Geschäftlicher Nutzen
 
@@ -51,7 +51,7 @@ Der Auslöser: die Gate-Suite prüfte das Zeitverhalten mit engen Margen („Mes
 
 ## Betroffene Verzeichnisstruktur
 
-Wie im Projekt üblich: E2E-Spezifikationen unter `e2e/tests/`, ihre Hilfsschichten unter `e2e/dsl/` und `e2e/treiber/`. Produktcode unter `src/GitReviewA/web/` wird **nicht** geändert (bis auf Kommentare, die abgelöste Zahlen nennen — siehe Offene Frage 4).
+Wie im Projekt üblich: E2E-Spezifikationen unter `e2e/tests/`, ihre Hilfsschichten unter `e2e/dsl/` und `e2e/treiber/`. Produktcode unter `src/GitReviewA/web/` wird **nicht** geändert — auch die Arbeitsfrist des Färbe-Workers (`FRIST_MS = 1000`) bleibt (Frage 4, entschieden); abgelöst ist nur ihr Zeitkriterium (Ablöse-Tabelle).
 
 ## Technische Überlegungen
 
@@ -82,14 +82,14 @@ Nach `~/.claude/skills/test-pyramide/SKILL.md` und der ATDD-Regel des Projekts i
 
 ## Offene Fragen
 
-Alle Fragen gehen an den `product-owner`; je mit Empfehlung.
+Alle sechs Fragen sind entschieden (PO-Protokoll, letzte Zeile, 2026-11-26, Commit `76a789a`); die Anforderung ist umsetzungsbereit.
 
-1. **Zahlen der Schranken**: Anzeige 5 s, Einfrier 2 s, „Beenden“ 5 s, Aufruf/Start 5 s? — **Empfehlung: ja.** Der Betreiber nennt das Beispiel „große Datei steht spätestens nach 5 s, die Oberfläche friert nie länger als 2 s ein“; die heutigen Messwerte (bis ~780 ms) liegen weit darunter, die Schranken fangen nur echte Einbrüche. Engere Alternativen (3 s/1 s) nähern sich wieder der alten Wackelzone; weitere (10 s/3 s) fangen weniger.
-2. **Vision angleichen?** Die Leitplanke „Lastprofil“ der Vision (Zeilen 113–117) trägt noch ≤ 2 s / ≤ 200 ms / ≤ 1 s. — **Empfehlung: `/vision fortschreiben` mit den neuen Schranken** (nur `/vision` schreibt die Vision; der `planer` nicht).
-3. **`AI-Team/po-entscheidungen.md` Zeile 245** (Entscheidung „(a) Zeilenaufbau beschleunigen, Messwert ≤ 0,7 s bleibt“) widerspricht dieser Anforderung. — **Empfehlung: der `product-owner` setzt sie auf „abgelöst durch R00047“.** Nicht im Schreibrecht des `planer`.
-4. **Arbeitsfrist des Färbe-Workers** (`src/GitReviewA/web/farbschlange.js`, `FRIST_MS = 1000`, R00007 Kriterium 7: die Datei endet ungefärbt nach 1 s). Das ist eine **Produktentscheidung** (ein Aufgeben-Budget für ein pathologisch teures Färben), keine Anzeige-Marge. — **Empfehlung: unverändert lassen**; sie ist selbst eine grobe Schranke gegen einen Einbruch. Der zugehörige Bausteintest (`farbschlange.spec.js`, `FRIST_MS === 1000`) bleibt.
-5. **„typisch ≤ 200 ms“ streichen?** Die Zeilen nennen „Dateiwechsel ≤ 200 ms typisch“ ausdrücklich als *kein* Kriterium. — **Empfehlung: als Kriterium streichen, als Messwert im Bericht behalten** (Beobachtung, kein Gate).
-6. **Umfang der Umstellung**: nur die Specs/DSL der Bauplan-Tabelle, oder auch die Textzeilen in unabgenommenen Dokumenten? — **Empfehlung: nur Specs/DSL; bestehende Anforderungen bleiben unverändert** (sie werden über die Ablöse-Tabelle dieser Anforderung ersetzt, nicht editiert).
+1. ~~**Zahlen der Schranken**: Anzeige 5 s, Einfrier 2 s, „Beenden“ 5 s, Aufruf/Start 5 s?~~ **Entschieden (PO-Protokoll, letzte Zeile):** ja, wie empfohlen — Anzeige 5 s, Einfrier 2 s, „Beenden“ 5 s, Aufruf/Start 5 s.
+2. ~~**Vision angleichen?**~~ **Entschieden (PO-Protokoll, letzte Zeile):** ja, über `/vision fortschreiben`; in diesem Lauf eingearbeitet (Vision, Leitplanke „Lastprofil“, Ergänzungshistorie 2026-11-26).
+3. ~~**`AI-Team/po-entscheidungen.md` Zeile 245** (Entscheidung „(a) Zeilenaufbau beschleunigen, Messwert ≤ 0,7 s bleibt“)?~~ **Entschieden (PO-Protokoll, letzte Zeile):** Zeile 245 ist durch R00047 abgelöst — **keine** Beschleunigung des Zeilenaufbaus.
+4. ~~**Arbeitsfrist des Färbe-Workers** (`src/GitReviewA/web/farbschlange.js`, `FRIST_MS = 1000`, R00007 Kriterium 7: die Datei endet ungefärbt nach 1 s)?~~ **Entschieden (PO-Protokoll, letzte Zeile):** die Färbe-Frist 1 s ist als Zeitkriterium durch die 2-s-Einfrier-Schranke abgelöst (Ablöse-Tabelle unten); das Aufgeben-Budget im Produktcode (`FRIST_MS = 1000`) und sein Bausteintest bleiben.
+5. ~~**„typisch ≤ 200 ms“ streichen?**~~ **Entschieden (PO-Protokoll, letzte Zeile):** als Kriterium streichen, als Messwert im Bericht behalten (Beobachtung, kein Gate).
+6. ~~**Umfang der Umstellung**: nur die Specs/DSL der Bauplan-Tabelle, oder auch die Textzeilen in unabgenommenen Dokumenten?~~ **Entschieden (PO-Protokoll, letzte Zeile):** nur Specs/DSL; bestehende Anforderungen bleiben unverändert (sie werden über die Ablöse-Tabelle ersetzt, nicht editiert).
 
 ## Umfang
 
@@ -111,12 +111,13 @@ Diese Anforderung löst die folgenden **Zeitkriterien** ab (Anforderung:Zeile, b
 
 | Anforderung:Zeile | bisherige Zahl | neue Schranke |
 |---|---|---|
-| R00000 (Vision):115–116 | Oberfläche ≤ 2 s, Dateiwechsel ≤ 200 ms typisch / ≤ 1 s, Beenden ≤ 1 s | 5 s Anzeige / 2 s Einfrier (Vision nur über `/vision`, Frage 2) |
+| R00000 (Vision):115–116 | Oberfläche ≤ 2 s, Dateiwechsel ≤ 200 ms typisch / ≤ 1 s, Beenden ≤ 1 s | 5 s Anzeige / 2 s Einfrier (Vision angeglichen 2026-11-26 über `/vision fortschreiben`, Frage 2) |
 | R00002:72, 85 | „Beenden“ ≤ 1 s | 5 s Anzeige |
 | R00003:39, 100 | Leiste ≤ 2 s, Dateiliste ≤ 1 s, Messwert ≤ 0,7 s | 5 s Anzeige |
 | R00004:45, 106 | ≤ 1 s, Messwert ≤ 0,7 s | 5 s Anzeige |
 | R00006:42, 104 | ≤ 2 s, ≥ 30 % Abstand | 5 s Anzeige |
 | R00007:62, 111, 156 | ≤ 1 s, Long Task ≤ 150 ms, Messwert ≤ 0,7 s | 5 s Anzeige / 2 s Einfrier |
+| R00007:105 (Kriterium 7, Färbe-Frist) | „die Datei endet ungefärbt (die Frist von 1 s ist verstrichen)“ | 2 s Einfrier (die 1 s liegen darunter; das Aufgeben-Budget `FRIST_MS = 1000` und sein Bausteintest bleiben — kein Produktverhalten geändert) |
 | R00008:36, 69, 70, 99 | ≤ 1 s, Messwert ≤ 0,7 s | 5 s Anzeige |
 | R00010:48, 85 | ≤ 1 s, Messwert ≤ 0,7 s | 5 s Anzeige |
 | R00011:71, 103 | ≤ 2 s / ≤ 1 s, Messwerte ≤ 1,4 s / ≤ 0,7 s | 5 s Anzeige |
@@ -173,7 +174,9 @@ Jede Zeile: Datei:Zeile, bisherige Schwelle, neue Schranke. „(Test)“ = Testn
 | `e2e/dsl/gitreviewa.js:17` (`STARTZEILE_FRIST_MS = 2000`), :128 (`aufEndeWarten` default 5000) | 2000 ms | `anzeigeSchrankeMs` (Beenden-Default 5000 bleibt) |
 | `e2e/dsl/veroeffentlichung.js:7` (`STARTZEILE_FRIST_MS = 5000`) | 5000 ms | unverändert (schon Schranke) |
 
-Nicht betroffen (kein Zeitkriterium): Knoten-/Zeilen-/Zeichen-/Treffer-Grenzen in `e2e/tests/bausteine/diff-werte.spec.js:100`, `suche-werte.spec.js:72`, `farbe-werte.spec.js:46`; die Positivkontrolle `einklappen-erhalt.spec.js:75` (Faktor 0,7 gegen eine verzögerte Quelle); die Arbeitsfrist des Färbe-Workers (`src/GitReviewA/web/farbschlange.js:8`, Frage 4).
+Nicht betroffen (kein Zeitkriterium): Knoten-/Zeilen-/Zeichen-/Treffer-Grenzen in `e2e/tests/bausteine/diff-werte.spec.js:100`, `suche-werte.spec.js:72`, `farbe-werte.spec.js:46`; die Positivkontrolle `einklappen-erhalt.spec.js:75` (Faktor 0,7 gegen eine verzögerte Quelle).
+
+Die Arbeitsfrist des Färbe-Workers (`src/GitReviewA/web/farbschlange.js:8`, `FRIST_MS = 1000`, R00007 Kriterium 7) ist dagegen ein Zeitkriterium und steht seit der Entscheidung zu Frage 4 in der Ablöse-Tabelle (2 s Einfrier); Produktcode und Bausteintest bleiben.
 
 ### Verworfene Alternativen
 - **Optimiere den Zeilenaufbau (Betriebs-Commit f4614d1)**: verworfen mit der Karte #57 — es ist Leistungsarbeit an einem im Betrieb unauffälligen Pfad; der Betreiber hat harte Performance-Bedingungen abgelehnt.
