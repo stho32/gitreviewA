@@ -10,6 +10,9 @@
   async function init() {
     const statusElement = document.getElementById('commit-status');
     const listeElement = document.getElementById('commit-liste');
+    // Der Startzustand der Zeile gehört vor das Laden: öffnet der Mensch sie während der Ladung, bleibt sie offen
+    // (ein späteres `zeigeModus` würde seine Wahl überschreiben).
+    zeigeModus();
     // Vor dem Warten auf die Commits angemeldet: die Zusammen-Ansicht und der Hakenstand können antworten, während die Leiste lädt.
     document.addEventListener('modus-gewechselt', () => {
       zeigeModus();
@@ -47,7 +50,6 @@
     zeichneKopfZahlen();
     zeichneZusammenfassung();
     baueWaehler();
-    zeigeModus();
   }
 
   async function commitsLaden() {
