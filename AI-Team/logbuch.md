@@ -490,3 +490,8 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Durchlauf: Betreiberwunsch (SQL-Dateien ansehen und kopieren) → Detailplanung Opus (D0005, I0044–I0047, 4,24 $), PO Sonnet (Richtungsfragen, Dateien auch außerhalb von git; Taste `y`; UTF-16 später nach Messung 22/22 SQL-Dateien UTF-8), Angriffsmatrix vor dem Bau (Sonnet, 113 Zeilen, 20 Lücken, 1,92 $), PO sortiert Lücken, planer nimmt 10 Kriterien auf; Server-Härtung #55 vorgezogen; Bau 36 min (9 Bubbles), Code-Review (auf Chinesisch, Vorschlag an die Factory) und Security-Review gegen die eigene Matrix (~40 Zeilen geprobt) je 1 Muss (belegter Port → Exit 134) + hochgestuft „nur einmal kopieren“, Nacharbeit 6 Punkte, Entwicklertest mit dem Betreiberfall ohne Befund. Karte gesamt 10,07 $ (davon ~7,2 $ Planung und Matrix).
 - Lehre: Eine Angriffsmatrix vor dem Bau mit PO-Sortierung (was jetzt, was später) hält die erste Stufe schlank und gibt dem Security-Review die Abnahmeproben gleich mit.
 - Gate: NUnit 1648/1648 zweimal, Playwright 871/871 zweimal.
+
+## Retrospektive #56 Wackler Fokus, Lastprofil, NUnit (2026-11-26)
+- Ursachen gemessen: (1) Fokus in `datei-annotieren` war ein **Produktfehler** (Datei-Feld verlor beim Neuzeichnen den Fokus) — behoben; (2) Lastprofil Umbruch kein Rückschritt, Messung jetzt ereignisgenau, Ziel 0,7 s bleibt aber zu knapp → Karte #57; (3) NUnit prüfte die Ziffer 5 im Zeitstempel statt des Feldes. Je Mutant rot. Zeitgrenze, per Fortsetzung abgeschlossen. 0,27 $.
+- Lehre: Ein Wackler ist erst nach der Messung ein Testproblem — einer von dreien war ein echter Fehler im Produkt.
+- Gate: NUnit 1648/1648 zweimal, Playwright 870–871/872 (zwei seltene Lastwackler, je 8/8 einzeln; umbruch:159 → #57).
