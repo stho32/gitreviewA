@@ -121,13 +121,14 @@ test.describe('Jede Darstellung und der eingeklappte Zustand (Kriterien 4 und 5)
 test.describe('Jede Seitenleistenbreite (Kriterium 3)', () => {
   test('soll bei 240, 360 und 640 px gelten, wenn man die Breite am Trenner zieht', async ({ dateisuche }) => {
     await dateisuche.starten({ zaehlen: true });
-    // Kriterium 6: Ziehen und Messen sind reine Anzeige — keine Anfrage, kein git-Aufruf.
+    // Kriterium 6: Ziehen und Messen sind reine Anzeige — keine Anfrage, kein git-Aufruf, keine Zeile auf stderr (S1).
     const anfragen = dateisuche.anfragenZaehlen();
     const gitVorher = dateisuche.gitAufrufe().length;
     // Bei 1280 px gäbe die Ergebnis-Spalte die breiteste Seitenleiste nicht frei (R00042) — sie ist für diese Probe nicht nötig.
     await dateisuche.ergebnisSpalteEinklappen();
     await dateisuche.ergebnisSpalteVerborgen();
     const anfragenVorher = anfragen();
+    const protokollVorher = dateisuche.protokollzeilen().length;
 
     for (const breite of BREITEN) {
       await dateisuche.seitenleisteZiehenAuf(breite);
@@ -139,5 +140,6 @@ test.describe('Jede Seitenleistenbreite (Kriterium 3)', () => {
     }
     expect(anfragen() - anfragenVorher, 'Anfragen durch Ziehen und Messen').toBe(0);
     expect(dateisuche.gitAufrufe().length - gitVorher, 'git-Aufrufe durch Ziehen und Messen').toBe(0);
+    expect(dateisuche.protokollzeilen().length, 'Zeilen auf stderr durch Ziehen und Messen').toBe(protokollVorher);
   });
 });

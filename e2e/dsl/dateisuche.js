@@ -158,6 +158,7 @@ function dateisucheSprache(gr, page) {
     aufEnde: () => gr.aufEndeWarten(lauf),
     ergebnis: () => lauf.stdout,
     stderr: () => lauf.stderr,
+    protokollzeilen: () => gr.stderrZeilen(lauf),
     lauf: () => lauf,
     adresse: () => lauf.adresse,
   };
