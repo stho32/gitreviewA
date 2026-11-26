@@ -17,6 +17,8 @@ nicht, sichtbar, nie still gekürzt, Arbeit und Speicher höchstens Grenze plus 
 **Linien.** U Unit (Zerleger, Format) · I Integration (Interactor/Endpunkt in-process, Wegwerf-Repo, kleine Grenze als Testparameter) · P Prozess (echte Instanz,
 Exit-Code, stdout/stderr getrennt, Start auch über `bash -c '… &'`, Lehre #21, und aus einem Unterordner, Lehre #6). Kein vorgelagerter Server: keine Linie L3.
 
+**Spalte „heute“** = Stand vor dem Bau (`a44781e`). Der Stand nach dem Bau (`a5c359b`) steht am Ende im Abschnitt „Stand nach dem Bau“.
+
 **Kontrollpaar:** K1 und K2 müssen heute und danach dasselbe liefern; sonst misst keine Zeile.
 
 Legende `Kriterium`: Nummer aus R00048, `Test-Strategie` = Abschnitt Regressionstests ohne eigene Nummer, **LÜCKE Ln** = Kriterium fehlt (Vorschlag unten).
@@ -117,3 +119,34 @@ Alle Zeilen in einem Repo mit gesetzter fremder `.git/config`; Vergleich: Ausgab
 - Anzeigegrenze von 20 000 Zeichen je Message in der Commit-Leiste: eigene neue Karte (PO #60 Folgefrage).
 - Hash-Auflösung (`rev-parse`, Hashpräfix gegen Tag-Namen): R00006/Lehre #2, unverändert.
 - Browser (Playwright): keine neue Spec, die Darstellung der Leiste ändert sich nicht (R00048, Test-Strategie).
+
+## Stand nach dem Bau (a5c359b, security-reviewer 2026-11-26)
+
+Eigene Kopie des Standes, eigener Build (`--artifacts-path …/target-60-srev`), Wegwerf-Repos mit Rohcommits (`git hash-object -t commit --literally`), echte Instanz auf freiem Port, git 2.48.1. `geprobt` = von mir an der Instanz gemessen; `Test` = Test des Pakets, in meiner Kopie grün (55 von 55 in `CommitGrenzeTests`, `CommitFelderTests`, `GitLeserGrenzeTests`, `GitLogAusgabeTests`, `CommitZuGrossAnsichtenTests`, `CommitSpeicherTests`, `GitLeserBereicheTests`).
+
+| # | Ergebnis | Beleg |
+|---|---|---|
+| K1–K3 | grün | geprobt (Basis, Umlaute) und Test |
+| F1, F2, F4 | **grün** (war rot) | geprobt über `GET /api/commits`: Autor `Anna␟Beispiel`, Betreff/Rumpf mit 0x1F unverschoben, ein Feld nur aus 0x1F/0x1E bleibt |
+| F3 | grün | geprobt |
+| F5, F7 | grün | geprobt: Betreff `Vor dem NUL`, Rumpf leer bzw. `B` |
+| F6 | **grün in der Form, aber siehe F16** | geprobt: Autor leer, genau ein Commit, Betreff/Rumpf unverschoben, Datum leer |
+| F8 | grün | geprobt: UTF-16LE → Betreff `A`; UTF-7 `+AAA-` bleibt Text; je ein Commit |
+| F9 | grün | geprobt: ISO-8859-1 mit 0x1F/0xFF → UTF-8, Trenner bleiben Werte |
+| F10 | grün | geprobt: `C0 80`, `ED A0 80`, `FF` → Marken `⟨0xC0⟩…`, nie U+0000/U+001F |
+| F11 | grün | geprobt: Autor `A\rB`, Betreff `Betreff zwei`, Rumpf `Rumpf\r\nzwei` |
+| F12 | grün | geprobt: leere Message, leerer Autor/Betreff/Rumpf: je ein Commit, Position stabil |
+| F13–F15 | grün | Test (`GitLogAusgabeTests`) |
+| **F16 (neu)** | **rot** | Commit mit Zeitzone `+0000`: git 2.48.1 gibt `%aI` als `2023-11-14T22:13:20Z` aus; `Datumsform` (`TryParseExact` mit `zzz`) lehnt `Z` ab → Datum leer → die Leiste zeigt „Datum nicht lesbar“ bei **jedem Commit in UTC**. Geprobt: `+0000`/`-0000` leer, `+0200`/`-0530` richtig. Erwartet: Datum `…Z` bleibt. Der Test nutzt nur `+00:00` |
+| G1 | grün | geprobt: 9 MiB als Hash, `a..g`, gemischt `ok g`: Exit 2, stdout 0 Byte, eine Zeile mit „8 MiB“; stdin-Weg siehe G4 |
+| G2 | grün | geprobt: Grundlauf 180 584 kB, 20+6 MiB 203 000 / 205 960 kB (Zuwachs 22–25 MB, vorher 514 MB); Exit 2 |
+| G3 | grün | Test (`GitLeserGrenzeTests`) |
+| G4 | grün | geprobt: zwei Bereiche `a..g a..h` Exit 2 mit „8 MiB“ |
+| G5 | grün | geprobt: 3 000 Commits à 3,2 KiB, zwei Bereiche zu je 10 Commits mit 2 970 dazwischen: startet mit 20 Commits |
+| G6–G8, G10, G11 | grün | Test (`CommitZuGrossAnsichtenTests`, `GitLeserGrenzeTests`); nicht eigens an der Instanz geprobt |
+| G9 | grün | geprobt: `git log` als Attrappe, die endlos schreibt (`yes`), Grenze 8 MiB: Exit 2 nach 0,47 s, kein `yes`-Prozess übrig. Hängender Leser ohne Ausgabe bleibt R00017 Frage 3 |
+| G12 | grün (Optional) | `Fehlertext` kappt auf 64 KiB; die Meldung kann bei git-stderr mit LF mehrzeilig sein: Anmerkung, kein Muss |
+| M1, M4, M5 | grün | geprobt: stderr genau eine Zeile ohne fremden Text, stdout 0 Byte, Exit 2; auch über `bash -c '… &'` aus einem Unterordner |
+| M2, M3 | grün | Test; nicht eigens geprobt |
+| E1–E4, E6 | grün | geprobt: Repo mit `format.pretty`, `log.*`, `i18n.*`, `gpg.program`, `gpg.ssh.program`, `core.fsmonitor`, `core.sshCommand`, `diff.external`, `remote.origin.uploadpack` (Partial Clone) auf Marker-Skript, dazu ein Commit mit `gpgsig`: Ausgabe byte-gleich mit und ohne Konfiguration, Markerverzeichnis leer |
+| E5, E7, E8 | grün | E5/E7 durch dieselbe Probe; E8 Bestand, nicht verändert |
