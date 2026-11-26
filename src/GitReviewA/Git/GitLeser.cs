@@ -13,18 +13,27 @@ internal static class GitLeser
 {
     private const int MergeBaseOhneGemeinsamenVorfahren = 1;
 
-    public static Commitzeilen Lesen(CommitHashes hashes, string arbeitsordner)
+    /// <summary>Die Größe eines Lesestücks; über der Grenze wird höchstens um dieses Stück weiter gelesen (Kriterium 8).</summary>
+    private const int Lesepuffergroesse = 81920;
+
+    /// <summary>Ohne eigene Angabe liest jeder Aufruf über die Produktgrenze (8 MiB); Tests geben eine kleine Grenze mit.</summary>
+    private static Ausgabegrenze GrenzeOderStandard(Ausgabegrenze? grenze)
+    {
+        return grenze ?? Ausgabegrenze.Standard;
+    }
+
+    public static Commitzeilen Lesen(CommitHashes hashes, string arbeitsordner, Ausgabegrenze? grenze = null)
     {
         var start = GitLogStart(hashes, arbeitsordner);
-        var ausgabe = Ausfuehren(start, "git log");
+        var ausgabe = Ausfuehren(start, "git log", GrenzeOderStandard(grenze));
         return GitLogAusgabe.Zerlegen(ausgabe);
     }
 
     /// <summary>Je Commit der Auswahl sein erster Eltern-Hash, in Auswahlreihenfolge; leer bei einer Wurzel.</summary>
-    public static Elternfolge ElternfolgeLesen(CommitHashes auswahl, string arbeitsordner)
+    public static Elternfolge ElternfolgeLesen(CommitHashes auswahl, string arbeitsordner, Ausgabegrenze? grenze = null)
     {
         var start = GitElternfolgeStart(auswahl, arbeitsordner);
-        var ausgabe = Ausfuehren(start, $"git log (Elternfolge von {auswahl.Anzahl} Commits)");
+        var ausgabe = Ausfuehren(start, $"git log (Elternfolge von {auswahl.Anzahl} Commits)", GrenzeOderStandard(grenze));
         return ElternfolgeAus(ausgabe, auswahl);
     }
 
@@ -32,27 +41,27 @@ internal static class GitLeser
     /// Die Netto-Änderungen der lückenlosen Kette in einem Aufruf: jede Datei einmal gegen den Elternstand des ältesten Commits.
     /// Eine leere Basis ist der leere Baum (ein Wurzelcommit). Umbenennungen erkennt `-M`, Submodule bleiben sichtbar.
     /// </summary>
-    public static Dateiaenderungen NettoDateienLesen(string basis, string spitze, string arbeitsordner)
+    public static Dateiaenderungen NettoDateienLesen(string basis, string spitze, string arbeitsordner, Ausgabegrenze? grenze = null)
     {
         var start = GitDiffNettoStart(basis, spitze, arbeitsordner);
-        var ausgabe = AusfuehrenAlsBytes(start, $"git diff (Netto {Kurz(basis)}..{Kurz(spitze)})");
+        var ausgabe = AusfuehrenAlsBytes(start, $"git diff (Netto {Kurz(basis)}..{Kurz(spitze)})", GrenzeOderStandard(grenze));
         return DateiaenderungenParser.Parse(ausgabe);
     }
 
     /// <summary>Merge-Commits gegen den ersten Elternteil (Entscheidung des PO, gilt auch für den Diff einer Datei).</summary>
-    public static Dateiaenderungen DateienLesen(string hash, string arbeitsordner)
+    public static Dateiaenderungen DateienLesen(string hash, string arbeitsordner, Ausgabegrenze? grenze = null)
     {
         var start = GitShowDateienStart(hash, arbeitsordner);
-        var ausgabe = AusfuehrenAlsBytes(start, $"git show {hash}");
+        var ausgabe = AusfuehrenAlsBytes(start, $"git show {hash}", GrenzeOderStandard(grenze));
         return DateiaenderungenParser.Parse(ausgabe);
     }
 
     /// <summary>Alle Dateien der Auswahl mit einem Aufruf, auf derselben Basis wie <see cref="DateienLesen"/>.</summary>
-    public static Dateiuebersicht UebersichtLesen(CommitHashes auswahl, string arbeitsordner)
+    public static Dateiuebersicht UebersichtLesen(CommitHashes auswahl, string arbeitsordner, Ausgabegrenze? grenze = null)
     {
         var start = GitLogUebersichtStart(auswahl, arbeitsordner);
         var anzahl = auswahl.Anzahl.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        var ausgabe = AusfuehrenAlsBytes(start, $"git log (Übersicht von {anzahl} Commits)");
+        var ausgabe = AusfuehrenAlsBytes(start, $"git log (Übersicht von {anzahl} Commits)", GrenzeOderStandard(grenze));
         return UebersichtParser.Parse(ausgabe, auswahl);
     }
 
@@ -61,21 +70,21 @@ internal static class GitLeser
     /// Scheitert die Repoprüfung, wirft der Git-Leser einen <see cref="GitFehler"/>; die Zuordnung zum Aufrufgrund
     /// macht die Aufruf-Schicht (<see cref="GitReviewA.Aufruf.Reposituation"/>), nicht das Git-Layer.
     /// </summary>
-    public static string WurzelLesen(string startordner)
+    public static string WurzelLesen(string startordner, Ausgabegrenze? grenze = null)
     {
         var start = GitStart.Im(startordner);
         start.ArgumentList.Add("rev-parse");
         start.ArgumentList.Add("--show-toplevel");
-        return Ausfuehren(start, "git rev-parse --show-toplevel").TrimEnd('\n');
+        return Ausfuehren(start, "git rev-parse --show-toplevel", GrenzeOderStandard(grenze)).TrimEnd('\n');
     }
 
     /// <summary>Ohne Arbeitsbaum ist es ein nacktes Repository; der Aufrufer entscheidet, was ein scheiternder rev-parse bedeutet.</summary>
-    public static bool IstNacktesRepository(string startordner)
+    public static bool IstNacktesRepository(string startordner, Ausgabegrenze? grenze = null)
     {
         var start = GitStart.Im(startordner);
         start.ArgumentList.Add("rev-parse");
         start.ArgumentList.Add("--is-bare-repository");
-        var ausgabe = Ausfuehren(start, "git rev-parse --is-bare-repository").TrimEnd('\n');
+        var ausgabe = Ausfuehren(start, "git rev-parse --is-bare-repository", GrenzeOderStandard(grenze)).TrimEnd('\n');
         return string.Equals(ausgabe, "true", StringComparison.Ordinal);
     }
 
@@ -232,7 +241,7 @@ internal static class GitLeser
         start.ArgumentList.Add("--verify");
         start.ArgumentList.Add("--end-of-options");
         start.ArgumentList.Add($"{hash}^{{commit}}");
-        var lauf = WarteAufEnde(Starte(start));
+        var lauf = WarteAufEndeMitGrenze(Starte(start), $"git rev-parse --verify {Kurz(hash)}", Ausgabegrenze.Standard);
         return lauf.ExitCode == 0;
     }
 
@@ -312,11 +321,11 @@ internal static class GitLeser
     /// Der Wert des `diff`-Attributs (`unspecified`, `set`, `unset` oder ein Treibername) unter denselben Schutzoptionen wie der Diff:
     /// nur `.git/info/attributes` wirkt noch. Mit `-z` übersteht jeder Pfad die Ausgabe: Pfad NUL `diff` NUL Wert NUL.
     /// </summary>
-    public static string DiffAttributLesen(Dateiaenderung datei, string arbeitsordner)
+    public static string DiffAttributLesen(Dateiaenderung datei, string arbeitsordner, Ausgabegrenze? grenze = null)
     {
         var pfad = datei.Pfad;
         var aufruf = $"git check-attr diff -- {pfad}";
-        var felder = AttributAusgabe(datei, arbeitsordner, aufruf).Split('\0');
+        var felder = AttributAusgabe(datei, arbeitsordner, aufruf, GrenzeOderStandard(grenze)).Split('\0');
         var istEinEintrag = felder.Length == 4 && felder[0] == pfad && felder[1] == "diff" && felder[3].Length == 0;
         if (!istEinEintrag)
         {
@@ -326,7 +335,7 @@ internal static class GitLeser
     }
 
     /// <summary>Ein Name mit Rohbytes geht über stdin an git (NUL-getrennt mit `-z`); die Ausgabe nennt ihn mit Marke wie die Dateiliste.</summary>
-    private static string AttributAusgabe(Dateiaenderung datei, string arbeitsordner, string aufruf)
+    private static string AttributAusgabe(Dateiaenderung datei, string arbeitsordner, string aufruf, Ausgabegrenze grenze)
     {
         var start = GitStart.Im(arbeitsordner);
         start.ArgumentList.Add("check-attr");
@@ -337,12 +346,12 @@ internal static class GitLeser
             start.ArgumentList.Add("--stdin");
             start.ArgumentList.Add("diff");
             var eingabe = new List<byte>(rohpfad.Bytes.ToArray()) { 0 };
-            return AusfuehrenMitEingabe(start, eingabe.ToArray(), aufruf);
+            return AusfuehrenMitEingabe(start, eingabe.ToArray(), aufruf, grenze);
         }
         start.ArgumentList.Add("diff");
         start.ArgumentList.Add("--");
         start.ArgumentList.Add(datei.Pfad);
-        return Ausfuehren(start, aufruf);
+        return Ausfuehren(start, aufruf, grenze);
     }
 
 
@@ -391,32 +400,33 @@ internal static class GitLeser
     /// auch die anderen Bereiche beschneiden. Die Reihenfolge hängt nur an der Vereinigung, nicht an der Reihenfolge der Bereiche,
     /// auch bei gleichen Commit-Zeiten. Je Bereich wird höchstens ein Commit mehr als die Grenze gelesen, damit eine zu große Auswahl erkennbar ist.
     /// </summary>
-    public static Commitzeilen LeseBereiche(Bereiche bereiche, string arbeitsordner)
+    public static Commitzeilen LeseBereiche(Bereiche bereiche, string arbeitsordner, Ausgabegrenze? grenze = null)
     {
+        var limit = GrenzeOderStandard(grenze);
         var istEinBereich = bereiche.Anzahl == 1;
         if (istEinBereich)
         {
-            return LeseBereich(bereiche[0], arbeitsordner);
+            return LeseBereich(bereiche[0], arbeitsordner, limit);
         }
-        var vereinigteHashes = VereinigeBereiche(bereiche, arbeitsordner);
-        var gemeinsameVorfahren = LeseGemeinsameVorfahrenDerAnfaenge(bereiche, arbeitsordner);
-        return LeseNeuesteZuerst(vereinigteHashes, gemeinsameVorfahren, arbeitsordner);
+        var vereinigteHashes = VereinigeBereiche(bereiche, arbeitsordner, limit);
+        var gemeinsameVorfahren = LeseGemeinsameVorfahrenDerAnfaenge(bereiche, arbeitsordner, limit);
+        return LeseNeuesteZuerst(vereinigteHashes, gemeinsameVorfahren, arbeitsordner, limit);
     }
 
-    private static Commitzeilen LeseBereich(string bereich, string arbeitsordner)
+    private static Commitzeilen LeseBereich(string bereich, string arbeitsordner, Ausgabegrenze grenze)
     {
         var start = GitLogBereichStart(bereich, arbeitsordner);
-        var ausgabe = Ausfuehren(start, $"git log {bereich}");
+        var ausgabe = Ausfuehren(start, $"git log {bereich}", grenze);
         return GitLogAusgabe.Zerlegen(ausgabe);
     }
 
-    private static CommitHashes VereinigeBereiche(Bereiche bereiche, string arbeitsordner)
+    private static CommitHashes VereinigeBereiche(Bereiche bereiche, string arbeitsordner, Ausgabegrenze grenze)
     {
         var vereinigt = new List<string>();
         var bekannt = new HashSet<string>(StringComparer.Ordinal);
         foreach (var bereich in bereiche)
         {
-            foreach (var zeile in LeseBereich(bereich, arbeitsordner))
+            foreach (var zeile in LeseBereich(bereich, arbeitsordner, grenze))
             {
                 var istNeu = bekannt.Add(zeile.Hash);
                 if (istNeu)
@@ -432,7 +442,7 @@ internal static class GitLeser
     /// Kein Commit der Vereinigung ist Vorfahr eines gemeinsamen Vorfahren aller Anfänge — dort darf der Verlauf enden,
     /// damit <c>--date-order</c> nicht die ganze Geschichte durchläuft. Ohne gemeinsamen Vorfahren bleibt die Liste leer.
     /// </summary>
-    private static CommitHashes LeseGemeinsameVorfahrenDerAnfaenge(Bereiche bereiche, string arbeitsordner)
+    private static CommitHashes LeseGemeinsameVorfahrenDerAnfaenge(Bereiche bereiche, string arbeitsordner, Ausgabegrenze grenze)
     {
         var start = GitStart.Im(arbeitsordner);
         start.ArgumentList.Add("merge-base");
@@ -443,7 +453,7 @@ internal static class GitLeser
         {
             start.ArgumentList.Add(AnfangDes(bereich));
         }
-        var lauf = WarteAufEnde(Starte(start));
+        var lauf = WarteAufEndeMitGrenze(Starte(start), "git merge-base", grenze);
         var keinGemeinsamerVorfahr = lauf.ExitCode == MergeBaseOhneGemeinsamenVorfahren && lauf.Ausgabe.Length == 0;
         if (keinGemeinsamerVorfahr)
         {
@@ -464,7 +474,7 @@ internal static class GitLeser
         return anfang;
     }
 
-    private static Commitzeilen LeseNeuesteZuerst(CommitHashes hashes, CommitHashes gemeinsameVorfahren, string arbeitsordner)
+    private static Commitzeilen LeseNeuesteZuerst(CommitHashes hashes, CommitHashes gemeinsameVorfahren, string arbeitsordner, Ausgabegrenze grenze)
     {
         var start = GitLogMitFormat(arbeitsordner);
         start.ArgumentList.Add("--date-order");
@@ -483,7 +493,7 @@ internal static class GitLeser
             start.ArgumentList.Add($"^{vorfahr}");
         }
         start.ArgumentList.Add("--");
-        var verlauf = GitLogAusgabe.Zerlegen(Ausfuehren(start, "git log"));
+        var verlauf = GitLogAusgabe.Zerlegen(Ausfuehren(start, "git log", grenze));
         return NurDieAusDerVereinigung(verlauf, hashesUnabhaengigVonDerBereichsreihenfolge);
     }
 
@@ -816,14 +826,6 @@ internal static class GitLeser
         }
     }
 
-    private static string Ausfuehren(ProcessStartInfo start, string aufruf)
-    {
-        var lauf = WarteAufEnde(Starte(start));
-        PruefeErfolg(lauf, aufruf);
-        return lauf.Ausgabe;
-    }
-
-    /// <summary>Wie <see cref="Ausfuehren(ProcessStartInfo, string)"/>, aber höchstens <paramref name="grenze"/> Byte; darüber wird der Prozess beendet und <see cref="GitZuGross"/> geworfen.</summary>
     private static string Ausfuehren(ProcessStartInfo start, string aufruf, Ausgabegrenze grenze)
     {
         var lauf = WarteAufEndeMitGrenze(Starte(start), aufruf, grenze);
@@ -832,20 +834,6 @@ internal static class GitLeser
     }
 
     /// <summary>Die Eingabe geht als Bytes an stdin; sie ist kurz (ein Hash und bis zu zwei Namen) und vollständig geschrieben, bevor git ausgibt.</summary>
-    private static string AusfuehrenMitEingabe(ProcessStartInfo start, byte[] eingabe, string aufruf)
-    {
-        start.RedirectStandardInput = true;
-        var gestartet = Starte(start);
-        using (var stdin = gestartet.StandardInput.BaseStream)
-        {
-            stdin.Write(eingabe);
-        }
-        var lauf = WarteAufEnde(gestartet);
-        PruefeErfolg(lauf, aufruf);
-        return lauf.Ausgabe;
-    }
-
-    /// <summary>Wie <see cref="AusfuehrenMitEingabe(ProcessStartInfo, byte[], string)"/>, aber höchstens <paramref name="grenze"/> Byte; darüber wird der Prozess beendet und <see cref="GitZuGross"/> geworfen.</summary>
     private static string AusfuehrenMitEingabe(ProcessStartInfo start, byte[] eingabe, string aufruf, Ausgabegrenze grenze)
     {
         start.RedirectStandardInput = true;
@@ -859,18 +847,17 @@ internal static class GitLeser
         return lauf.Ausgabe;
     }
 
-    /// <summary>Namen in der Ausgabe sind Bytes: erst der Parser entscheidet je Name, ob er gültiges UTF-8 ist.</summary>
-    private static byte[] AusfuehrenAlsBytes(ProcessStartInfo start, string aufruf)
+    /// <summary>Namen in der Ausgabe sind Bytes: erst der Parser entscheidet je Name, ob er gültiges UTF-8 ist. Ganz oder gar nicht:
+    /// über der Grenze kein (auch kein gekürzter) Anfang, sondern <see cref="GitZuGross"/> — anders als beim Blob-Leser, der den Anfang liefert.</summary>
+    private static byte[] AusfuehrenAlsBytes(ProcessStartInfo start, string aufruf, Ausgabegrenze grenze)
     {
-        using var prozess = Starte(start);
-        var fehler = new StringBuilder();
-        prozess.ErrorDataReceived += (_, zeile) => fehler.AppendLine(zeile.Data);
-        prozess.BeginErrorReadLine();
-        using var ausgabe = new MemoryStream();
-        prozess.StandardOutput.BaseStream.CopyTo(ausgabe);
-        prozess.WaitForExit();
-        PruefeErfolg(new GitLauf(prozess.ExitCode, "", fehler.ToString().Trim()), aufruf);
-        return ausgabe.ToArray();
+        var lauf = WarteAufEndeMitGrenzeBytes(Starte(start), aufruf, grenze);
+        if (lauf.UeberschritteneGrenze is not null)
+        {
+            throw new GitZuGross(aufruf, grenze.Bytes);
+        }
+        PruefeErfolgBytes(lauf, aufruf);
+        return lauf.Inhalt;
     }
 
     /// <summary>
@@ -995,41 +982,12 @@ internal static class GitLeser
     private static GitBytelauf WarteAufEndeMitGrenzeBytes(Process gestartet, string aufruf, Ausgabegrenze grenze)
     {
         using var prozess = gestartet;
-        var fehler = new StringBuilder();
-        prozess.ErrorDataReceived += (_, zeile) => fehler.AppendLine(zeile.Data);
+        var fehler = new Fehlertext();
+        prozess.ErrorDataReceived += (_, zeile) => fehler.HaengeAn(zeile.Data);
         prozess.BeginErrorReadLine();
-        var inhalt = LesenBytesMitGrenze(prozess, grenze, out var ueberschritteneGrenze);
+        var gelesen = LiesStdout(prozess, grenze);
         prozess.WaitForExit();
-        return new GitBytelauf(prozess.ExitCode, inhalt, fehler.ToString().Trim(), ueberschritteneGrenze);
-    }
-
-    /// <summary>
-    /// Liest Stdout als Bytes bis zur Grenze; hatte git mehr, wird der Prozess beendet und der bis zur Grenze gelesene Anfang samt
-    /// der Grenze gemeldet — nie still gekürzt, ohne es zu sagen (die Bildart kommt aus den ersten Bytes, bevor die Größe zählt).
-    /// </summary>
-    private static byte[] LesenBytesMitGrenze(Process prozess, Ausgabegrenze grenze, out Ausgabegrenze? ueberschritteneGrenze)
-    {
-        ueberschritteneGrenze = null;
-        using var speicher = new MemoryStream();
-        var puffer = new byte[81920];
-        while (true)
-        {
-            var gelesen = prozess.StandardOutput.BaseStream.Read(puffer, 0, puffer.Length);
-            if (gelesen == 0)
-            {
-                break;
-            }
-            var bisZurGrenze = grenze.Bytes - speicher.Length;
-            if (gelesen > bisZurGrenze)
-            {
-                speicher.Write(puffer, 0, (int)bisZurGrenze);
-                ueberschritteneGrenze = grenze;
-                Beende(prozess);
-                break;
-            }
-            speicher.Write(puffer, 0, gelesen);
-        }
-        return speicher.ToArray();
+        return new GitBytelauf(prozess.ExitCode, gelesen.Puffer.AlsBytes(), fehler.Text, gelesen.UeberschritteneGrenze);
     }
 
     private static void PruefeErfolgBytes(GitBytelauf lauf, string befehl)
@@ -1052,52 +1010,132 @@ internal static class GitLeser
         }
     }
 
-    private static GitLauf WarteAufEnde(Process gestartet)
-    {
-        using var prozess = gestartet;
-        var fehler = new StringBuilder();
-        prozess.ErrorDataReceived += (_, zeile) => fehler.AppendLine(zeile.Data);
-        prozess.BeginErrorReadLine();
-        var ausgabe = prozess.StandardOutput.ReadToEnd();
-        prozess.WaitForExit();
-        return new GitLauf(prozess.ExitCode, ausgabe, fehler.ToString().Trim());
-    }
-
     /// <summary>
-    /// Wie <see cref="WarteAufEnde(Process)"/>, aber die Stdout wird stückweise bis zur <paramref name="grenze"/> gelesen; darüber wird der
-    /// Prozess beendet und <see cref="GitZuGross"/> geworfen. Kein gekürzter Rumpf: entweder die ganze Ausgabe oder der Ausgang „zu groß“.
+    /// Der eine Leseweg für Text: die Stdout wird stückweise bis zur <paramref name="grenze"/> gelesen; darüber wird der Prozess
+    /// beendet und <see cref="GitZuGross"/> geworfen. Kein gekürzter Rumpf: entweder die ganze Ausgabe oder der Ausgang „zu groß“.
     /// </summary>
     private static GitLauf WarteAufEndeMitGrenze(Process gestartet, string aufruf, Ausgabegrenze grenze)
     {
         using var prozess = gestartet;
-        var fehler = new StringBuilder();
-        prozess.ErrorDataReceived += (_, zeile) => fehler.AppendLine(zeile.Data);
+        var fehler = new Fehlertext();
+        prozess.ErrorDataReceived += (_, zeile) => fehler.HaengeAn(zeile.Data);
         prozess.BeginErrorReadLine();
-        var ausgabe = LesenMitGrenze(prozess, aufruf, grenze);
+        var gelesen = LiesStdout(prozess, grenze);
         prozess.WaitForExit();
-        return new GitLauf(prozess.ExitCode, ausgabe, fehler.ToString().Trim());
+        var istUeberschritten = gelesen.UeberschritteneGrenze is not null;
+        if (istUeberschritten)
+        {
+            throw new GitZuGross(aufruf, grenze.Bytes);
+        }
+        return new GitLauf(prozess.ExitCode, gelesen.Puffer.AlsText(), fehler.Text);
     }
 
-    /// <summary>Liest Stdout als Bytes, bis der Puffer leer ist; überschreitet die Ausgabe die Grenze, wird der Prozess beendet.</summary>
-    private static string LesenMitGrenze(Process prozess, string aufruf, Ausgabegrenze grenze)
+    /// <summary>
+    /// Der eine Ort, an dem die Stdout eines git-Aufrufs gelesen wird: stückweise bis zur <paramref name="grenze"/>; hatte git mehr,
+    /// wird der Prozess beendet und die Grenze gemeldet. Gelesen wird in einen wachsenden Puffer — kein <c>MemoryStream</c>, kein
+    /// <c>ToArray</c>, kein <c>ReadToEnd</c>, kein <c>CopyTo</c> (L4/Kriterium 13). Je Lauf sind höchstens Grenze + ein Lesepuffer
+    /// (80 KiB) gelesen (Kriterium 8).
+    /// </summary>
+    private static Ausgabelesung LiesStdout(Process prozess, Ausgabegrenze grenze)
     {
-        using var speicher = new MemoryStream();
-        var puffer = new byte[81920];
+        var puffer = new Lesepuffer(Lesepuffergroesse);
+        var stueck = new byte[Lesepuffergroesse];
         while (true)
         {
-            var gelesen = prozess.StandardOutput.BaseStream.Read(puffer, 0, puffer.Length);
+            var gelesen = prozess.StandardOutput.BaseStream.Read(stueck, 0, stueck.Length);
             if (gelesen == 0)
             {
-                break;
+                return new Ausgabelesung(puffer, null);
             }
-            if (speicher.Length + gelesen > grenze.Bytes)
+            var bisZurGrenze = grenze.Bytes - puffer.Laenge;
+            if (gelesen > bisZurGrenze)
             {
+                puffer.HaengeAn(stueck, 0, (int)bisZurGrenze);
                 Beende(prozess);
-                throw new GitZuGross(aufruf, grenze.Bytes);
+                return new Ausgabelesung(puffer, grenze);
             }
-            speicher.Write(puffer, 0, gelesen);
+            puffer.HaengeAn(stueck, 0, gelesen);
         }
-        return FremdeBytes.Utf8MitBytemarken.GetString(speicher.ToArray());
+    }
+
+    /// <summary>
+    /// Der wachsende Puffer der einen Lesestelle: hängt an und verdoppelt bei Bedarf. Die Ausgabe steht höchstens einmal als Bytes
+    /// und einmal als Text im Speicher; ein <c>MemoryStream</c> mit <c>ToArray</c> würde sie zweimal kopieren (L4/Kriterium 13).
+    /// </summary>
+    private sealed class Lesepuffer(int groesse)
+    {
+        private byte[] puffer = new byte[groesse];
+
+        public int Laenge { get; private set; }
+
+        public void HaengeAn(byte[] quelle, int ab, int anzahl)
+        {
+            if (anzahl <= 0)
+            {
+                return;
+            }
+            SicherGroesse(Laenge + anzahl);
+            Buffer.BlockCopy(quelle, ab, puffer, Laenge, anzahl);
+            Laenge += anzahl;
+        }
+
+        public string AlsText()
+        {
+            return FremdeBytes.Utf8MitBytemarken.GetString(puffer, 0, Laenge);
+        }
+
+        public byte[] AlsBytes()
+        {
+            if (puffer.Length != Laenge)
+            {
+                Array.Resize(ref puffer, Laenge);
+            }
+            return puffer;
+        }
+
+        private void SicherGroesse(int noetig)
+        {
+            if (noetig <= puffer.Length)
+            {
+                return;
+            }
+            var neu = puffer.Length;
+            while (neu < noetig)
+            {
+                neu *= 2;
+            }
+            Array.Resize(ref puffer, neu);
+        }
+    }
+
+    private sealed record Ausgabelesung(Lesepuffer Puffer, Ausgabegrenze? UeberschritteneGrenze);
+
+    /// <summary>
+    /// Der stderr-Text eines git-Aufrufs, auf <see cref="Hoechstlaenge"/> gekappt (L5): ein fremdes Repo kann beliebig viel auf
+    /// stderr schreiben; die Meldung bleibt eine Zeile und trägt keinen unbegrenzten fremden Text.
+    /// </summary>
+    private sealed class Fehlertext
+    {
+        private const int Hoechstlaenge = 64 * 1024;
+        private readonly StringBuilder bauer = new();
+
+        public string Text => bauer.ToString().Trim();
+
+        public void HaengeAn(string? zeile)
+        {
+            if (zeile is null)
+            {
+                return;
+            }
+            var rest = Hoechstlaenge - bauer.Length;
+            if (rest <= 1)
+            {
+                return;
+            }
+            var platz = rest - 1;
+            bauer.Append(zeile.Length <= platz ? zeile : zeile[..platz]);
+            bauer.Append('\n');
+        }
     }
 
     /// <summary>Beendet einen noch laufenden Prozess samt Kindern; war er schon beendet, ist nichts zu tun. Ein gescheitertes Beenden
