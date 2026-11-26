@@ -97,11 +97,27 @@ test.describe('Dialog Beenden und Abbrechen (B4602)', () => {
     });
     await gr.beendenDialogOeffnen(page);
 
-    page.on('pageerror', fehler => console.log('SEITENFEHLER', fehler.message));
     await page.locator('#beenden-dialog').focus();
     await expect(page.locator('#beenden-dialog')).toBeFocused();
     await page.keyboard.press('Enter');
 
     await expect.poll(() => anforderungen).toBe(1);
+  });
+
+  test('Konsole ohne pageerror: öffnen, Esc, Abbrechen-Dialog, Bestätigen gegen einen Fake, Endzustand', async ({ gr, page }) => {
+    const repo = gr.repoMitCommits();
+    const lauf = await gr.gitreviewAStarten(repo, repo.hashes);
+    const seitenfehler = [];
+    page.on('pageerror', fehler => seitenfehler.push(fehler.stack || fehler.message));
+    await gr.oberflaecheOeffnen(page, lauf);
+
+    await gr.beendenDialogOeffnen(page);
+    await page.keyboard.press('Escape');
+    await page.route('**/api/abbrechen', route => route.fulfill({ status: 200, contentType: 'application/json', body: '{"zustand":"abgebrochen"}' }));
+    await gr.abbrechenDialogOeffnen(page);
+    await gr.beendenDialogBestaetigen(page, 'Abbrechen');
+    await expect(page.getByText('Review abgebrochen', { exact: true })).toBeVisible();
+
+    expect(seitenfehler, `pageerror:\n${seitenfehler.join('\n')}`).toEqual([]);
   });
 });
