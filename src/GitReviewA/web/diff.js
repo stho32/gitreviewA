@@ -188,6 +188,25 @@
     kuerzePfad(ansicht.pfadElement, teile);
   }
 
+  /** Ein Element des Kopfs, dessen Text bei Platzmangel gekürzt werden darf (R00039: Herkunft, Grund und Hinweis des
+      Sprungs), trägt den vollen Text immer auch in `title` und im zugänglichen Namen — sonst wäre die Kürzung still. */
+  function setzeSichtbarenText(element, text) {
+    element.textContent = text;
+    if (text) {
+      element.setAttribute('title', text);
+      element.setAttribute('aria-label', text);
+      return;
+    }
+    element.removeAttribute('title');
+    element.removeAttribute('aria-label');
+  }
+
+  /** Die Herkunft im Kopf (R00012). Sie darf bei Platzmangel gekürzt werden (R00039); der volle Text bleibt über
+      `setzeSichtbarenText` in `title` und im zugänglichen Namen abrufbar. */
+  function setzeHerkunft(ansicht, text) {
+    setzeSichtbarenText(ansicht.herkunftElement, text);
+  }
+
   /** Bei jeder Breitenänderung des Pfads neu messen und kürzen (R00039, B3802): nur so bleibt der gekürzte Text im Kasten,
       statt am Rand hart abgeschnitten zu werden — Fenster, ziehbare Seitenleiste und das Umbrechen der Leiste ändern die Breite. */
   function beobachtePfad(pfadElement) {
@@ -311,7 +330,7 @@
     zustand.anzeige += 1;
     ansicht.farbschlange.aufraeumen();
     delete ansicht.rollElement.dataset.farbe;
-    ansicht.herkunftElement.textContent = '';
+    setzeHerkunft(ansicht, '');
     ansicht.meldungElement.textContent = text;
     ansicht.meldungElement.classList.toggle('fehler', istFehler);
     ansicht.rollElement.replaceChildren();
@@ -382,7 +401,7 @@
     setzeBildlaufAnDenAnfang(ansicht);
     if (uebernommen) {
       if (herkunft) {
-        ansicht.herkunftElement.textContent = herkunft;
+        setzeHerkunft(ansicht, herkunft);
       }
       return;
     }
@@ -392,7 +411,7 @@
       zeigeMeldung(ansicht, KEINE_ZEILENAENDERUNGEN, false);
     }
     if (herkunft) {
-      ansicht.herkunftElement.textContent = herkunft;
+      setzeHerkunft(ansicht, herkunft);
     }
   }
 
@@ -470,23 +489,23 @@
       const zeilen = zeilenDerDiffansicht(antwort.patch, diffansicht);
       if (zeilen.length === 0) {
         zeigeMeldung(ansicht, KEINE_ZEILENAENDERUNGEN, false);
-        ansicht.herkunftElement.textContent = herkunft;
+        setzeHerkunft(ansicht, herkunft);
         return;
       }
       const zuLangGrund = zuLang(zeilen);
       if (zuLangGrund) {
         zeigeZugeklappt(ansicht, antwort, zeilen, zuLangGrund);
-        ansicht.herkunftElement.textContent = herkunft;
+        setzeHerkunft(ansicht, herkunft);
         return;
       }
       zeichneAnsicht(ansicht, antwort, zeilen, diffansicht);
-      ansicht.herkunftElement.textContent = herkunft;
+      setzeHerkunft(ansicht, herkunft);
       return;
     }
     const abschnitte = antwort.abschnitte || [];
     if (abschnitte.length === 0) {
       zeigeMeldung(ansicht, KEINE_ZEILENAENDERUNGEN, false);
-      ansicht.herkunftElement.textContent = 'je Commit, nicht netto — Es fehlen Commits der Auswahl';
+      setzeHerkunft(ansicht, 'je Commit, nicht netto — Es fehlen Commits der Auswahl');
       return;
     }
     zeichneAbschnitte(ansicht, antwort, abschnitte, alsText, diffansicht);
@@ -525,7 +544,7 @@
       Lücken im Stand seines Commits (R00026, Karte #44); „ganze Datei“ zeigt alles. */
   function zeichneAbschnitte(ansicht, antwort, abschnitte, alsText, diffansicht) {
     zeigeMeldung(ansicht, '', false);
-    ansicht.herkunftElement.textContent = 'je Commit, nicht netto — Es fehlen Commits der Auswahl';
+    setzeHerkunft(ansicht, 'je Commit, nicht netto — Es fehlen Commits der Auswahl');
     const mitLuecken = diffansicht !== 'ganz';
     const sammel = document.createDocumentFragment();
     const bereiche = [];
@@ -1259,9 +1278,9 @@
     } else {
       ansicht.sprungVerweisElement.setAttribute('href', link);
     }
-    ansicht.sprungGrundElement.textContent = link === null ? grund : '';
+    setzeSichtbarenText(ansicht.sprungGrundElement, link === null ? grund : '');
     const zeigtHinweis = link !== null && passt && zustand.sprung.geaendert;
-    ansicht.sprungHinweisElement.textContent = zeigtHinweis ? 'Datei seit dem Commit geändert' : '';
+    setzeSichtbarenText(ansicht.sprungHinweisElement, zeigtHinweis ? 'Datei seit dem Commit geändert' : '');
   }
 
   function nummerOderNull(text) {
