@@ -1,6 +1,7 @@
 /* gitreviewA — die eine Kopierstelle der Dateiansicht (R00043, B4207): schreibt den Text byte-genau über die Zwischenablage-API.
    Fehlt sie oder verweigert sie, erscheint der Ersatzweg: die Datei ist Kopierziel, und das `copy`-Ereignis des Browsers legt
    denselben Text ab (darf ohne Berechtigung schreiben). Ohne Geste wird nie geschrieben und nie gelesen — kein `readText`.
+   Nach einem Erfolg bleibt der Knopf bedienbar: jede Geste kopiert erneut.
    Nur `text/plain`: kein `text/html`, kein `text/uri-list` (Angriffsmatrix B7/B8). */
 (function (ziel) {
   'use strict';
@@ -24,7 +25,7 @@
           anlage.kopierziel.classList.remove(KOPIERZIEL_KLASSE);
         }
         if (anlage.knopf) {
-          anlage.knopf.disabled = true;
+          anlage.knopf.disabled = false;
         }
         return true;
       }

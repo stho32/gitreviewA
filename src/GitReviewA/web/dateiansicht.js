@@ -18,7 +18,6 @@
     sprache: null,
     stuecke: null,
     aufgedeckt: false,
-    kopiert: false,
   };
 
   function werte() {
@@ -275,8 +274,9 @@
     return ziel.closest('input:not([type="checkbox"]):not([type="radio"]), textarea, select, [contenteditable="true"]') !== null;
   }
 
+  /** Jede Geste kopiert erneut und bestätigt erneut (R00043, Kriterium 8): kein Merker, der Knopf bleibt bedienbar. */
   function kopiere() {
-    if (zustand.kopiert || !zustand.text) {
+    if (!zustand.text) {
       return;
     }
     const knopf = document.getElementById('datei-kopieren');
@@ -292,11 +292,6 @@
       ansage: document.getElementById('da-ansage'),
       kopierziel: document.getElementById('da-inhalt'),
       verweigert: ZWISCHENABLAGE_VERWEIGERT,
-    }).then(erfolg => {
-      zustand.kopiert = erfolg;
-      if (erfolg) {
-        knopf.disabled = true;
-      }
     });
   }
 

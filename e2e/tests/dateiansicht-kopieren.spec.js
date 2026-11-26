@@ -65,6 +65,30 @@ test.describe('Dateiansicht kopieren', () => {
     });
   });
 
+  test('Kriterium 8: jede Geste kopiert erneut — zweimal c, zweimal geschrieben, zweimal bestätigt', async ({ page }) => {
+    await mitLauf('a.sql', page, async () => {
+      await page.keyboard.press('c');
+      await expect(page.locator('#da-status')).toHaveText('Datei kopiert (3 Zeilen)');
+      expect(Buffer.from(await zwischenablage(page), 'utf8').equals(dateiBytes('a.sql'))).toBe(true);
+
+      await page.locator('#da-status').evaluate(element => { element.textContent = ''; });
+      await page.evaluate(() => navigator.clipboard.writeText('MARKER-ZWISCHENABLAGE'));
+      await expect.poll(() => zwischenablage(page)).toBe('MARKER-ZWISCHENABLAGE');
+
+      await page.keyboard.press('c');
+
+      await expect(page.locator('#datei-kopieren')).toBeEnabled();
+      await expect(page.locator('#da-status')).toHaveText('Datei kopiert (3 Zeilen)');
+      expect(Buffer.from(await zwischenablage(page), 'utf8').equals(dateiBytes('a.sql'))).toBe(true);
+
+      await page.locator('#da-status').evaluate(element => { element.textContent = ''; });
+      await page.locator('#datei-kopieren').click();
+
+      await expect(page.locator('#da-status')).toHaveText('Datei kopiert (3 Zeilen)');
+      expect(Buffer.from(await zwischenablage(page), 'utf8').equals(dateiBytes('a.sql'))).toBe(true);
+    });
+  });
+
   test('Kriterium 15: breit.sql nennt die eine nur gekürzt gezeigte Zeile und kopiert trotzdem alle 50 000 Zeichen', async ({ page }) => {
     await mitLauf('breit.sql', page, async () => {
       await expect(page.locator('#da-hinweis')).toHaveText('1 Zeile nur gekürzt gezeigt');
