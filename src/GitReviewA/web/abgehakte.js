@@ -62,11 +62,16 @@
     element.textContent = werte().zaehlertext(sicht(zustand.dateien, zustand.modus, zustand.commit));
   }
 
-  /** Die Sicht auf die gezeigte Liste: je Muster (R00025) und je Haken (nur bei eingeschaltetem Schalter) ausgeblendet. */
+  /** Die Sicht auf die gezeigte Liste: je Muster (R00025), je Suchtext (R00049) und je Haken (nur bei eingeschaltetem Schalter) ausgeblendet. */
   function sicht(dateien, modus, commit) {
     const muster = window.gitreviewaAusblenden ? window.gitreviewaAusblenden.muster() : [];
     const eintraege = dateien.map(datei => eintragFuer(datei, modus, commit));
-    return werte().sicht(eintraege, muster, zustand.an);
+    return werte().sicht(eintraege, muster, zustand.an, sucheTreffer(dateien));
+  }
+
+  /** Die Pfade, die zum Suchtext passen, oder `null`, wenn keine Suche läuft; den Lauf führt `dateisuche.js` einmal je Text und Liste. */
+  function sucheTreffer(dateien) {
+    return window.gitreviewaDateisuche ? window.gitreviewaDateisuche.trefferFuer(dateien) : null;
   }
 
   /** In „Zusammen“ eine Datei (abgehakt, wenn alle ihre Stellen es sind), in „Einzeln“ eine Stelle (Commit und Datei). */

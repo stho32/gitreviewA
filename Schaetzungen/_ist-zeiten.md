@@ -124,3 +124,4 @@ Nie vom User erfragen.
 | 2026-11-26 | R00049 Dateiliste durchsuchen | I0050 B4501 Suchtext prüfen und Namen abgleichen | Standard | 2h | 0,3h | 0,3h | autonom |
 | 2026-11-26 | R00049 Dateiliste durchsuchen | I0050 B4502 Suchlauf mit Aufwandsgrenze | Standard | 2h | 0,3h | 0,3h | autonom |
 | 2026-11-26 | R00049 Dateiliste durchsuchen | I0050 B4503 Suche als dritter Grund der Sicht | unklar | 2-4h | 0,4h | 0,4h | autonom |
+| 2026-11-26 | R00049 Dateiliste durchsuchen | I0050 B4504 Suchfeld mit Meldung | unklar | 2-4h | 0,5h | 0,5h | autonom |

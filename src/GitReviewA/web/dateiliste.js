@@ -50,6 +50,11 @@
         zeichneDateien(ansicht);
       }
     });
+    document.addEventListener('suche-geaendert', () => {
+      if (zustand.dateien.length > 0) {
+        zeichneDateien(ansicht);
+      }
+    });
     document.addEventListener('abgehakte-geaendert', () => {
       if (zustand.dateien.length > 0) {
         zeichneDateien(ansicht);
@@ -188,7 +193,7 @@
     ansicht.summeElement.textContent = summeText(zustand.dateien);
     if (sicht.sichtbare.length === 0) {
       ansicht.meldungElement.textContent = window.gitreviewaAbgehakteWerte
-        ? window.gitreviewaAbgehakteWerte.meldung(0, zustand.dateien.length)
+        ? window.gitreviewaAbgehakteWerte.meldung(0, zustand.dateien.length, sicht)
         : 'Alle Dateien ausgeblendet';
       ansicht.zeilenElement.replaceChildren();
       meldeGezeichnet();

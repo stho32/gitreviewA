@@ -13,11 +13,13 @@
 <script src="commit-werte.js" defer></script>
 <script src="ausblenden-werte.js" defer></script>
 <script src="ausblenden.js" defer></script>
+<script src="dateisuche-werte.js" defer></script>
 <script src="abgehakte-werte.js" defer></script>
 <script src="abgehakte.js" defer></script>
 <script src="gruppen-werte.js" defer></script>
 <script src="dateiliste-werte.js" defer></script>
 <script src="dateiliste.js" defer></script>
+<script src="dateisuche.js" defer></script>
 <script src="zusammen.js" defer></script>
 <script src="haken-werte.js" defer></script>
 <script src="haken.js" defer></script>
@@ -121,6 +123,13 @@
         </div>
         <div class="werkzeuge">
           <label class="schalter"><input type="checkbox" role="switch" id="ausblenden">Abgehakte ausblenden</label>
+        </div>
+        <div class="dateisuche">
+          <label class="dateisuche-feld">
+            <span class="dateisuche-label">Dateien suchen</span>
+            <input type="search" id="dateiliste-suche" class="dateisuche-eingabe" autocomplete="off" spellcheck="false" placeholder="Name oder Muster, z. B. *.sql" aria-describedby="dateisuche-fehler">
+          </label>
+          <p id="dateisuche-fehler" class="dateisuche-fehler gr-status fehler" role="alert"></p>
         </div>
         <div class="ausblenden">
           <div class="ausblenden-feld">
