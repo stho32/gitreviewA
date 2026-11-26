@@ -102,3 +102,4 @@ Nie vom User erfragen.
 | 2026-11-26 | R00044 Stelle suchen und Bereich kopieren | B4225 Tests | unklar | 2-4h | 0,3h | 0,3h | autonom |
 | 2026-11-26 | R00044 Stelle suchen und Bereich kopieren | Karte #52: ?-Uebersicht in der Dateiansicht | unklar | – | 0,4h | – | autonom |
 | 2026-11-26 | R00045 Mehrere Dateien in der Seitenleiste | I0046 B4241 Quellenliste prüfen | Standard | 2h | 0,6h | 0,6h | autonom |
+| 2026-11-26 | R00045 Mehrere Dateien in der Seitenleiste | I0046 B4242 Dateiliste in der Seitenleiste | unklar | 2-4h | 1,0h | 1,0h | autonom |

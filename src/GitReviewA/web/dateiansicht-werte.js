@@ -90,7 +90,8 @@
     return `Datei kopiert (${zeilenWort(zeilen)}${zusatz})`;
   }
 
-  /** Einen langen Pfad in der Mitte kürzen; der ganze Pfad gehört in den zugänglichen Namen, nie nur ins `title`. */
+  /** Einen langen Pfad in der Mitte kürzen; der ganze Pfad gehört in den zugänglichen Namen, nie nur ins `title`.
+      Geschnitten wird nie mitten in einer Marke `⟨U+XXXX⟩` — ein halbes Zeichen wäre keine Marke mehr (Lehre #17). */
   function pfadKuerzen(pfad, hoechstlaenge) {
     const grenze = hoechstlaenge || 100;
     if (pfad.length <= grenze) {
@@ -99,7 +100,27 @@
     const rest = grenze - 1;
     const vorn = Math.ceil(rest / 2);
     const hinten = rest - vorn;
-    return `${pfad.slice(0, vorn)}…${pfad.slice(pfad.length - hinten)}`;
+    return `${vornOhneHalbeMarke(pfad, vorn)}…${hintenOhneHalbeMarke(pfad, hinten)}`;
+  }
+
+  /** Die ersten `laenge` Zeichen; ein begonnenes, aber nicht geschlossenes `⟨…` fällt weg. */
+  function vornOhneHalbeMarke(text, laenge) {
+    const stueck = text.slice(0, laenge);
+    const letzterAuf = stueck.lastIndexOf('⟨');
+    if (letzterAuf < 0 || stueck.indexOf('⟩', letzterAuf) >= 0) {
+      return stueck;
+    }
+    return stueck.slice(0, letzterAuf);
+  }
+
+  /** Die letzten `laenge` Zeichen; ein `…⟩` ohne sein `⟨` fällt weg. */
+  function hintenOhneHalbeMarke(text, laenge) {
+    const stueck = text.slice(text.length - laenge);
+    const ersterZu = stueck.indexOf('⟩');
+    if (ersterZu < 0 || stueck.lastIndexOf('⟨', ersterZu) >= 0) {
+      return stueck;
+    }
+    return stueck.slice(ersterZu + 1);
   }
 
   const api = {

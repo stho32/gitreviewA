@@ -25,6 +25,9 @@ function ordnerDAnlegen() {
   fs.writeFileSync(pfad('zeile\numbruch.sql'), 'SELECT 1;\n');
   fs.writeFileSync(pfad('cr\r.sql'), 'SELECT 1;\n');
   fs.writeFileSync(pfad('f\uFFFD.sql'), 'INHALT-FFFD\n');
+  for (const nummer of ['001', '002', '003']) {
+    fs.writeFileSync(pfad(`${nummer}.sql`), `-- Migration ${nummer}\nSELECT ${nummer};\n`);
+  }
   fs.writeFileSync(pfad('lang.sql'), Array.from({ length: 30000 }, (_, i) => `SELECT ${i + 1};`).join('\n') + '\n');
   fs.writeFileSync(pfad('breit.sql'), 'x'.repeat(50000) + '\n');
   fs.writeFileSync(pfad('mig.sql'), Array.from({ length: 8 }, (_, i) => `-- Teil ${i + 1}`).join('\r\n'));
@@ -57,6 +60,13 @@ async function starten(d, angabe) {
   return lauf;
 }
 
+/** Mehrere Angaben in Aufrufreihenfolge (R00045): dieselbe Mechanik, nur die Liste wächst. */
+async function startenMit(d, angaben) {
+  const lauf = programmStarten(d.ordner, ['--dateien', ...angaben, '--kein-browser', '--port', '0']);
+  lauf.adresse = await adresseAbwarten(lauf, 15000);
+  return lauf;
+}
+
 async function oeffnen(page, lauf) {
   await page.goto(lauf.adresse);
   await page.waitForSelector('#da-name:not(:empty)', { state: 'attached' });
@@ -66,4 +76,4 @@ async function beenden(lauf) {
   await programmBeenden(lauf);
 }
 
-module.exports = { ordnerDAnlegen, entfernen, starten, oeffnen, beenden };
+module.exports = { ordnerDAnlegen, entfernen, starten, startenMit, oeffnen, beenden };

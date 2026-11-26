@@ -12,6 +12,9 @@
   const DATEIANSICHT = 'dateiansicht';
 
   const zustand = {
+    dateien: [],
+    gewaehlt: -1,
+    ladung: 0,
     stand: null,
     text: '',
     zeilen: null,
@@ -54,6 +57,7 @@
     inhalt.addEventListener('mousemove', zieheWeiter);
     inhalt.addEventListener('click', waehleZeilePerKlick);
     document.addEventListener('mouseup', beendeZiehen);
+    document.getElementById('da-dateien').addEventListener('click', beiLeistenklick);
     zeichneHinweise();
     hilfeLageAnmelden();
     sucheAnmelden();
@@ -61,28 +65,120 @@
     lade();
   }
 
-  /** Die Aktionen, deren Bedienelement diese Laufart gebaut hat — Verfügbarkeit und Hinweis kommen aus dem Katalog (R00030). */
+  /** Die Aktionen, deren Bedienelement diese Laufart gebaut hat — Verfügbarkeit und Hinweis kommen aus dem Katalog (R00030).
+      Der Einklapp-Knopf der Seitenleiste entsteht erst in `einklappen.js` (R00035); er zählt nur, wenn er wirklich gebaut ist. */
   function vorhandeneAktionen() {
-    return ['dateiKopieren', 'bereichKopieren', 'umbruchWechseln', 'suche', 'hilfe'];
+    const aktionen = ['dateiKopieren', 'bereichKopieren', 'umbruchWechseln', 'suche', 'hilfe'];
+    if (document.getElementById('einklappen')) {
+      aktionen.push('seitenleisteEinklappen');
+    }
+    return aktionen;
   }
 
   async function lade() {
     try {
       const liste = await holeJson('api/dateiansicht');
-      const stand = liste.dateien[0];
-      if (!stand) {
+      zustand.dateien = liste.dateien;
+      if (zustand.dateien.length === 0) {
         zeigeMeldung(NAME_NICHT_GELESEN);
         return;
       }
-      zustand.stand = stand;
-      const inhalt = await holeJson('api/dateiansicht/0');
+      zeichneLeiste();
+      await waehle(0);
+    } catch (fehler) {
+      zeigeMeldung(`${NAME_NICHT_GELESEN}: ${fehler.message}`);
+    }
+  }
+
+  /** Die Datei über ihre Nummer laden; eine späte Antwort einer früheren Wahl wird verworfen (R00045, Kriterium 5).
+      Markierung und Suchtreffer gehören der Datei, der Umbruch bleibt: der Inhalt wird für die neue Datei neu gezeichnet. */
+  async function waehle(nummer) {
+    const ladung = (zustand.ladung += 1);
+    zustand.gewaehlt = nummer;
+    markiereGewaehlt();
+    try {
+      const inhalt = await holeJson(`api/dateiansicht/${nummer}`);
+      if (ladung !== zustand.ladung) {
+        return;
+      }
+      zustand.stand = zustand.dateien[nummer];
       zustand.text = inhalt.text;
-      zustand.sprache = window.spracheZuPfad(stand.echterPfad);
-      zeichneKopf(stand);
+      zustand.zeilen = null;
+      zustand.stuecke = null;
+      zustand.aufgedeckt = false;
+      zustand.sprache = window.spracheZuPfad(zustand.stand.echterPfad);
+      zeichneKopf(zustand.stand);
       zeichneInhalt();
       faerbe();
     } catch (fehler) {
-      zeigeMeldung(`${NAME_NICHT_GELESEN}: ${fehler.message}`);
+      if (ladung === zustand.ladung) {
+        zeigeMeldung(`${NAME_NICHT_GELESEN}: ${fehler.message}`);
+      }
+    }
+  }
+
+  /** Klick oder `j`/`k` wählen eine andere Datei; die Nummer läuft um (R00045, Kriterien 1 und 2). */
+  function schritt(richtung) {
+    const anzahl = zustand.dateien.length;
+    if (anzahl === 0) {
+      return;
+    }
+    const von = zustand.gewaehlt < 0 ? (richtung > 0 ? -1 : anzahl) : zustand.gewaehlt;
+    const ziel = (von + richtung + anzahl) % anzahl;
+    if (ziel === zustand.gewaehlt) {
+      return;
+    }
+    waehle(ziel);
+    fokussiereZeile(ziel);
+  }
+
+  function beiLeistenklick(ereignis) {
+    const zeile = ereignis.target.closest('.da-datei');
+    if (!zeile) {
+      return;
+    }
+    const nummer = Number(zeile.dataset.nummer);
+    if (nummer === zustand.gewaehlt) {
+      return;
+    }
+    waehle(nummer);
+  }
+
+  /** Je Datei eine Zeile: Anzeigename (Marken aus dem Server, in der Mitte gekürzt, voll im zugänglichen Namen) und Zeilenzahl. */
+  function zeichneLeiste() {
+    document.getElementById('da-dateien').replaceChildren(...zustand.dateien.map(dateiElement));
+  }
+
+  function dateiElement(datei) {
+    const zeile = document.createElement('li');
+    zeile.className = 'datei-zeile da-datei';
+    zeile.dataset.nummer = String(datei.nummer);
+    zeile.tabIndex = -1;
+    zeile.setAttribute('aria-current', String(datei.nummer === zustand.gewaehlt));
+    zeile.setAttribute('aria-label', datei.anzeigename);
+    const name = document.createElement('span');
+    name.className = 'da-datei-name';
+    name.textContent = werte().pfadKuerzen(datei.anzeigename, 100);
+    name.setAttribute('title', datei.anzeigename);
+    const anzahl = document.createElement('span');
+    anzahl.className = 'da-datei-zeilen';
+    anzahl.textContent = werte().zeilenWort(datei.zeilen);
+    zeile.append(name, anzahl);
+    return zeile;
+  }
+
+  /** Die Markierung der Liste folgt der Wahl sofort — auch bevor der Text geladen ist. */
+  function markiereGewaehlt() {
+    for (const zeile of document.querySelectorAll('#da-dateien .da-datei')) {
+      zeile.setAttribute('aria-current', String(Number(zeile.dataset.nummer) === zustand.gewaehlt));
+    }
+  }
+
+  function fokussiereZeile(nummer) {
+    const zeile = document.querySelector(`#da-dateien .da-datei[data-nummer="${nummer}"]`);
+    if (zeile) {
+      zeile.focus({ preventScroll: true });
+      zeile.scrollIntoView({ block: 'nearest' });
     }
   }
 
@@ -439,6 +535,21 @@
       schalteUmbruch();
       return;
     }
+    if (aktion === 'dateiWeiter') {
+      ereignis.preventDefault();
+      schritt(1);
+      return;
+    }
+    if (aktion === 'dateiZurueck') {
+      ereignis.preventDefault();
+      schritt(-1);
+      return;
+    }
+    if (aktion === 'seitenleisteEinklappen') {
+      ereignis.preventDefault();
+      klappeSeitenleiste();
+      return;
+    }
     if (aktion === 'suche') {
       ereignis.preventDefault();
       fokussiereSuche();
@@ -458,6 +569,14 @@
     }
     if (beiBereichstaste(ereignis)) {
       ereignis.preventDefault();
+    }
+  }
+
+  /** `b` betätigt den Ausklapp-Knopf an der Grenze über denselben Weg wie die Maus (R00035). */
+  function klappeSeitenleiste() {
+    const knopf = document.getElementById('einklappen');
+    if (knopf) {
+      knopf.click();
     }
   }
 

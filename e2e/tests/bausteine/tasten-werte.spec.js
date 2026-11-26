@@ -285,11 +285,18 @@ test.describe('Baustein Tasten-Werte — Katalogeintrag je Laufart (R00044, Kart
     const review = werte.belegung(reviewLage()).flatMap(gruppe => gruppe.eintraege);
     const aktionen = eintraege => eintraege.map(eintrag => eintrag.aktion);
 
-    expect(aktionen(dateiansicht).sort()).toEqual(['bereichKopieren', 'dateiKopieren', 'hilfe', 'schliessen', 'suche', 'umbruchWechseln']);
+    expect(aktionen(dateiansicht).sort()).toEqual([
+      'bereichKopieren', 'dateiKopieren', 'dateiWeiter', 'dateiZurueck', 'hilfe', 'schliessen', 'seitenleisteEinklappen', 'suche', 'umbruchWechseln',
+    ]);
     for (const eintrag of dateiansicht) {
       expect(eintrag.verfuegbar, `${eintrag.text} ist in der Dateiansicht verfügbar`).toBe(true);
     }
-    for (const fremd of ['dateiWeiter', 'abhaken', 'ansichtWechseln', 'zeileAnmerken', 'dateiAnmerken']) {
+    // Die Seitenleiste der Dateiansicht (R00045) trägt dieselben Listenkürzel wie der Review: `j`/`k` wählen, `b` klappt ein.
+    for (const geteilt of ['dateiWeiter', 'dateiZurueck', 'seitenleisteEinklappen']) {
+      expect(aktionen(dateiansicht), `${geteilt} gehört in die Dateiansicht`).toContain(geteilt);
+      expect(aktionen(review), `${geteilt} gehört in den Review`).toContain(geteilt);
+    }
+    for (const fremd of ['abhaken', 'ansichtWechseln', 'zeileAnmerken', 'dateiAnmerken']) {
       expect(aktionen(dateiansicht), `${fremd} gehört nicht in die Dateiansicht`).not.toContain(fremd);
       expect(aktionen(review), `${fremd} gehört in den Review`).toContain(fremd);
     }

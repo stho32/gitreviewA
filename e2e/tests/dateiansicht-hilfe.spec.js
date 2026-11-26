@@ -1,6 +1,7 @@
 'use strict';
 // Karte #52 (Kommentar): `?` zeigt auch in der Dateiansicht die Kürzel-Übersicht — nur die Kürzel dieser Laufart
-// (`c`, `y`, `w`, `/`, Esc), aus demselben Katalog (`tasten-werte.js`), Ziel und Text je Laufart.
+// (`c`, `y`, `w`, `/`, Esc) plus die Listenkürzel der Seitenleiste (`j`, `k`, `b`, Karte #53), aus demselben Katalog
+// (`tasten-werte.js`), Ziel und Text je Laufart.
 const { test, expect } = require('@playwright/test');
 const dTreiber = require('../treiber/dateiansicht-d.js');
 
@@ -50,8 +51,8 @@ test.describe('Dateiansicht Kürzel-Übersicht (Karte #52)', () => {
       const eintraege = gruppen.flatMap(gruppe => gruppe.eintraege);
       const anzeigen = eintraege.flatMap(eintrag => eintrag.anzeige);
 
-      expect(anzeigen).toEqual(expect.arrayContaining(['?', 'Esc', 'c', 'y', 'w', '/']));
-      for (const fremd of ['j', 'k', 'n', 'p', 'x', 'm', 'a', 'e', '1', '2', '3', 'b', 'r', 'h', 'u', 'g', 'o', 's', 'v', 'l', '↓', '↑']) {
+      expect(anzeigen).toEqual(expect.arrayContaining(['?', 'Esc', 'c', 'y', 'w', '/', 'j', 'k', 'b']));
+      for (const fremd of ['n', 'p', 'x', 'm', 'a', 'e', '1', '2', '3', 'r', 'h', 'u', 'g', 'o', 's', 'v', 'l', '↓', '↑']) {
         expect(anzeigen, `Kürzel ${fremd} gehört nicht in die Dateiansicht`).not.toContain(fremd);
       }
       for (const eintrag of eintraege) {

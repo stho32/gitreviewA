@@ -255,3 +255,80 @@
   margin: 0;
   font-size: 12px;
 }
+/* Seitenleiste und zweispaltiger Aufbau (R00045): dieselben Klassen und Skripte wie im Review (R00033–R00035) — hier ohne
+   Ergebnis-Spalte, also drei statt fünf Spalten. Der Trenner und das Einklappen wirken allein über das Layout; `trenner.js`
+   und `einklappen.js` setzen die Klassen `gr-eingeklappt`/`gr-ergebnis-eingeklappt` und die Breitenvariablen. */
+.da-kopf {
+  flex: none;
+}
+
+.da-haupt {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+  padding: 0;
+}
+
+.da-links {
+  min-block-size: 0;
+}
+
+.da-dateien {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.da-datei {
+  cursor: pointer;
+}
+
+.da-datei-name {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.da-datei-zeilen {
+  flex: none;
+  color: var(--kd-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.da-haupt .da-roll {
+  flex: 1 1 0;
+}
+
+@media (min-width:566px) {
+  .da-ansicht {
+    flex: 1 1 auto;
+    min-block-size: 0;
+    grid-template-columns:var(--gr-leiste-breite,360px) var(--gr-trenner-breite,6px) minmax(0,1fr);
+  }
+
+  .da-ansicht.gr-eingeklappt {
+    grid-template-columns:0 var(--gr-streifen-breite,24px) minmax(0,1fr);
+  }
+
+  .da-ansicht.gr-eingeklappt.gr-ergebnis-eingeklappt {
+    grid-template-columns:0 var(--gr-streifen-breite,24px) minmax(0,1fr);
+  }
+
+  .da-links {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .da-dateien {
+    flex: 1 1 auto;
+    min-block-size: 0;
+    overflow: auto;
+  }
+
+  .da-haupt {
+    overflow: hidden;
+  }
+}
