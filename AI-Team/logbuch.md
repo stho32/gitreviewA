@@ -513,3 +513,8 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Befund des dokumentar (#39); PO (Sonnet) entschied: Lücken auch in „Zusammen“ (netto und je Abschnitt). Bau 44 min — Lücken-Logik aus „Einzeln“ geteilt statt doppelt (diff.js 126+/68−), Code-Review ohne Befund, Entwicklertest nach Risiko entfallen. Karte gesamt 0,94 $.
 - Lehre (Factory-Ebene): Mit drei Karten, die jeweils eigene volle Suiten fahren, wackelt im Gate fast jedes Mal ein anderer Zeit- oder Fokustest (je 8/8 einzeln grün). Gate und volle Suiten der Rollen sollten sich nicht überlappen — Vorschlag: volle Suite der Rollen nur, wenn kein Gate läuft, sonst nur betroffene Specs.
 - Gate: NUnit 1648/1648 zweimal, Playwright 875/876 bzw. 874/876 (Lastwackler).
+
+## Retrospektive #46 I0038 Ergebnis-Spalte live (2026-11-26)
+- Durchlauf: Bau 63 min (6 Bubbles, Einklappen aus I0036 wiederverwendet), Code-Review ohne Muss, Security (Sonnet) ohne Muss — Spalte und stdout aus demselben Formatierer, `cmp` bei 4,69 MB gleich; Entwicklertest ohne Befund. Ohne eine einzige Nacharbeit. Karte gesamt 2,13 $.
+- Lehre: Eine Anzeige, die einen Vertrag spiegelt, holt ihn vom Server statt ihn im Browser nachzubauen — dann kann Anzeige und Wirklichkeit nicht auseinanderlaufen.
+- Gate: NUnit 1648/1648 zweimal, Playwright 904/904 zweimal.
