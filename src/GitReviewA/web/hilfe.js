@@ -72,27 +72,32 @@
 
   /** Hintergrund inert: Kopf, Inhalt und Fußzeile sind weder zu bedienen noch vorzulesen. */
   function setzeHintergrundInert(inert) {
-    for (const selektor of ['header.kz', 'main.gr-inhalt', 'footer.statuszeile']) {
-      const element = document.querySelector(selektor);
-      if (!element) {
-        continue;
-      }
-      if (inert) {
-        element.setAttribute('inert', '');
-      } else {
-        element.removeAttribute('inert');
+    for (const selektor of ['header.kz', 'main.gr-inhalt', 'footer.statuszeile', '[data-hilfe-hintergrund]']) {
+      for (const element of document.querySelectorAll(selektor)) {
+        if (inert) {
+          element.setAttribute('inert', '');
+        } else {
+          element.removeAttribute('inert');
+        }
       }
     }
   }
 
-  /** Die Hilfe aus dem Katalog: je Bereich eine Gruppe mit ihren Einträgen; nicht verfügbare sind als solche markiert. */
+  /** Die Hilfe aus dem Katalog: je Bereich eine Gruppe mit ihren Einträgen; nicht verfügbare sind als solche markiert.
+      Die Lage (Laufart, Modus, gebaute Bedienelemente) kommt von der Seite — die Dateiansicht meldet ihre eigene. */
   function zeichneInhalt() {
     const inhalt = dialogElement().querySelector('.hilfe-inhalt');
-    const lage = {
+    inhalt.replaceChildren(...window.gitreviewaTastenWerte.belegung(lage()).map(gruppeElement));
+  }
+
+  function lage() {
+    if (typeof window.gitreviewaHilfeLage === 'function') {
+      return window.gitreviewaHilfeLage();
+    }
+    return {
       modus: window.gitreviewaModus ? window.gitreviewaModus.hole() : window.gitreviewaTastenWerte.EINZELN,
       vorhanden: window.gitreviewaTasten ? window.gitreviewaTasten.vorhandeneAktionen() : [],
     };
-    inhalt.replaceChildren(...window.gitreviewaTastenWerte.belegung(lage).map(gruppeElement));
   }
 
   function gruppeElement(gruppe) {

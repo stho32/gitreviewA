@@ -17,6 +17,7 @@
 <script src="suche-werte.js" defer></script>
 <script src="kopieren.js" defer></script>
 <script src="hinweise.js" defer></script>
+<script src="hilfe.js" defer></script>
 <script src="suche.js" defer></script>
 <script src="dateiansicht.js" defer></script>
 </head>
@@ -28,6 +29,7 @@
     <p id="da-pfad" class="da-pfad mono"></p>
     <div class="da-knoepfe">
       <button type="button" id="datei-kopieren" class="btn">Datei kopieren</button>
+      <button type="button" id="hilfe-knopf" class="btn">Kürzel</button>
       <button type="button" id="schliessen" class="btn">Schließen</button>
     </div>
   </div>
@@ -54,9 +56,16 @@
     <p id="da-meldung" class="da-meldung"></p>
     <div id="da-inhalt" class="da-inhalt umbr"></div>
   </div>
-  <div id="da-fuss" class="da-fuss">
+  <div id="da-fuss" class="da-fuss" data-hilfe-hintergrund>
     <p class="da-schliessen-hinweis muted">„Schließen“ beendet die Ansicht; das Ergebnis bleibt leer.</p>
   </div>
 </main>
+<!-- Hilfe-Overlay (R00030): dieselbe Übersicht wie im Review, aus dem Katalog (`tasten-werte.js`) mit der Laufart Dateiansicht. -->
+<div id="hilfe-scrim" class="hilfe-scrim" hidden></div>
+<div id="hilfe" class="hilfe" role="dialog" aria-modal="true" aria-labelledby="h-hilfe" hidden>
+  <h2 id="h-hilfe">Tastaturkürzel</h2>
+  <button type="button" id="hilfe-zu" class="btn btn-sym zu" aria-label="Kürzel schließen">×</button>
+  <div class="hilfe-inhalt"></div>
+</div>
 </body>
 </html>

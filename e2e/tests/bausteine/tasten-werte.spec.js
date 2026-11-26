@@ -257,6 +257,66 @@ test.describe('Baustein Tasten-Werte — Katalog `b` der Seitenleiste (R00035, B
   });
 });
 
+test.describe('Baustein Tasten-Werte — Katalogeintrag je Laufart (R00044, Karte #52)', () => {
+  const DATEIANSICHT = werte.DATEIANSICHT;
+  const dateiansichtLage = (zusatz = {}) => lage({ laufart: DATEIANSICHT, vorhanden: GEBAUT, ...zusatz });
+  const reviewLage = (zusatz = {}) => lage({ laufart: werte.REVIEW, vorhanden: GEBAUT, ...zusatz });
+
+  test('soll `y` genau einmal als „Bereich kopieren“ der Dateiansicht führen', () => {
+    const eintraege = werte.EINTRAEGE.filter(eintrag => eintrag.taste === 'y');
+
+    expect(eintraege).toHaveLength(1);
+    expect(eintraege[0].aktion).toBe('bereichKopieren');
+    expect(eintraege[0].text).toBe('Bereich kopieren');
+    expect(eintraege[0].ziel).toBe('#bereich-kopieren');
+    expect(eintraege[0].anzeige).toEqual(['y']);
+    expect(eintraege[0].laufart).toBe(DATEIANSICHT);
+  });
+
+  test('soll `y` und `c` nur in der Dateiansicht abfangen, im Review nicht', () => {
+    expect(werte.aktionFuer('y', dateiansichtLage())).toBe('bereichKopieren');
+    expect(werte.aktionFuer('c', dateiansichtLage())).toBe('dateiKopieren');
+    expect(werte.aktionFuer('y', reviewLage())).toBeNull();
+    expect(werte.aktionFuer('c', reviewLage())).toBeNull();
+  });
+
+  test('soll nur die Kürzel der jeweiligen Laufart in der Hilfe zeigen', () => {
+    const dateiansicht = werte.belegung(dateiansichtLage()).flatMap(gruppe => gruppe.eintraege);
+    const review = werte.belegung(reviewLage()).flatMap(gruppe => gruppe.eintraege);
+    const aktionen = eintraege => eintraege.map(eintrag => eintrag.aktion);
+
+    expect(aktionen(dateiansicht).sort()).toEqual(['bereichKopieren', 'dateiKopieren', 'hilfe', 'schliessen', 'suche', 'umbruchWechseln']);
+    for (const eintrag of dateiansicht) {
+      expect(eintrag.verfuegbar, `${eintrag.text} ist in der Dateiansicht verfügbar`).toBe(true);
+    }
+    for (const fremd of ['dateiWeiter', 'abhaken', 'ansichtWechseln', 'zeileAnmerken', 'dateiAnmerken']) {
+      expect(aktionen(dateiansicht), `${fremd} gehört nicht in die Dateiansicht`).not.toContain(fremd);
+      expect(aktionen(review), `${fremd} gehört in den Review`).toContain(fremd);
+    }
+  });
+
+  test('soll Ziel und Text je Laufart überschreiben (/, Esc)', () => {
+    expect(werte.zielFuer(werte.eintragFuerTaste('/'), dateiansichtLage())).toBe('#da-suche');
+    expect(werte.zielFuer(werte.eintragFuerTaste('/'), reviewLage())).toBe('#suche-eingabe');
+    expect(werte.textFuer(werte.eintragFuerTaste('/'), dateiansichtLage())).toBe('In der Datei suchen');
+    expect(werte.textFuer(werte.eintragFuerTaste('/'), reviewLage())).toBe('Suche im Diff');
+    expect(werte.textFuer(werte.eintragFuerTaste('Escape'), dateiansichtLage())).toBe('Markierung aufheben, Übersicht schließen');
+    expect(werte.textFuer(werte.eintragFuerTaste('Escape'), reviewLage())).toBe('Notizfeld verwerfen, Ebene schließen');
+  });
+
+  test('soll die Hinweise je Laufart an das richtige Bedienelement liefern', () => {
+    const dateiansicht = werte.hinweise(dateiansichtLage());
+    const selektoren = dateiansicht.map(hinweis => hinweis.selektor);
+
+    expect(selektoren).toEqual(expect.arrayContaining(['#datei-kopieren', '#bereich-kopieren', '#da-suche', '#hilfe-knopf', '#da-umbruch']));
+    for (const fremd of ['#diff .df-sc', '#naechste-ungepruefte', '.anordnung-wahl', '#diff .sprung-knopf']) {
+      expect(selektoren, `${fremd} gehört nicht in die Dateiansicht`).not.toContain(fremd);
+    }
+    expect(dateiansicht.find(hinweis => hinweis.selektor === '#bereich-kopieren').aria).toBe('y');
+    expect(dateiansicht.find(hinweis => hinweis.selektor === '#da-suche').aria).toBe('/');
+  });
+});
+
 test.describe('Baustein Tasten-Werte — Katalog `r` der Ergebnis-Spalte (R00037, B3604)', () => {
   test('soll `r` genau einmal fuehren, mit der Aktion und dem Ziel des Ausklapp-Knopfes (Kriterium 10)', () => {
     const eintraege = werte.EINTRAEGE.filter(eintrag => eintrag.taste === 'r');

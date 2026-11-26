@@ -55,6 +55,7 @@
     inhalt.addEventListener('click', waehleZeilePerKlick);
     document.addEventListener('mouseup', beendeZiehen);
     zeichneHinweise();
+    hilfeLageAnmelden();
     sucheAnmelden();
     window.gitreviewaKopieren.zielQuelle(bereichsziel);
     lade();
@@ -410,6 +411,7 @@
     if (ereignis.defaultPrevented || ereignis.isComposing) {
       return;
     }
+    const offenerDialog = Boolean(window.gitreviewaHilfe && window.gitreviewaHilfe.istOffen());
     const aktion = tasten().aktionFuer(ereignis.key, {
       laufart: DATEIANSICHT,
       feldImFokus: imEingabefeld(ereignis.target),
@@ -419,7 +421,7 @@
         meta: ereignis.metaKey,
         altGraph: typeof ereignis.getModifierState === 'function' && ereignis.getModifierState('AltGraph'),
       },
-      offenerDialog: false,
+      offenerDialog,
       vorhanden: vorhandeneAktionen(),
     });
     if (aktion === 'dateiKopieren') {
@@ -440,6 +442,15 @@
     if (aktion === 'suche') {
       ereignis.preventDefault();
       fokussiereSuche();
+      return;
+    }
+    if (aktion === 'hilfe') {
+      ereignis.preventDefault();
+      window.gitreviewaHilfe.oeffnen();
+      return;
+    }
+    if (aktion === 'schliessen') {
+      window.gitreviewaHilfe.schliessen();
       return;
     }
     if (imEingabefeld(ereignis.target)) {
@@ -554,6 +565,11 @@
       mit der Laufart „Dateiansicht“ — das Kürzel `w` steht hier am Umbruch-Schalter (R00039, B3), `/` am Suchfeld (R00044). */
   function zeichneHinweise() {
     window.gitreviewaHinweise.setzen(document, tasten().hinweise({ laufart: tasten().DATEIANSICHT }));
+  }
+
+  /** Die Lage der Kürzel-Übersicht für diese Laufart (R00030, R00044): der Katalog liefert daraus die Zeilen. */
+  function hilfeLageAnmelden() {
+    window.gitreviewaHilfeLage = () => ({ laufart: DATEIANSICHT, vorhanden: vorhandeneAktionen() });
   }
 
   /** Die Suche an die Dateiansicht anschließen (R00044, B4224): dieselbe Suche wie im Diff (`suche.js`), kein zweiter Bau.
