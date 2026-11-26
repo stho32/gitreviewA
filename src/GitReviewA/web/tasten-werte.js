@@ -25,7 +25,7 @@
    * Beschreibung der Aktion. `nurEinzeln` gilt nur im Modus „Einzeln“; `ziel` nennt das Bedienelement, dessen Vorhandensein die
    * Aktion verfügbar macht und das den Hinweis (`<kbd>` und `aria-keyshortcuts`) trägt (die Karte des Bedienelements setzt es,
    * ohne diese Schicht umzubauen); `zielJeLaufart` überschreibt `ziel` für eine Laufart (dasselbe Kürzel steht in der
-   * Dateiansicht an einem anderen Bedienelement, R00039); `imFeld` heißt: die Taste wirkt nur im Feld selbst und wird hier nie
+   * Dateiansicht an einem anderen Bedienelement, R00039/R00044); `imFeld` heißt: die Taste wirkt nur im Feld selbst und wird hier nie
    * abgefangen. `kurz` ist der Text der Statuszeile. Eine Karte, die ein Bedienelement mit Kürzel baut, ergänzt ihren Eintrag
    * hier — Hinweis und Verfügbarkeit folgen aus demselben `ziel`.
    */
@@ -54,10 +54,11 @@
     { taste: 'v', aktion: 'anordnungWechseln', bereich: DIFF, text: 'untereinander / nebeneinander (Ansicht ▾)', anzeige: ['v'], ziel: '#ansicht-knopf' },
     { taste: 'w', aktion: 'umbruchWechseln', bereich: DIFF, text: 'Umbruch (Ansicht ▾)', anzeige: ['w'], ziel: '#ansicht-knopf', zielJeLaufart: { [DATEIANSICHT]: '#da-umbruch' } },
     { taste: 'c', aktion: 'dateiKopieren', bereich: DIFF, text: 'Datei kopieren', anzeige: ['c'], kurz: 'Datei kopieren', laufart: DATEIANSICHT, ziel: '#datei-kopieren' },
+    { taste: 'y', aktion: 'bereichKopieren', bereich: DIFF, text: 'Bereich kopieren', anzeige: ['y'], kurz: 'Bereich kopieren', laufart: DATEIANSICHT, ziel: '#bereich-kopieren' },
     { taste: 'l', aktion: 'leerraumWechseln', bereich: DIFF, text: 'Leerraum (Ansicht ▾)', anzeige: ['l'], ziel: '#ansicht-knopf' },
     { taste: 'g', aktion: 'naechsteLuecke', bereich: DIFF, text: 'nächste Lücke', anzeige: ['g'] },
     { taste: 'o', aktion: 'inVsCode', bereich: DIFF, text: 'Stelle in VS Code öffnen', anzeige: ['o'], ziel: '#diff .sprung-knopf' },
-    { taste: '/', aktion: 'suche', bereich: DIFF, text: 'Suche im Diff', anzeige: ['/'], ziel: '#suche-eingabe' },
+    { taste: '/', aktion: 'suche', bereich: DIFF, text: 'Suche im Diff', anzeige: ['/'], ziel: '#suche-eingabe', zielJeLaufart: { [DATEIANSICHT]: '#da-suche' } },
     { taste: 'a', aktion: 'dateiAnmerken', bereich: ANMERKUNG, text: 'Datei anmerken', anzeige: ['a'], ziel: '#diff .datei-anmerken' },
     { taste: 'e', aktion: 'anmerkungAendern', bereich: ANMERKUNG, text: 'Anmerkung ändern', anzeige: ['e'] },
     { taste: 'Enter', aktion: 'anmerkungSpeichern', bereich: ANMERKUNG, text: 'Anmerkung speichern (im Feld)', anzeige: ['Strg', 'Enter'], imFeld: true },

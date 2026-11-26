@@ -1,7 +1,8 @@
-/* gitreviewA — die eine Kopierstelle der Dateiansicht (R00043, B4207): schreibt den Text byte-genau über die Zwischenablage-API.
-   Fehlt sie oder verweigert sie, erscheint der Ersatzweg: die Datei ist Kopierziel, und das `copy`-Ereignis des Browsers legt
-   denselben Text ab (darf ohne Berechtigung schreiben). Ohne Geste wird nie geschrieben und nie gelesen — kein `readText`.
-   Nach einem Erfolg bleibt der Knopf bedienbar: jede Geste kopiert erneut.
+/* gitreviewA — die eine Kopierstelle der Dateiansicht (R00043 B4207, R00044 B4223): schreibt den Text byte-genau über die
+   Zwischenablage-API. Das **Kopierziel** (Datei oder Bereich) bestimmt der Aufrufer an einer Stelle und übergibt `text` und
+   Bestätigung; Knopf, Kürzel und Ersatzweg nutzen nur sie. Fehlt die API oder verweigert sie, erscheint der Ersatzweg: das
+   Kopierziel ist markiert, und das `copy`-Ereignis des Browsers legt denselben Text ab (darf ohne Berechtigung schreiben).
+   Ohne Geste wird nie geschrieben und nie gelesen — kein `readText`. Nach einem Erfolg bleibt der Knopf bedienbar.
    Nur `text/plain`: kein `text/html`, kein `text/uri-list` (Angriffsmatrix B7/B8). */
 (function (ziel) {
   'use strict';
@@ -10,6 +11,8 @@
   const KOPIERZIEL_KLASSE = 'da-kopierziel';
 
   let ersatz = null;
+  let zielHolen = null;
+  let hoerer = false;
 
   /** Kopiert `text`; `true` bei Erfolg. `optionen`: `{knopf, status, ansage, kopierziel, verweigert}`. */
   function kopiere(text, bestaetigung, optionen) {
@@ -50,33 +53,45 @@
     return zwischenablage.writeText(text).then(() => true, () => false);
   }
 
-  /** Nach einer Verweigerung: Datei als Kopierziel markieren; Strg+C legt denselben Text ab, freie Auswahl bleibt dem Browser. */
+  /** Das Kopierziel für Strg+C (eine Stelle): `holen()` liefert `{text, bestaetigung, optionen}` oder `null`. */
+  function zielQuelle(holen) {
+    zielHolen = holen;
+    hoereAufKopieren();
+  }
+
+  /** Nach einer Verweigerung: das Kopierziel markieren; Strg+C legt denselben Text ab, freie Auswahl bleibt dem Browser. */
   function markiereErsatz(text, bestaetigung, anlage) {
-    ersatz = { text, bestaetigung, status: anlage.status, ansage: anlage.ansage };
+    ersatz = { text, bestaetigung, optionen: anlage };
     if (!anlage.kopierziel) {
       return;
     }
     anlage.kopierziel.classList.add(KOPIERZIEL_KLASSE);
-    if (anlage.kopierziel.dataset.kopierbereit === 'ja') {
+    hoereAufKopieren();
+  }
+
+  function hoereAufKopieren() {
+    if (hoerer) {
       return;
     }
-    anlage.kopierziel.dataset.kopierbereit = 'ja';
+    hoerer = true;
     document.addEventListener('copy', beiKopieren);
   }
 
+  /** Strg+C ohne freie Auswahl legt das Kopierziel ab: den markierten Bereich, sonst den Ersatzweg nach einer Verweigerung. */
   function beiKopieren(ereignis) {
-    if (!ersatz) {
-      return;
-    }
     const auswahl = typeof window.getSelection === 'function' ? window.getSelection() : null;
     const freieAuswahl = auswahl && !auswahl.isCollapsed && auswahl.toString().length > 0;
     if (freieAuswahl) {
       return;
     }
-    ereignis.clipboardData.setData('text/plain', ersatz.text);
+    const aktuell = (zielHolen && zielHolen()) || ersatz;
+    if (!aktuell) {
+      return;
+    }
+    ereignis.clipboardData.setData('text/plain', aktuell.text);
     ereignis.preventDefault();
-    melde(ersatz.status, ersatz.bestaetigung, false);
-    melde(ersatz.ansage, ersatz.bestaetigung, false);
+    melde(aktuell.optionen.status, aktuell.bestaetigung, false);
+    melde(aktuell.optionen.ansage, aktuell.bestaetigung, false);
   }
 
   function melde(element, text, istFehler) {
@@ -87,7 +102,7 @@
     element.classList.toggle('fehler', Boolean(istFehler));
   }
 
-  const api = { kopiere, VERWEIGERT };
+  const api = { kopiere, zielQuelle, VERWEIGERT };
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = api;
   } else {

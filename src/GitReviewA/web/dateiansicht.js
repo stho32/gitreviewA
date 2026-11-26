@@ -8,6 +8,7 @@
   const BLOCK_ZEILEN = 500;
   const NAME_NICHT_GELESEN = 'Datei konnte nicht geladen werden';
   const ZWISCHENABLAGE_VERWEIGERT = 'Zwischenablage verweigert — Strg+C kopiert die Datei';
+  const VERWEIGERT_BEREICH = 'Zwischenablage verweigert — Strg+C kopiert den Bereich';
   const DATEIANSICHT = 'dateiansicht';
 
   const zustand = {
@@ -18,10 +19,19 @@
     sprache: null,
     stuecke: null,
     aufgedeckt: false,
+    bereich: null,
+    anker: null,
+    ziehen: null,
+    ziehenBehandelt: false,
   };
 
   function werte() {
     return window.gitreviewaDateiansichtWerte;
+  }
+
+  /** Die reine Bereichs-Rechnung aus `bereich-werte.js` (R00044, B4221): `bereich`, `ausschnitt`, `bereichsangabe`. */
+  function bereichWerte() {
+    return window;
   }
 
   function umbruchWerte() {
@@ -37,10 +47,22 @@
     document.addEventListener('keydown', beiTaste);
     document.getElementById('schliessen').addEventListener('click', schliesse);
     document.getElementById('da-umbruch').addEventListener('change', () => schalteUmbruch());
-    const kopieren = document.getElementById('datei-kopieren');
-    kopieren.addEventListener('click', () => kopiere());
+    document.getElementById('datei-kopieren').addEventListener('click', () => kopiere('datei'));
+    document.getElementById('bereich-kopieren').addEventListener('click', () => kopiere('bereich'));
+    const inhalt = document.getElementById('da-inhalt');
+    inhalt.addEventListener('mousedown', beginneZiehen);
+    inhalt.addEventListener('mousemove', zieheWeiter);
+    inhalt.addEventListener('click', waehleZeilePerKlick);
+    document.addEventListener('mouseup', beendeZiehen);
     zeichneHinweise();
+    sucheAnmelden();
+    window.gitreviewaKopieren.zielQuelle(bereichsziel);
     lade();
+  }
+
+  /** Die Aktionen, deren Bedienelement diese Laufart gebaut hat — Verfügbarkeit und Hinweis kommen aus dem Katalog (R00030). */
+  function vorhandeneAktionen() {
+    return ['dateiKopieren', 'bereichKopieren', 'umbruchWechseln', 'suche', 'hilfe'];
   }
 
   async function lade() {
@@ -108,13 +130,20 @@
       leer.className = 'da-leer';
       leer.textContent = 'Datei ist leer';
       inhalt.append(leer);
+      meldeGezeichnet();
       return;
     }
     if (zustand.stand.zeilen >= ZUGEKLAPPT_AB_ZEILEN && !zustand.aufgedeckt) {
       inhalt.append(zugeklapptElement());
+      meldeGezeichnet();
       return;
     }
-    zeichneZeilen(inhalt, zeilenFuerAnzeige(), 0);
+    zeichneZeilen(inhalt, zeilenFuerAnzeige(), 0, meldeGezeichnet);
+  }
+
+  /** Nach jedem vollständigen Zeichnen: die Suche trägt ihre Treffer erneut auf (die Färbung baut die Zeilen neu, R00044). */
+  function meldeGezeichnet() {
+    document.dispatchEvent(new CustomEvent('da-gezeichnet'));
   }
 
   /** Über 20 000 Zeilen: zugeklappt mit der Zahl und „Trotzdem laden“ (R00043, R00017); kopiert wird trotzdem alles. */
@@ -136,7 +165,7 @@
   }
 
   /** Zeilen in Blöcken zeichnen (content-visibility), damit eine sehr lange Datei die Seite nicht blockiert. */
-  function zeichneZeilen(inhalt, zeilen, ab) {
+  function zeichneZeilen(inhalt, zeilen, ab, fertig) {
     const bis = Math.min(ab + BLOCK_ZEILEN, zeilen.length);
     const block = document.createElement('div');
     block.className = 'da-block';
@@ -145,13 +174,21 @@
     }
     inhalt.append(block);
     if (bis < zeilen.length) {
-      requestAnimationFrame(() => zeichneZeilen(inhalt, zeilen, bis));
+      requestAnimationFrame(() => zeichneZeilen(inhalt, zeilen, bis, fertig));
+      return;
+    }
+    if (fertig) {
+      fertig();
     }
   }
 
   function zeileElement(nummer, text) {
     const zeile = document.createElement('div');
     zeile.className = 'da-zeile';
+    zeile.dataset.nummer = String(nummer);
+    if (istMarkiert(nummer)) {
+      zeile.classList.add('da-markiert');
+    }
     const nummerElement = document.createElement('span');
     nummerElement.className = 'da-nr';
     nummerElement.setAttribute('aria-hidden', 'true');
@@ -159,8 +196,14 @@
     const textElement = document.createElement('span');
     textElement.className = 'da-text';
     textElement.append(...teileElemente(text, stueckeDerZeile(nummer - 1)));
+    textElement.dataset.gezeigt = String(gezeigtLaenge(text));
     zeile.append(nummerElement, textElement);
     return zeile;
+  }
+
+  /** Die Länge des gezeigten Textes einer Zeile (Marken eingerechnet): Treffer jenseits davon zählt die Suche nur (L5). */
+  function gezeigtLaenge(text) {
+    return werte().alsMarken(werte().kuerzeZeile(text).gezeigt).length;
   }
 
   function stueckeDerZeile(index) {
@@ -242,6 +285,127 @@
     document.getElementById('da-inhalt').classList.toggle('umbr', umbrochen);
   }
 
+  /* ── Bereich markieren (R00044, B4222): Gesten aus I0032 — Klick, Umschalt-Klick, Ziehen, Umschalt+↑/↓, Esc ── */
+
+  function zeilenzahl() {
+    return zustand.stand ? zustand.stand.zeilen : 0;
+  }
+
+  function istMarkiert(nummer) {
+    return Boolean(zustand.bereich) && zustand.bereich.bis >= 1 && nummer >= zustand.bereich.von && nummer <= zustand.bereich.bis;
+  }
+
+  /** Setzt den markierten Bereich und zeichnet Markierung, Werkzeugleiste und Knopf nach. */
+  function setzeBereich(neu) {
+    zustand.bereich = neu;
+    markiere();
+  }
+
+  /** Trägt die Markierung auf die gezeichneten Zeilen auf (beim Neuzeichnen trägt sie jede Zeile selbst). */
+  function markiere() {
+    for (const zeile of document.querySelectorAll('#da-inhalt .da-zeile')) {
+      zeile.classList.toggle('da-markiert', istMarkiert(Number(zeile.dataset.nummer)));
+    }
+    zeichneMarkierung();
+  }
+
+  /** Die Werkzeugleiste nennt „Zeilen 3–7 markiert“ und schaltet „Bereich kopieren“ frei (R00044, Pflichtpunkt 3). */
+  function zeichneMarkierung() {
+    const bereich = zustand.bereich;
+    const vorhanden = Boolean(bereich) && bereich.bis >= 1;
+    document.getElementById('da-markierung').textContent = vorhanden ? `${bereichWerte().bereichsangabe(bereich.von, bereich.bis)} markiert` : '';
+    document.getElementById('bereich-kopieren').disabled = !vorhanden;
+  }
+
+  /** Die Zeilennummer unter dem Zeiger oder null (nur die Nummernspalte zählt, ein Klick in den Text markiert nichts). */
+  function nummerAus(ereignis) {
+    if (!ereignis.target || typeof ereignis.target.closest !== 'function') {
+      return null;
+    }
+    const zeile = ereignis.target.closest('.da-zeile');
+    return zeile && zeile.dataset.nummer ? Number(zeile.dataset.nummer) : null;
+  }
+
+  /** Ein Druck auf eine Nummer beginnt ein Ziehen; erst eine Bewegung erweitert (sonst bleibt es der Klick). */
+  function beginneZiehen(ereignis) {
+    if (ereignis.button !== 0 || !ereignis.target.closest || !ereignis.target.closest('.da-nr')) {
+      return;
+    }
+    const nummer = nummerAus(ereignis);
+    if (nummer === null) {
+      return;
+    }
+    ereignis.preventDefault();
+    zustand.ziehen = { anker: nummer, bewegt: false };
+  }
+
+  function zieheWeiter(ereignis) {
+    if (!zustand.ziehen) {
+      return;
+    }
+    const nummer = nummerAus(ereignis);
+    if (nummer === null) {
+      return;
+    }
+    zustand.ziehen.bewegt = true;
+    setzeBereich(bereichWerte().bereich(zustand.ziehen.anker, nummer, zeilenzahl()));
+  }
+
+  /** Am Ende eines Zugs steht der Anker am erreichten Ende; der folgende Klick wird nicht mehr als Zeilenklick gewertet. */
+  function beendeZiehen() {
+    if (!zustand.ziehen) {
+      return;
+    }
+    const bewegt = zustand.ziehen.bewegt;
+    zustand.ziehen = null;
+    if (bewegt) {
+      zustand.ziehenBehandelt = true;
+      zustand.anker = zustand.bereich ? zustand.bereich.bis : null;
+    }
+  }
+
+  /** Klick auf eine Nummer setzt den Anker (einzeiliger Bereich); Umschalt-Klick erweitert auf von…bis (R00044). */
+  function waehleZeilePerKlick(ereignis) {
+    if (zustand.ziehenBehandelt) {
+      zustand.ziehenBehandelt = false;
+      return;
+    }
+    if (!ereignis.target.closest || !ereignis.target.closest('.da-nr')) {
+      return;
+    }
+    const nummer = nummerAus(ereignis);
+    if (nummer === null) {
+      return;
+    }
+    if (ereignis.shiftKey && zustand.anker !== null) {
+      setzeBereich(bereichWerte().bereich(zustand.anker, nummer, zeilenzahl()));
+      return;
+    }
+    zustand.anker = nummer;
+    setzeBereich(bereichWerte().bereich(nummer, nummer, zeilenzahl()));
+  }
+
+  /** Umschalt+↑/↓ erweitert den Bereich um die Nachbarzeile (nach oben bzw. unten), Esc hebt ihn auf. */
+  function beiBereichstaste(ereignis) {
+    if (ereignis.key === 'Escape') {
+      zustand.anker = null;
+      setzeBereich(null);
+      return true;
+    }
+    if (!ereignis.shiftKey || (ereignis.key !== 'ArrowUp' && ereignis.key !== 'ArrowDown')) {
+      return false;
+    }
+    const bereich = zustand.bereich;
+    if (!bereich || bereich.bis < 1) {
+      return false;
+    }
+    const neu = ereignis.key === 'ArrowDown'
+      ? bereichWerte().bereich(bereich.von, bereich.bis + 1, zeilenzahl())
+      : bereichWerte().bereich(bereich.von - 1, bereich.bis, zeilenzahl());
+    setzeBereich(neu);
+    return true;
+  }
+
   function beiTaste(ereignis) {
     if (ereignis.defaultPrevented || ereignis.isComposing) {
       return;
@@ -256,14 +420,33 @@
         altGraph: typeof ereignis.getModifierState === 'function' && ereignis.getModifierState('AltGraph'),
       },
       offenerDialog: false,
-      vorhanden: ['dateiKopieren', 'umbruchWechseln'],
+      vorhanden: vorhandeneAktionen(),
     });
     if (aktion === 'dateiKopieren') {
       ereignis.preventDefault();
-      kopiere();
-    } else if (aktion === 'umbruchWechseln') {
+      kopiere('datei');
+      return;
+    }
+    if (aktion === 'bereichKopieren') {
+      ereignis.preventDefault();
+      kopiere('bereich');
+      return;
+    }
+    if (aktion === 'umbruchWechseln') {
       ereignis.preventDefault();
       schalteUmbruch();
+      return;
+    }
+    if (aktion === 'suche') {
+      ereignis.preventDefault();
+      fokussiereSuche();
+      return;
+    }
+    if (imEingabefeld(ereignis.target)) {
+      return;
+    }
+    if (beiBereichstaste(ereignis)) {
+      ereignis.preventDefault();
     }
   }
 
@@ -274,25 +457,61 @@
     return ziel.closest('input:not([type="checkbox"]):not([type="radio"]), textarea, select, [contenteditable="true"]') !== null;
   }
 
-  /** Jede Geste kopiert erneut und bestätigt erneut (R00043, Kriterium 8): kein Merker, der Knopf bleibt bedienbar. */
-  function kopiere() {
+  /** Das Kopierziel (Datei oder Bereich) → `{text, bestaetigung}`: die **eine** Stelle, die den Kopiertext bestimmt
+      (R00044, Pflichtpunkt 5). `null`, wenn es nichts zu kopieren gibt. */
+  function zieltext(art) {
+    if (art === 'bereich') {
+      const bereich = zustand.bereich;
+      if (!bereich || bereich.bis < 1) {
+        return null;
+      }
+      return {
+        text: bereichWerte().ausschnitt(zustand.text, bereich.von, bereich.bis),
+        bestaetigung: `${bereichWerte().bereichsangabe(bereich.von, bereich.bis)} kopiert`,
+      };
+    }
     if (!zustand.text) {
-      return;
+      return null;
     }
-    const knopf = document.getElementById('datei-kopieren');
-    const status = document.getElementById('da-status');
-    const bestaetigung = bestaetigungstext();
-    if (!window.gitreviewaKopieren) {
-      status.textContent = ZWISCHENABLAGE_VERWEIGERT;
-      return;
-    }
-    window.gitreviewaKopieren.kopiere(zustand.text, bestaetigung, {
-      knopf,
-      status,
+    return { text: zustand.text, bestaetigung: bestaetigungstext() };
+  }
+
+  /** Die Bedienelemente und die Meldung des Ersatzwegs je Kopierziel. */
+  function kopieroptionen(art) {
+    const bereich = art === 'bereich';
+    return {
+      knopf: document.getElementById(bereich ? 'bereich-kopieren' : 'datei-kopieren'),
+      status: document.getElementById('da-status'),
       ansage: document.getElementById('da-ansage'),
       kopierziel: document.getElementById('da-inhalt'),
-      verweigert: ZWISCHENABLAGE_VERWEIGERT,
-    });
+      verweigert: bereich ? VERWEIGERT_BEREICH : ZWISCHENABLAGE_VERWEIGERT,
+    };
+  }
+
+  /** Jede Geste kopiert erneut und bestätigt erneut (R00043, Kriterium 8): kein Merker, der Knopf bleibt bedienbar. */
+  function kopiere(art) {
+    const ziel = zieltext(art);
+    if (!ziel) {
+      return;
+    }
+    const optionen = kopieroptionen(art);
+    if (!window.gitreviewaKopieren) {
+      optionen.status.textContent = optionen.verweigert;
+      return;
+    }
+    window.gitreviewaKopieren.kopiere(ziel.text, ziel.bestaetigung, optionen);
+  }
+
+  /** Das Kopierziel für Strg+C: der markierte Bereich (den Ersatzweg nach einer Verweigerung hält `kopieren.js`). */
+  function bereichsziel() {
+    if (!zustand.bereich || zustand.bereich.bis < 1) {
+      return null;
+    }
+    const ziel = zieltext('bereich');
+    if (!ziel) {
+      return null;
+    }
+    return { text: ziel.text, bestaetigung: ziel.bestaetigung, optionen: kopieroptionen('bereich') };
   }
 
   function bestaetigungstext() {
@@ -327,13 +546,35 @@
     meldung.textContent = 'Dateiansicht geschlossen';
     haupt.replaceChildren(meldung);
     document.getElementById('datei-kopieren').disabled = true;
+    document.getElementById('bereich-kopieren').disabled = true;
     document.getElementById('schliessen').disabled = true;
   }
 
   /** Hinweis und `aria-keyshortcuts` am Bedienelement aus dem Katalog (R00030), gerendert an der einen Stelle (`hinweise.js`)
-      mit der Laufart „Dateiansicht“ — das Kürzel `w` steht hier am Umbruch-Schalter (R00039, B3). */
+      mit der Laufart „Dateiansicht“ — das Kürzel `w` steht hier am Umbruch-Schalter (R00039, B3), `/` am Suchfeld (R00044). */
   function zeichneHinweise() {
     window.gitreviewaHinweise.setzen(document, tasten().hinweise({ laufart: tasten().DATEIANSICHT }));
+  }
+
+  /** Die Suche an die Dateiansicht anschließen (R00044, B4224): dieselbe Suche wie im Diff (`suche.js`), kein zweiter Bau.
+      Gesucht wird über den **vollen** Text der Zeilen (Marken auffindbar); Treffer jenseits des gezeigten Teils zählt sie nur. */
+  function sucheAnmelden() {
+    window.gitreviewaSuche.anlegen({
+      bereich: document.getElementById('da-inhalt'),
+      eingabe: document.getElementById('da-suche'),
+      zaehler: document.querySelector('.da-suche-zaehler'),
+      fehler: document.getElementById('da-suche-fehler'),
+      zellen: () => [...document.getElementById('da-inhalt').querySelectorAll('.da-text')],
+      texte: () => (zustand.zeilen ? zustand.zeilen.map(text => werte().alsMarken(text)) : []),
+      sichtbar: zelle => Number(zelle.dataset.gezeigt) || 0,
+      zeichnenEreignis: 'da-gezeichnet',
+    });
+  }
+
+  function fokussiereSuche() {
+    const feld = document.getElementById('da-suche');
+    feld.focus();
+    feld.select();
   }
 
   function zeigeMeldung(text) {

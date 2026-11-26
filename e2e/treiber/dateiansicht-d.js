@@ -27,6 +27,9 @@ function ordnerDAnlegen() {
   fs.writeFileSync(pfad('f\uFFFD.sql'), 'INHALT-FFFD\n');
   fs.writeFileSync(pfad('lang.sql'), Array.from({ length: 30000 }, (_, i) => `SELECT ${i + 1};`).join('\n') + '\n');
   fs.writeFileSync(pfad('breit.sql'), 'x'.repeat(50000) + '\n');
+  fs.writeFileSync(pfad('mig.sql'), Array.from({ length: 8 }, (_, i) => `-- Teil ${i + 1}`).join('\r\n'));
+  const fernNah = 'x'.repeat(9000) + 'NAHBEI' + 'x'.repeat(10990);
+  fs.writeFileSync(pfad('fern.sql'), fernNah + 'FERNTREFFER' + 'y'.repeat(49999 - fernNah.length - 'FERNTREFFER'.length) + '\n');
   fs.writeFileSync(pfad('viele.sql'), Array.from({ length: 1000 }, (_, i) => `SELECT ${i + 1};`).join('\n') + '\n');
   fs.mkdirSync(pfad('ordner'));
   fs.mkdirSync(pfad('unter'));

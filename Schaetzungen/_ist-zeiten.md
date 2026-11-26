@@ -98,3 +98,4 @@ Nie vom User erfragen.
 | 2026-11-26 | R00039 Werkzeugleiste einzeilig | Nacharbeit Code-Review B1–B3 (Leistenhöhe und Knopf-Innenlage, Pfadkürzung nach Größenänderung, Katalogziel je Laufart) | Bug-Fix | – | 0,6h | – | autonom |
 | 2026-11-26 | R00039 Werkzeugleiste einzeilig | Nacharbeit Entwicklertest: Herkunft nicht still kürzen (voller Text in `title` und Name); Sichtbarkeitsgrenze belegt | Bug-Fix | – | 0,7h | – | autonom |
 | 2026-11-26 | R00044 Stelle suchen und Bereich kopieren | B4221 Bereichsregel und Ausschnitt | klar | 2h | 0,3h | 0,3h | autonom |
+| 2026-11-26 | R00044 Stelle suchen und Bereich kopieren | B4222-B4224 Bereich markieren, kopieren und suchen | unklar | 2-4h | 0,6h | 0,6h | autonom |

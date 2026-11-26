@@ -80,9 +80,61 @@
 
 .da-haupt {
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto auto 1fr auto;
   block-size: calc(100vh - 2.8rem);
   min-block-size: 0;
+}
+
+/* Werkzeugleiste (R00044, Pflichtpunkt 3): Suche, „Zeilen 3–7 markiert“ und „Bereich kopieren“ in **einer** Zeile. */
+.da-werkzeug {
+  display: flex;
+  align-items: center;
+  gap: var(--kd-s3);
+  padding: 0 1rem;
+  font-size: 12px;
+  min-inline-size: 0;
+}
+
+.da-suche-feld {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kd-s2);
+  flex: none;
+}
+
+.da-suche-label {
+  color: var(--kd-muted);
+}
+
+.da-suche {
+  font: inherit;
+  padding: 0.05rem 0.3rem;
+  border: 1px solid var(--kd-line-strong);
+  border-radius: 3px;
+  background: var(--kd-bg);
+  color: inherit;
+  inline-size: 12rem;
+}
+
+.da-suche-zaehler {
+  flex: none;
+  color: var(--kd-muted);
+}
+
+.da-suche-fehler:empty {
+  display: none;
+}
+
+.da-markierung {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.da-markierung:empty {
+  display: none;
 }
 
 .da-status {
@@ -136,6 +188,18 @@
   padding-inline-end: 0.75rem;
   color: var(--kd-muted);
   user-select: none;
+  cursor: pointer;
+}
+
+/* Markierter Bereich (R00044): nicht allein über Farbe — ein Balken am linken Rand trägt die Aussage mit. */
+.da-zeile.da-markiert {
+  background: var(--kd-accent-weak);
+}
+
+.da-zeile.da-markiert > .da-nr {
+  box-shadow: inset 3px 0 0 var(--kd-accent);
+  color: var(--kd-accent-ink);
+  font-weight: 600;
 }
 
 .da-text {
@@ -171,7 +235,7 @@
 }
 
 .da-kopierziel::before {
-  content: 'Kopierziel: Strg+C legt die Datei in die Zwischenablage';
+  content: 'Kopierziel: Strg+C legt es in die Zwischenablage';
   display: block;
   padding: var(--kd-s1) var(--kd-s2);
   color: var(--kd-muted);

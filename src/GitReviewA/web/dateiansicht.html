@@ -13,13 +13,16 @@
 <script src="farbe-werte.js" defer></script>
 <script src="farbschlange.js" defer></script>
 <script src="dateiansicht-werte.js" defer></script>
+<script src="bereich-werte.js" defer></script>
+<script src="suche-werte.js" defer></script>
 <script src="kopieren.js" defer></script>
 <script src="hinweise.js" defer></script>
+<script src="suche.js" defer></script>
 <script src="dateiansicht.js" defer></script>
 </head>
 <body>
 <!-- Kopf (R00043): Angabe, echter Pfad, Größe, Zeilen, Kodierung, Zeilenende, „Datei kopieren“, „Schließen“; höchstens zwei Zeilen. -->
-<header id="da-kopf" class="da-kopf" aria-label="Datei">
+<header id="da-kopf" class="da-kopf" aria-label="Datei" data-hilfe-hintergrund>
   <div class="da-kopf-zeile">
     <h1 id="da-name" class="da-name mono"></h1>
     <p id="da-pfad" class="da-pfad mono"></p>
@@ -34,7 +37,17 @@
     <label class="ru-sch da-umbruch-schalter"><input type="checkbox" role="switch" class="umbruch-schalter" id="da-umbruch" checked>Umbruch</label>
   </div>
 </header>
-<main class="da-haupt">
+<main class="da-haupt" data-hilfe-hintergrund>
+  <!-- Werkzeugleiste (R00044): Suche, markierter Bereich und „Bereich kopieren“ in einer Zeile. -->
+  <div id="da-werkzeug" class="da-werkzeug">
+    <label class="da-suche-feld"><span class="da-suche-label">Suchen</span>
+      <input type="search" id="da-suche" class="da-suche" autocomplete="off" spellcheck="false" aria-describedby="da-suche-fehler">
+    </label>
+    <span class="da-suche-zaehler" role="status" aria-live="polite"></span>
+    <span id="da-suche-fehler" class="da-suche-fehler gr-status fehler" role="alert"></span>
+    <span id="da-markierung" class="da-markierung" role="status"></span>
+    <button type="button" id="bereich-kopieren" class="btn" disabled>Bereich kopieren</button>
+  </div>
   <p id="da-status" class="da-status" role="status"></p>
   <p id="da-ansage" class="vh" aria-live="polite" aria-atomic="true"></p>
   <div id="da-roll" class="da-roll" tabindex="0" role="region" aria-label="Dateiinhalt">
