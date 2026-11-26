@@ -139,3 +139,9 @@ Nie vom User erfragen.
 | 2026-11-26 | R00048 Commit-Angaben unverfälscht und begrenzt lesen | Nacharbeit Security-Review F16 (Datum `Z` in UTC) und Code-Review H1 (Diff/Sprung/Bild) und H2 (stderr-Kappung) | Bug-Fix | – | 0,5h | – | autonom |
 | 2026-11-26 | R00048 Commit-Angaben unverfälscht und begrenzt lesen | Nacharbeit Entwicklertest: nicht auflösbares Hexpräfix mit 4–6 Stellen (Exit 134) | Bug-Fix | – | 0,1h | – | autonom |
 | 2026-11-26 | R00039 Werkzeugleiste einzeilig | Wackler B3802: Pfadkürzung überläuft (Karte #62) | Bug-Fix | – | 0,6h | – | autonom |
+
+| 2026-11-26 | R00038 Absicht der KI über dem Diff | I0039 B3701 Commits der Datei bestimmen | Standard | 2h | 0,2h | 0,2h | autonom |
+| 2026-11-26 | R00038 Absicht der KI über dem Diff | I0039 B3702 Absicht-Block zeichnen | unklar | 2-4h | 0,7h | 0,7h | autonom |
+| 2026-11-26 | R00038 Absicht der KI über dem Diff | I0039 B3703 Anschluss an Wahl und Ansichten | Standard | 2h | 0,2h | 0,2h | autonom |
+| 2026-11-26 | R00038 Absicht der KI über dem Diff | I0039 B3705 Block im Rollbereich über alle Zeichenwege | unklar | 2-4h | 0,6h | 0,6h | autonom |
+| 2026-11-26 | R00038 Absicht der KI über dem Diff | I0039 B3704 Tests und Wegwerf-Repos | unklar | 2-4h | 0,8h | 0,8h | autonom |
