@@ -39,6 +39,8 @@ const VORBEREITUNGEN = {
   'Repo Still': { anlegen: repos.repoStill, commits: ['t2'] },
   // R00032: `v1` und `v3` bilden keine lückenlose Kette (es fehlt `v2`); `breit.txt` trägt die 300 Zeichen lange Zeile 2.
   'Repo V': { anlegen: repos.repoV, commits: ['v1', 'v3'] },
+  // Karte #44: `y3` und `y1` bilden keine lückenlose Kette (es fehlt `y2`); `weit.txt` hat zwei Abschnitte mit der Lücke 9–31.
+  'Repo Y': { anlegen: repos.repoY, commits: ['y3', 'y1'] },
 };
 
 function diffSprache(gr, page) {
@@ -165,6 +167,12 @@ function diffSprache(gr, page) {
     zeilenzahl: () => diffSeite.zeilenZaehlen(page),
     hatZeile: neu => diffSeite.zeileVorhanden(page, neu),
     zeilentext: neu => diffSeite.zeilentextLesen(page, neu),
+    /** Ohne Kette: die Lücken, ihr Betätigen und die gezeichneten Zeilen **im Abschnitt** des Commits `name` (Karte #44). */
+    abschnittLuecken: name => diffSeite.abschnittLueckenLesen(page, hash(name)),
+    abschnittLueckeAufklappen: (name, nummer, ganz = false) => diffSeite.abschnittLueckeAufklappen(page, hash(name), nummer, ganz),
+    abschnittZeilenzahl: name => diffSeite.abschnittZeilenZaehlen(page, hash(name)),
+    abschnittHatZeile: (name, neu) => diffSeite.abschnittZeileVorhanden(page, hash(name), neu),
+    abschnittZeilentext: (name, neu) => diffSeite.abschnittZeilentextLesen(page, hash(name), neu),
     anfragenGezaehlt: () => anfragen,
     /** Lädt die Seite neu (Browser-Eigenes): die Wahl von „Umbruch“, „Ansicht“ und „Leerraum“ lebt nur im Speicher. */
     neuLaden: () => page.reload(),

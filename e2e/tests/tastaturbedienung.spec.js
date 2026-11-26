@@ -281,6 +281,20 @@ test.describe('R00030 Diff und Anmerkung — Enter, a, e, s, w, l, o, g', () => 
     await tast.druecke('g');
     await tast.fokusAufLuecke(1);
   });
+
+  // Karte #44: die Lücken gibt es jetzt auch in „Zusammen“ (der Standard) — das Kürzel springt dort wie in „Einzeln“.
+  test('g springt im Netto-Diff von „Zusammen“ zur nächsten Lücke (R00026, Karte #44)', async ({ tast }) => {
+    await tast.starten({ vorbereitung: 'Repo W' });
+    await tast.dateiAnsehen('weit.txt');
+
+    await expect.poll(() => tast.luecken()).toHaveLength(2);
+
+    await tast.inDenDiffTabben();
+    await tast.druecke('g');
+    await tast.fokusAufLuecke(0);
+    await tast.druecke('g');
+    await tast.fokusAufLuecke(1);
+  });
 });
 test.describe('R00030 Statuszeile', () => {
   test('nennt die wichtigsten Kürzel des Bereichs, in „Einzeln“ zusätzlich den Commit, und ist keine Live-Region', async ({ tast }) => {

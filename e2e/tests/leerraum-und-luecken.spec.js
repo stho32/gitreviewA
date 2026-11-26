@@ -456,3 +456,87 @@ test.describe('Zusammen: Leerraum-Umschalter (R00012, Nacharbeit)', () => {
     await diff.diffZeigt({ pfad: 'still.txt', zeilen: STILL });
   });
 });
+
+// Karte #44 (PO 2026-11-26, R00026): die Lücken-Bedienelemente fehlten in „Zusammen“, weil der Netto-Zweig
+// `zeichneZusammenAntwort` ohne Lückenliste zeichnete. Dieselbe Lückenrechnung wie in „Einzeln“; ohne Kette je
+// Commit-Abschnitt im Stand seines Commits. Ebene: Playwright — die Rechnung prüfen die Bausteine (`luecken-werte`).
+test.describe('Zusammen: Lücke aufklappen (R00026, Karte #44)', () => {
+  test('soll im Netto-Diff der lückenlosen Kette die Lücken ankündigen, aufdecken und die ganze Datei einmal lesen', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Repo W', commits: ['w2'], modus: null });
+    await diff.dateiAnsehen('weit.txt');
+    await diff.anfragenBeobachten();
+
+    await expect.poll(() => diff.zeilenzahl()).toBe(18);
+    await expect.poll(() => diff.luecken()).toEqual([
+      { text: '1 verborgene Zeile', schritt: '1 aufklappen', ganz: 'Ganz aufklappen' },
+      { text: '23 verborgene Zeilen', schritt: '20 aufklappen', ganz: 'Ganz aufklappen' },
+    ]);
+    expect(await diff.hatZeile(9)).toBe(false);
+
+    await diff.lueckeAufklappen(2);
+
+    await expect.poll(() => diff.zeilenzahl()).toBe(38);
+    expect(await diff.zeilentext(9)).toBe('z09');
+    expect(await diff.zeilentext(28)).toBe('z28');
+    await expect.poll(() => diff.luecken()).toEqual([
+      { text: '1 verborgene Zeile', schritt: '1 aufklappen', ganz: 'Ganz aufklappen' },
+      { text: '3 verborgene Zeilen', schritt: '3 aufklappen', ganz: 'Ganz aufklappen' },
+      { text: '22 verborgene Zeilen', schritt: '20 aufklappen', ganz: 'Ganz aufklappen' },
+    ]);
+
+    await diff.lueckeAufklappen(1);
+    await diff.lueckeAufklappen(1);
+    await diff.lueckeAufklappen(1, true);
+
+    await expect.poll(() => diff.zeilenzahl()).toBe(64);
+    expect(await diff.zeilentext(1)).toBe('z01');
+    expect(await diff.zeilentext(20)).toBe('<b>z20</b>');
+    expect(await diff.zeilentext(21)).toBe('a⟨U+202E⟩b');
+    expect(await diff.zeilentext(60)).toBe('z60');
+    expect(await diff.luecken()).toEqual([]);
+    await diff.fremderTextBleibtText();
+    const gelesen = (await diff.anfragenGezaehlt()).filter(anfrage => anfrage.umfang === 'ganz');
+    expect(gelesen).toEqual([{ pfad: 'weit.txt', umfang: 'ganz', leerraum: null }]);
+  });
+
+  test('soll ohne Kette je Commit-Abschnitt Lücken zeigen und im Stand des jeweiligen Commits aufdecken', async ({ diff }) => {
+    await diff.starten({ vorbereitung: 'Repo Y', modus: null });
+    await diff.dateiAnsehen('weit.txt');
+    await diff.anfragenBeobachten();
+
+    // `y3` ändert die Zeilen 5 und 35 — zwei Abschnitte mit der Lücke 9–31; `y1` legt die Datei an (ein Abschnitt, keine Lücke).
+    await expect.poll(() => diff.abschnittLuecken('y3')).toEqual([
+      { text: '1 verborgene Zeile', schritt: '1 aufklappen', ganz: 'Ganz aufklappen' },
+      { text: '23 verborgene Zeilen', schritt: '20 aufklappen', ganz: 'Ganz aufklappen' },
+    ]);
+    expect(await diff.abschnittLuecken('y1')).toEqual([]);
+    expect(await diff.abschnittZeilenzahl('y3')).toBe(18);
+    expect(await diff.abschnittHatZeile('y3', 9)).toBe(false);
+
+    await diff.abschnittLueckeAufklappen('y3', 2);
+
+    await expect.poll(() => diff.abschnittZeilenzahl('y3')).toBe(38);
+    expect(await diff.abschnittZeilentext('y3', 9)).toBe('z09');
+    expect(await diff.abschnittZeilentext('y3', 28)).toBe('z28');
+    await expect.poll(() => diff.abschnittLuecken('y3')).toEqual([
+      { text: '1 verborgene Zeile', schritt: '1 aufklappen', ganz: 'Ganz aufklappen' },
+      { text: '3 verborgene Zeilen', schritt: '3 aufklappen', ganz: 'Ganz aufklappen' },
+      { text: '22 verborgene Zeilen', schritt: '20 aufklappen', ganz: 'Ganz aufklappen' },
+    ]);
+
+    await diff.abschnittLueckeAufklappen('y3', 1);
+    expect(await diff.abschnittZeilentext('y3', 1)).toBe('z01');
+    await diff.abschnittLueckeAufklappen('y3', 1);
+    await diff.abschnittLueckeAufklappen('y3', 1, true);
+
+    await expect.poll(() => diff.abschnittZeilenzahl('y3')).toBe(64);
+    expect(await diff.abschnittZeilentext('y3', 20)).toBe('<b>z20</b>');
+    expect(await diff.abschnittZeilentext('y3', 21)).toBe('a⟨U+202E⟩b');
+    expect(await diff.abschnittZeilentext('y3', 60)).toBe('z60');
+    expect(await diff.abschnittLuecken('y3')).toEqual([]);
+    await diff.fremderTextBleibtText();
+    expect(await diff.abschnittZeilenzahl('y1')).toBe(61);
+    const gelesen = (await diff.anfragenGezaehlt()).filter(anfrage => anfrage.umfang === 'ganz');
+    expect(gelesen, 'je Abschnitt höchstens ein Lesevorgang der ganzen Datei').toHaveLength(1);
+  });
+});

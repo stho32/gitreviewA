@@ -499,28 +499,70 @@ async function diffAntwortErsetzen(page, { pfad, umfang = null, leerraum = null,
   };
 }
 
-/** Die Lücken-Bedienelemente der gezeigten Ansicht: Zahl der verborgenen Zeilen und die Beschriftungen der beiden Knöpfe. */
-async function lueckenLesen(page) {
-  return page.locator(`${ROLLBEREICH} .dz-l`).evaluateAll(elemente => elemente.map(element => ({
+/** Die Lücken-Bedienelemente innerhalb `wurzel`: Zahl der verborgenen Zeilen und die Beschriftungen der beiden Knöpfe. */
+async function lueckenIn(wurzel) {
+  return wurzel.locator('.dz-l').evaluateAll(elemente => elemente.map(element => ({
     text: element.querySelector('.dz-l-text').textContent,
     schritt: element.querySelector('.dz-l-auf:not([data-ganz])').textContent,
     ganz: element.querySelector('.dz-l-auf[data-ganz]').textContent,
   })));
 }
 
+/** Die Lücken-Bedienelemente der gezeigten Ansicht: Zahl der verborgenen Zeilen und die Beschriftungen der beiden Knöpfe. */
+async function lueckenLesen(page) {
+  return lueckenIn(page.locator(ROLLBEREICH));
+}
+
+/** Der Knopf der `nummer`-ten Lücke (ab 1) innerhalb von `wurzel`; `ganz` wählt statt des Schritts „Ganz aufklappen“. */
+function lueckenKnopfIn(wurzel, nummer, ganz) {
+  const luecke = wurzel.locator('.dz-l').nth(nummer - 1);
+  if (ganz) {
+    return luecke.locator('.dz-l-auf[data-ganz]');
+  }
+  return luecke.locator('.dz-l-auf:not([data-ganz])');
+}
+
+/** Betätigt den Knopf der `nummer`-ten Lücke (ab 1) innerhalb von `wurzel`; `ganz` wählt „Ganz aufklappen“. */
+async function lueckeAufklappenIn(wurzel, nummer, ganz = false) {
+  await lueckenKnopfIn(wurzel, nummer, ganz).click();
+}
+
 /** Betätigt den Knopf der `nummer`-ten Lücke (ab 1); `ganz` wählt statt des Schritts „Ganz aufklappen“, `perTastatur` Enter. */
 async function lueckeAufklappen(page, nummer, ganz = false, perTastatur = false) {
-  const luecke = page.locator(`${ROLLBEREICH} .dz-l`).nth(nummer - 1);
-  let knopf = luecke.locator('.dz-l-auf:not([data-ganz])');
-  if (ganz) {
-    knopf = luecke.locator('.dz-l-auf[data-ganz]');
-  }
+  const knopf = lueckenKnopfIn(page.locator(ROLLBEREICH), nummer, ganz);
   if (perTastatur) {
     await knopf.focus();
     await page.keyboard.press('Enter');
     return;
   }
   await knopf.click();
+}
+
+/* ── Lücken im Abschnitt eines Commits (Zusammen ohne Kette, R00012/R00026): jeder Abschnitt trägt seine eigenen ── */
+
+/** Die Lücken im Abschnitt `commit` — jeder Abschnitt hat seine eigene Lückenrechnung im Stand seines Commits. */
+async function abschnittLueckenLesen(page, commit) {
+  return lueckenIn(abschnitt(page, commit));
+}
+
+/** Betätigt den Knopf der `nummer`-ten Lücke (ab 1) im Abschnitt `commit`. */
+async function abschnittLueckeAufklappen(page, commit, nummer, ganz = false) {
+  await lueckeAufklappenIn(abschnitt(page, commit), nummer, ganz);
+}
+
+/** Zahl der gezeichneten Diff-Zeilen im Abschnitt `commit`. */
+async function abschnittZeilenZaehlen(page, commit) {
+  return abschnitt(page, commit).locator('tr[data-art]').count();
+}
+
+/** Ob eine Zeile mit Nummer neu `neu` im Abschnitt `commit` steht. */
+async function abschnittZeileVorhanden(page, commit, neu) {
+  return (await abschnitt(page, commit).locator(`tr[data-art][data-neu="${neu}"]`).count()) > 0;
+}
+
+/** Der Text der Zeile mit Nummer neu `neu` im Abschnitt `commit`. */
+async function abschnittZeilentextLesen(page, commit, neu) {
+  return abschnitt(page, commit).locator(`tr[data-art][data-neu="${neu}"] .c`).textContent();
 }
 
 /** Die Meldung der `nummer`-ten Lücke (ab 1), z. B. wenn das Lesen der ganzen Datei scheitert (R00026). */
@@ -773,5 +815,6 @@ module.exports = {
   pruefeSprungVerweis, pruefeSprungGrund, pruefeSprungHinweis, sprungAntwortVerzoegern, sprungAntwortScheitern,
   leerraumUmschalten, leerraumPerTastaturUmschalten, pruefeLeerraumStellung, diffAnfragenBeobachten, diffAntwortErsetzen,
   lueckenLesen, lueckeAufklappen, lueckeMeldet, pruefeZeilenMitEigenemLink, zeilenZaehlen, zeileVorhanden, zeilentextLesen,
+  abschnittLueckenLesen, abschnittLueckeAufklappen, abschnittZeilenZaehlen, abschnittZeileVorhanden, abschnittZeilentextLesen,
   bildAnfragenBeobachten, bildAntwortErsetzen, bilderLesen, abschnittsbilderLesen, bildTitel, pruefeNurImgImBildbereich,
 };

@@ -80,6 +80,21 @@ function weitDatei() {
   return zeilenRumpf.join('');
 }
 
+/** Repo Y (R00026 in „Zusammen“ ohne Kette, Karte #44): `y1` „Anlegen“ legt `weit.txt` (60 Zeilen wie Repo W) und `klein.txt` an;
+    `y2` „Dazwischen“ ändert nur `klein.txt`; `y3` „Weit“ ändert in `weit.txt` die Zeilen 5 und 35 — zwei Abschnitte mit der Lücke
+    9–31. Die Auswahl `<y3> <y1>` ist keine lückenlose Kette (es fehlt `y2`): je Commit ein Abschnitt, `weit.txt` im Stand von `y3`. */
+function repoY(ordner) {
+  repoAnlegen(ordner);
+  dateiSchreiben(ordner, 'weit.txt', weitDatei());
+  dateiSchreiben(ordner, 'klein.txt', 'a\nb\n');
+  const y1 = commitAnlegen(ordner, { betreff: 'Anlegen' });
+  dateiSchreiben(ordner, 'klein.txt', 'a\nB\n');
+  const y2 = commitAnlegen(ordner, { betreff: 'Dazwischen' });
+  dateiSchreiben(ordner, 'weit.txt', weitDatei().replace('z05\n', 'Z05\n').replace('z35\n', 'Z35\n'));
+  const y3 = commitAnlegen(ordner, { betreff: 'Weit' });
+  return { ordner, hashes: { y1, y2, y3 } };
+}
+
 /** Repo C (R00026-Nacharbeit, B1): `c1` „Anlegen“ legt `code.js` und `code.txt` (je 60 Zeilen `const zNN = NN;`) an;
     `c2` „Aendern“ ändert in beiden die Zeilen 5 und 35. `code.js` trägt Syntaxfarben, `code.txt` nicht — die Probe der
     Färbung und der Links braucht beides. */
@@ -459,4 +474,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoV, repoG, repoKlammern, repoX, repoK, repoZ, repoZeilenbereich, repoQ, repoS, repoL, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoV, repoG, repoKlammern, repoX, repoK, repoZ, repoZeilenbereich, repoQ, repoS, repoL, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, repoY, markerVorhanden, diffProgrammOhneSchutzStarten };
