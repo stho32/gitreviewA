@@ -23,6 +23,8 @@ const VORBEREITUNGEN = {
   'Repo B': { anlegen: repos.repoMitBidiPfad, commits: ['b'] },
   'Repo I': { anlegen: repos.repoMitUnsichtbarenNamen, commits: ['i'] },
   'Repo Z': { anlegen: repos.repoZ, commits: ['z1', 'z2', 'z3'] },
+  // R00026: `w2` ändert `weit.txt` in den Zeilen 5 und 35 — zwei Abschnitte mit den Lücken 1 und 9–31.
+  'Repo W': { anlegen: repos.repoW, commits: ['w2'] },
   'Repo R (Bereich)': { anlegen: repos.repoZeilenbereich, commits: ['r2', 'r1'] },
   'Repo mit Rumpf': { anlegen: repos.repoMitRumpf, commits: ['p', 'q', 'r'] },
 };
@@ -107,6 +109,9 @@ function annotierSprache(gr, page) {
 
     annotieren,
     annotierenImAbschnitt,
+    /** Die Lücken der gezeigten Ansicht (R00026) und ihr Aufklappen — die Stelle der Anmerkung bleibt dabei dieselbe. */
+    luecken: () => diffSeite.lueckenLesen(page),
+    lueckeAufklappen: (nummer, ganz = false) => diffSeite.lueckeAufklappen(page, nummer, ganz),
 
     /* ── Bereich (R00031) ── */
     bereichFeldname,
