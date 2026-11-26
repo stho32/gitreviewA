@@ -32,7 +32,10 @@ internal static class Program
         using var abbruchsignale = Abbruchsignale.Abfangen();
         if (aufruf.Dateiaufruf is { } dateiaufruf)
         {
-            return await LaufeDateiansichtAsync(dateiaufruf, abbruchsignale);
+            var dateiprotokoll = NeuesProtokoll(dateiaufruf.Mindeststufe);
+            return await LaufeMitEinerFehlerzeileAsync(
+                () => LaufeDateiansichtAsync(dateiaufruf, abbruchsignale, dateiprotokoll),
+                dateiprotokoll);
         }
         var startauftrag = aufruf.Startauftrag
             ?? throw new InvalidOperationException("gültiger Aufruf ohne Startauftrag");
@@ -44,9 +47,20 @@ internal static class Program
             MeldeAufruffehler(folge.Fehler, protokoll);
             return folge.Fehler.ExitCode;
         }
+        return await LaufeMitEinerFehlerzeileAsync(
+            () => LaufeBisZumEnde(startauftrag, folge.Commits, folge.Arbeitsbaumwurzel, abbruchsignale, protokoll),
+            protokoll);
+    }
+
+    /// <summary>
+    /// Ein Fangen für beide Laufarten: ein Laufzeitfehler wird zu genau einer Zeile und Exit 1 — ein belegter Port endet nie
+    /// mit Exit 134 und Stacktrace (R00043, Kriterium 10; Angriffsmatrix X7). Die Kontexte „git“ und „Server“ bleiben getrennt.
+    /// </summary>
+    private static async Task<int> LaufeMitEinerFehlerzeileAsync(Func<Task<int>> lauf, StderrProtokoll protokoll)
+    {
         try
         {
-            return await LaufeBisZumEnde(startauftrag, folge.Commits, folge.Arbeitsbaumwurzel, abbruchsignale, protokoll);
+            return await lauf();
         }
         catch (GitFehler fehler)
         {
@@ -64,11 +78,10 @@ internal static class Program
     /// Der Lauf der Dateiansicht (R00043, B4204): Gründe vor dem Serverstart als eine Zeile je Angabe, sonst Server und Warten.
     /// „Schließen“ endet mit Exit 0, ein Signal oder ein anderes Ende mit „Review abgebrochen“ und Exit 130; stdout bleibt leer.
     /// </summary>
-    private static async Task<int> LaufeDateiansichtAsync(Dateiaufruf aufruf, Abbruchsignale abbruchsignale)
+    private static async Task<int> LaufeDateiansichtAsync(Dateiaufruf aufruf, Abbruchsignale abbruchsignale, StderrProtokoll protokoll)
     {
         const int ExitAbgebrochen = 130;
         const int HoechsteGrundzeilenlaenge = 300;
-        var protokoll = NeuesProtokoll(aufruf.Mindeststufe);
         var interactor = new DateiansichtStartInteractor(new DateiLeser(new Quellenbuchung()));
         var ausgang = interactor.Starte(aufruf);
         if (!ausgang.IstErfolg)

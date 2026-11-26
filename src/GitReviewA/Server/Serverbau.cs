@@ -28,6 +28,8 @@ internal static class Serverbau
         builder.Services.AddRoutingCore();
         builder.Services.Configure<HostOptions>(optionen => optionen.ShutdownTimeout = HoechsteWartezeitAufOffeneAnfragen);
         builder.Logging.SetMinimumLevel(LogLevel.Warning);
+        // Den Startfehler meldet das Programm selbst in genau einer Zeile `FEHLER [Server] …` (R00043, X7); der Host wiederholte ihn.
+        builder.Logging.AddFilter("Microsoft.Extensions.Hosting", LogLevel.None);
         builder.Logging.AddProvider(new ProtokollLoggerProvider(protokoll));
         var anwendung = builder.Build();
         anwendung.Use(SchuetzeVorFremdemHost(lauscherPort, protokoll));

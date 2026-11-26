@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Sockets;
 using System.Text.Json;
 using GitReviewA.Tests.Hilfen;
 
@@ -143,6 +145,24 @@ public class DateiansichtLaufTests
     }
 
     [Test]
+    public async Task Wenn_der_Port_belegt_ist_dann_Exit_1_mit_genau_einer_Serverzeile_ohne_Stacktrace_in_beiden_Laufarten()
+    {
+        using var d = OrdnerD.Anlegen();
+        using var belegung = new TcpListener(IPAddress.Loopback, 0);
+        belegung.Start();
+        var port = ((IPEndPoint)belegung.LocalEndpoint).Port.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        using (var dateiansicht = await Dateiansichtprozess.StarteAsync(d.Ordner, "--dateien", "a.sql", "--kein-browser", "--port", port))
+        {
+            PruefeServerzeile(await dateiansicht.WarteAufEndeAsync(), dateiansicht);
+        }
+
+        using var repo = WegwerfRepo.MitCommits("Erster Stand");
+        using var review = await Dateiansichtprozess.StarteAsync(repo.Ordner, repo.Hashes[0], "--kein-browser", "--port", port);
+        PruefeServerzeile(await review.WarteAufEndeAsync(), review);
+    }
+
+    [Test]
     public async Task Wenn_der_Pfad_5000_Zeichen_hat_dann_Exit_2_mit_einer_hoechstens_400_Zeichen_langen_Zeile()
     {
         using var d = OrdnerD.Anlegen();
@@ -230,5 +250,21 @@ public class DateiansichtLaufTests
     private static int Fehlerzeilen(string fehler)
     {
         return fehler.Split('\n').Count(zeile => zeile.Contains("[Dateiansicht]", StringComparison.Ordinal));
+    }
+
+    private static int NichtLeereZeilen(string fehler)
+    {
+        return fehler.Split('\n').Count(zeile => zeile.Trim().Length > 0);
+    }
+
+    /// <summary>Ein belegter Port ist ein Laufzeitfehler: Exit 1, genau eine `FEHLER [Server]`-Zeile, kein Stacktrace, stdout leer.</summary>
+    private static void PruefeServerzeile(int ende, Dateiansichtprozess lauf)
+    {
+        Assert.That(ende, Is.EqualTo(1));
+        Assert.That(lauf.Ausgabe, Is.Empty);
+        Assert.That(lauf.Fehler, Does.Contain("FEHLER [Server] Server ließ sich nicht starten"));
+        Assert.That(lauf.Fehler, Does.Not.Contain("Unhandled exception"));
+        Assert.That(lauf.Fehler, Does.Not.Contain("   at "));
+        Assert.That(NichtLeereZeilen(lauf.Fehler), Is.EqualTo(1));
     }
 }
