@@ -74,3 +74,5 @@ Nie vom User erfragen.
 | 2026-11-25 | R00031 Zeilenbereich annotieren | B3008 Tests und Wegwerf-Repos | unklar | 2-4h | 0,4h | 0,4h | autonom |
 | 2026-11-25 | R00002 Sicherheit (Karte #55) | Fremde Herkunft auf lesenden `/api/`-Anfragen, Pfadvarianten (L6/L15) | unklar | – | 1,2h | – | autonom |
 | 2026-11-26 | R00043 Datei ansehen und kopieren | Lauf R00043 | Nacharbeit | — | — | 0,39h | autonom |
+
+| 2026-11-26 | Wackler #56 (Fokus, Lastprofil, WebserverTests) | Fokus im `zeichneDateikopf`, ereignisgenaue Zeitmessung, genaue Feldprüfung | unklar | – | 2,4h | – | autonom |
