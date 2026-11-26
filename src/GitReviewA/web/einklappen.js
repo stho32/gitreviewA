@@ -1,11 +1,15 @@
-/* gitreviewA — Seitenleiste und Ergebnis-Spalte ein- und ausklappen (R00035/R00037, I0036/I0038): der Knopf an der Grenze
-   klappt den Bereich ein und wieder aus. Der Zustand ist nur RAM und bleibt beim Wechsel von Datei, Commit, Modus, Ansicht und
-   Anordnung; er wirkt allein über das Layout — der Diff wird nicht neu gezeichnet (Lehre #23), und das Ausklappen bringt die
+/* gitreviewA — Seitenleiste und Ergebnis-Spalte ein- und ausklappen (R00035/R00037/R00042, I0036/I0038/B4104): der Knopf an der
+   Grenze klappt den Bereich ein und wieder aus. Der Zustand ist nur RAM und bleibt beim Wechsel von Datei, Commit, Modus, Ansicht
+   und Anordnung; er wirkt allein über das Layout — der Diff wird nicht neu gezeichnet (Lehre #23), und das Ausklappen bringt die
    gewählte Zeile in den Blick. Der Knopf trägt `aria-expanded` und `aria-controls`, sein Name und die Pfeilrichtung folgen dem
-   Zustand; beim Einklappen wandert ein Fokus aus dem Bereich auf den Knopf (nie ins Leere). Unter 566 px gibt es den Knopf
-   nicht (eine Spalte, kein Einklappen). Die Mechanik wird je Bereich angelegt (`anlegen`) — die Ergebnis-Spalte (I0038) nutzt
-   sie ohne Kopie. Eine Seite nennt zusätzlich `start` (Stellung beim Laden), `ausklappbar` (darf ausgeklappt werden) und
-   `grund` (warum nicht). Die reine Rechnung liegt in `einklappen-werte.js`. */
+   Zustand; beim Einklappen wandert ein Fokus aus dem Bereich auf den Knopf (nie ins Leere). Unter 566 px gibt es den Knopf nicht
+   (eine Spalte, kein Einklappen). Die Mechanik wird je Bereich angelegt (`anlegen`) — die Ergebnis-Spalte (I0038) nutzt sie ohne
+   Kopie. Eine Seite nennt zusätzlich `ausklappbar` (darf ausgeklappt werden) und `grund` (warum nicht).
+
+   Die Stellung kommt aus der einen Breitenregel (B4101/B4104): sie liegt im gemeinsamen Breitenzustand `window.gitreviewaBreiten`
+   (geführt von `trenner.js`) und wird über `klappeUm` gewechselt — die zweite Grenze 812 und das selbständige Einklappen sind
+   damit Teil derselben Rechnung. Das Fokusretten greift auch, wenn die Spalte beim Verkleinern von selbst einklappt (R00042,
+   Kriterium 9). Die reine Rechnung liegt in `einklappen-werte.js`. */
 (function () {
   'use strict';
 
@@ -15,21 +19,25 @@
     return window.gitreviewaEinklappenWerte;
   }
 
+  function breiten() {
+    return window.gitreviewaBreiten;
+  }
+
   function zweispaltig() {
     return werte().passtZweiSpaltig(window.innerWidth);
   }
 
   /**
    * Einen Bereich ein-/ausklappbar machen. `seite` nennt: `rahmen` (die Rahmenfläche, an der die Klasse wirkt), `leiste`
-   * (der Bereich), `streifen` (der Ort des Knopfes an der Grenze), `trenner` (der Trennzug, der beim Einklappen verschwindet;
-   * null, wenn es keinen gibt), `knopfId`, `klasse` (die Stellung am Rahmen), `bezeichnung` (Anfangs des Namens), `ereignis`
-   * (der Zustandswechsel), `wahl` (die Zeile, die beim Ausklappen in den Blick kommt; null, wenn keine), `medien` (die
-   * Mediengrenze des zweispaltigen Aufbaus), `rechts` (Pfeilrichtung), `start` (Stellung beim Laden aus der Fensterbreite) und
-   * `ausklappbar` (darf zur aktuellen Fensterbreite ausgeklappt werden) samt `grund`.
+   * (der Bereich), `streifen` (der Ort des Knopfes an der Grenze), `trenner` (der Trennzug, der beim Einklappen verschwindet),
+   * `breite` (der Schlüssel im Breitenzustand: `'links'`/`'rechts'`), `knopfId`, `klasse` (die Stellung am Rahmen), `bezeichnung`
+   * (Anfangs des Namens), `ereignis` (der Zustandswechsel), `wahl` (die Zeile, die beim Ausklappen in den Blick kommt; null,
+   * wenn keine), `medien` (die Mediengrenze des zweispaltigen Aufbaus), `rechts` (Pfeilrichtung) und `ausklappbar` (darf zur
+   * aktuellen Fensterbreite ausgeklappt werden) samt `grund`.
    */
   function anlegen(seite) {
-    const zustand = { eingeklappt: startStellung() };
     let knopf = null;
+    let letzteStellung = null;
 
     function rahmen() {
       return document.querySelector(seite.rahmen);
@@ -51,12 +59,10 @@
       return rahmenElement ? rahmenElement.querySelector(seite.trenner) : null;
     }
 
-    /** Die Stellung beim Laden: die Seite darf sie aus der Fensterbreite ableiten (Ergebnis-Spalte ab 1012 px ausgeklappt). */
-    function startStellung() {
-      if (typeof seite.start === 'function') {
-        return seite.start(window.innerWidth);
-      }
-      return werte().start();
+    /** Die Stellung der Seite aus dem einen Breitenzustand (die Regel führt sie; kein zweiter Zustand). */
+    function eingeklapptZustand() {
+      const gezeigt = breiten().gezeigt();
+      return Boolean(gezeigt[`${seite.breite}Ein`]);
     }
 
     /** Darf der Bereich zur aktuellen Fensterbreite ausgeklappt werden? (Ergebnis-Spalte erst ab 812 px.) */
@@ -73,6 +79,7 @@
         medien.addEventListener('change', anwenden);
       }
       window.addEventListener('resize', anwenden);
+      letzteStellung = eingeklappt();
       anwenden();
     }
 
@@ -82,14 +89,18 @@
       if (!zweispaltig()) {
         return false;
       }
-      return zustand.eingeklappt || !ausklappbar();
+      return eingeklapptZustand() || !ausklappbar();
     }
 
     /** Zustand → Layout und Bedienelement; erzeugt bzw. entfernt den Knopf je Aufbau. Der eingeklappte Bereich ist `hidden`
-        und `inert`: er ist weder sichtbar noch im Tab- oder Lese-Weg (kein unsichtbarer Stopp). */
+        und `inert`: er ist weder sichtbar noch im Tab- oder Lese-Weg (kein unsichtbarer Stopp). Klappt die Spalte selbständig
+        ein (Fenster schmaler), rettet dieselbe Stelle den Fokus auf den Knopf (R00042, Kriterium 9). */
     function anwenden() {
       sichereKnopf();
       const eingeklapptJetzt = eingeklappt();
+      const wurdeEingeklappt = eingeklapptJetzt && letzteStellung === false;
+      letzteStellung = eingeklapptJetzt;
+      const fokusWirdVerborgen = wirdVerborgen(document.activeElement);
       const rahmenElement = rahmen();
       if (rahmenElement) {
         rahmenElement.classList.toggle(seite.klasse, eingeklapptJetzt);
@@ -105,6 +116,9 @@
       }
       if (knopf) {
         setzeKnopf(eingeklapptJetzt);
+      }
+      if (eingeklapptJetzt && wurdeEingeklappt && (fokusWirdVerborgen || fokusNirgends()) && knopf) {
+        knopf.focus({ preventScroll: true });
       }
       document.dispatchEvent(new CustomEvent(seite.ereignis, { detail: { eingeklappt: eingeklapptJetzt } }));
     }
@@ -181,11 +195,11 @@
     }
 
     /**
-     * Die Betätigung (Klick oder Kürzel, das denselben Knopf betätigt): Stellung wechseln, sonst nichts. Der Fokus geht nie
-     * ins Leere: hatte er in einem Element gestanden, das jetzt verschwindet (Bereich `hidden`/`inert` oder Trennzug
-     * `display:none`), oder war er nirgends, steht er danach auf dem Knopf; stand er anderswo (etwa im offenen Notizfeld des
-     * Diffs), bleibt er dort — das Einklappen verwirft keine Eingabe (Lehre #23). Beim Ausklappen bleibt der Fokus auf demselben
-     * Bedienelement.
+     * Die Betätigung (Klick oder Kürzel, das denselben Knopf betätigt): die Stellung im gemeinsamen Breitenzustand wechseln
+     * (`klappeUm` — dieselbe Regel wie Ziehen, Fenster und Ausklappen), sonst nichts. Der Fokus geht nie ins Leere: hatte er in
+     * einem Element gestanden, das jetzt verschwindet (Bereich `hidden`/`inert` oder Trennzug `display:none`), oder war er
+     * nirgends, steht er danach auf dem Knopf; stand er anderswo (etwa im offenen Notizfeld des Diffs), bleibt er dort — das
+     * Einklappen verwirft keine Eingabe (Lehre #23). Beim Ausklappen bleibt der Fokus auf demselben Bedienelement.
      */
     function umschalten() {
       if (!zweispaltig() || !ausklappbar()) {
@@ -193,12 +207,13 @@
       }
       // Der Fokusstand wird vor dem Anwenden gelesen: das Verbergen blurst das Element erst mit der nächsten Stilberechnung.
       const fokusWirdVerborgen = wirdVerborgen(document.activeElement);
-      zustand.eingeklappt = werte().umschalten(zustand.eingeklappt);
+      const klapptEin = !eingeklappt();
+      breiten().klappeUm(seite.breite);
       anwenden();
-      if (knopf && (document.activeElement === knopf || fokusWirdVerborgen || fokusNirgends())) {
+      if (knopf && (document.activeElement === knopf || (klapptEin && fokusWirdVerborgen) || fokusNirgends())) {
         knopf.focus({ preventScroll: true });
       }
-      if (!zustand.eingeklappt) {
+      if (!eingeklappt()) {
         bringeWahlInDenBlick();
       }
     }
@@ -240,7 +255,7 @@
     return {
       umschalten,
       anwenden,
-      istEingeklappt: () => zustand.eingeklappt,
+      istEingeklappt: eingeklappt,
       knopf: () => knopf,
     };
   }
@@ -252,6 +267,7 @@
       leiste: '#seitenleiste',
       streifen: '.gr-streifen',
       trenner: '.gr-trenner',
+      breite: 'links',
       knopfId: 'einklappen',
       klasse: 'gr-eingeklappt',
       bezeichnung: 'Seitenleiste',
@@ -263,7 +279,8 @@
       rahmen: RAHMEN,
       leiste: '#ergebnis',
       streifen: '.gr-ergebnis-streifen',
-      trenner: null,
+      trenner: '.gr-ergebnis-trenner',
+      breite: 'rechts',
       knopfId: 'ergebnis-einklappen',
       klasse: 'gr-ergebnis-eingeklappt',
       bezeichnung: 'Ergebnis-Spalte',
@@ -271,7 +288,6 @@
       wahl: null,
       medien: `(min-width:${werte().mindestFensterBreite()}px)`,
       rechts: true,
-      start: fensterBreite => !werte().ergebnisStartetAusgeklappt(fensterBreite),
       ausklappbar: fensterBreite => werte().ergebnisAusklappbar(fensterBreite),
       grund: 'Fenster zu schmal',
     });

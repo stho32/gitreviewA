@@ -1,22 +1,28 @@
-/* gitreviewA — Trenner der Seitenleiste (R00034, I0035): der Zustand der Breite (nur RAM, Start 360 px), das Trenner-Element im
-   zweispaltigen Aufbau, die Breite über eine CSS-Variable am Rahmen (`--gr-leiste-breite`), das Ziehen mit dem Zeiger, die Tasten am
-   Element und der Doppelklick auf die Startbreite. Die reine Rechnung liegt in `trenner-werte.js`; die Breite wirkt allein über das
-   Layout, ohne den Diff neu zu zeichnen (Lehre #23). Nach dem Neuladen gilt wieder die Startbreite — nichts wird gespeichert. */
+/* gitreviewA — Trenner beider Seitenleisten (R00034, R00037, R00042, B4102): die Mechanik je Seite (`anlegen(seite)`) — Zustand,
+   Element, Zug, Tasten, Doppelklick und `aria-*` hängen an der Seite, nicht am Modul. Vorbild der Verallgemeinerung ist
+   `einklappen.js` `anlegen(seite)`; ein gemeinsamer Breitenzustand `{wunsch, gezeigt, vorrang}` trägt beide Wünsche, weil die
+   eine Regel (`trenner-werte.js`) beide braucht. Die gezeigten Breiten wirken allein über CSS-Variablen am Rahmen
+   (`--gr-leiste-breite`, `--gr-ergebnis-breite`), ohne den Diff oder das Ergebnis neu zu zeichnen (Lehre #23). Nach dem Neuladen
+   gelten die Startbreiten — nichts wird gespeichert. Der Zustand ist die eine Quelle für `einklappen.js`: es liest und schreibt
+   die Stellung der Spalte über `window.gitreviewaBreiten` (B4104). */
 (function () {
   'use strict';
 
   const RAHMEN = '.gr-ansicht';
-  const DIFF = '#diff';
   const werte = window.gitreviewaTrennerWerte;
   const MEDIEN = `(min-width:${werte.mindestFensterBreite()}px)`;
-  const zustand = { wunsch: werte.START, breite: werte.START, ziehen: null };
+
+  /** Der eine Breitenzustand beider Seiten (nur RAM): beide Wünsche, der gezeigte Stand und die klebende Stellung der Spalte. */
+  const zustand = {
+    wunsch: { links: werte.START, rechts: werte.ERGEBNIS },
+    gezeigt: { links: werte.START, rechts: werte.ERGEBNIS, linksEin: false, rechtsEin: false },
+    vorrang: null,
+    ziehen: null,
+  };
+  const seiten = [];
 
   function rahmen() {
     return document.querySelector(RAHMEN);
-  }
-
-  function trenner() {
-    return document.querySelector(`${RAHMEN} .gr-trenner`);
   }
 
   /** Die Entscheidung kommt aus der einen Quelle in `trenner-werte.js`; `MEDIEN` dient nur dem Grenzübertritt. */
@@ -24,165 +30,236 @@
     return werte.passtZweiSpaltig(window.innerWidth);
   }
 
-  function hoechste() {
-    return werte.hoechsteBreite(window.innerWidth, ergebnisBreiteJetzt());
+  /** Die eine Rechnung; ihr Ergebnis ist der gezeigte Stand und die klebende Stellung der Spalte (B4101). */
+  function rechne() {
+    zustand.gezeigt = werte.anzeige(window.innerWidth, zustand.wunsch, {
+      linksEin: zustand.gezeigt.linksEin,
+      rechtsEin: zustand.gezeigt.rechtsEin,
+      vorrang: zustand.vorrang,
+    });
+    zustand.vorrang = zustand.gezeigt.vorrang;
+    return zustand.gezeigt;
+  }
+
+  /** Die gezeigten Breiten als CSS-Variablen am Rahmen setzen — das Layout folgt, der Diff zeichnet nicht neu. */
+  function anwenden() {
+    const rahmenElement = rahmen();
+    if (rahmenElement) {
+      rahmenElement.style.setProperty('--gr-leiste-breite', `${zustand.gezeigt.links}px`);
+      rahmenElement.style.setProperty('--gr-ergebnis-breite', `${zustand.gezeigt.rechts}px`);
+    }
+    for (const seite of seiten) {
+      seite.aktualisiere();
+    }
+  }
+
+  /** Bei jeder Größenänderung neu rechnen und anwenden — in beide Richtungen; die Wünsche bleiben erhalten. */
+  function beiGroesse() {
+    rechne();
+    anwenden();
   }
 
   /**
-   * Die Breite, die die ausgeklappte Ergebnis-Spalte belegt; 0, wenn sie eingeklappt ist (dann belegt sie nur den Streifen).
-   * Der Zustand kommt aus der Klasse am Rahmen, die `einklappen.js` setzt — keine zweite Zustandsquelle.
+   * Eine Seite ein-/ausklappen (der Knopf der Seitenleiste oder der Ergebnis-Spalte ruft das): die Stellung wechseln. Ein
+   * ausdrückliches Ausklappen der Spalte setzt den Vorrang (R00042, Kriterium 7), ein Einklappen oder das Ausklappen der
+   * Seitenleiste löscht ihn (dann gilt wieder die Reihenfolge beim Schrumpfen).
    */
-  function ergebnisBreiteJetzt() {
-    const rahmenElement = rahmen();
-    if (!rahmenElement || !werte.ergebnisVorhanden(window.innerWidth)) {
-      return 0;
-    }
-    if (rahmenElement.classList.contains('gr-ergebnis-eingeklappt')) {
-      return 0;
-    }
-    return werte.ergebnisBreite(window.innerWidth);
+  function klappeUm(seite) {
+    const schluessel = `${seite}Ein`;
+    zustand.gezeigt[schluessel] = !zustand.gezeigt[schluessel];
+    zustand.vorrang = seite === 'rechts' && !zustand.gezeigt.rechtsEin ? werte.VORRANG_RECHTS : null;
+    rechne();
+    anwenden();
+    return zustand.gezeigt[schluessel];
   }
 
+  /**
+   * Einen Trenner anlegen. `seite` nennt: `seite` (der Schlüssel im Breitenzustand: `'links'`/`'rechts'`), `klasse` (die Klasse
+   * des Elements), `steuert` (`aria-controls`), `name` (`aria-label`), `start` (Doppelklick), `richtung` (Pfeilrichtung: `1`
+   * links, `-1` rechts), `ereignis` (der Breitenwechsel) und `vor` (der Selektor, vor dem das Element eingefügt wird).
+   */
+  function anlegen(seite) {
+    function selektor() {
+      return `${RAHMEN} .${seite.klasse}`;
+    }
+
+    function trenner() {
+      return document.querySelector(selektor());
+    }
+
+    function hoechste() {
+      return seite.seite === 'rechts'
+        ? werte.hoechstRechts(window.innerWidth, zustand.gezeigt)
+        : werte.hoechstLinks(window.innerWidth, zustand.gezeigt);
+    }
+
+    function gezeigt() {
+      return zustand.gezeigt[seite.seite];
+    }
+
+    /** Die gewählte Breite als Wunsch setzen (auf die feste Spanne geklemmt) und die gezeigten Breiten neu rechnen. */
+    function setzen(neu) {
+      const wunsch = werte.klemme(Number(neu), werte.KLEINSTE, werte.GROESSTE);
+      if (!Number.isFinite(wunsch) || wunsch === zustand.wunsch[seite.seite]) {
+        return;
+      }
+      zustand.wunsch[seite.seite] = wunsch;
+      rechne();
+      anwenden();
+      document.dispatchEvent(new CustomEvent(seite.ereignis, { detail: { breite: gezeigt() } }));
+    }
+
+    /** Die ARIA-Angaben des Trennzugs an die gezeigte Breite und die tatsächliche Höchstbreite angleichen. Im einspaltigen
+        Rückfall gibt es keinen Trenner; dann bleibt auch keine verletzte Spanne stehen. */
+    function aktualisiere() {
+      sichere();
+      const element = trenner();
+      if (!element || !zweispaltig()) {
+        return;
+      }
+      element.setAttribute('aria-valuenow', String(gezeigt()));
+      element.setAttribute('aria-valuemin', String(werte.KLEINSTE));
+      element.setAttribute('aria-valuemax', String(hoechste()));
+    }
+
+    /** Der Trenner gehört nur in den zweispaltigen Aufbau; unter 566 px gibt es ihn nicht (R00033). */
+    function sichere() {
+      if (zweispaltig()) {
+        if (!trenner()) {
+          erzeuge();
+        }
+      } else if (trenner()) {
+        trenner().remove();
+      }
+    }
+
+    function erzeuge() {
+      const element = document.createElement('div');
+      element.className = seite.klasse;
+      element.setAttribute('role', 'separator');
+      element.setAttribute('aria-orientation', 'vertical');
+      element.setAttribute('aria-controls', seite.steuert);
+      element.setAttribute('aria-label', seite.name);
+      element.setAttribute('tabindex', '0');
+      element.addEventListener('pointerdown', ereignis => beginneZug(ereignis));
+      element.addEventListener('pointermove', ereignis => ziehe(ereignis));
+      element.addEventListener('pointerup', ereignis => beendeZug(ereignis));
+      element.addEventListener('pointercancel', ereignis => beendeZug(ereignis));
+      element.addEventListener('keydown', ereignis => beiTaste(ereignis));
+      element.addEventListener('dblclick', () => setzen(seite.start));
+      rahmen().insertBefore(element, rahmen().querySelector(seite.vor));
+      aktualisiere();
+    }
+
+    /** Die Tasten am Trenner (R00034/R00042): ein Pfeil verstellt um 16 px in die Richtung der Seite, Pos1/Ende auf die
+        Grenzen; sonst bleibt die Taste beim Browser. */
+    function beiTaste(ereignis) {
+      if (ereignis.defaultPrevented || ereignis.isComposing) {
+        return;
+      }
+      if (ereignis.key !== 'ArrowRight' && ereignis.key !== 'ArrowLeft' && ereignis.key !== 'Home' && ereignis.key !== 'End') {
+        return;
+      }
+      ereignis.preventDefault();
+      setzen(werte.breiteNachTaste(gezeigt(), ereignis.key, hoechste(), seite.richtung));
+    }
+
+    /** Der Beginn eines Zugs: den Zeiger am Trenner festhalten (Pointer-Capture), damit auch ein schneller Sprung ankommt. */
+    function beginneZug(ereignis) {
+      const element = trenner();
+      if (!element) {
+        return;
+      }
+      const rahmenRechteck = rahmen().getBoundingClientRect();
+      zustand.ziehen = {
+        id: ereignis.pointerId,
+        links: rahmenRechteck.left,
+        rechts: rahmenRechteck.right,
+        griff: ereignis.clientX - element.getBoundingClientRect().left,
+      };
+      element.setPointerCapture(ereignis.pointerId);
+      element.classList.add('aktiv');
+      ereignis.preventDefault();
+    }
+
+    /** Der Zeiger bewegt sich: die Breite folgt der Zeigerposition (die Trennerkante steht unter dem Griff). */
+    function ziehe(ereignis) {
+      const zug = zustand.ziehen;
+      if (!zug || ereignis.pointerId !== zug.id) {
+        return;
+      }
+      const kante = ereignis.clientX - zug.griff;
+      const neu = seite.seite === 'rechts'
+        ? werte.breiteNachZugRechts(kante, zug.rechts, hoechste(), gezeigt())
+        : werte.breiteNachZug(kante, zug.links, hoechste(), gezeigt());
+      setzen(neu);
+    }
+
+    /** Der Zug ist zu Ende: den Zeiger freigeben. */
+    function beendeZug(ereignis) {
+      const zug = zustand.ziehen;
+      if (!zug || ereignis.pointerId !== zug.id) {
+        return;
+      }
+      zustand.ziehen = null;
+      const element = trenner();
+      if (element) {
+        element.classList.remove('aktiv');
+        if (element.hasPointerCapture && element.hasPointerCapture(ereignis.pointerId)) {
+          element.releasePointerCapture(ereignis.pointerId);
+        }
+      }
+    }
+
+    const api = {
+      hole: gezeigt,
+      setzen,
+      hoechste,
+      wunsch: () => zustand.wunsch[seite.seite],
+      aktualisiere,
+      sichere,
+    };
+    seiten.push(api);
+    return api;
+  }
+
+  const SEITEN = {
+    links: {
+      seite: 'links',
+      klasse: 'gr-trenner',
+      steuert: 'seitenleiste',
+      name: 'Breite der Dateiliste',
+      start: werte.START,
+      richtung: 1,
+      ereignis: 'breite-geaendert',
+      vor: '#diff',
+    },
+  };
+
   function init() {
-    zustand.breite = gezeigteBreite();
+    // Die Spalte startet ausgeklappt ab 1012 px (R00037); darunter bleibt sie zu, bis der Mensch sie ausklappt.
+    zustand.gezeigt.rechtsEin = !werte.ergebnisStartetAusgeklappt(window.innerWidth);
+    rechne();
     anwenden();
-    sichereTrenner();
     const medien = window.matchMedia(MEDIEN);
     if (typeof medien.addEventListener === 'function') {
       medien.addEventListener('change', beiGroesse);
     }
     window.addEventListener('resize', beiGroesse);
+    document.addEventListener('eingeklappt-geaendert', beiGroesse);
     document.addEventListener('ergebnis-eingeklappt-geaendert', beiGroesse);
   }
 
-  /** Die gezeigte Breite: der Wunsch, auf die tatsächliche Spanne geklemmt; im einspaltigen Rückfall bleibt der Wunsch. */
-  function gezeigteBreite() {
-    if (!zweispaltig()) {
-      return zustand.wunsch;
-    }
-    return werte.klemme(zustand.wunsch, werte.kleinsteBreite(), hoechste());
-  }
+  const api = anlegen(SEITEN.links);
 
-  /** Die Breite der Seitenleiste als CSS-Variable am Rahmen setzen — das Layout folgt, der Diff zeichnet nicht neu. Die
-      ausgeklappte Ergebnis-Spalte bekommt ihre Breite aus derselben Rechnung (R00037). */
-  function anwenden() {
-    const rahmenElement = rahmen();
-    if (rahmenElement) {
-      rahmenElement.style.setProperty('--gr-leiste-breite', `${zustand.breite}px`);
-      rahmenElement.style.setProperty('--gr-ergebnis-breite', `${werte.ergebnisBreite(window.innerWidth)}px`);
-    }
-    aktualisiereAria();
-  }
-
-  /** Die ARIA-Angaben des Trennzugs an die aktuelle Breite und die tatsächliche Höchstbreite angleichen. Im einspaltigen
-      Rückfall gibt es keinen Trenner; dann bleibt auch keine verletzte Spanne stehen. */
-  function aktualisiereAria() {
-    const element = trenner();
-    if (!element || !zweispaltig()) {
-      return;
-    }
-    element.setAttribute('aria-valuenow', String(zustand.breite));
-    element.setAttribute('aria-valuemin', String(werte.kleinsteBreite()));
-    element.setAttribute('aria-valuemax', String(hoechste()));
-  }
-
-  /** Die gewählte Breite als Wunsch setzen (auf die feste Spanne geklemmt) und die gezeigte Breite neu klemmen. */
-  function setzen(neu) {
-    const wunsch = werte.klemme(Number(neu), werte.kleinsteBreite(), werte.GROESSTE);
-    if (!Number.isFinite(wunsch) || wunsch === zustand.wunsch) {
-      return;
-    }
-    zustand.wunsch = wunsch;
-    zustand.breite = gezeigteBreite();
-    anwenden();
-    document.dispatchEvent(new CustomEvent('breite-geaendert', { detail: { breite: zustand.breite } }));
-  }
-
-  /** Bei jeder Größenänderung die gezeigte Breite neu klemmen — in beide Richtungen; der Wunsch bleibt erhalten. */
-  function beiGroesse() {
-    zustand.breite = gezeigteBreite();
-    anwenden();
-    sichereTrenner();
-  }
-
-  /** Der Trenner gehört nur in den zweispaltigen Aufbau; unter 566 px gibt es ihn nicht (R00033, Rückfall auf eine Spalte). */
-  function sichereTrenner() {
-    if (zweispaltig()) {
-      if (!trenner()) {
-        erzeugeTrenner();
-      }
-    } else if (trenner()) {
-      trenner().remove();
-    }
-  }
-
-  function erzeugeTrenner() {
-    const element = document.createElement('div');
-    element.className = 'gr-trenner';
-    element.setAttribute('role', 'separator');
-    element.setAttribute('aria-orientation', 'vertical');
-    element.setAttribute('aria-controls', 'seitenleiste');
-    element.setAttribute('aria-label', 'Breite der Dateiliste');
-    element.setAttribute('tabindex', '0');
-    element.addEventListener('pointerdown', ereignis => beginneZug(element, ereignis));
-    element.addEventListener('pointermove', ereignis => ziehe(element, ereignis));
-    element.addEventListener('pointerup', ereignis => beendeZug(element, ereignis));
-    element.addEventListener('pointercancel', ereignis => beendeZug(element, ereignis));
-    element.addEventListener('keydown', ereignis => beiTaste(ereignis));
-    element.addEventListener('dblclick', () => setzen(werte.START));
-    rahmen().insertBefore(element, rahmen().querySelector(DIFF));
-    aktualisiereAria();
-  }
-
-  /** Die Tasten am Trenner (R00034, B3304): Pfeil rechts/links um 16 px, Pos1/Ende auf die Grenzen; sonst bleibt die Taste beim Browser. */
-  function beiTaste(ereignis) {
-    if (ereignis.defaultPrevented || ereignis.isComposing) {
-      return;
-    }
-    if (ereignis.key !== 'ArrowRight' && ereignis.key !== 'ArrowLeft' && ereignis.key !== 'Home' && ereignis.key !== 'End') {
-      return;
-    }
-    ereignis.preventDefault();
-    setzen(werte.breiteNachTaste(zustand.breite, ereignis.key, hoechste()));
-  }
-
-  /** Der Beginn eines Zugs: den Zeiger am Trenner festhalten (Pointer-Capture), damit auch ein schneller Sprung ankommt. */
-  function beginneZug(element, ereignis) {
-    zustand.ziehen = {
-      id: ereignis.pointerId,
-      links: rahmen().getBoundingClientRect().left,
-      griff: ereignis.clientX - element.getBoundingClientRect().left,
-    };
-    element.setPointerCapture(ereignis.pointerId);
-    element.classList.add('aktiv');
-    ereignis.preventDefault();
-  }
-
-  /** Der Zeiger bewegt sich: die Breite folgt der Zeigerposition (die linke Kante des Trennzugs steht unter dem Griff). */
-  function ziehe(element, ereignis) {
-    if (!zustand.ziehen || ereignis.pointerId !== zustand.ziehen.id) {
-      return;
-    }
-    setzen(werte.breiteNachZug(ereignis.clientX - zustand.ziehen.griff, zustand.ziehen.links, hoechste(), zustand.breite));
-  }
-
-  /** Der Zug ist zu Ende: den Zeiger freigeben. */
-  function beendeZug(element, ereignis) {
-    if (!zustand.ziehen || ereignis.pointerId !== zustand.ziehen.id) {
-      return;
-    }
-    zustand.ziehen = null;
-    element.classList.remove('aktiv');
-    if (element.hasPointerCapture && element.hasPointerCapture(ereignis.pointerId)) {
-      element.releasePointerCapture(ereignis.pointerId);
-    }
-  }
-
-  window.gitreviewaBreite = {
-    hole: () => zustand.breite,
-    setzen,
-    hoechste: () => hoechste(),
+  /** Der gemeinsame Breitenzustand für `einklappen.js` (B4104): es liest die Stellung und wechselt sie über `klappeUm`. */
+  window.gitreviewaBreiten = {
+    gezeigt: () => zustand.gezeigt,
+    wunsch: () => zustand.wunsch,
+    rechne,
+    klappeUm,
   };
+  window.gitreviewaBreite = api;
 
   document.addEventListener('DOMContentLoaded', init);
 }());
