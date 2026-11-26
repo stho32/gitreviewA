@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using GitReviewA.Anmerkungen;
+using GitReviewA.Ansicht;
 using GitReviewA.Aufruf;
 using GitReviewA.Beenden;
 using GitReviewA.Dateien;
@@ -19,7 +20,7 @@ internal sealed class Webserver : IAsyncDisposable
 
     private readonly WebApplication anwendung;
 
-    private Webserver(WebApplication anwendung, int port, Anmerkungsspeicher anmerkungen, DateiAbhakenInteractor dateiAbhaken, ErgebnisKopierenInteractor ergebnis, Laufende laufende)
+    private Webserver(WebApplication anwendung, int port, Anmerkungsspeicher anmerkungen, DateiAbhakenInteractor dateiAbhaken, ErgebnisKopierenInteractor ergebnis, Laufende laufende, Ansichtsstand ansichtsstand)
     {
         this.anwendung = anwendung;
         Adresse = $"http://{HostPruefung.Rechneradresse}:{port}/";
@@ -27,6 +28,7 @@ internal sealed class Webserver : IAsyncDisposable
         DateiAbhaken = dateiAbhaken;
         Ergebnis = ergebnis;
         Laufende = laufende;
+        Ansichtsstand = ansichtsstand;
     }
 
     public string Adresse { get; }
@@ -41,6 +43,9 @@ internal sealed class Webserver : IAsyncDisposable
     /// <summary>Der eine Einmal-Schalter für „Beenden“ und „Abbrechen“ (R00050); der Hauptablauf liest ihn.</summary>
     public Laufende Laufende { get; }
 
+    /// <summary>Der Ansichtsstand des Laufs (R00041) — dieselbe Stelle, die `GET` und `POST /api/angesehen` bedienen.</summary>
+    public Ansichtsstand Ansichtsstand { get; }
+
     public static async Task<Webserver> StartenAsync(int port, Commitzeilen commits, IDateiquelle dateiquelle, IDiffquelle diffquelle, IUebersichtsquelle uebersichtsquelle, IZusammenquelle zusammenquelle, Oberflaeche oberflaeche, StderrProtokoll protokoll, ISprungquelle? sprungquelle = null, Musterliste? muster = null, Bild.IBildquelle? bildquelle = null, string? arbeitsordner = null, Laufende? laufende = null)
     {
         var lauscherPort = new Serverbau.LauscherPort();
@@ -50,6 +55,7 @@ internal sealed class Webserver : IAsyncDisposable
         var uebersicht = new GemerkteUebersicht(uebersichtsquelle);
         var zusammen = new ZusammenLesenInteractor(commits, uebersicht, zusammenquelle, diffquelle, protokoll);
         var dateiAbhaken = new DateiAbhakenInteractor(uebersicht, haken, zusammen, protokoll);
+        var ansichtsstand = new Ansichtsstand();
         BildeEndpunkte(anwendung, commits, oberflaeche, muster);
         MeldeMuster(protokoll, muster);
         var dateien = new GemerkteDateiquelle(dateiquelle);
@@ -70,10 +76,10 @@ internal sealed class Webserver : IAsyncDisposable
         {
             laufendeSchalter = new Laufende();
         }
-        var ergebnis = BildeRueckkanal(anwendung, commits, anmerkungen, haken, dateiAbhaken, uebersicht, arbeitsordner, laufendeSchalter, protokoll);
+        var ergebnis = BildeRueckkanal(anwendung, commits, anmerkungen, haken, dateiAbhaken, uebersicht, arbeitsordner, laufendeSchalter, protokoll, ansichtsstand);
         await anwendung.StartAsync();
         lauscherPort.Wert = Serverbau.TatsaechlicherPort(anwendung);
-        return new Webserver(anwendung, lauscherPort.Wert, anmerkungen, dateiAbhaken, ergebnis, laufendeSchalter);
+        return new Webserver(anwendung, lauscherPort.Wert, anmerkungen, dateiAbhaken, ergebnis, laufendeSchalter, ansichtsstand);
     }
 
     public Task WartenBisBeendetAsync()
@@ -126,7 +132,7 @@ internal sealed class Webserver : IAsyncDisposable
     }
 
     /// <summary>Baut den Rückkanal und liefert die eine Erzeugungsstelle des Ergebnisses (der Hauptablauf nutzt sie für stdout).</summary>
-    private static ErgebnisKopierenInteractor BildeRueckkanal(WebApplication anwendung, Commitzeilen commits, Anmerkungsspeicher anmerkungen, Hakenspeicher haken, DateiAbhakenInteractor dateiAbhaken, GemerkteUebersicht uebersicht, string? arbeitsordner, Laufende laufende, StderrProtokoll protokoll)
+    private static ErgebnisKopierenInteractor BildeRueckkanal(WebApplication anwendung, Commitzeilen commits, Anmerkungsspeicher anmerkungen, Hakenspeicher haken, DateiAbhakenInteractor dateiAbhaken, GemerkteUebersicht uebersicht, string? arbeitsordner, Laufende laufende, StderrProtokoll protokoll, Ansichtsstand ansichtsstand)
     {
         var sperre = new Stellensperre(uebersicht, protokoll);
         var interactor = new ZeileAnnotierenInteractor(anmerkungen, new CommitAuswahl(commits), sperre, protokoll);
@@ -139,6 +145,9 @@ internal sealed class Webserver : IAsyncDisposable
         anwendung.Map("/api/anmerkungen/{nummer}/loeschen", GeschuetzterEndpunkt.Mit(loeschen, protokoll));
         anwendung.MapGet("/api/haken", HakenEndpunkt.Stand(dateiAbhaken));
         anwendung.Map("/api/haken", GeschuetzterEndpunkt.Mit(HakenEndpunkt.Setzen(dateiAbhaken, protokoll), protokoll));
+        var angesehen = new AngesehenInteractor(uebersicht, ansichtsstand, protokoll);
+        anwendung.MapGet(AngesehenEndpunkt.Muster, AngesehenEndpunkt.Stand(angesehen));
+        anwendung.Map(AngesehenEndpunkt.Muster, GeschuetzterEndpunkt.Mit(AngesehenEndpunkt.Markieren(angesehen, protokoll), protokoll));
         var beenden = BeendenEndpunkt.Fuer(anmerkungen, haken, laufende, anwendung.Lifetime, protokoll);
         anwendung.Map("/api/beenden", GeschuetzterEndpunkt.Mit(beenden, protokoll));
         var abbrechen = AbbrechenEndpunkt.Fuer(laufende, anwendung.Lifetime);

@@ -1,3 +1,6 @@
+using GitReviewA.Git;
+using GitReviewA.Protokoll;
+
 namespace GitReviewA.Haken;
 
 /// <summary>
@@ -33,5 +36,33 @@ internal sealed class GemerkteUebersicht(IUebersichtsquelle quelle)
             return new Dateiuebersicht([], []);
         }
         return bisherGemerkt;
+    }
+
+    /// <summary>
+    /// Liest die Übersicht für einen Zugriff, der ohne sie nichts entscheiden kann: ein Fehler wird protokolliert und als
+    /// <paramref name="grund"/> gemeldet — die eine Stelle für alle Leser (Haken, Angesehen). Der Aufrufer macht daraus seinen Ausgang.
+    /// </summary>
+    public bool VersucheZuLesen(StderrProtokoll protokoll, string kontext, string grundNichtLesbar, out Dateiuebersicht gelesen, out string grund)
+    {
+        grund = string.Empty;
+        try
+        {
+            gelesen = Lesen();
+            return true;
+        }
+        catch (GitZuGross zuGross)
+        {
+            protokoll.Melde(Protokollstufe.Warnung, kontext, $"Übersicht der Dateien {zuGross.UiGrund}: Ausgabegrenze von {zuGross.Grenze} Byte überschritten");
+            grund = zuGross.UiGrund;
+            gelesen = new Dateiuebersicht([], []);
+            return false;
+        }
+        catch (GitFehler fehler)
+        {
+            protokoll.Melde(Protokollstufe.Fehler, kontext, $"Übersicht der Dateien nicht lesbar: {fehler.Message}");
+            grund = grundNichtLesbar;
+            gelesen = new Dateiuebersicht([], []);
+            return false;
+        }
     }
 }

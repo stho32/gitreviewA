@@ -1,5 +1,4 @@
 using GitReviewA.Fremdtext;
-using GitReviewA.Git;
 using GitReviewA.Protokoll;
 using GitReviewA.Zusammen;
 
@@ -40,7 +39,7 @@ internal sealed class DateiAbhakenInteractor
 
     public Hakenstand Stand()
     {
-        if (!VersucheUebersichtZuLesen(out var gelesen, out _))
+        if (!uebersicht.VersucheZuLesen(protokoll, Kontext, NichtLesbarGrund, out var gelesen, out _))
         {
             return new Hakenstand(false, new Dateienstand([]));
         }
@@ -59,7 +58,7 @@ internal sealed class DateiAbhakenInteractor
         {
             return Abgelehnt(Hakenausgang.Ungueltig, formgrund);
         }
-        if (!VersucheUebersichtZuLesen(out var gelesen, out var nichtLesbarGrund))
+        if (!uebersicht.VersucheZuLesen(protokoll, Kontext, NichtLesbarGrund, out var gelesen, out var nichtLesbarGrund))
         {
             return Abgelehnt(Hakenausgang.NichtLesbar, nichtLesbarGrund);
         }
@@ -85,7 +84,7 @@ internal sealed class DateiAbhakenInteractor
         {
             return Abgelehnt(Hakenausgang.Ungueltig, formgrund);
         }
-        if (!VersucheUebersichtZuLesen(out var gelesen, out var nichtLesbarGrund))
+        if (!uebersicht.VersucheZuLesen(protokoll, Kontext, NichtLesbarGrund, out var gelesen, out var nichtLesbarGrund))
         {
             return Abgelehnt(Hakenausgang.NichtLesbar, nichtLesbarGrund);
         }
@@ -142,30 +141,6 @@ internal sealed class DateiAbhakenInteractor
     {
         protokoll.Melde(Protokollstufe.Debug, Kontext, $"abgelehnt: {grund}");
         return new Hakenergebnis(ausgang, 0, 0, grund);
-    }
-
-    private bool VersucheUebersichtZuLesen(out Dateiuebersicht gelesen, out string grund)
-    {
-        grund = string.Empty;
-        try
-        {
-            gelesen = uebersicht.Lesen();
-            return true;
-        }
-        catch (GitZuGross zuGross)
-        {
-            protokoll.Melde(Protokollstufe.Warnung, Kontext, $"Übersicht der Dateien {zuGross.UiGrund}: Ausgabegrenze von {zuGross.Grenze} Byte überschritten");
-            grund = zuGross.UiGrund;
-            gelesen = new Dateiuebersicht([], []);
-            return false;
-        }
-        catch (GitFehler fehler)
-        {
-            protokoll.Melde(Protokollstufe.Fehler, Kontext, $"Übersicht der Dateien nicht lesbar: {fehler.Message}");
-            grund = NichtLesbarGrund;
-            gelesen = new Dateiuebersicht([], []);
-            return false;
-        }
     }
 
     private void MeldeGesetzt(Hakenwunsch wunsch)

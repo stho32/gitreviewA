@@ -1,6 +1,8 @@
 /* gitreviewA — Diff-Bereich: liest den Diff einer Datei erst bei ihrer Wahl (Ereignis `datei-gewaehlt`) und zeigt ihn mit Nummern
    alt und neu, als „nur Änderungen“ oder „ganze Datei“ (Diffansicht); der Wechsel des Commits (`commit-gewaehlt`) hebt die Wahl auf
-   und fordert zum Wählen auf. Nach jedem Zeichnen meldet das Ereignis `diff-gezeichnet` Commit, Pfad, Ansicht und Bereich. Jede Zeile
+   und fordert zum Wählen auf. Nach jedem Zeichnen meldet das Ereignis `diff-gezeichnet` Commit, Pfad, Ansicht und Bereich. Das
+   Ereignis `diff-gezeigt` (R00041) meldet die eine Stelle, die der Bereich danach zeigt — auch „Keine Zeilenänderungen“,
+   Binärdatei und zugeklappte große Datei; es feuert am Ende von `ladeDiff`, ein Lese- oder Sperrfehler meldet nichts. Jede Zeile
    mit Nummer neu und jeder Abschnittskopf tragen einen Link nach VS Code, der Verweis „In VS Code“ im Kopf zeigt auf die gewählte
    Zeile (R00021); das Ziel kommt als Attribut aus `sprung-geladen`, nie aus fremdem Text. Der Umschalter „Leerraum“ stellt den
    Vergleich um (`-w`), die Lücken von „nur Änderungen“ deckt ein Bedienelement schrittweise oder ganz auf (R00026) — die Zeilen dazu
@@ -302,6 +304,17 @@
       return;
     }
     zeichneAntwort(ansicht, antwort, alsText, diffansicht);
+    meldeGezeigt(antwort.pfad);
+  }
+
+  /** Das Ereignis „Diff gezeigt“ (R00041, B4001): der Bereich zeigt jetzt diese Stelle — Diff, „Keine Zeilenänderungen“,
+      Binärdatei oder zugeklappte große Datei. Ein Lese- oder Sperrfehler meldet nichts: dann ist der Diff nicht zu sehen. */
+  function meldeGezeigt(pfad) {
+    if (!zustand.datei) {
+      return;
+    }
+    const detail = { modus: zustand.datei.modus, commit: zustand.datei.commit, pfad };
+    document.dispatchEvent(new CustomEvent('diff-gezeigt', { detail }));
   }
 
   /** Die ganze Datei liest der Server nur auf ausdrückliche Wahl der Diffansicht; die Leerraum-Stellung gilt für beide Ansichten.
