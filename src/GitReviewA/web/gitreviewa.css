@@ -254,7 +254,7 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .anm-art-wahl input{margin:0}
 .anm-fehler{margin:var(--kd-s1) 0 0;font-size:12px;color:var(--kd-status-error-ink)}
 .anm-fehler:empty{display:none}
-.anm-knoepfe{display:flex;gap:var(--kd-s2);margin-block-start:var(--kd-s2)}
+.anm-knoepfe{display:flex;flex-wrap:wrap;gap:var(--kd-s2);margin-block-start:var(--kd-s2)}
 .anm-knoepfe .btn:disabled{opacity:.6;cursor:progress}
 .anmerkungen-ausserhalb{margin:0;padding:var(--kd-s2) var(--kd-s3);font-size:12px;color:var(--kd-status-warn-ink);background:var(--kd-status-warn-bg);border-bottom:1px solid var(--kd-line)}
 /* Syntaxfarben nach kanbanD kd-app.css (.dz .c .tk-*): sieben Rollen aus den Tokens --kd-tk-*, nur der Kommentar kursiv (R00007) */
