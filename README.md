@@ -2,7 +2,7 @@
 
 gitreviewA ist ein Kommandozeilenwerkzeug für Reviews von Git-Commits: Sie rufen es in einem Repository mit einer Auswahl von Commits auf, sehen die Änderungen in einer schlichten Weboberfläche durch, haken geprüfte Dateien ab und hängen Anmerkungen an Stellen im Diff. Mit **Beenden** gibt es das „Ergebnis manueller Review“ auf stdout aus — an Sie im Terminal oder an die KI, die das Werkzeug aufgerufen hat und auf Ihr Urteil wartet.
 
-Lizenz: MIT.
+Lizenz: MIT, siehe [LICENSE](LICENSE).
 
 ![gitreviewA im Modus Zusammen: links die geänderten Dateien aller gewählten Commits, rechts der Diff der gewählten Datei](Dokumentation/Bilder/readme/01-zusammen.png)
 
@@ -268,11 +268,11 @@ Ohne Argument erzeugt das Skript `linux-x64`, `win-x64` und `osx-arm64`; bekannt
 
 ## Lizenz und Herkunft
 
-gitreviewA steht unter der MIT-Lizenz.
+gitreviewA steht unter der MIT-Lizenz, Copyright (c) 2026 Stefan Hoffmann; der Text steht in [`LICENSE`](LICENSE).
+
+Teile der Oberfläche stammen aus dem Schwesterprojekt [kanbanD](https://github.com/stho32/kanbanD) (MIT, gleicher Inhaber) und wurden für gitreviewA angepasst: die Gestaltungswerte und Grundformen (`kd-tokens.css`, `kd-base.css`), die Zeilen- und Blockrechnung des Diffs (`diff-werte.js`, `diff.js`, `nebeneinander-werte.js`, `nebeneinander.js`), die Syntaxfärbung (`faerben.js`, `farbe-werte.js`, `farbschlange.js`), die Zeilenwerte der Commit-Liste (`commit-werte.js`), die Größenbalken der Dateiliste (`dateiliste-werte.js`) sowie Zeilenform und Muster in `gitreviewa.css` und `dateiansicht.css`. Die Kopfkommentare der Dateien in `src/GitReviewA/web` nennen die Stelle in kanbanD.
 
 Mitgelieferte Komponenten mit Lizenztext im Repository:
 
 - **Prism** (MIT, Lea Verou) für die Syntaxfarben: [`src/GitReviewA/web/vendor/LICENSE-prism.txt`](src/GitReviewA/web/vendor/LICENSE-prism.txt)
 - **IBM Plex** (SIL Open Font License 1.1) als Schrift: [`src/GitReviewA/web/fonts/LICENSE-OFL.txt`](src/GitReviewA/web/fonts/LICENSE-OFL.txt)
-
-Gestaltung und einzelne Skripte der Oberfläche stammen aus dem Schwesterprojekt kanbanD; die Kopfkommentare der Dateien in `src/GitReviewA/web` nennen die Herkunft.
