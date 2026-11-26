@@ -31,7 +31,7 @@ Heute sieht der Mensch erst nach „Beenden“ (oder über die Zwischenablage), 
 - **Darstellung**: Überschrift „Ergebnis für die KI“; darunter der Text unverändert als vorformatierter Text (`textContent`), lange Zeilen umbrochen, kein waagerechter Bildlauf. Die Bildlaufposition bleibt beim Auffrischen.
 - **Fehler**: scheitert das Holen, steht eine Zeile „Ergebnis konnte nicht geladen werden“ über dem Text, der letzte Stand bleibt sichtbar und ist als „veraltet“ gekennzeichnet; die nächste Änderung versucht es erneut.
 - **Einklappen**: ein Knopf am linken Rand der Spalte (am Rand zum Diff) klappt sie ein und aus — eingeklappt bleibt ein schmaler Streifen mit dem Knopf, die Spalte ist `hidden`/`inert`, der Diff bekommt die Breite. Der Knopf trägt `aria-expanded`, einen Namen „Ergebnis-Spalte einklappen“/„… ausklappen“ und das Kürzel `r`; diese Karte setzt den Katalogeintrag mit `ziel` (Katalog aus R00030; R00030 bleibt unverändert, der Eintrag entsteht hier wie bei jeder Karte, die ein Bedienelement mit Kürzel baut). Der Fokus wandert beim Einklappen auf den Knopf. Gebaut über dieselbe Einklapp-Mechanik wie R00035 (je Seite), keine Kopie.
-- **Breiten** (entschieden, PO Zeile 194): Breite der Spalte 320 px. Start ausgeklappt ab 1012 px Fensterbreite (360 Seitenleiste + 320 Diff + 320 Spalte + 2 × 6 Trenner), darunter eingeklappt. Unter 812 px (240 + 320 + 240 + 2 × 6, die drei Mindestbreiten) ist Ausklappen nicht möglich; der Knopf ist gesperrt und nennt den Grund „Fenster zu schmal“. Unter 566 px (eine Spalte, R00033) gibt es weder Spalte noch Streifen; „Ergebnis kopieren“ bleibt. Die Höchstbreite der linken Seitenleiste (R00034) rechnet die ausgeklappte Spalte ein, sodass der Diff nie unter 320 px fällt.
+- **Breiten** (entschieden, PO Zeile 194): Breite der Spalte 320 px. Start ausgeklappt ab 1012 px Fensterbreite (360 Seitenleiste + 320 Diff + 320 Spalte + 2 × 6 Trenner), darunter eingeklappt. Unter 812 px (240 + 320 + 240 + 2 × 6, die drei Mindestbreiten) ist Ausklappen nicht möglich; der Knopf ist gesperrt und nennt den Grund „Fenster zu schmal“. Unter 590 px (eine Spalte, R00033, PO Zeile 249) gibt es weder Spalte noch Streifen; „Ergebnis kopieren“ bleibt. Die Höchstbreite der linken Seitenleiste (R00034) rechnet die ausgeklappte Spalte ein, sodass der Diff nie unter 320 px fällt.
 - **Zustand**: ein-/ausgeklappt ist Zustand der Seite (nur RAM), bleibt bei Datei-, Commit-, Modus-, Ansichts- und Anordnungswechsel; nach dem Neuladen gilt der Start nach Fensterbreite.
 - **Nach „Beenden“** zeigt die Spalte den ausgegebenen Stand und frischt nicht mehr auf.
 
@@ -58,7 +58,7 @@ Vorbereitung: **Repo Z** (`user-stories/R00012.md`), **Repo N plus `v`** (gesper
 ### Bereich, Einklappen, Breiten (Pflichtpunkte 2 und 3)
 - [ ] 6. Gegeben 1280 × 800, wenn die Seite startet, dann steht die Spalte ausgeklappt (320 px) rechts als eigener Rollbereich mit eigener Bildlaufleiste: Scrollen in der Spalte bewegt weder Diff noch Seitenleiste und umgekehrt; Kopf und Statuszeile stehen; eine Anmerkung mit einer Zeile aus 5 000 Zeichen erzeugt keinen waagerechten Bildlauf. *Ebene: Playwright (Darstellung).*
 - [ ] 7. Gegeben ausgeklappt, wenn man den Knopf am Rand oder `r` betätigt, dann ist die Spalte nicht sichtbar und nicht im Tab-Weg, ein Streifen mit dem Knopf bleibt, `aria-expanded` ist `false`, der Fokus steht auf dem Knopf, und der Diff ist um die Spaltenbreite breiter; erneutes Betätigen klappt aus. Der Zustand bleibt bei Datei-, Commit-, Modus-, Ansichts- und Anordnungswechsel und ist nach dem Neuladen wieder der Start. *Ebene: Playwright (Browser-Eigenes).*
-- [ ] 8. Gegeben die Fensterbreiten 1011 px, 900 px, 811 px und 565 px, wenn die Seite startet, dann ist die Spalte bei 1011 und 900 px eingeklappt und ausklappbar (Diff danach ≥ 320 px), bei 811 px eingeklappt mit gesperrtem Knopf und dem Grund „Fenster zu schmal“, bei 565 px gibt es weder Spalte noch Streifen; zieht man bei 1280 px mit ausgeklappter Spalte die linke Seitenleiste auf das Höchstmaß, bleibt der Diff ≥ 320 px. *Ebene: Unit (Breitenregel) und Playwright (Darstellung).*
+- [ ] 8. Gegeben die Fensterbreiten 1011 px, 900 px, 811 px und 589 px, wenn die Seite startet, dann ist die Spalte bei 1011 und 900 px eingeklappt und ausklappbar (Diff danach ≥ 320 px), bei 811 px eingeklappt mit gesperrtem Knopf und dem Grund „Fenster zu schmal“, bei 589 px gibt es weder Spalte noch Streifen; zieht man bei 1280 px mit ausgeklappter Spalte die linke Seitenleiste auf das Höchstmaß, bleibt der Diff ≥ 320 px. *Ebene: Unit (Breitenregel) und Playwright (Darstellung).*
 
 ### Sicherheit
 - [ ] 9. Gegeben Repo N plus `v` (Namen mit Rohbytes und U+202E) und eine Anmerkung mit dem Text `<img src=x onerror=alert(1)>`, wenn die Spalte auffrischt, dann steht der Text wörtlich da (kein Element `img`, kein Dialog), Namen tragen die Marken wie auf stdout, und die Zeilen „Ungeprüft“ nennen den Grund „Diff nicht lesbar“. *Ebene: Playwright (DOM-Sicherheit).*
@@ -98,7 +98,7 @@ Keine Serverklasse. `trenner-werte.js` (Höchstbreite links), `einklappen.js` (j
 
 ## Tests
 
-**Unit:** Auffrischregel (eine, zehn, Reihenfolge, nach „Beenden“), Breitenregel (1012, 1011, 812, 811, 566, 565), Katalog (`r` einmal).
+**Unit:** Auffrischregel (eine, zehn, Reihenfolge, nach „Beenden“), Breitenregel (1012, 1011, 812, 811, 590, 589), Katalog (`r` einmal).
 **Integration:** Oberfläche gegen Fake (live, Fehler, Position, verzögerter Fake).
 **E2E (Playwright):** gleich stdout, Lastprofil, Rollbereich, Einklappen, Breiten, DOM-Sicherheit — Browser-Eigenes; nicht Hot Path.
 
@@ -111,7 +111,7 @@ Keine Serverklasse. `trenner-werte.js` (Höchstbreite links), `einklappen.js` (j
 
 Keine offenen. Der product-owner hat beide Fragen am 2026-11-25 entschieden (`AI-Team/po-entscheidungen.md`, Zeile 194); die Antworten sind oben eingearbeitet:
 
-1. **Breiten und Start** — entschieden (PO Zeile 194): 320 px, ausgeklappt ab 1012 px, unter 812 px nicht ausklappbar, unter 566 px keine Spalte (Rechnung oben). Alternative „immer eingeklappt starten“ verworfen — dann sieht der Mensch den Nutzen der Richtung A erst nach einem Klick.
+1. **Breiten und Start** — entschieden (PO Zeile 194): 320 px, ausgeklappt ab 1012 px, unter 812 px nicht ausklappbar, unter 590 px keine Spalte (Rechnung oben, PO Zeile 249). Alternative „immer eingeklappt starten“ verworfen — dann sieht der Mensch den Nutzen der Richtung A erst nach einem Klick.
 2. **Kürzel `r`** — entschieden (PO Zeile 194): frei im Katalog (belegt: `? Esc j k u x m [ ] h n p s v w l g o / a e b Enter ↑↓`, dazu `1 2 3` aus R00036); `r` für „Ergebnis“; den Katalogeintrag setzt diese Karte (Kriterium 10), R00030 bleibt unverändert.
 
 ## Manuelle Vorbereitungstätigkeiten

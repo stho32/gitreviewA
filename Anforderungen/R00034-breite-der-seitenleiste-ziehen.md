@@ -24,11 +24,11 @@ Die Seitenleiste hat heute eine feste Breite (der Entwurf zeichnet 360 px, das h
 
 ## Funktionale Anforderungen
 
-- **Trenner**: ein senkrechter Trenner zwischen Seitenleiste und Diff, sichtbar als schmale Ziehfläche an der Grenze (heute die 1-px-Kante aus dem Entwurf, `.leiste{border-right}`). Er sitzt **nur** im zweispaltigen Aufbau (R00033); unter 566 px gibt es ihn nicht.
+- **Trenner**: ein senkrechter Trenner zwischen Seitenleiste und Diff, sichtbar als schmale Ziehfläche an der Grenze (heute die 1-px-Kante aus dem Entwurf, `.leiste{border-right}`). Er sitzt **nur** im zweispaltigen Aufbau (R00033); unter 590 px gibt es ihn nicht.
 - **Ziehen**: Drücken und Ziehen mit der Maus (Pointer-Ereignisse) ändert die Breite beider Seiten mit; die Seitenleiste folgt der Zeigerposition, der Diff nimmt den Rest.
 - **Tastatur**: der Trenner ist mit **Tab** erreichbar (`tabindex`) und trägt `role="separator"`, `aria-orientation="vertical"`, `aria-controls` (auf die Seitenleiste — das Element, das Commit-Zeile und Dateiliste umschließt), `aria-valuenow` (aktuelle Breite), `aria-valuemin`, `aria-valuemax` und einen Namen, der mit dem sichtbaren Text beginnt („Breite der Dateiliste“). **Pfeil links/rechts** verstellen um 16 px, **Pos1/Ende** setzen auf Mindest-/Höchstbreite; der Fokusring ist sichtbar (R00030, B2907).
 - **Doppelklick** auf den Trenner setzt die **Startbreite** zurück.
-- **Mindest- und Höchstbreite** (geklemmt): Seitenleiste **240–640 px**, Diff **mindestens 320 px**; die tatsächliche Höchstbreite ist `min(640, Fensterbreite − 320 − Trennerbreite)`. Ein Zug über die Grenze wird geklemmt, nie verworfen. Ist die Höchstbreite kleiner als die Mindestbreite, gilt der Rückfall auf eine Spalte (R00033, unter 566 px). Startbreite **360 px**; ein Doppelklick setzt genau darauf zurück.
+- **Mindest- und Höchstbreite** (geklemmt): Seitenleiste **240–640 px**, Diff **mindestens 320 px**; die tatsächliche Höchstbreite ist `min(640, Fensterbreite − 24 − 320 − Trennerbreite)` (der Streifen links 24 px zählt wie in der Grenze 590, PO Zeile 249). Ein Zug über die Grenze wird geklemmt, nie verworfen. Ist die Höchstbreite kleiner als die Mindestbreite, gilt der Rückfall auf eine Spalte (R00033, unter 590 px). Startbreite **360 px**; ein Doppelklick setzt genau darauf zurück.
 - **Zustand**: die Breite ist ein Zustand der Seite (nur RAM); sie bleibt beim Wechsel von Datei, Commit, Modus, Ansicht und Anordnung, auch ohne gewählte Datei; nach dem Neuladen gilt wieder die Startbreite (nichts wird gespeichert, wie „Umbruch“/„Ansicht“/„Anordnung“).
 - **Ohne Neuzeichnen** (Lehre #23): die Breite wirkt über das Layout (eine CSS-Variable am Rahmen), **ohne** den Diff neu zu zeichnen. Ein offenes Notizfeld (R00010/R00022/R00031), Markierungen, die Treffer der Suche (R00027) und die Bildlaufposition des Diffs bleiben unverändert. Gilt in beiden Modi, beiden Ansichten und beiden Anordnungen (Lehre #7).
 - **Tastenkatalog**: ändert sich die Tastenbelegung für dieses Bedienelement (etwa ein Kürzel), ist es ein Eintrag im Katalog von I0015 (R00030), keine zweite Liste.
@@ -56,9 +56,9 @@ Vorbereitung: **Repo Z** (aus [R00012](R00012-oberflaeche-liste-detail-zusammen.
 ### Zustand und Anzeigeverfahren (Lehre #7/#23)
 - [ ] Gegeben die Seitenleiste auf 500 px, wenn man die Datei wechselt, den Commit wechselt, auf „Einzeln“/„Zusammen“ und auf „ganze Datei“/„nebeneinander“ umschaltet, dann bleibt die Breite 500 px; nach dem Neuladen der Seite steht sie wieder bei 360 px (nichts gespeichert). *Ebene: Playwright (Browser-Eigenes) und Unit (Zustand: Start, Wechsel, Neuladen).*
 - [ ] Gegeben `src/a.txt` mit einem **offenen** Notizfeld an einer Zeile (Text „Klammer fehlt“) und einem Suchtreffer, wenn man den Trenner zieht, dann bleiben das offene Feld samt Text und Fokus, die Markierung, der Suchtreffer und die Bildlaufposition des Diffs erhalten; es wird keine neue Diff-Anfrage gestellt. *Ebene: Playwright (Browser-Eigenes; kein Neuzeichnen, Lehre #23).*
-- [ ] Gegeben ein Fenster von 700 px Breite (zweispaltig, aber enger), wenn man den Trenner ganz nach rechts zieht, dann klemmt die Höchstbreite bei `700 − 320 − 6 = 374 px` (nicht 640); unter 566 px verschwindet der Trenner ganz (eine Spalte, R00033). *Ebene: Unit (Breitenregel: Höchstbreite aus der Fensterbreite) und Playwright (Darstellung).*
+- [ ] Gegeben ein Fenster von 700 px Breite (zweispaltig, aber enger), wenn man den Trenner ganz nach rechts zieht, dann klemmt die Höchstbreite bei `700 − 24 − 320 − 6 = 350 px` (nicht 640); unter 590 px verschwindet der Trenner ganz (eine Spalte, R00033). *Ebene: Unit (Breitenregel: Höchstbreite aus der Fensterbreite) und Playwright (Darstellung).*
 
-Grenz- und Leerfälle bedacht: Ziehen über beide Grenzen; Tastendruck auf der Grenze; Fenster genau an 566 px; kein zweispaltiger Aufbau (kein Trenner); Modus/Ansicht ohne gewählte Datei. Verworfen als eigenes Kriterium: eine gespeicherte Breite über das Neuladen hinaus (`localStorage`), touch-Gesten, eine Breiten-Eingabe als Zahl.
+Grenz- und Leerfälle bedacht: Ziehen über beide Grenzen; Tastendruck auf der Grenze; Fenster genau an 590 px; kein zweispaltiger Aufbau (kein Trenner); Modus/Ansicht ohne gewählte Datei. Verworfen als eigenes Kriterium: eine gespeicherte Breite über das Neuladen hinaus (`localStorage`), touch-Gesten, eine Breiten-Eingabe als Zahl.
 
 ## Betroffene Verzeichnisstruktur
 
@@ -118,7 +118,7 @@ Keine offenen. Der product-owner hat alle vier Fragen am 2026-11-25 entschieden 
 3. **RAM statt `localStorage`** — nach dem Neuladen gilt wieder die Startbreite (Vision „Nichts wird gespeichert“).
 4. **Ort des Ausklapp-Knopfs: am Trenner** (R00035) — `Braucht I0035` bleibt.
 
-Ohne Rückfrage entschieden und vom product-owner bestätigt: nur RAM — nach dem Neuladen gilt wieder die Startbreite (wie „Umbruch“/„Ansicht“/„Anordnung“); die Breite überlebt Datei-, Commit-, Modus-, Ansichts- und Anordnungswechsel; das Ziehen zeichnet den Diff nicht neu (Lehre #23); unter 566 px gibt es keinen Trenner.
+Ohne Rückfrage entschieden und vom product-owner bestätigt: nur RAM — nach dem Neuladen gilt wieder die Startbreite (wie „Umbruch“/„Ansicht“/„Anordnung“); die Breite überlebt Datei-, Commit-, Modus-, Ansichts- und Anordnungswechsel; das Ziehen zeichnet den Diff nicht neu (Lehre #23); unter 590 px gibt es keinen Trenner.
 
 ## Manuelle Vorbereitungstätigkeiten
 

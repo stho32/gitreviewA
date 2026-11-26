@@ -28,7 +28,7 @@ Heute scrollt die Seite als Ganzes: sobald der Mensch in einer großen Datei nac
 - **Gewählte Zeile in den Blick**: Ist die gewählte Zeile der Dateiliste außerhalb ihres sichtbaren Bereichs, wird sie in den Blick gescrollt (kleinste Bewegung, oben/unten begrenzt); ist sie schon sichtbar, scrollt nichts. Der Diff springt bei neuem Inhalt (Datei-, Commit-, Modus- oder Ansichtswechsel) an den Anfang. Das gilt für den Klick in der Liste, für `j`/`k` (R00030), für „Nächste ungeprüfte“ ([I0025](R00028-naechste-ungepruefte-datei.md), B2703) und für den Tastensprung `u`.
 - **Gilt in allen Anzeigeverfahren** (Lehre #7): Der Rahmen und die getrennten Rollbereiche gelten in beiden **Modi** („Zusammen“/„Einzeln“), beiden **Ansichten** („nur Änderungen“/„ganze Datei“) und beiden **Anordnungen** („untereinander“/„nebeneinander“, R00023). Die Blockgrenze (`content-visibility`, R00017) und das Aufklappen von Lücken (R00026) bleiben im Diff-Rollbereich, nicht auf der Seite.
 - **Anschluss an die vorhandenen Sprünge**: Treffer der Suche (R00027) und der Abschnittswechsel (`n`/`p`, R00030) scrollen im Diff-Rollbereich; die Liste scrollt die gewählte Zeile in ihren eigenen Bereich. Beide Bereiche haben ihre eigene Bildlaufleiste; ein Scrollen im einen bewegt den anderen nicht.
-- **Schmales Fenster**: Unter **566 px** (Seitenleiste 240 + Diff 320 + Trenner 6) fällt der Aufbau auf **eine** Spalte zurück — die Seitenleiste steht über dem Diff, und die Seite scrollt wie bisher; dann gibt es keinen Trenner (R00034) und kein Ausklappen (R00035). Die heutige Mediengrenze `@media (max-width:899px)` wird damit ersetzt.
+- **Schmales Fenster**: Unter **590 px** (Streifen 24 + Seitenleiste 240 + Trenner 6 + Diff 320; PO Zeile 249, revidiert am 2026-11-26) fällt der Aufbau auf **eine** Spalte zurück — die Seitenleiste steht über dem Diff, und die Seite scrollt wie bisher; dann gibt es keinen Trenner (R00034) und kein Ausklappen (R00035). Die heutige Mediengrenze `@media (max-width:899px)` wird damit ersetzt.
 - **Fokus und Tab-Reihenfolge**: Die getrennten Rollbereiche brechen die Tab-Reihenfolge nicht: die Reihenfolge bleibt Kopf → Seitenleiste → Diff → Statuszeile, jeder Bereich erreicht seine inneren Elemente wie bisher; der Diff-Bereich bleibt ein Tab-Stopp (wandernder `tabindex`, B0908/R00030).
 - **Kein neuer Weg**: kein neuer Serverweg, kein neuer `git`-Aufruf, kein neuer gespeicherter Zustand (die Fensterbreite des Nutzers wird nicht gemerkt, nur die Darstellung angepasst).
 
@@ -58,16 +58,16 @@ Vorbereitung: **Repo Z** (aus [R00012](R00012-oberflaeche-liste-detail-zusammen.
 - [ ] Gegeben ein Treffer der Suche (R00027) außerhalb des Sichtbereichs, wenn man zum nächsten Treffer springt, dann scrollt der **Diff-Rollbereich** den Treffer in den Blick (nicht die Seite), und die Dateiliste bleibt stehen. *Ebene: Playwright (Browser-Eigenes).*
 
 ### Schmales Fenster und Grenzen
-- [ ] Gegeben ein Fenster unter 566 px (Breite 560 px, Höhe 800 px), wenn die Seite geladen ist, dann stehen Seitenleiste und Diff in **einer** Spalte (Seitenleiste über dem Diff), es gibt keinen Trenner (R00034) und keinen Ausklapp-Knopf (R00035), und die Seite scrollt wie bisher; zieht man das Fenster wieder über 566 px, stehen die zwei Spalten mit getrennten Rollbereichen wieder da. *Ebene: Playwright (Browser-Eigenes).*
+- [ ] Gegeben ein Fenster unter 590 px (Breite 560 px, Höhe 800 px), wenn die Seite geladen ist, dann stehen Seitenleiste und Diff in **einer** Spalte (Seitenleiste über dem Diff), es gibt keinen Trenner (R00034) und keinen Ausklapp-Knopf (R00035), und die Seite scrollt wie bisher; zieht man das Fenster wieder über 590 px, stehen die zwei Spalten mit getrennten Rollbereichen wieder da. *Ebene: Playwright (Browser-Eigenes).*
 
-Grenz- und Leerfälle bedacht: leere Dateiliste („Keine Dateien geändert“) → nur der Diff-Rollbereich; keine gewählte Datei → kein Sprung in den Blick; Fenster genau an 566 px → zwei Spalten. Verworfen als eigenes Kriterium: Touch-Gesten, gespeicherte Fensterbreite (nichts wird gespeichert), ein zweiter Bildlauf für die Commit-Zeile.
+Grenz- und Leerfälle bedacht: leere Dateiliste („Keine Dateien geändert“) → nur der Diff-Rollbereich; keine gewählte Datei → kein Sprung in den Blick; Fenster genau an 590 px → zwei Spalten. Verworfen als eigenes Kriterium: Touch-Gesten, gespeicherte Fensterbreite (nichts wird gespeichert), ein zweiter Bildlauf für die Commit-Zeile.
 
 ## Betroffene Verzeichnisstruktur
 
 Wie in [R00001](R00001-mit-commit-hashes-aufrufen.md) und R00012 (Oberfläche unter `src/GitReviewA/web/`; Tests in `tests/GitReviewA.Tests/`, E2E in `e2e/`).
 
 - `web/index.html` — Rahmen mit Kopf, Werkzeugzeilen, Seitenleiste (Commit-Zeile + Liste) und Diff-Bereich als zwei Rollbereiche (der Aufbau `.gr-ansicht`/`.gr-links`/`.gr-dateiliste`/`.gr-diff` wird zum festen Rahmen).
-- `web/gitreviewa.css` — fester Rahmen (Höhe = Fenster), `min-height:0`/`overflow:auto` für die beiden Rollbereiche, Rückfall auf eine Spalte unter 566 px; die heutige Mediengrenze `@media (max-width:899px)` entfällt.
+- `web/gitreviewa.css` — fester Rahmen (Höhe = Fenster), `min-height:0`/`overflow:auto` für die beiden Rollbereiche, Rückfall auf eine Spalte unter 590 px; die heutige Mediengrenze `@media (max-width:899px)` entfällt.
 - `web/dateiliste.js`/`web/zusammen.js`/`web/diff.js` — die vorhandenen `scrollIntoView`-Aufrufe (R00027, R00028, R00030) zielen auf den jeweiligen Rollbereich.
 - `e2e/` — Playwright-Specs für getrenntes Scrollen, Wahl in den Blick, alle Anzeigeverfahren, schmales Fenster; kein neuer Serverweg.
 
@@ -82,7 +82,7 @@ Wie in [R00001](R00001-mit-commit-hashes-aufrufen.md) und R00012 (Oberfläche un
 1. **Rahmen** (Oberfläche) — `Fensterhöhe + Kopfhöhe → Aufbau mit Kopf, Werkzeugzeilen und zwei Rollbereichen` (die Seite selbst scrollt nicht).
 2. **Wahl in den Blick** — `datei-gewaehlt`/Sprung → die Listenzeile in den eigenen Rollbereich scrollen; der Diff bei neuem Inhalt an den Anfang.
 3. **Anschluss** — Suche (R00027), Abschnittswechsel (R00030), Lücke (R00026) und „Trotzdem laden“ (R00017) scrollen im Diff-Rollbereich.
-4. **Schmales Fenster** — unter 566 px auf eine Spalte zurückfallen.
+4. **Schmales Fenster** — unter 590 px auf eine Spalte zurückfallen.
 
 ### Grobentwurf (Klassen-Entwurf ohne Implementierungen)
 
@@ -111,11 +111,11 @@ Nach Test-Pyramide und Konfiguration (Interactor je Interaction; Playwright nur 
 
 Keine offenen. Der product-owner hat alle drei Fragen am 2026-11-25 entschieden (`AI-Team/po-entscheidungen.md`, Zeilen 170–180, Commit `feb3296`); die Entscheidungen sind eingearbeitet:
 
-1. **Mindestbreite für zwei Spalten: 566 px** (240 + 320 + 6) — darunter eine Spalte. Die heutige Mediengrenze `@media (max-width:899px)` wird ersetzt und ist Teil der Bauaufgabe von I0034 (B3202).
+1. **Mindestbreite für zwei Spalten: 590 px** (Streifen 24 + Seitenleiste 240 + Trenner 6 + Diff 320) — darunter eine Spalte. Die frühere Zahl 566 px (240 + 320 + 6, PO Zeile 170) ist am 2026-11-26 auf 590 px nachgezogen (PO Zeile 249); die 590 kommt aus denselben Konstanten. Die heutige Mediengrenze `@media (max-width:899px)` wird ersetzt und ist Teil der Bauaufgabe von I0034 (B3202).
 2. **Gewählte Zeile in den Blick: ja, kleinste Bewegung** (`block:'nearest'`), nur wenn nötig; kein Scrollen, wenn die Zeile schon sichtbar ist.
 3. **Fortschritt im Rahmen/Streifen: nein** — der Fortschritt bleibt allein im Kopf (der eine Zähler, R00012/R00029); der Rahmen wiederholt ihn nicht.
 
-Ohne Rückfrage entschieden und vom product-owner bestätigt: die Seite selbst scrollt nicht; beide Rollbereiche haben eine eigene Bildlaufleiste; der Diff springt bei neuem Inhalt an den Anfang; unter 566 px fällt der Aufbau auf eine Spalte zurück, und Trenner und Ausklappen gibt es dann nicht; nichts wird gespeichert; kein neuer Serverweg.
+Ohne Rückfrage entschieden und vom product-owner bestätigt: die Seite selbst scrollt nicht; beide Rollbereiche haben eine eigene Bildlaufleiste; der Diff springt bei neuem Inhalt an den Anfang; unter 590 px fällt der Aufbau auf eine Spalte zurück, und Trenner und Ausklappen gibt es dann nicht; nichts wird gespeichert; kein neuer Serverweg.
 
 ## Manuelle Vorbereitungstätigkeiten
 
