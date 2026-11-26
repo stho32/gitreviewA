@@ -132,7 +132,7 @@ Die Oberfläche läuft im Browser unter `127.0.0.1`. Nach dem Start steht **Zusa
 
 ![Diff zweispaltig, links alte, rechts neue Fassung, mit Bereichsanmerkung und ignoriertem Leerraum](Dokumentation/Bilder/readme/04-nebeneinander.png)
 
-**Lücken aufklappen**: In **Einzeln** zeigt der Diff zwischen den Abschnitten **n verborgene Zeilen** mit den Schaltflächen **20 aufklappen** und **Ganz aufklappen**.
+**Lücken aufklappen**: In **Einzeln** und in **Zusammen** zeigt der Diff vor dem ersten, zwischen zwei und nach dem letzten Abschnitt **n verborgene Zeilen** mit den Schaltflächen **20 aufklappen** und **Ganz aufklappen**.
 
 **Im Diff suchen**: Text in **Suchen** eintippen und Enter drücken. Die Treffer sind hervorgehoben, ein Zähler nennt ihre Zahl, zum Beispiel **1 von 2**.
 
