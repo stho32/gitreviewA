@@ -11,14 +11,21 @@
   const musterWerte = typeof module !== 'undefined' ? require('./ausblenden-werte.js') : null;
 
   /** Die sichtbaren Einträge in der Reihenfolge der gezeigten Liste, dazu die Zahl je Ausblendgrund.
-      Ein Eintrag, der beide Gründe trifft, wird einmal ausgeblendet und einmal gezählt (als Muster, denn das Muster wirkt schalterunabhängig). */
-  function sicht(eintraege, muster, schalter) {
+      Ein Eintrag, der mehrere Gründe trifft, wird einmal ausgeblendet und einmal gezählt — bei dem ersten Grund der Reihe
+      **Muster, Suche, abgehakt** (PO 2026-11-26): das Muster wirkt schalterunabhängig, die Suche ist der flüchtige Text,
+      der Haken zuletzt. `suche` ist `null` (keine Suche) oder die Menge der Pfade, die zum Suchtext passen. */
+  function sicht(eintraege, muster, schalter, suche) {
     const sichtbare = [];
     let ausgeblendetAbgehakt = 0;
     let ausgeblendetMuster = 0;
+    let ausgeblendetSuche = 0;
     for (const eintrag of eintraege) {
       if (trifftMuster(eintrag.pfad, muster)) {
         ausgeblendetMuster += 1;
+        continue;
+      }
+      if (trifftSuche(eintrag.pfad, suche)) {
+        ausgeblendetSuche += 1;
         continue;
       }
       if (schalter && eintrag.abgehakt && !eintrag.gesperrt) {
@@ -27,7 +34,11 @@
       }
       sichtbare.push(eintrag);
     }
-    return { sichtbare, ausgeblendetAbgehakt, ausgeblendetMuster };
+    return { sichtbare, ausgeblendetAbgehakt, ausgeblendetMuster, ausgeblendetSuche };
+  }
+
+  function trifftSuche(pfad, suche) {
+    return suche !== null && suche !== undefined && !suche.has(pfad);
   }
 
   function trifftMuster(pfad, muster) {
@@ -42,10 +53,10 @@
   }
 
   function anzahlAusgeblendet(ergebnis) {
-    return ergebnis.ausgeblendetAbgehakt + ergebnis.ausgeblendetMuster;
+    return ergebnis.ausgeblendetAbgehakt + ergebnis.ausgeblendetMuster + ergebnis.ausgeblendetSuche;
   }
 
-  /** „n ausgeblendet, davon a abgehakt, b Muster“; ein Anteil von 0 wird weggelassen, bei 0 Ausgeblendeten kein Zähler. */
+  /** „n ausgeblendet, davon a abgehakt, b Muster, c Suche“; ein Anteil von 0 wird weggelassen, bei 0 Ausgeblendeten kein Zähler. */
   function zaehlertext(ergebnis) {
     const gesamt = anzahlAusgeblendet(ergebnis);
     if (gesamt === 0) {
@@ -58,18 +69,26 @@
     if (ergebnis.ausgeblendetMuster > 0) {
       anteile.push(`${ergebnis.ausgeblendetMuster} Muster`);
     }
+    if (ergebnis.ausgeblendetSuche > 0) {
+      anteile.push(`${ergebnis.ausgeblendetSuche} Suche`);
+    }
     return `${gesamt} ausgeblendet, davon ${anteile.join(', ')}`;
   }
 
-  /** Der Leerfall (nichts sichtbar, aber Ausgeblendete) ist ein Zustand mit Ausweg; ohne Auswahl kein Zustand. */
-  function meldung(anzahlSichtbare, gesamt) {
+  /** Der Leerfall (nichts sichtbar, aber Ausgeblendete) ist ein Zustand mit Ausweg; ohne Auswahl kein Zustand. Hat allein die
+      Suche nichts übrig gelassen, sagt die Meldung das („Keine Datei passt zur Suche“); sind Muster oder Abgehakte beteiligt,
+      bleibt es bei „Alle Dateien ausgeblendet“ (R00029). */
+  function meldung(anzahlSichtbare, gesamt, gruende) {
     if (gesamt === 0) {
       return '';
     }
-    if (anzahlSichtbare === 0) {
-      return 'Alle Dateien ausgeblendet';
+    if (anzahlSichtbare > 0) {
+      return '';
     }
-    return '';
+    if (gruende && gruende.ausgeblendetSuche > 0 && gruende.ausgeblendetMuster === 0 && gruende.ausgeblendetAbgehakt === 0) {
+      return 'Keine Datei passt zur Suche';
+    }
+    return 'Alle Dateien ausgeblendet';
   }
 
   Object.assign(ziel, { sicht, zaehlertext, meldung });

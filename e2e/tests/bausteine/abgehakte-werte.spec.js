@@ -75,13 +75,14 @@ test.describe('Baustein Abgehakte-Werte', () => {
     expect(zaehlertext(ergebnis)).toBe('3 ausgeblendet, davon 1 abgehakt, 2 Muster');
   });
 
-  test('soll den Zählertext mit Anteil je Grund bilden und bei 0 nichts zeigen (R00025/R00029)', () => {
-    expect(zaehlertext({ ausgeblendetAbgehakt: 0, ausgeblendetMuster: 0 })).toBe('');
-    expect(zaehlertext({ ausgeblendetAbgehakt: 1, ausgeblendetMuster: 0 })).toBe('1 ausgeblendet, davon 1 abgehakt');
-    expect(zaehlertext({ ausgeblendetAbgehakt: 0, ausgeblendetMuster: 1 })).toBe('1 ausgeblendet, davon 1 Muster');
-    expect(zaehlertext({ ausgeblendetAbgehakt: 1, ausgeblendetMuster: 1 })).toBe('2 ausgeblendet, davon 1 abgehakt, 1 Muster');
-    expect(zaehlertext({ ausgeblendetAbgehakt: 1000, ausgeblendetMuster: 1000 })).toBe('2000 ausgeblendet, davon 1000 abgehakt, 1000 Muster');
-    expect(zaehlertext({ ausgeblendetAbgehakt: 2000, ausgeblendetMuster: 0 })).toBe('2000 ausgeblendet, davon 2000 abgehakt');
+  test('soll den Zählertext mit Anteil je Grund bilden und bei 0 nichts zeigen (R00025/R00029, Suche R00049)', () => {
+    expect(zaehlertext({ ausgeblendetAbgehakt: 0, ausgeblendetMuster: 0, ausgeblendetSuche: 0 })).toBe('');
+    expect(zaehlertext({ ausgeblendetAbgehakt: 1, ausgeblendetMuster: 0, ausgeblendetSuche: 0 })).toBe('1 ausgeblendet, davon 1 abgehakt');
+    expect(zaehlertext({ ausgeblendetAbgehakt: 0, ausgeblendetMuster: 1, ausgeblendetSuche: 0 })).toBe('1 ausgeblendet, davon 1 Muster');
+    expect(zaehlertext({ ausgeblendetAbgehakt: 1, ausgeblendetMuster: 1, ausgeblendetSuche: 0 })).toBe('2 ausgeblendet, davon 1 abgehakt, 1 Muster');
+    expect(zaehlertext({ ausgeblendetAbgehakt: 1000, ausgeblendetMuster: 1000, ausgeblendetSuche: 0 })).toBe('2000 ausgeblendet, davon 1000 abgehakt, 1000 Muster');
+    expect(zaehlertext({ ausgeblendetAbgehakt: 2000, ausgeblendetMuster: 0, ausgeblendetSuche: 0 })).toBe('2000 ausgeblendet, davon 2000 abgehakt');
+    expect(zaehlertext({ ausgeblendetAbgehakt: 1, ausgeblendetMuster: 2, ausgeblendetSuche: 4 })).toBe('7 ausgeblendet, davon 1 abgehakt, 2 Muster, 4 Suche');
   });
 
   test('soll die Meldung des Leerfalls nennen und bei leerer Auswahl keine', () => {
