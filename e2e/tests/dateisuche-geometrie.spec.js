@@ -86,6 +86,38 @@ test.describe('Klickfläche des Feldes (Kriterium 2)', () => {
   });
 });
 
+test.describe('Jede Darstellung und der eingeklappte Zustand (Kriterien 4 und 5)', () => {
+  test('soll in „Einzeln“ und im Baum dieselbe Lage haben', async ({ dateisuche }) => {
+    await dateisuche.starten();
+
+    for (const modus of ['einzeln', 'zusammen']) {
+      await dateisuche.modusWaehlen(modus);
+      for (const art of ['flach', 'baum']) {
+        await dateisuche.darstellung(art);
+        const lage = await messung(dateisuche);
+        expect(lage.feld.rechts, `feld.right ≤ knopf.left in ${modus}/${art} (${JSON.stringify(lage)})`).toBeLessThanOrEqual(lage.knopf.links);
+        expect(lage.trefferFeld, `Treffer an der rechten Feldkante in ${modus}/${art} (${lage.treffer})`).toBe(true);
+      }
+    }
+  });
+
+  test('soll nach dem Einklappen und Ausklappen wieder ganz in der Seitenleiste stehen, und f fokussiert das Feld', async ({ dateisuche }) => {
+    await dateisuche.starten();
+
+    await dateisuche.einklappen();
+    await dateisuche.eingeklappt();
+    await dateisuche.einklappen();
+    await dateisuche.ausgeklappt();
+
+    const lage = await messung(dateisuche);
+    expect(lage.feld.rechts, `feld.right ≤ knopf.left nach dem Ausklappen (${JSON.stringify(lage)})`).toBeLessThanOrEqual(lage.knopf.links);
+    expect(lage.trefferFeld, `Treffer an der rechten Feldkante (${lage.treffer})`).toBe(true);
+
+    await dateisuche.druecke('f');
+    await dateisuche.fokusImSuchfeld();
+  });
+});
+
 test.describe('Jede Seitenleistenbreite (Kriterium 3)', () => {
   test('soll bei 240, 360 und 640 px gelten, wenn man die Breite am Trenner zieht', async ({ dateisuche }) => {
     await dateisuche.starten();

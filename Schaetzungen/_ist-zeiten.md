@@ -162,3 +162,6 @@ Nie vom User erfragen.
 | 2026-11-26 | R00051 Commit-Leiste kürzt lange Nachrichten sichtbar | I0051 B4701 Eine Kürzungsregel für Leiste und Streifen | Standard | 2h | 0,8h | 0,8h | autonom |
 | 2026-11-26 | R00051 Commit-Leiste kürzt lange Nachrichten sichtbar | I0051 B4702 Anzeigewerte der Leiste gekürzt | Standard | 2h | 0,2h | 0,2h | autonom |
 | 2026-11-26 | R00051 Commit-Leiste kürzt lange Nachrichten sichtbar | I0051 B4703 Tests und Wegwerf-Repo K | unklar | 2-4h | 0,8h | 0,8h | autonom |
+| 2026-11-26 | R00052 Suchfeld unter Einklapp-Knopf | I0052 B4803 Rote Messprobe | Standard | 2-4h | 0,3h | – | autonom |
+| 2026-11-26 | R00052 Suchfeld unter Einklapp-Knopf | I0052 B4802 Kopfzeile ohne Überlauf | Standard | 2h | 0,5h | – | autonom |
+| 2026-11-26 | R00052 Suchfeld unter Einklapp-Knopf | I0052 B4801 Feldbreite am Behälter | Standard | 2h | 0,2h | – | autonom |
