@@ -148,3 +148,4 @@ Nie vom User erfragen.
 | 2026-11-26 | R00050 Beenden und Abbrechen im Kopf | I0028 B4601 Dialog bestimmen | Standard | 2h | 0,4h | 0,4h | autonom |
 | 2026-11-26 | R00050 Beenden und Abbrechen im Kopf | I0028 B4603 Abbrechen im Server | unklar | 2-4h | 0,7h | 0,7h | autonom |
 | 2026-11-26 | R00050 Beenden und Abbrechen im Kopf | I0028 B4602 Dialog zeigen und bedienen | unklar | 2-4h | 1,0h | 1,0h | autonom |
+| 2026-11-26 | R00050 Beenden und Abbrechen im Kopf | I0028 B4604 Knöpfe, Kürzel und Endzustände | unklar | 2-4h | 0,9h | 0,9h | autonom |

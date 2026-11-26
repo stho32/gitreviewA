@@ -116,6 +116,7 @@
       case 'suche': return fokussiere('#diff-suche');
       case 'dateiAnmerken': return merkeDateiAn();
       case 'anmerkungAendern': return aendereAnmerkung();
+      case 'beendenDialog': return oeffneBeendenDialog();
       case 'hilfe': return oeffneHilfe();
       case 'schliessen': return schliesseHilfe();
       default: return false;
@@ -464,6 +465,16 @@
       return false;
     }
     aendern.click();
+    return true;
+  }
+
+  /** `q` öffnet nur den Dialog „Beenden“ (R00050, PO): es beendet nie selbst, der Mensch bestätigt im Dialog. */
+  function oeffneBeendenDialog() {
+    const knopf = document.getElementById('beenden');
+    if (!knopf || knopf.disabled) {
+      return false;
+    }
+    knopf.click();
     return true;
   }
 

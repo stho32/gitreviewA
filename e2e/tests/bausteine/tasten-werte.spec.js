@@ -34,9 +34,11 @@ test.describe('Baustein Tasten-Werte — Tastenbelegung und Kontext (B2901)', ()
   });
 
   test('soll eine unbekannte Taste oder ein Browserkürzel dem Browser lassen', () => {
-    for (const taste of ['q', 'F5', 'F1', 'Control', 'Shift', 'PageDown', 'Tab']) {
+    for (const taste of ['F5', 'F1', 'Control', 'Shift', 'PageDown', 'Tab']) {
       expect(werte.aktionFuer(taste, lage()), `Taste ${taste}`).toBeNull();
     }
+    // `q` ist seit R00050 im Katalog (Dialog „Beenden“) und deshalb hier keine unbekannte Taste mehr.
+    expect(werte.aktionFuer('q', lage({ vorhanden: [] }))).toBeNull();
   });
 
   test('soll ohne Treffer und ohne verfügbare Aktion nichts auslösen', () => {
@@ -49,7 +51,7 @@ test.describe('Baustein Tasten-Werte — Tastenbelegung und Kontext (B2901)', ()
   });
 
   test('soll in einem Eingabefeld keine einzige Taste abfangen', () => {
-    for (const taste of ['j', 'k', 'n', 'p', 'x', 'm', 's', 'v', 'w', 'h', 'b', 'u', '[', ']', 'Enter', 'a', 'e', '1', '2', '3', '?']) {
+    for (const taste of ['j', 'k', 'n', 'p', 'x', 'm', 's', 'v', 'w', 'h', 'b', 'u', '[', ']', 'Enter', 'a', 'e', 'q', '1', '2', '3', '?']) {
       expect(werte.aktionFuer(taste, lage({ feldImFokus: true, modus: werte.EINZELN })), `Taste ${taste}`).toBeNull();
     }
   });
@@ -72,10 +74,10 @@ test.describe('Baustein Tasten-Werte — Tastenbelegung und Kontext (B2901)', ()
   });
 
   test('soll im offenen Dialog nur Esc und ? durchlassen', () => {
-    const dialog = { offenerDialog: true, modus: werte.EINZELN, vorhanden: ['anordnungWechseln'] };
+    const dialog = { offenerDialog: true, modus: werte.EINZELN, vorhanden: ['anordnungWechseln', 'beendenDialog'] };
     expect(werte.aktionFuer('Escape', lage(dialog))).toBe('schliessen');
     expect(werte.aktionFuer('?', lage(dialog))).toBe('hilfe');
-    for (const taste of ['j', 'k', 'x', 'm', 'n', 'Enter', 'e', 'v']) {
+    for (const taste of ['j', 'k', 'x', 'm', 'n', 'Enter', 'e', 'v', 'q']) {
       expect(werte.aktionFuer(taste, lage(dialog)), `Taste ${taste}`).toBeNull();
     }
   });
@@ -435,5 +437,41 @@ test.describe('Baustein Tasten-Werte — Katalog `f` der Dateisuche (R00049, B45
 
     expect(hinweis.anzeige).toEqual(['f']);
     expect(hinweis.aria).toBe('f');
+  });
+});
+
+// R00050 (B4604): `q` öffnet nur den Dialog „Beenden“ und beendet nie selbst; „Abbrechen“ hat kein Kürzel.
+test.describe('Baustein Tasten-Werte — Katalog `q` des Beenden-Dialogs (R00050, B4604)', () => {
+  test('soll `q` genau einmal führen, Bereich Allgemein, Laufart Review, mit dem Ziel des Beenden-Knopfes', () => {
+    const eintraege = werte.EINTRAEGE.filter(eintrag => eintrag.taste === 'q');
+
+    expect(eintraege).toHaveLength(1);
+    expect(eintraege[0].aktion).toBe('beendenDialog');
+    expect(eintraege[0].bereich).toBe('allgemein');
+    expect(eintraege[0].laufart).toBe(werte.REVIEW);
+    expect(eintraege[0].ziel).toBe('#beenden');
+    expect(eintraege[0].anzeige).toEqual(['q']);
+  });
+
+  test('soll `q` nur abfangen, wenn der Beenden-Knopf gebaut ist, und nie in der Dateiansicht', () => {
+    expect(werte.aktionFuer('q', lage({ vorhanden: GEBAUT }))).toBe('beendenDialog');
+    expect(werte.aktionFuer('q', lage({ vorhanden: [] }))).toBeNull();
+    expect(werte.aktionFuer('q', lage({ vorhanden: GEBAUT, laufart: werte.DATEIANSICHT }))).toBeNull();
+  });
+
+  test('soll den Hinweis `q` am Beenden-Knopf tragen (Hinweis und aria-keyshortcuts aus derselben Quelle)', () => {
+    const hinweis = werte.hinweise({ laufart: werte.REVIEW }).find(eintrag => eintrag.selektor === '#beenden');
+
+    expect(hinweis).toEqual({ selektor: '#beenden', anzeige: ['q'], aria: 'q' });
+  });
+
+  test('soll in der Hilfe `q` bei „Beenden“ nennen und „Abbrechen“ ohne Eintrag lassen', () => {
+    const allgemein = werte.belegung(lage({ vorhanden: GEBAUT })).find(gruppe => gruppe.kennung === 'allgemein');
+    const q = allgemein.eintraege.find(eintrag => eintrag.anzeige.includes('q'));
+    const abbrechen = werte.EINTRAEGE.filter(eintrag => /abbrechen/i.test(eintrag.text) || /abbrechen/i.test(eintrag.aktion));
+
+    expect(q.text).toContain('Beenden');
+    expect(q.verfuegbar).toBe(true);
+    expect(abbrechen).toHaveLength(0);
   });
 });

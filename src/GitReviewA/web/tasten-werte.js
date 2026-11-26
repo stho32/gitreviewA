@@ -32,6 +32,7 @@
    */
   const EINTRAEGE = [
     { taste: '?', aktion: 'hilfe', bereich: ALLGEMEIN, text: 'diese Übersicht', anzeige: ['?'], kurz: 'alle Kürzel', ziel: '#hilfe-knopf' },
+    { taste: 'q', aktion: 'beendenDialog', bereich: ALLGEMEIN, text: 'Beenden: Bestätigungsdialog öffnen', anzeige: ['q'], ziel: '#beenden', laufart: REVIEW },
     { taste: 'Escape', aktion: 'schliessen', bereich: ALLGEMEIN, text: 'Notizfeld verwerfen, Ebene schließen', anzeige: ['Esc'], nurEbene: true, textJeLaufart: { [DATEIANSICHT]: 'Markierung aufheben, Übersicht schließen' } },
     { taste: 'j', aktion: 'dateiWeiter', bereich: LISTE, text: 'nächste Datei', anzeige: ['j'], kurz: 'Datei' },
     { taste: 'k', aktion: 'dateiZurueck', bereich: LISTE, text: 'vorige Datei', anzeige: ['k'] },

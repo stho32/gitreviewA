@@ -73,7 +73,8 @@
     dialog().setzeBestaetigenGesperrt(true);
     try {
       const antwort = await anfordern(art);
-      zeigeEndzustand(art === werte().ABBRECHEN ? 'abgebrochen' : 'beendet');
+      const zustand = antwort.zustand || (art === werte().ABBRECHEN ? 'abgebrochen' : 'beendet');
+      zeigeEndzustand(zustand);
       dialog().schliesse({ grund: 'endzustand' });
     } catch (fehler) {
       dialog().zeigeFehler(`${fehlerwort(art)} ist gescheitert: ${fehler.message}`);
@@ -85,6 +86,7 @@
     return art === werte().ABBRECHEN ? 'Abbrechen' : 'Beenden';
   }
 
+  /** 200 und 409 tragen den geltenden Zustand; 409 heißt, die andere Art war zuerst angenommen (R00050, Kriterium 11). */
   async function anfordern(art) {
     const pfad = art === werte().ABBRECHEN ? 'api/abbrechen' : 'api/beenden';
     const antwort = await fetch(pfad, {
@@ -92,10 +94,19 @@
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: '{}',
     });
+    let inhalt = {};
+    try {
+      inhalt = await antwort.json();
+    } catch {
+      inhalt = {};
+    }
+    if (antwort.status === 409 && inhalt.zustand) {
+      return inhalt;
+    }
     if (!antwort.ok) {
       throw new Error(`Antwort ${antwort.status}`);
     }
-    return antwort.json();
+    return inhalt;
   }
 
   /** Beide Endzustände ersetzen die Bedienung: „Ergebnis kopieren“, „Abbrechen“ und „Beenden“ verschwinden. */
