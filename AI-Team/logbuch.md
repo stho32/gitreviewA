@@ -701,3 +701,12 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-26 | #61 | Reviews | code-reviewer | bestanden | 3 min | kein Muss; O1 window-Export, O2 doppelte Passage, O3 gleiche Zahl ZEILEN_GRENZE; Gelesen-Zeile fehlt, Belege in crev-61 vorhanden · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 61-code-reviewer-1 · 0,057 $ · Karte gesamt 4,65 $ |
 | 2026-11-26 | #63 | Entwicklertest | entwicklertester | befund | 8 min | Muss R00053 US-4: Ändern-Feld bei 812 px offen 14 px über; übrige Arten, Suchfeld, Abbruchzeile bestanden · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 63-entwicklertester-3 · 0,21 $ · Karte gesamt 1,36 $ |
 | 2026-11-26 | #61 | Entwicklertest | entwicklertester | bestanden | 8 min | alle 7 Szenarien R00051 bestanden; A1 Wähler-Menüeintrag ohne Autor wie vorher · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 61-entwicklertester-1 · 0,16 $ · Karte gesamt 4,81 $ |
+| 2026-11-26 | #63 | Entwicklung | entwickler | bestanden | 12 min | Nacharbeit 2: Ursache Anmerkungskopf ohne Umbruch, .anm-kopf/.anm-rechts flex-wrap; Arten-Matrix 18 grün; Gate lief über Lastgrenze (nice, workers=1) · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 63-entwickler-3 · 0,12 $ · Karte gesamt 1,48 $ |
+| 2026-11-26 | #63 | Entwicklertest | entwicklertester | bestanden | 5 min | R00052, R00053 (alle Arten inkl. Ändern), R00043 bestanden; Anmerkung: Dateinamen brechen bei 812 offen zeichenweise um (Bestand) · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 63-entwicklertester-4 · 0,11 $ · Karte gesamt 1,59 $ |
+
+## Retrospektive #61 I0051 Commit-Leiste kürzt lange Nachrichten (2026-11-26)
+
+- **Eine Regel statt Nachbau** hat sich getragen: `nachricht-werte.js` hält Grenze, Hinweis und Zählung; Leiste und Streifen zählen dieselbe Zahl n. Security (Sonnet) und Code-Review fanden kein Muss.
+- **Teuer war der erste Bau** (2,08 $ von 4,81 $): 90 min bis zur Zeitgrenze, darin lange Wartezeiten bei Last > 6 durch zwei parallele Karten. Die Fortsetzung brauchte 17 min für Commit und Gate.
+- **Gate auf main**: NUnit 1880 zweimal grün; Playwright 1257 + 1 rot, dann 1258 und 1258. Der rote Test ist nicht ermittelt, weil das Gate-Skript nur die Zusammenfassung behielt — ab jetzt schreibt das Gate das volle Protokoll (`gate-e2e-log.sh`). Angenommen nach zwei weiteren grünen Läufen; offen als Wackler-Verdacht ohne Namen.
+- **Bericht ohne Gelesen-Zeile** (Code-Review Flash): angenommen, weil die Proben in der Ablage belegt sind.

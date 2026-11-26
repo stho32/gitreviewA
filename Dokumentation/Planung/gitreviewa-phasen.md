@@ -69,3 +69,4 @@ zuletzt: 2026-11-26
 | I0039 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | Szenarien R00038 und Betreiberfall sechs Commits an einer Datei, Karte #47 |
 | I0028 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester + Director, Auftrag Stefan Hoffmann) | 12 Szenarien R00050, US-8 (zweiter Tab) nach Nacharbeit vom Director nachgeprüft, Karte #32 |
 | I0042 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | 8 Szenarien R00041 und Betreiberfall (Muster, Suche, Abgehakte), Anmerkungen nach PO-Zeilen 271–273 nachgearbeitet, Karte #50 |
+| I0051 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | 7 Szenarien R00051 (Kürzung, Grenze, Schnittkante, gleiche Zahl wie Streifen, Betreff und Autor nach PO-Zeile 274), Karte #61 |
