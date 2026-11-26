@@ -55,6 +55,8 @@
 <script src="ergebnis-kopieren.js" defer></script>
 <script src="ergebnis-werte.js" defer></script>
 <script src="ergebnis-spalte.js" defer></script>
+<script src="beenden-werte.js" defer></script>
+<script src="beenden-dialog.js" defer></script>
 <script src="beenden.js" defer></script>
 <script src="hinweise.js" defer></script>
 <script src="tasten.js" defer></script>
@@ -82,7 +84,8 @@
   </div>
   <div class="gr-kopfaktionen">
     <button type="button" id="ergebnis-kopieren" class="kz-btn">Ergebnis kopieren</button>
-    <button type="button" id="beenden" class="kz-btn">Beenden</button>
+    <button type="button" id="abbrechen" class="kz-btn">Abbrechen</button>
+    <button type="button" id="beenden" class="kz-btn kz-btn-haupt">Beenden</button>
   </div>
 </header>
 <!-- Höfliche Live-Region der Kürzel-Aktionen (R00030): sagt die Zustandsänderung in Kürze an; steht außerhalb des Fortschritts,
@@ -198,6 +201,19 @@
     </section>
   </div>
 </main>
+<!-- Dialog „Beenden“/„Abbrechen“ (R00050, B4601/B4602): ein Dialog, eine Beschreibung; der Scrim schirmt den Hintergrund ab
+     und schließt per Klick. Der Rollbereich für `abschnitte` steht unter den Hinweiszeilen (Anschluss I0042). -->
+<div id="beenden-scrim" class="beenden-scrim" hidden></div>
+<div id="beenden-dialog" class="beenden-dialog" role="dialog" aria-modal="true" aria-labelledby="beenden-titel" tabindex="-1" hidden>
+  <h2 id="beenden-titel"></h2>
+  <div class="beenden-hinweise"></div>
+  <div class="beenden-abschnitte" hidden></div>
+  <p id="beenden-fehler" class="gr-status fehler" role="alert"></p>
+  <div class="beenden-knoepfe">
+    <button type="button" id="beenden-zurueck" class="btn">Zurück (Esc)</button>
+    <button type="button" id="beenden-bestaetigen" class="btn btn-haupt">Beenden (Enter)</button>
+  </div>
+</div>
 <!-- Hilfe-Overlay (R00030, B2905): modaler Dialog aus dem Katalog; der Scrim schirmt den Hintergrund ab und schließt per Klick. -->
 <div id="hilfe-scrim" class="hilfe-scrim" hidden></div>
 <div id="hilfe" class="hilfe" role="dialog" aria-modal="true" aria-labelledby="h-hilfe" hidden>

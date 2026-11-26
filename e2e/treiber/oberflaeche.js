@@ -194,6 +194,48 @@ async function ergebnisAntwortZurueckhalten(page) {
   };
 }
 
+/** Der Knopf „Abbrechen“ im Kopfbereich, ebenso über Rolle und sichtbaren Namen (R00050). */
+function abbrechenKnopf(page) {
+  return page.locator(KOPFAKTIONEN).getByRole('button', { name: 'Abbrechen', exact: true });
+}
+
+function beendenDialog(page) {
+  return page.locator('#beenden-dialog');
+}
+
+function beendenDialogTitel(page) {
+  return page.locator('#beenden-titel');
+}
+
+function beendenDialogZeilen(page) {
+  return page.locator('#beenden-dialog .beenden-hinweise p');
+}
+
+function beendenDialogKnopf(page, name) {
+  return page.locator('#beenden-dialog').getByRole('button', { name, exact: true });
+}
+
+function beendenDialogFehler(page) {
+  return page.locator('#beenden-fehler');
+}
+
+/** Öffnet den Dialog über den Knopf „Beenden“ und wartet, bis er steht (nicht bestätigen). */
+async function beendenDialogOeffnen(page) {
+  await beendenKnopf(page).click({ timeout: 5000 });
+  await expect(beendenDialog(page)).toBeVisible();
+}
+
+/** Öffnet den Dialog über den Knopf „Abbrechen“ und wartet, bis er steht. */
+async function abbrechenDialogOeffnen(page) {
+  await abbrechenKnopf(page).click({ timeout: 5000 });
+  await expect(beendenDialog(page)).toBeVisible();
+}
+
+/** Betätigt den Knopf im Dialog über seinen sichtbaren Namen („Zurück (Esc)“, „Beenden (Enter)“, „Abbrechen“). */
+async function beendenDialogBestaetigen(page, name) {
+  await beendenDialogKnopf(page, name).click({ timeout: 5000 });
+}
+
 async function beendenBetaetigen(page) {
   await beendenKnopf(page).click({ timeout: 5000 });
 }
@@ -597,7 +639,9 @@ module.exports = {
   abgehakteSchalter, abgehakteSchalterBetatigen, pruefeAbgehakteSchalter, abgehakteHinweis,
   sucheFeld, sucheZaehler, sucheFehler, sucheSuchen, sucheWeiter, sucheZurueck, sucheMarken, sucheMarkenLesen,
   dateiwahlenSammeln, gesammelteDateiwahlen, formatierungsElementeZaehlen,
-  beendenKnopf, beendenBetaetigen, beendenBetaetigenBinnen, aufgabenSammeln, pruefeAufgabenNachAnzeige, pruefeAufgabenZaehler, beendetMeldung, beendenFehler, beendenScheitertMit, modusWaehlen, neuLaden,
+  beendenKnopf, abbrechenKnopf, beendenDialog, beendenDialogTitel, beendenDialogZeilen, beendenDialogKnopf, beendenDialogFehler,
+  beendenDialogOeffnen, abbrechenDialogOeffnen, beendenDialogBestaetigen,
+  beendenBetaetigen, beendenBetaetigenBinnen, aufgabenSammeln, pruefeAufgabenNachAnzeige, pruefeAufgabenZaehler, beendetMeldung, beendenFehler, beendenScheitertMit, modusWaehlen, neuLaden,
   kopfZahlen, fortschrittZaehler, commitZeileZusammenfassung, commitZeileText, pruefeKopfZahlen, pruefeFortschritt, pruefeCommitZeileZusammenfassung,
   pruefeCommitZeileEnthaelt, pruefeCommitZeileEnthaeltNicht, zusammenAntwortVerzoegern, zusammenAntwortScheitert,
   commitZeileAufklappen, commitZeileZuklappen, pruefeCommitZeileUeberDerListe,

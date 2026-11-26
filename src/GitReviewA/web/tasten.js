@@ -60,7 +60,7 @@
         meta: ereignis.metaKey,
         altGraph: typeof ereignis.getModifierState === 'function' && ereignis.getModifierState('AltGraph'),
       },
-      offenerDialog: Boolean(window.gitreviewaHilfe && window.gitreviewaHilfe.istOffen()) || offenesNotizfeld() || Boolean(window.gitreviewaAnsichtMenue && window.gitreviewaAnsichtMenue.istOffen()),
+      offenerDialog: Boolean(window.gitreviewaHilfe && window.gitreviewaHilfe.istOffen()) || offenesNotizfeld() || Boolean(window.gitreviewaAnsichtMenue && window.gitreviewaAnsichtMenue.istOffen()) || Boolean(window.gitreviewaBeendenDialog && window.gitreviewaBeendenDialog.istOffen()),
       modus: window.gitreviewaModus ? window.gitreviewaModus.hole() : werte().EINZELN,
       laufart: werte().REVIEW,
       vorhanden: vorhandeneAktionen(),

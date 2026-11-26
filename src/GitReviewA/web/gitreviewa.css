@@ -20,7 +20,13 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .message-schalter{flex:none;font:inherit;font-size:12px;padding:0 var(--kd-s2);min-block-size:var(--kd-ziel);border:1px solid var(--kd-line);background:var(--kd-surface);color:var(--kd-text);cursor:pointer}
 .message-schalter[aria-expanded="true"]{border-color:var(--kd-accent)}
 .rumpf{flex-basis:100%;margin:0;padding:var(--kd-s2) var(--kd-s3);font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;background:var(--kd-sunken);border-inline-start:2px solid var(--kd-line-strong)}
-.gr-kopfaktionen{margin-inline-start:auto;display:flex;align-items:center;padding:0 var(--kd-s5)}
+/* Kopfaktionen (R00050, B4604): „Ergebnis kopieren“, „Abbrechen“, „Beenden“ in dieser Reihenfolge; „Beenden“ ist die
+   Hauptaktion. Die Knöpfe bleiben ganz sichtbar und nehmen keinen Platz ein — den gibt zuerst der Zähler ab. */
+.gr-kopfaktionen{margin-inline-start:auto;display:flex;align-items:center;gap:var(--kd-s2);flex:none;padding:0 var(--kd-s5)}
+.gr-kopfaktionen .kz-btn{white-space:nowrap}
+.kz-btn-haupt{background:var(--kd-accent);border-color:var(--kd-accent);color:var(--kd-on-accent);font-weight:600}
+.kz-btn-haupt:hover{background:var(--kd-accent-hover)}
+.kz-lauf{flex:0 1 auto;overflow:hidden}
 .kz-hilfe{display:flex;align-items:center;padding:0 var(--kd-s3) 0 0}
 /* Kopf der Liste–Detail-Ansicht (R00012): Zählung, Umschalter, Fortschritt, Aktionen; die Titelzelle bleibt wie in kanbanD */
 .kz-lauf{display:flex;align-items:center;padding:0 var(--kd-s5);border-right:1px solid var(--kd-head-line);min-width:0}
@@ -304,6 +310,19 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .statuszeile .rechts{margin-inline-start:auto}
 kbd{font:11px/1.2 var(--kd-mono);padding:1px 4px;border:1px solid var(--kd-line-strong);background:var(--kd-sunken);color:var(--kd-text)}
 .hinweis-taste{margin-inline-start:2px;pointer-events:none}
+/* Dialog „Beenden“/„Abbrechen“ (R00050, B4602): Material 3 Basic dialog, zentriert, nie höher als das Fenster; der
+   Rollbereich für `abschnitte` steht unter den Hinweiszeilen und scrollt innen (Anschluss I0042). */
+.beenden-scrim{position:fixed;inset:0;z-index:11;background:var(--kd-scrim)}
+.beenden-dialog{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:12;width:min(480px,calc(100vw - 32px));
+  max-block-size:calc(100vh - 32px);display:flex;flex-direction:column;padding:var(--kd-s5);background:var(--kd-surface);
+  border:1px solid var(--kd-line-strong);box-shadow:var(--kd-shadow-mod,0 8px 24px rgb(0 0 0 / 25%));overflow:hidden}
+.beenden-dialog[hidden],.beenden-scrim[hidden]{display:none}
+.beenden-dialog h2{margin:0 0 var(--kd-s4);font-size:15px;min-block-size:0}
+.beenden-hinweise{display:flex;flex-direction:column;gap:var(--kd-s2);min-block-size:0;overflow:auto}
+.beenden-hinweise p{margin:0;font-size:13px;line-height:1.45}
+.beenden-abschnitte{min-block-size:0;max-block-size:min(50vh,20rem);overflow:auto;margin-block-start:var(--kd-s3)}
+.beenden-abschnitte[hidden]{display:none}
+.beenden-knoepfe{display:flex;justify-content:flex-end;gap:var(--kd-s3);margin-block-start:var(--kd-s5);flex:none}
 /* Hilfe-Overlay (R00030, B2905) nach Entwurf Fassung 2 (.hilfe) und Material 3 (Dialog): Scrim über der ganzen Seite, Panel unter dem
    Kopf, Schließen-Knopf; nicht verfügbare Aktionen tragen einen sichtbaren Vermerk, nicht nur eine Farbe. */
 .hilfe-scrim{position:fixed;inset:0;z-index:9;background:color-mix(in oklch,var(--kd-text) 40%,transparent)}
