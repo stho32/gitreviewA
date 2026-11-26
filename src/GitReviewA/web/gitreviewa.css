@@ -64,6 +64,16 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .diff-abschnitt:first-child{border-top:0;margin-top:0;padding-top:0}
 .diff-abschnitt-kopf{margin:0 0 var(--kd-s2);font-size:12.5px;font-weight:600;color:var(--kd-muted)}
 .diff-abschnitt-hinweis{margin:0 0 var(--kd-s2);font-size:12px;color:var(--kd-muted)}
+/* Absicht der KI über dem Diff (R00038): der Block ist der erste Inhalt des Rollbereichs und scrollt mit dem Diff weg.
+   Jede Commit-Zeile bleibt einzeilig; der Betreff wird bei Platzmangel sichtbar gekürzt — wie die Herkunft im Kopf (R00039),
+   der volle Text steht in `title` und im zugänglichen Namen. Der Rumpf steht erst beim Aufklappen im DOM und umbricht. */
+.absicht{display:flex;flex-direction:column;padding:var(--kd-s2) 10px;border-bottom:1px solid var(--kd-line);background:var(--kd-sunken)}
+.absicht-liste{display:flex;flex-direction:column;gap:2px;margin:0;padding:0;list-style:none}
+.absicht-zeile,.absicht-mehr-zeile{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 var(--kd-s2);min-width:0}
+.absicht-hash{flex:none;font-size:11px;color:var(--kd-muted)}
+.absicht-betreff{flex:1 1 4rem;min-inline-size:0;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.absicht-nachricht,.absicht-mehr{flex:none;font-size:11px;padding:0 4px}
+.absicht-rumpf{flex-basis:100%;margin:2px 0 0;font:12px/1.45 var(--kd-font);color:var(--kd-muted);white-space:pre-wrap;overflow-wrap:anywhere}
 .kz-btn:disabled{opacity:.6;cursor:progress}
 .gr-beendet{margin:var(--kd-s5) 0 0;font-size:14px;font-weight:600}
 .gr-beendet-hinweis{margin:var(--kd-s2) 0 0;font-size:12px}

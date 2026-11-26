@@ -1,8 +1,11 @@
 'use strict';
 // Bausteintests (ohne Browser) der Absicht der KI über dem Diff (R00038): die Commits der gewählten Datei aus den Stellen
-// des Servers bzw. dem gewählten Commit, in der Reihenfolge der Commit-Leiste und je einmal (B3701).
+// des Servers bzw. dem gewählten Commit, in der Reihenfolge der Commit-Leiste und je einmal (B3701); dazu die sichtbaren
+// Zeilen, die Längengrenze je Nachricht und die Marken der einen Zeichenklasse (B3702).
 const { test, expect } = require('@playwright/test');
-const { stellenDerDatei, commitsDerDatei } = require('../../../src/GitReviewA/web/absicht-werte.js');
+const {
+  stellenDerDatei, commitsDerDatei, sichtbare, nachrichtText, markiert, SICHTBARE_COMMITS, NACHRICHT_GRENZE,
+} = require('../../../src/GitReviewA/web/absicht-werte.js');
 
 const HASH_Z1 = '13ba46c707f0744779fe7c52c3e935814b908017';
 const HASH_Z2 = 'dd13577c75a05e64a0aa01cb6e9053d7548c83d0';
@@ -56,5 +59,78 @@ test.describe('Baustein Absicht-Werte', () => {
     expect(commitsDerDatei('zusammen', { modus: 'zusammen', pfad: 'src/a.txt', commit: HASH_Z3 }, [], COMMITS)).toEqual([]);
     expect(commitsDerDatei('zusammen', { modus: 'zusammen', pfad: 'src/a.txt', commit: HASH_Z3 }, stellenDerDatei(DATEIEN, 'src/a.txt'), [])).toEqual([]);
     expect(commitsDerDatei('einzeln', { modus: 'einzeln', pfad: 'src/a.txt', commit: 'nicht-in-der-leiste' }, [], COMMITS)).toEqual([]);
+  });
+});
+
+test.describe('Baustein Absicht-Werte — sichtbare Commits', () => {
+  /** `anzahl` Commits mit laufender Nummer als Kurz-Hash. */
+  function commits(anzahl) {
+    return Array.from({ length: anzahl }, (_, index) => ({ hash: `h${index}`, kurzHash: `k${index}`, betreff: `Betreff ${index}`, rumpf: '' }));
+  }
+
+  test('soll bis fünf Commits ganz zeigen und ohne Rest keinen Knopf „weitere“ anbieten', () => {
+    expect(sichtbare(commits(0))).toEqual({ sichtbar: [], weitere: [] });
+    expect(sichtbare(commits(1)).sichtbar.map(commit => commit.kurzHash)).toEqual(['k0']);
+    expect(sichtbare(commits(1)).weitere).toEqual([]);
+    expect(sichtbare(commits(5)).sichtbar).toHaveLength(5);
+    expect(sichtbare(commits(5)).weitere).toEqual([]);
+  });
+
+  test('soll ab sechs Commits die ersten fünf zeigen und den Rest als „weitere“', () => {
+    const sechs = sichtbare(commits(6));
+    expect(sechs.sichtbar.map(commit => commit.kurzHash)).toEqual(['k0', 'k1', 'k2', 'k3', 'k4']);
+    expect(sechs.weitere.map(commit => commit.kurzHash)).toEqual(['k5']);
+
+    const tausend = sichtbare(commits(1000));
+    expect(tausend.sichtbar).toHaveLength(SICHTBARE_COMMITS);
+    expect(tausend.weitere).toHaveLength(995);
+  });
+});
+
+test.describe('Baustein Absicht-Werte — Länge je Nachricht', () => {
+  test('soll eine Nachricht bis zur Grenze unverändert lassen und darüber sichtbar kürzen', () => {
+    const genau = 'x'.repeat(NACHRICHT_GRENZE);
+    expect(nachrichtText(genau)).toBe(genau);
+    expect(nachrichtText('xxxxx', 5)).toBe('xxxxx');
+    expect(nachrichtText('abcdef', 6)).toBe('abcdef');
+
+    const einsZuViel = 'x'.repeat(NACHRICHT_GRENZE + 1);
+    expect(nachrichtText(einsZuViel)).toBe(`${genau}… (1 Zeichen nicht gezeigt)`);
+    expect(nachrichtText('abcdef', 4)).toBe('abcd… (2 Zeichen nicht gezeigt)');
+  });
+
+  test('soll Zeichen statt Codeeinheiten zählen, damit ein Zeichenpaar nie zerschnitten wird', () => {
+    // „😀“ ist ein Zeichen aus zwei Codeeinheiten; die Grenze von 3 Zeichen lässt es ganz stehen.
+    expect(nachrichtText('ab😀cd', 3)).toBe('ab😀… (2 Zeichen nicht gezeigt)');
+    expect(nachrichtText('ab😀', 3)).toBe('ab😀');
+  });
+
+  test('soll vor den Marken kürzen, damit nie eine Marke angeschnitten wird', () => {
+    // Das 20 000. Zeichen ist ein richtungsänderndes Zeichen: es steht ganz in der Marke, das nächste ist nicht gezeigt.
+    const mitMarke = `${'x'.repeat(NACHRICHT_GRENZE - 1)}\u202Ez`;
+    const gekuerzt = nachrichtText(mitMarke);
+    expect(gekuerzt).toBe(`${'x'.repeat(NACHRICHT_GRENZE - 1)}\u202E… (1 Zeichen nicht gezeigt)`);
+    expect(markiert(gekuerzt)).toBe(`${'x'.repeat(NACHRICHT_GRENZE - 1)}⟨U+202E⟩… (1 Zeichen nicht gezeigt)`);
+
+    // Kein Ausschnitt endet je in einer halben Marke.
+    const ohneHalb = markiert(nachrichtText(`${'a\u202E'.repeat(15000)}`));
+    expect(ohneHalb.match(/⟨/g)).toHaveLength(ohneHalb.match(/⟩/g).length);
+  });
+});
+
+test.describe('Baustein Absicht-Werte — Marken der einen Zeichenklasse', () => {
+  test('soll richtungsändernde und unsichtbare Zeichen als Marke zeigen und Tab und Sichtbares lassen', () => {
+    expect(markiert('a\u202Eb\u200Bc\u{E0041}d')).toBe('a⟨U+202E⟩b⟨U+200B⟩c⟨U+E0041⟩d');
+    expect(markiert('a\tb')).toBe('a\tb');
+    expect(markiert('normaler Text')).toBe('normaler Text');
+  });
+
+  test('soll je Zeile markieren und den Zeilenumbruch als Umbruch lassen', () => {
+    expect(markiert('erste\nzweite \u202Ezeile')).toBe('erste\nzweite ⟨U+202E⟩zeile');
+    expect(markiert('a\nb\n')).toBe('a\nb\n');
+  });
+
+  test('soll Rohbyte-Marken des Servers unverändert durchlassen', () => {
+    expect(markiert('f⟨0xFF⟩.txt')).toBe('f⟨0xFF⟩.txt');
   });
 });

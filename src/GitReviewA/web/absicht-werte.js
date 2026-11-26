@@ -1,6 +1,16 @@
-/* gitreviewA — Absicht der KI über dem Diff (R00038): die Commits der gewählten Datei. Reine Funktionen, im Browser und in Node. */
+/* gitreviewA — Absicht der KI über dem Diff (R00038): die Commits der gewählten Datei und ihre Anzeigewerte. Reine Funktionen,
+   im Browser und in Node. Die Marken sind die eine Zeichenklasse der Namen (`sichtbarerName`), keine zweite Liste. */
 (function (ziel) {
   'use strict';
+
+  const namensWerte = typeof module !== 'undefined' ? require('./dateiliste-werte.js') : window;
+  const sichtbarerName = namensWerte.sichtbarerName;
+
+  /** Zugeklappt stehen höchstens fünf Commits; der Rest erscheint auf „k weitere“ (PO Zeile 195). */
+  const SICHTBARE_COMMITS = 5;
+
+  /** Länge je Nachricht (PO #47, Zeile 250): darüber endet der Text sichtbar mit der Zahl des nicht gezeigten Restes. */
+  const NACHRICHT_GRENZE = 20000;
 
   /** Die Stellen der gewählten Datei aus der Netto-Liste (`GET /api/zusammen`): dieselben Stellen, aus denen der Diff-Kopf
       seine Herkunft „netto aus …“ nennt (der Server verkettet sie über Umbenennungen, `StellenZu`). Ohne Eintrag leer —
@@ -23,5 +33,27 @@
     return commits.filter(commit => derDatei.has(commit.hash));
   }
 
-  Object.assign(ziel, { stellenDerDatei, commitsDerDatei });
-})(typeof module !== 'undefined' ? module.exports : window);
+  /** Die ersten `grenze` Commits und der Rest für den Knopf „k weitere“. */
+  function sichtbare(commits, grenze = SICHTBARE_COMMITS) {
+    return { sichtbar: commits.slice(0, grenze), weitere: commits.slice(grenze) };
+  }
+
+  /** Fremder Text einer Nachricht, sichtbar gekürzt: höchstens `grenze` Zeichen, darüber mit der Zahl des nicht gezeigten
+      Restes. Gekürzt wird **vor** den Marken und in Zeichen statt Codeeinheiten — so wird nie eine Marke `⟨U+…⟩` und nie
+      ein Zeichenpaar angeschnitten (Lehre #17). */
+  function nachrichtText(text, grenze = NACHRICHT_GRENZE) {
+    const zeichen = Array.from(text);
+    if (zeichen.length <= grenze) {
+      return text;
+    }
+    return `${zeichen.slice(0, grenze).join('')}… (${zeichen.length - grenze} Zeichen nicht gezeigt)`;
+  }
+
+  /** Der Text mit den Marken der einen Zeichenklasse, je Zeile: der Zeilenumbruch bleibt Umbruch (R00038, Sicherheit). */
+  function markiert(text) {
+    return text.split('\n').map(sichtbarerName).join('\n');
+  }
+
+  Object.assign(ziel, { stellenDerDatei, commitsDerDatei, sichtbare, nachrichtText, markiert, SICHTBARE_COMMITS, NACHRICHT_GRENZE });
+})(typeof module !== 'undefined' ? module.exports : (window.gitreviewaAbsichtWerte = window.gitreviewaAbsichtWerte || {}));
+
