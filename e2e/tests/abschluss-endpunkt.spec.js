@@ -44,7 +44,7 @@ test.describe('Abschlussschritt — Melden und Endpunkt (B4001/B4005)', () => {
     await gr.beendenDialogOeffnen(page);
 
     await expect(gr.beendenAbschnittTitel(page, 'nicht-angesehen')).toHaveText('Nicht angesehen (2)');
-    await expect(gr.beendenEintraege(page)).toHaveText(['README.md', 'src/b.txt']);
+    await expect(gr.beendenEintraege(page)).toHaveText(['src/b.txt', 'README.md']);
   });
 
   test('Kriterium 7: der Endpunkt trägt den Anfrageschutz, ein GET setzt nichts, stderr nennt nur die Anzahl', async ({ gr }) => {

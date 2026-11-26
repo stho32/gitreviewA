@@ -3,7 +3,7 @@
 // Reihenfolge der gezeigten Liste, gesperrte Stellen und Dateien ausgenommen (R00014), ausgeblendete mit Vermerk; dazu die
 // Grenze 20 Einträge mit „… und k weitere“ (Kriterium 6).
 const { test, expect } = require('@playwright/test');
-const { nichtAngesehen, abschnitt, HOECHSTENS_EINTRAEGE } = require('../../../src/GitReviewA/web/abschluss-werte.js');
+const { nichtAngesehen, abschnitt, gezeigteReihenfolge, HOECHSTENS_EINTRAEGE } = require('../../../src/GitReviewA/web/abschluss-werte.js');
 
 const schluessel = (commit, pfad) => `${commit} ${pfad}`;
 const nieGesperrt = () => false;
@@ -112,5 +112,29 @@ test.describe('Baustein Abschluss-Werte — nicht angesehene Stellen (B4002)', (
 
     expect([mitAnzahl(19).weitere, mitAnzahl(20).weitere, mitAnzahl(21).weitere]).toEqual([0, 0, 1]);
     expect([mitAnzahl(19).eintraege.length, mitAnzahl(21).eintraege.length]).toEqual([19, 20]);
+  });
+
+  // PO 272 (#50, Zeile 272): die Einträge folgen der gezeigten Liste; die Gruppenordnung (Code vor Tests vor Doku) ist
+  // dieselbe eine Stelle, die die Dateiliste zeichnet (`gruppen-werte.nachGruppen`, R00040).
+  test('PO 272: in „Zusammen“ ordnet die gezeigte Liste — Code vor Doku', () => {
+    const liste = [datei('README.md', [['z1', 'README.md']]), datei('src/a.txt', [['z1', 'src/a.txt']]), datei('docs/x.md', [['z1', 'docs/x.md']]), datei('src/b.txt', [['z1', 'src/b.txt']])];
+
+    const geordnet = gezeigteReihenfolge('zusammen', liste);
+
+    expect(geordnet.map(eintrag => eintrag.pfad)).toEqual(['src/a.txt', 'src/b.txt', 'README.md', 'docs/x.md']);
+  });
+
+  test('PO 272: in „Einzeln“ je Commit in Reihenfolge der Liste, darin Code vor Doku', () => {
+    const liste = [
+      stelle('z1', 'README.md'), stelle('z1', 'src/a.txt'),
+      stelle('z2', 'src/a.txt'), stelle('z2', 'src/b.txt'),
+    ];
+
+    const geordnet = gezeigteReihenfolge('einzeln', liste);
+
+    expect(geordnet.map(eintrag => [eintrag.commit, eintrag.pfad])).toEqual([
+      ['z1', 'src/a.txt'], ['z1', 'README.md'],
+      ['z2', 'src/a.txt'], ['z2', 'src/b.txt'],
+    ]);
   });
 });

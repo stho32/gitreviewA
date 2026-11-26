@@ -2,9 +2,9 @@
 // Der Abschlussschritt gegen Repo N plus `v` und den Commit mit 2 000 Dateien (R00041, B4005): gesperrte Stellen stehen
 // nicht unter „Nicht angesehen“ (sie stehen schon als ungeprüft mit Grund im Ergebnistext), eine per Muster ausgeblendete
 // Datei trägt den Vermerk und wird beim Betätigen gezeigt; bei 2 000 Dateien zeigt der Abschnitt 20 Einträge und den Rest,
-// der Dialog bleibt im Fenster und steht binnen der Anzeige-Schranke (Kriterien 5 und 6).
+// der Dialog bleibt im Fenster und steht binnen der groben Abschluss-Schranke von 15 s (Kriterien 5 und 6).
 const { test, expect } = require('../dsl/gitreviewa.js');
-const { anzeigeSchrankeMs, erwarteBinnenAnzeigeSchranke } = require('../dsl/schranken.js');
+const { anzeigeSchrankeMs, abschlussDialogSchrankeMs, erwarteBinnenAbschlussSchranke } = require('../dsl/schranken.js');
 
 /** Die Zeilen des Ergebnistextes zu gesperrten Stellen (R00014: `- <Pfad> (Commit <Hash>) — <Sperrgrund>`). */
 function gesperrtePfade(ergebnis) {
@@ -70,7 +70,7 @@ test.describe('Abschlussschritt — gesperrt, ausgeblendet, Lastprofil (B4005)',
     await gr.beendenDialogOeffnen(page);
     const dauerMs = Date.now() - startUmMs;
 
-    erwarteBinnenAnzeigeSchranke(dauerMs, 'Abschlussdialog mit 2 000 nicht angesehenen Dateien');
+    erwarteBinnenAbschlussSchranke(dauerMs, 'Abschlussdialog mit 2 000 nicht angesehenen Dateien');
     await expect(gr.beendenAbschnittTitel(page, 'nicht-angesehen')).toHaveText('Nicht angesehen (2000)');
     await expect(gr.beendenEintraege(page)).toHaveCount(20);
     await expect(gr.beendenAbschnittMehr(page)).toHaveText('… und 1980 weitere');
@@ -80,5 +80,6 @@ test.describe('Abschlussschritt — gesperrt, ausgeblendet, Lastprofil (B4005)',
     expect(rahmen.y + rahmen.height, 'Dialog endet im Fenster (800 px)').toBeLessThanOrEqual(800);
     await expect(gr.beendenDialogKnopf(page, 'Beenden (Enter)')).toBeVisible();
     expect(anzeigeSchrankeMs).toBe(5000);
+    expect(abschlussDialogSchrankeMs).toBe(15000);
   });
 });

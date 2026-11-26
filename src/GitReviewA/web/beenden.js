@@ -98,7 +98,7 @@
   function abschnitte(quellen) {
     const modus = modusJetzt();
     const angesehen = angesehenSchluessel(quellen.angesehen);
-    const liste = listeFuer(modus, quellen);
+    const liste = abschlussWerte().gezeigteReihenfolge(modus, listeFuer(modus, quellen));
     const eintraege = abschlussWerte().nichtAngesehen(modus, liste, angesehen, gesperrtFuer(modus), ausgeblendetFuer(modus, quellen));
     return werte().abschlussAbschnitte(standBestimmbar(modus, quellen), eintraege, quellen.ergebnis);
   }

@@ -17,6 +17,7 @@
 
   const hakenWerte = typeof module !== 'undefined' ? require('./haken-werte.js') : null;
   const stellenSchluessel = hakenWerte ? hakenWerte.stellenSchluessel : window.stellenSchluessel;
+  const gruppenWerte = typeof module !== 'undefined' ? require('./gruppen-werte.js') : null;
 
   /** Die nicht angesehenen Einträge in der Reihenfolge der gezeigten Liste. */
   function nichtAngesehen(modus, liste, stand, gesperrt, ausgeblendet) {
@@ -55,5 +56,49 @@
     return { anzahl: eintraege.length, eintraege: eintraege.slice(0, HOECHSTENS_EINTRAEGE), weitere };
   }
 
-  Object.assign(ziel, { HOECHSTENS_EINTRAEGE, nichtAngesehen, abschnitt });
+  /** Die Reihenfolge, in der die Dateiliste die Einträge zeigt (PO 2026-11-26, Zeile 272): dieselbe eine Gruppenordnung,
+      die auch `dateiliste.js` zeichnet (`gruppen-werte.nachGruppen`, R00040) — Code vor Tests vor Doku; in „Einzeln“ je
+      Commit in der Reihenfolge der Liste, darin die Dateien der gezeigten Liste. */
+  function gezeigteReihenfolge(modus, liste) {
+    if (!Array.isArray(liste)) {
+      return [];
+    }
+    if (modus === ZUSAMMEN) {
+      return nachGezeigterGruppe(liste);
+    }
+    const jeCommit = new Map();
+    for (const eintrag of liste) {
+      if (!jeCommit.has(eintrag.commit)) {
+        jeCommit.set(eintrag.commit, []);
+      }
+      jeCommit.get(eintrag.commit).push(eintrag);
+    }
+    const geordnet = [];
+    for (const eintraege of jeCommit.values()) {
+      for (const eintrag of nachGezeigterGruppe(eintraege)) {
+        geordnet.push(eintrag);
+      }
+    }
+    return geordnet;
+  }
+
+  function nachGezeigterGruppe(eintraege) {
+    const verpackt = eintraege.map(eintrag => ({ eintrag, anzeigename: eintrag.pfad }));
+    const geordnet = [];
+    for (const gruppe of nachGruppen(verpackt)) {
+      for (const eintrag of gruppe.eintraege) {
+        geordnet.push(eintrag.eintrag);
+      }
+    }
+    return geordnet;
+  }
+
+  function nachGruppen(eintraege) {
+    if (gruppenWerte) {
+      return gruppenWerte.nachGruppen(eintraege);
+    }
+    return window.gitreviewaGruppenWerte.nachGruppen(eintraege);
+  }
+
+  Object.assign(ziel, { HOECHSTENS_EINTRAEGE, nichtAngesehen, abschnitt, gezeigteReihenfolge });
 })(typeof module !== 'undefined' ? module.exports : (window.gitreviewaAbschlussWerte = window.gitreviewaAbschlussWerte || {}));

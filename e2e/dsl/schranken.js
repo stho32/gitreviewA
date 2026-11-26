@@ -8,6 +8,9 @@ const { expect } = require('@playwright/test');
 
 /** Anzeige-Schranke: nach einer auslösenden Handlung steht das erwartete Ergebnis spätestens dann — Millisekunden. */
 const anzeigeSchrankeMs = 5000;
+/** Abschluss-Dialog mit 2 000 Dateien (R00041 Kriterium 6, PO 2026-11-26 Zeile 273): grobe Schranke als eigene Zahl —
+    die übrigen Handlungen bleiben bei der allgemeinen Anzeige-Schranke von 5 s. */
+const abschlussDialogSchrankeMs = 15000;
 /** Einfrier-Schranke: keine einzelne Aufgabe des Hauptfadens dauert länger — Millisekunden. */
 const einfrierSchrankeMs = 2000;
 
@@ -16,9 +19,14 @@ function erwarteBinnenAnzeigeSchranke(dauerMs, beschreibung) {
   expect(dauerMs, `${beschreibung} (Anzeige-Schranke ${anzeigeSchrankeMs} ms)`).toBeLessThanOrEqual(anzeigeSchrankeMs);
 }
 
+/** Die ereignisgenau gemessene Dauer `dauerMs` hat die grobe Abschluss-Dialog-Schranke gehalten. */
+function erwarteBinnenAbschlussSchranke(dauerMs, beschreibung) {
+  expect(dauerMs, `${beschreibung} (Abschluss-Dialog-Schranke ${abschlussDialogSchrankeMs} ms)`).toBeLessThanOrEqual(abschlussDialogSchrankeMs);
+}
+
 /** Die gemessene Dauer `dauerMs` hat die Einfrier-Schranke gehalten. */
 function erwarteUnterEinfrierSchranke(dauerMs, beschreibung) {
   expect(dauerMs, `${beschreibung} (Einfrier-Schranke ${einfrierSchrankeMs} ms)`).toBeLessThanOrEqual(einfrierSchrankeMs);
 }
 
-module.exports = { anzeigeSchrankeMs, einfrierSchrankeMs, erwarteBinnenAnzeigeSchranke, erwarteUnterEinfrierSchranke };
+module.exports = { anzeigeSchrankeMs, abschlussDialogSchrankeMs, einfrierSchrankeMs, erwarteBinnenAnzeigeSchranke, erwarteBinnenAbschlussSchranke, erwarteUnterEinfrierSchranke };

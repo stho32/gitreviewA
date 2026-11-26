@@ -19,7 +19,8 @@ test.describe('Abschlussschritt — Weg zur Datei (B4004)', () => {
 
     await gr.beendenDialogOeffnen(page);
     await expect(gr.beendenAbschnittTitel(page, 'nicht-angesehen')).toHaveText('Nicht angesehen (2)');
-    await expect(gr.beendenEintraege(page)).toHaveText(['README.md', 'src/b.txt']);
+    // PO 272: die Einträge folgen der gezeigten Liste — Gruppe „Code“ vor „Doku“ (R00040).
+    await expect(gr.beendenEintraege(page)).toHaveText(['src/b.txt', 'README.md']);
 
     await gr.beendenEintraege(page).filter({ hasText: 'src/b.txt' }).click();
 
@@ -63,9 +64,9 @@ test.describe('Abschlussschritt — Weg zur Datei (B4004)', () => {
     await gr.beendenDialogOeffnen(page);
 
     await expect(gr.beendenAbschnittTitel(page, 'nicht-angesehen')).toHaveText('Nicht angesehen (3)');
-    await expect(gr.beendenEintraege(page).nth(1)).toHaveText('src/a.txt ausgeblendet');
+    await expect(gr.beendenEintraege(page)).toHaveText(['src/a.txt ausgeblendet', 'src/b.txt ausgeblendet', 'README.md']);
 
-    await gr.beendenEintraege(page).nth(1).click();
+    await gr.beendenEintraege(page).nth(0).click();
 
     await expect(gr.beendenDialog(page)).toBeHidden();
     await expect(gr.dateizeilen(page)).toHaveCount(3);
@@ -109,10 +110,11 @@ test.describe('Abschlussschritt — Weg zur Datei (B4004)', () => {
     await gr.beendenDialogOeffnen(page);
 
     await expect(gr.beendenAbschnittTitel(page, 'nicht-angesehen')).toHaveText('Nicht angesehen (3)');
-    await expect(gr.beendenEintraege(page).nth(0)).toHaveText('README.md ausgeblendet');
-    await expect(gr.beendenEintraege(page).nth(1)).toHaveText('src/a.txt');
+    await expect(gr.beendenEintraege(page).nth(0)).toHaveText('src/a.txt');
+    await expect(gr.beendenEintraege(page).nth(1)).toHaveText('src/b.txt');
+    await expect(gr.beendenEintraege(page).nth(2)).toHaveText('README.md ausgeblendet');
 
-    await gr.beendenEintraege(page).nth(0).click();
+    await gr.beendenEintraege(page).nth(2).click();
 
     await expect(gr.beendenDialog(page)).toBeHidden();
     await expect(page.locator('#diff .diff-pfad')).toHaveText('README.md');
@@ -135,9 +137,9 @@ test.describe('Abschlussschritt — Weg zur Datei (B4004)', () => {
     await gr.beendenDialogOeffnen(page);
 
     await expect(gr.beendenAbschnittTitel(page, 'nicht-angesehen')).toHaveText('Nicht angesehen (3)');
-    await expect(gr.beendenEintraege(page).nth(0)).toHaveText('README.md ausgeblendet');
+    await expect(gr.beendenEintraege(page).nth(2)).toHaveText('README.md ausgeblendet');
 
-    await gr.beendenEintraege(page).nth(0).click();
+    await gr.beendenEintraege(page).nth(2).click();
 
     await expect(gr.beendenDialog(page)).toBeHidden();
     await expect(gr.dateizeilen(page)).toHaveCount(3);
@@ -164,5 +166,32 @@ test.describe('Abschlussschritt — Weg zur Datei (B4004)', () => {
     ]);
     await expect(gr.beendenEintraege(page).nth(2)).toHaveAttribute('data-pfad', 'f⟨0xFF⟩.txt');
     expect(gr.laeuftNoch(lauf)).toBe(true);
+  });
+
+  // PO 272 (#50, Zeile 272): „Nicht angesehen“ folgt der gezeigten Liste — die Gruppenordnung (Code vor Tests vor Doku,
+  // R00040) kommt aus derselben Stelle, die auch die Dateiliste ordnet; in „Einzeln“ je Commit in Reihenfolge der Liste.
+  test('PO 272: „Nicht angesehen“ folgt der gezeigten Liste — Code vor Doku, in „Zusammen“ und in „Einzeln“', async ({ gr, page }) => {
+    const repo = gr.repoZ();
+    const { z1, z2, z3 } = repo.hashes;
+    const zusammen = await gr.gitreviewAStarten(repo, [z1, z2, z3]);
+    await gr.oberflaecheOeffnen(page, zusammen, 'zusammen');
+    await gr.aufDateizeilenWarten(page, 3);
+
+    await gr.beendenDialogOeffnen(page);
+    await expect(gr.beendenEintraege(page)).toHaveText(['src/a.txt', 'src/b.txt', 'README.md']);
+    await page.keyboard.press('Escape');
+    await expect(gr.beendenDialog(page)).toBeHidden();
+
+    const einzeln = await gr.gitreviewAStarten(repo, [z1, z2, z3]);
+    await gr.oberflaecheOeffnen(page, einzeln, 'einzeln');
+    await gr.aufDateizeilenWarten(page, 2);
+
+    await gr.beendenDialogOeffnen(page);
+    await expect(gr.beendenAbschnittTitel(page, 'nicht-angesehen')).toHaveText('Nicht angesehen (6)');
+    await expect(gr.beendenEintraege(page)).toHaveText([
+      'src/a.txt', 'README.md',
+      'src/a.txt', 'src/b.txt',
+      'src/a.txt', 'src/b.txt',
+    ]);
   });
 });
