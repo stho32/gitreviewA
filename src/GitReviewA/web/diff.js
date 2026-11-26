@@ -41,16 +41,13 @@
       einer Lücke, deren ganze Datei nicht gelesen werden konnte (alles nur im Speicher der Seite, R00026). */
   const zustand = { letzteLadung: 0, datei: null, alsText: false, diffansicht: 'aenderungen', leerraum: 'beachten', umbruch: umbruchWerte.startstellung(), zugeklappt: null, anzeige: 0, sprung: null, gezeichnet: null, gewaehlteZeile: null, anzeigeDaten: null, ganz: {}, laeuft: {}, aufgedeckt: {}, lueckenfehler: {}, neuerInhalt: false };
 
+  /** Die einmal gelesenen Elemente des Bereichs; `init` setzt sie, die öffentlichen Setzer (Menü, Kürzel) lesen sie. */
+  let ansicht = null;
+
   function init() {
-    const ansicht = ansichtElemente();
+    ansicht = ansichtElemente();
     zeichneUmbruch(ansicht);
     zeigeAufforderungZurWahl(ansicht);
-    ansicht.umbruchElement.addEventListener('change', () => schalteUmbruch(ansicht));
-    ansicht.leerraumElement.addEventListener('change', () => schalteLeerraum(ansicht));
-    for (const diffansichtElement of ansicht.diffansichtElemente) {
-      diffansichtElement.checked = diffansichtElement.value === zustand.diffansicht;
-      diffansichtElement.addEventListener('change', () => schalteDiffansicht(ansicht, diffansichtElement.value));
-    }
     ansicht.alsTextElement.addEventListener('click', () => ladeDiff(ansicht, zustand.datei, true));
     ansicht.trotzdemLadenElement.addEventListener('click', () => klappeAuf(ansicht));
     ansicht.erneutLadenElement.addEventListener('click', () => ladeDiff(ansicht, zustand.datei, zustand.alsText));
@@ -80,9 +77,6 @@
     const kopfElement = wurzelElement.querySelector('.diff-kopf');
     return {
       wurzelElement,
-      umbruchElement: wurzelElement.querySelector('.umbruch-schalter'),
-      leerraumElement: wurzelElement.querySelector('.leerraum-schalter'),
-      diffansichtElemente: wurzelElement.querySelectorAll('input[name="diffansicht"]'),
       pfadElement: wurzelElement.querySelector('.diff-pfad'),
       herkunftElement: wurzelElement.querySelector('.diff-herkunft'),
       meldungElement: wurzelElement.querySelector('.diff-meldung'),
@@ -102,36 +96,54 @@
     return new Worker('faerben.js');
   }
 
-  /** Die Wahl liegt am Bereich, nicht am Diff: sie bleibt beim Wechsel von Datei und Commit. Der Umschalter kippt die Stellung
-      (R00032); die Anzeige folgt ihr — `.umbr` am Bereich und der Kontrollzustand der Checkbox. */
-  function schalteUmbruch(ansicht) {
-    zustand.umbruch = umbruchWerte.umschalten(zustand.umbruch);
-    zeichneUmbruch(ansicht);
+  /** Die Wahl liegt am Bereich, nicht am Diff: sie bleibt beim Wechsel von Datei und Commit. Die Stellung setzt das Menü oder
+      ein Kürzel (`setzeUmbruch`); die Anzeige folgt ihr — `.umbr` am Bereich (R00032). */
+  function setzeUmbruch(stellung) {
+    if (stellung !== umbruchWerte.AN && stellung !== umbruchWerte.AUS) {
+      return;
+    }
+    if (stellung === zustand.umbruch) {
+      return;
+    }
+    zustand.umbruch = stellung;
+    if (ansicht) {
+      zeichneUmbruch(ansicht);
+    }
   }
 
-  /** Stellung → Anzeige: die Checkbox zeigt „an“ als angekreuzt, der Bereich trägt die Umbruch-Regeln (`.umbr`). */
+  /** Stellung → Anzeige: der Bereich trägt die Umbruch-Regeln (`.umbr`). */
   function zeichneUmbruch(ansicht) {
     const umbrochen = umbruchWerte.umbrochen(zustand.umbruch);
-    ansicht.umbruchElement.checked = umbrochen;
     ansicht.wurzelElement.classList.toggle('umbr', umbrochen);
   }
 
   /** Wie Umbruch und Ansicht liegt die Leerraum-Stellung am Bereich: sie gilt für jede weitere Datei und jeden weiteren Commit,
       auch wenn noch keine Datei gewählt ist (R00026). Eine gewählte Datei zeigt danach denselben Diff mit dem anderen Vergleich. */
-  function schalteLeerraum(ansicht) {
-    zustand.leerraum = ansicht.leerraumElement.checked ? 'ignorieren' : 'beachten';
+  function setzeLeerraum(stellung) {
+    if (stellung !== 'beachten' && stellung !== 'ignorieren') {
+      return;
+    }
+    if (stellung === zustand.leerraum) {
+      return;
+    }
+    zustand.leerraum = stellung;
     if (zustand.datei) {
       ladeDiff(ansicht, zustand.datei, zustand.alsText);
     }
   }
 
-  /** Wie der Umbruch liegt die Diffansicht am Bereich: sie gilt für jede weitere Datei, auch wenn noch keine gewählt ist. */
-  function schalteDiffansicht(ansicht, diffansicht) {
-    zustand.diffansicht = diffansicht;
-    if (!zustand.datei) {
+  /** Wie der Umbruch liegt die Diffansicht am Bereich: sie gilt für jede weitere Datei, auch wenn noch keine gewählt ist (R00008). */
+  function setzeAnsicht(wert) {
+    if (wert !== 'aenderungen' && wert !== 'ganz') {
       return;
     }
-    ladeDiff(ansicht, zustand.datei, zustand.alsText);
+    if (wert === zustand.diffansicht) {
+      return;
+    }
+    zustand.diffansicht = wert;
+    if (zustand.datei) {
+      ladeDiff(ansicht, zustand.datei, zustand.alsText);
+    }
   }
 
   /** Die Anordnung (R00023) liegt am Bereich wie Umbruch und Ansicht: sie gilt für jede weitere Datei und jeden weiteren Commit.
@@ -1389,6 +1401,17 @@
     element.textContent = text;
     return element;
   }
+
+  /* Der öffentliche Weg zu den drei Zuständen des Bereichs (R00039): Menü und Kürzel lesen und schreiben hier — kein zweiter
+     Zustand, keine zweite Wahrheit. Die Bedienelemente der Schalter sind entfallen; das Menü ist ihr Ersatz. */
+  window.gitreviewaDiff = {
+    ansicht: () => zustand.diffansicht,
+    setzeAnsicht,
+    leerraum: () => zustand.leerraum,
+    setzeLeerraum,
+    umbruch: () => zustand.umbruch,
+    setzeUmbruch,
+  };
 
   document.addEventListener('DOMContentLoaded', init);
 }());

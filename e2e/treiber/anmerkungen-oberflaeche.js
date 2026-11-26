@@ -383,9 +383,9 @@ async function pruefeKeinHinweisAusserhalb(page) {
   await expect(page.locator(HINWEIS_AUSSERHALB)).toHaveCount(0);
 }
 
-/** Fokus auf den Diff-Bereich per Tab vom Umschalter „Umbruch“ aus — der Bereich ist unter den nächsten Tab-Stopps (das Suchfeld, R00027, liegt davor). */
+/** Fokus auf den Diff-Bereich per Tab vom Menüknopf „Ansicht ▾“ aus — der Bereich ist unter den nächsten Tab-Stopps (das Suchfeld, R00027, liegt davor). */
 async function inDenDiffTabben(page) {
-  await page.locator('#diff .umbruch-schalter').focus();
+  await page.locator('#ansicht-knopf').focus();
   for (let versuch = 0; versuch < 5; versuch += 1) {
     await page.keyboard.press('Tab');
     const hatFokus = await page.locator(ROLLBEREICH).evaluate(element => element === document.activeElement);

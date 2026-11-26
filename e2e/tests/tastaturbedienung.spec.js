@@ -353,18 +353,20 @@ test.describe('R00030 Kürzel an den Bedienelementen', () => {
     expect(dateiAnmerken.aria).toBe('a');
     expect(dateiAnmerken.name).toBe('Datei anmerken');
 
-    expect((await tast.hinweis('#diff .diffansicht-wahl')).aria).toBe('s');
-    expect((await tast.hinweis('#diff .umbruch-schalter')).aria).toBe('w');
-    expect((await tast.hinweis('#diff .leerraum-schalter')).aria).toBe('l');
+    const menue = await tast.hinweis('#ansicht-knopf');
+    expect(menue.aria).toBe('s v w l');
+    expect(menue.kbd).toBe('s');
+    expect(menue.kbdVerborgen).toBe(true);
   });
 
   test('jeder Katalogeintrag mit vorhandenem Ziel trägt seinen Hinweis am Element — auch die Anordnung (v)', async ({ tast }) => {
     await tast.starten();
     await tast.dateiAnsehen('README.md');
 
-    // Abnahme-Probe: der Umschalter aus I0007 trägt den Hinweis seines Katalogeintrags.
-    const anordnung = await tast.hinweis('.anordnung-wahl');
-    expect(anordnung).toEqual({ aria: 'v', kbd: 'v', kbdVerborgen: true, name: 'Anordnung' });
+    // Abnahme-Probe: das Menü „Ansicht ▾“ trägt den Hinweis der Anordnung (v) mit.
+    const anordnung = await tast.hinweis('#ansicht-knopf');
+    expect(anordnung.aria).toContain('v');
+    expect(anordnung.kbdVerborgen).toBe(true);
 
     // Variante: die Hilfe nennt die Anordnung verfügbar.
     await tast.druecke('?');
@@ -384,7 +386,7 @@ test.describe('R00030 Kürzel an den Bedienelementen', () => {
 test.describe('R00030 Hilfe-Overlay', () => {
   test('? öffnet den Dialog mit allen Kürzeln, gruppiert, Fokus gefangen; nicht verfügbare Aktionen sind markiert', async ({ tast }) => {
     await tast.starten();
-    await pageFokus(tast, '#diff .umbruch-schalter');
+    await pageFokus(tast, '#ansicht-knopf');
     await tast.druecke('?');
 
     await tast.hilfeOffen(true);
@@ -410,7 +412,7 @@ test.describe('R00030 Hilfe-Overlay', () => {
     await tast.druecke('Escape');
     await tast.hilfeOffen(false);
     expect(await tast.hintergrundInert(), 'Hintergrund wieder bedienbar').toBe(false);
-    await tast.fokusAuf('#diff .umbruch-schalter');
+    await tast.fokusAuf('#ansicht-knopf');
   });
 
   test('im offenen Dialog wirkt kein Kürzel außer Esc; der Knopf „Kürzel“ öffnet und schließt mit Fokus zurück', async ({ tast }) => {
@@ -446,7 +448,7 @@ test.describe('R00030 Fokus sichtbar', () => {
     await tast.starten();
     await tast.dateiAnsehen('src/a.txt');
 
-    for (const selektor of ['#hilfe-knopf', '.kz-modus-knopf', '#naechste-ungepruefte', '#datei-zeilen input.haken', '#diff .umbruch-schalter', '#diff .sprung-knopf']) {
+    for (const selektor of ['#hilfe-knopf', '.kz-modus-knopf', '#naechste-ungepruefte', '#datei-zeilen input.haken', '#ansicht-knopf', '#diff .sprung-knopf']) {
       const ring = await tast.fokusringPerTab(selektor);
       expect(ring.sichtbar, `${selektor}: Ring sichtbar`).toBe(true);
       expect(ring.breite, `${selektor}: Breite`).toBeGreaterThanOrEqual(2);

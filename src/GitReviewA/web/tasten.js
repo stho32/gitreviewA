@@ -60,7 +60,7 @@
         meta: ereignis.metaKey,
         altGraph: typeof ereignis.getModifierState === 'function' && ereignis.getModifierState('AltGraph'),
       },
-      offenerDialog: Boolean(window.gitreviewaHilfe && window.gitreviewaHilfe.istOffen()) || offenesNotizfeld(),
+      offenerDialog: Boolean(window.gitreviewaHilfe && window.gitreviewaHilfe.istOffen()) || offenesNotizfeld() || Boolean(window.gitreviewaAnsichtMenue && window.gitreviewaAnsichtMenue.istOffen()),
       modus: window.gitreviewaModus ? window.gitreviewaModus.hole() : werte().EINZELN,
       laufart: werte().REVIEW,
       vorhanden: vorhandeneAktionen(),
@@ -307,50 +307,51 @@
     return true;
   }
 
-  /** `s` schaltet „nur Änderungen“/„ganze Datei“ wie das Optionsfeld im Diff-Kopf. */
+  /** `s` schaltet „nur Änderungen“/„ganze Datei“ über den Zustand des Bereichs (R00039) — dasselbe wie der Menüeintrag. */
   function wechsleAnsicht() {
-    const offen = [...document.querySelectorAll('#diff input[name="diffansicht"]')].find(feld => !feld.checked);
-    if (!offen) {
+    const diff = window.gitreviewaDiff;
+    if (!diff) {
       return false;
     }
-    offen.click();
-    ansagen(`Ansicht: ${offen.value === 'ganz' ? 'ganze Datei' : 'nur Änderungen'}`);
+    const neu = diff.ansicht() === 'ganz' ? 'aenderungen' : 'ganz';
+    diff.setzeAnsicht(neu);
+    ansagen(`Ansicht: ${neu === 'ganz' ? 'ganze Datei' : 'nur Änderungen'}`);
     return true;
   }
 
-  /** `v` schaltet die Anordnung wie die Gruppe „Anordnung“ aus I0007 (`anordnung.js`, `.anordnung-wahl`). */
+  /** `v` schaltet die Anordnung über den Zustand aus I0007 (`anordnung.js`) — dasselbe wie der Menüeintrag. */
   function wechsleAnordnung() {
-    const gruppe = document.querySelector('.anordnung-wahl');
-    if (!gruppe) {
+    const anordnung = window.gitreviewaAnordnung;
+    if (!anordnung) {
       return false;
     }
-    const nichtGedrueckt = gruppe.querySelector('[data-anordnung][aria-pressed="false"]');
-    const knopf = nichtGedrueckt || gruppe.querySelector('[data-anordnung]');
-    if (!knopf) {
-      return false;
-    }
-    knopf.click();
-    ansagen(`Anordnung: ${knopf.textContent.trim()}`);
+    const neu = anordnung.hole() === 'nebeneinander' ? 'untereinander' : 'nebeneinander';
+    anordnung.setzen(neu);
+    ansagen(`Anordnung: ${neu}`);
     return true;
   }
 
+  /** `w` schaltet den Umbruch über den Zustand des Bereichs (R00039). */
   function schalteUmbruch() {
-    const schalter = document.querySelector('#diff .umbruch-schalter');
-    if (!schalter) {
+    const diff = window.gitreviewaDiff;
+    if (!diff) {
       return false;
     }
-    schalter.click();
-    ansagen(`Umbruch ${schalter.checked ? 'an' : 'aus'}`);
+    const neu = diff.umbruch() === 'an' ? 'aus' : 'an';
+    diff.setzeUmbruch(neu);
+    ansagen(`Umbruch ${neu}`);
     return true;
   }
 
+  /** `l` schaltet den Leerraum über den Zustand des Bereichs (R00039). */
   function schalteLeerraum() {
-    const schalter = document.querySelector('#diff .leerraum-schalter');
-    if (!schalter) {
+    const diff = window.gitreviewaDiff;
+    if (!diff) {
       return false;
     }
-    schalter.click();
-    ansagen(`Leerraum ${schalter.checked ? 'ignorieren' : 'beachten'}`);
+    const neu = diff.leerraum() === 'ignorieren' ? 'beachten' : 'ignorieren';
+    diff.setzeLeerraum(neu);
+    ansagen(`Leerraum ${neu}`);
     return true;
   }
 

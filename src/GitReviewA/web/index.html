@@ -40,6 +40,7 @@
 <script src="bild.js" defer></script>
 <script src="umbruch-werte.js" defer></script>
 <script src="diff.js" defer></script>
+<script src="ansicht-menue.js" defer></script>
 <script src="suche-werte.js" defer></script>
 <script src="suche.js" defer></script>
 <script src="sprung.js" defer></script>
@@ -139,30 +140,24 @@
     <section id="diff" class="gr-diff" aria-label="Diff der gewählten Datei">
       <div class="diff-kopf">
         <h2 class="diff-pfad mono"></h2>
+        <span class="diff-herkunft"></span>
+        <label class="gr-diff-haken"><input type="checkbox" id="diff-haken"> Haken</label>
+        <span class="diff-datei-anmerken" hidden><button type="button" class="btn datei-anmerken">Datei anmerken</button><span class="diff-datei-grund gr-status muted" role="status"></span></span>
         <div class="diff-sprung">
           <span class="sprung-hinweis gr-status muted" role="status"></span>
           <span class="sprung-grund gr-status muted" role="status"></span>
           <a class="sprung-knopf btn" href="#" hidden>In VS Code</a>
         </div>
-        <span class="diff-herkunft"></span>
-        <label class="gr-diff-haken"><input type="checkbox" id="diff-haken"> Haken</label>
-        <span class="diff-datei-anmerken" hidden><button type="button" class="btn datei-anmerken">Datei anmerken</button><span class="diff-datei-grund gr-status muted" role="status"></span></span>
-        <div class="diff-schalter">
-          <div class="seg diffansicht-wahl" role="radiogroup" aria-label="Ansicht">
-            <label><input type="radio" name="diffansicht" value="aenderungen" autocomplete="off" checked>nur Änderungen</label>
-            <label><input type="radio" name="diffansicht" value="ganz" autocomplete="off">ganze Datei</label>
-          </div>
-          <div class="seg anordnung-wahl" role="group" aria-label="Anordnung">
-            <button type="button" data-anordnung="untereinander" aria-pressed="true">untereinander</button>
-            <button type="button" data-anordnung="nebeneinander" aria-pressed="false">nebeneinander</button>
-          </div>
-          <label class="ru-sch"><input type="checkbox" class="leerraum-schalter">Leerraum ignorieren</label>
-          <label class="ru-sch"><input type="checkbox" role="switch" class="umbruch-schalter">Umbruch</label>
+        <div class="diff-werkzeuge">
           <label class="suche-feld"><span class="suche-label">Suchen</span>
             <input type="search" id="diff-suche" class="diff-suche" autocomplete="off" spellcheck="false" aria-describedby="diff-suche-fehler">
           </label>
           <span class="diff-suche-zaehler" role="status" aria-live="polite"></span>
           <span id="diff-suche-fehler" class="diff-suche-fehler gr-status fehler" role="alert"></span>
+          <div class="ansicht-menue">
+            <button type="button" id="ansicht-knopf" class="ansicht-knopf btn" aria-haspopup="menu" aria-expanded="false" aria-controls="ansicht-menue">Ansicht ▾</button>
+            <div id="ansicht-menue" class="ansicht-menue-liste" role="menu" aria-label="Ansicht" hidden></div>
+          </div>
         </div>
       </div>
       <p class="diff-meldung gr-status muted" role="status"></p>

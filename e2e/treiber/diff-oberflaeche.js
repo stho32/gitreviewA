@@ -7,11 +7,47 @@ const PFAD = '#diff .diff-pfad';
 const MELDUNG = '#diff .diff-meldung';
 const HERKUNFT = '#diff .diff-herkunft';
 const ROLLBEREICH = '#diff .df-sc';
+const MENUE_KNOPF = '#ansicht-knopf';
+const MENUE = '#ansicht-menue';
 /** Nur Diff-Zeilen: Anmerkungszeilen (R00010) tragen kein `data-art` und zählen nicht mit. */
 const ZEILE = '#diff .dz tr[data-art]';
 const HINWEIS_ZUR_WAHL = 'Datei wählen, um ihren Diff zu sehen';
 const VORZEICHEN = { plus: '+', minus: '−' };
 const VERZOEGERUNG_MS = 1500;
+
+/* ── Menü „Ansicht ▾“ (R00039): der eine Weg zu den vier Anzeigeverfahren ── */
+
+/** Öffnet das Menü über den Knopf und wartet, bis es steht (der Fokus liegt auf dem gewählten Eintrag). */
+async function menueOeffnen(page) {
+  await page.locator(MENUE_KNOPF).click();
+  await expect(page.locator(MENUE)).toBeVisible();
+}
+
+/** Schließt das Menü über den Knopf (Umschalten). */
+async function menueSchliessen(page) {
+  await page.locator(MENUE_KNOPF).click();
+  await expect(page.locator(MENUE)).toBeHidden();
+}
+
+/** Der Menüeintrag mit diesem sichtbaren Namen (Optionsfeld oder Kästchen). */
+function menueEintrag(page, name) {
+  return page.locator(MENUE).getByRole('menuitemradio', { name, exact: true })
+    .or(page.locator(MENUE).getByRole('menuitemcheckbox', { name, exact: true }));
+}
+
+/** Öffnet das Menü, wählt den Eintrag `name` (wie der bisherige Schalter) und wartet, bis das Menü zu ist. */
+async function menueWaehlen(page, name) {
+  await menueOeffnen(page);
+  await menueEintrag(page, name).click();
+  await expect(page.locator(MENUE)).toBeHidden();
+}
+
+/** Öffnet das Menü, prüft den Zustand des Eintrags (`aria-checked`) und schließt es wieder. */
+async function pruefeMenueZustand(page, name, erwartet) {
+  await menueOeffnen(page);
+  await expect(menueEintrag(page, name)).toHaveAttribute('aria-checked', erwartet);
+  await menueSchliessen(page);
+}
 
 /** Je Zeile Art, Nummern (aus den Spalten und aus `data-alt`/`data-neu`), Vorzeichen und Text ohne die Lesetexte für Screenreader. */
 async function diffZeilenLesen(page) {
@@ -172,29 +208,34 @@ async function pruefeHerkunft(page, text) {
 }
 
 async function umbruchUmschalten(page) {
-  await page.locator(BEREICH).getByLabel('Umbruch').click();
+  await menueWaehlen(page, 'Umbruch');
+}
+
+/** Die Stellung des Umbruchs aus dem Menü: „an“ (der Start seit R00032) oder „aus“. */
+async function umbruchStellung(page) {
+  await menueOeffnen(page);
+  const wert = await menueEintrag(page, 'Umbruch').getAttribute('aria-checked');
+  await menueSchliessen(page);
+  return wert === 'true' ? 'an' : 'aus';
 }
 
 /** Der Umschalter „Leerraum“ trägt seinen sichtbaren Text als Namen (R00026). */
 const LEERRAUM_NAME = 'Leerraum ignorieren';
 
 async function leerraumUmschalten(page) {
-  await page.locator(BEREICH).getByRole('checkbox', { name: LEERRAUM_NAME }).click();
+  await menueWaehlen(page, LEERRAUM_NAME);
 }
 
 async function leerraumPerTastaturUmschalten(page) {
-  await page.locator(BEREICH).getByRole('checkbox', { name: LEERRAUM_NAME }).focus();
+  await menueOeffnen(page);
+  await menueEintrag(page, LEERRAUM_NAME).focus();
   await page.keyboard.press('Space');
+  await expect(page.locator(MENUE)).toBeHidden();
 }
 
 /** Die Stellung des Leerraum-Umschalters: „beachten“ (nicht angekreuzt, Start) oder „ignorieren“. */
 async function pruefeLeerraumStellung(page, stellung) {
-  const schalter = page.locator(BEREICH).getByRole('checkbox', { name: LEERRAUM_NAME });
-  if (stellung === 'ignorieren') {
-    await expect(schalter).toBeChecked();
-    return;
-  }
-  await expect(schalter).not.toBeChecked();
+  await pruefeMenueZustand(page, LEERRAUM_NAME, String(stellung === 'ignorieren'));
 }
 
 /** Höhe der Zeile mit Nummer neu `neu` im Verhältnis zur Zeile 1, und ob der Bereich waagerecht scrollen kann. */
@@ -207,7 +248,7 @@ async function zeilenmass(page, neu) {
 }
 
 async function pruefeEinzeilig(page, neu, text) {
-  await expect(page.locator(BEREICH).getByLabel('Umbruch')).not.toBeChecked();
+  await expect.poll(() => umbruchStellung(page), { message: 'Umbruch aus' }).toBe('aus');
   await expect(page.locator(`${ZEILE}[data-neu="${neu}"] .c`)).toHaveText(`hinzugefügt: ${text}`);
   const mass = await zeilenmass(page, neu);
   // Zeile 1 trägt die halbe Kante des Hunk-Kopfs (border-collapse); eine Bildschirmzeile mehr wäre das Doppelte
@@ -216,7 +257,7 @@ async function pruefeEinzeilig(page, neu, text) {
 }
 
 async function pruefeUmbrochen(page, neu, text) {
-  await expect(page.locator(BEREICH).getByLabel('Umbruch')).toBeChecked();
+  await expect.poll(() => umbruchStellung(page), { message: 'Umbruch an' }).toBe('an');
   await expect(page.locator(`${ZEILE}[data-neu="${neu}"] .c`)).toHaveText(`hinzugefügt: ${text}`);
   const mass = await zeilenmass(page, neu);
   expect(mass.verhaeltnis, `Höhe von Zeile ${neu} zu Zeile 1`).toBeGreaterThan(1.5);
@@ -225,37 +266,33 @@ async function pruefeUmbrochen(page, neu, text) {
 
 /** Die Stellung des Umschalters „Umbruch“: „an“ (der Start seit R00032) oder „aus“. */
 async function pruefeUmbruchStellung(page, stellung) {
-  const schalter = page.locator(BEREICH).getByLabel('Umbruch');
-  if (stellung === 'an') {
-    await expect(schalter).toBeChecked();
-    return;
-  }
-  await expect(schalter).not.toBeChecked();
+  await expect.poll(() => umbruchStellung(page), { message: `Umbruch ${stellung}` }).toBe(stellung);
 }
 
-/** R00032: der Umschalter „Umbruch“ ist ein Schalter (`role="switch"`, Entscheidung des product-owners) mit dem sichtbaren
-    Namen „Umbruch“; sein Kontrollzustand ist `checked`. */
+/** R00039: der Umbruch ist ein Menüeintrag (`menuitemcheckbox`) mit dem Namen „Umbruch“; sein Zustand ist `aria-checked`. */
 async function pruefeUmschalter(page, stellung) {
-  const schalter = page.locator(BEREICH).getByRole('switch', { name: 'Umbruch' });
-  await expect(schalter, 'genau ein Schalter „Umbruch“').toHaveCount(1);
-  if (stellung === 'an') {
-    await expect(schalter).toBeChecked();
-    return;
-  }
-  await expect(schalter).not.toBeChecked();
+  await menueOeffnen(page);
+  const eintrag = menueEintrag(page, 'Umbruch');
+  await expect(eintrag, 'genau ein Menüeintrag „Umbruch“').toHaveCount(1);
+  await expect(eintrag).toHaveAttribute('aria-checked', String(stellung === 'an'));
+  await menueSchliessen(page);
 }
 
-/** R00032: der Umschalter ist der nächste Tab-Stopp nach „Leerraum ignorieren“ und damit per Tastatur erreichbar. */
+/** R00039: der Menüknopf „Ansicht ▾“ ist der nächste Tab-Stopp nach dem Suchfeld und damit per Tastatur erreichbar. */
 async function pruefeUmschalterPerTabErreichbar(page) {
-  await page.locator(BEREICH).getByLabel(LEERRAUM_NAME).focus();
+  await page.locator('#diff-suche').focus();
   await page.keyboard.press('Tab');
-  await expect(page.locator(BEREICH).getByRole('switch', { name: 'Umbruch' })).toBeFocused();
+  await expect(page.locator(MENUE_KNOPF)).toBeFocused();
 }
 
-/** R00032: der Umschalter lässt sich mit der Leertaste bedienen (Fokus auf dem Schalter). */
+/** R00039: den Umbruch mit der Tastatur umschalten — Enter öffnet das Menü, die Leertaste wählt den Eintrag. */
 async function umbruchPerTastaturUmschalten(page) {
-  await page.locator(BEREICH).getByLabel('Umbruch').focus();
+  await page.locator(MENUE_KNOPF).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator(MENUE)).toBeVisible();
+  await menueEintrag(page, 'Umbruch').focus();
   await page.keyboard.press('Space');
+  await expect(page.locator(MENUE)).toBeHidden();
 }
 
 /** R00032: die Zeile mit Nummer neu `neu` ist umbrochen — mehrere Bildschirmzeilen hoch, kein waagerechtes Scrollen.
@@ -280,21 +317,22 @@ async function pruefeAbschnittZeileUmbrochen(page, commit, neu) {
   expect(mass.scrolltWaagerecht, 'waagerecht scrollbar').toBe(false);
 }
 
-/** Stellt den Umschalter der Ansicht auf `name` („nur Änderungen“ oder „ganze Datei“) — per Klick wie der Mensch. */
+/** Stellt die Ansicht („nur Änderungen“ oder „ganze Datei“) über das Menü ein — per Klick wie der Mensch. */
 async function ansichtWaehlen(page, name) {
-  await page.locator(BEREICH).getByRole('radiogroup', { name: 'Ansicht' }).getByRole('radio', { name, exact: true }).click();
+  await menueWaehlen(page, name);
 }
 
-/** Mit der Tastatur: Fokus auf die gewählte Stellung, dann Pfeiltaste zur anderen. */
+/** Mit der Tastatur: das Kürzel `s` wechselt die Ansicht (R00039: die Kürzel wirken bei geschlossenem Menü wie bisher). */
 async function ansichtPerTastaturWechseln(page) {
-  await page.locator(BEREICH).getByRole('radiogroup', { name: 'Ansicht' }).getByRole('radio', { checked: true }).focus();
-  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('s');
 }
 
 async function pruefeAnsicht(page, name) {
-  const gruppe = page.locator(BEREICH).getByRole('radiogroup', { name: 'Ansicht' });
-  await expect(gruppe.getByRole('radio', { name, exact: true })).toBeChecked();
-  await expect(gruppe.getByRole('radio', { checked: true })).toHaveCount(1);
+  const andere = name === 'ganze Datei' ? 'nur Änderungen' : 'ganze Datei';
+  await menueOeffnen(page);
+  await expect(menueEintrag(page, name)).toHaveAttribute('aria-checked', 'true');
+  await expect(menueEintrag(page, andere)).toHaveAttribute('aria-checked', 'false');
+  await menueSchliessen(page);
 }
 
 /** Hintergrundfarbe der Textzelle der ersten Zeile je Art. */
@@ -813,6 +851,7 @@ async function sprungAntwortScheitern(page, pfad, status = 500) {
 
 module.exports = {
   pruefeBedienbarNachAlsText, ansichtWaehlen, ansichtPerTastaturWechseln, pruefeAnsicht, zeilenfarbenLesen, pruefeZeilenfarben, pruefeKontextzeileBinnen,
+  menueOeffnen, menueSchliessen, menueEintrag, menueWaehlen, pruefeMenueZustand, umbruchStellung,
   pruefeDiff, pruefeMeldung, pruefeFehlerOhneZeilen, pruefeAufforderungZurWahl, pruefeHerkunft, umbruchUmschalten, pruefeEinzeilig, pruefeUmbrochen, pruefeUmbruchStellung, pruefeUmschalter, pruefeUmschalterPerTabErreichbar, umbruchPerTastaturUmschalten, pruefeZeileUmbrochen, pruefeAbschnittZeileUmbrochen, diffAntwortVerzoegern,
   pruefeZeileBinnenNachKlick, pruefeBinaer, alsTextZeigen, pruefeZugeklappt, trotzdemLaden, pruefeZeile, pruefeKeinSchalter,
   pruefeAbschnittZugeklappt, abschnittTrotzdemLaden, pruefeAbschnittZeile, pruefeAbschnittskopf,

@@ -1,39 +1,41 @@
 'use strict';
 // Treiber Oberfläche der Nebeneinander-Ansicht (R00023): der einzige Ort, der ihre Selektoren kennt; die Prüfungen sitzen hier.
 const { expect } = require('@playwright/test');
+const diffSeite = require('./diff-oberflaeche.js');
 
 const BEREICH = '#diff';
 const ROLLBEREICH = '#diff .df-sc';
-const ANORDNUNG = '#diff .anordnung-wahl';
 const ZEILE = '#diff .dz.ru-nb tbody tr[data-art]';
 
-/** Schaltet die Anordnung über den Werkzeugkasten und wartet, bis sie steht (`body[data-anordnung]`). */
+/** Schaltet die Anordnung über das Menü „Ansicht ▾“ und wartet, bis sie steht (`body[data-anordnung]`). */
 async function anordnungWaehlen(page, anordnung) {
-  await page.locator(ANORDNUNG).getByRole('button', { name: anordnung, exact: true }).click();
+  await diffSeite.menueWaehlen(page, anordnung);
   await expect(page.locator('body')).toHaveAttribute('data-anordnung', anordnung);
 }
 
-/** Die Anordnung steht: der gedrückte Knopf ist der gewählte, die übrigen sind es nicht. */
+/** Die Anordnung steht: `body[data-anordnung]` und der Menüeintrag stimmen überein. */
 async function pruefeAnordnung(page, anordnung) {
   await expect(page.locator('body')).toHaveAttribute('data-anordnung', anordnung);
-  for (const wert of ['untereinander', 'nebeneinander']) {
-    await expect(page.locator(`${ANORDNUNG} [data-anordnung="${wert}"]`)).toHaveAttribute('aria-pressed', String(wert === anordnung));
-  }
-  await expect(page.locator(`${ANORDNUNG} [data-anordnung]`)).toHaveCount(2);
+  const andere = anordnung === 'nebeneinander' ? 'untereinander' : 'nebeneinander';
+  await diffSeite.menueOeffnen(page);
+  await expect(diffSeite.menueEintrag(page, anordnung)).toHaveAttribute('aria-checked', 'true');
+  await expect(diffSeite.menueEintrag(page, andere)).toHaveAttribute('aria-checked', 'false');
+  await diffSeite.menueSchliessen(page);
 }
 
-/** Die Gruppe „Anordnung“ trägt ihren Namen und die beiden Knöpfe (R00023, Kriterium 12). */
+/** Die Gruppe „Anordnung“ im Menü trägt ihren Namen und die beiden Einträge (R00023, Kriterium 12). */
 async function pruefeGruppe(page) {
+  await diffSeite.menueOeffnen(page);
   const gruppe = page.getByRole('group', { name: 'Anordnung' });
   await expect(gruppe).toHaveCount(1);
-  await expect(gruppe.getByRole('button', { name: 'untereinander', exact: true })).toBeVisible();
-  await expect(gruppe.getByRole('button', { name: 'nebeneinander', exact: true })).toBeVisible();
+  await expect(diffSeite.menueEintrag(page, 'untereinander')).toBeVisible();
+  await expect(diffSeite.menueEintrag(page, 'nebeneinander')).toBeVisible();
+  await diffSeite.menueSchliessen(page);
 }
 
-/** Schaltet die Anordnung nur mit der Tastatur: Fokus auf den Knopf, dann Leertaste. */
+/** Schaltet die Anordnung nur mit der Tastatur: das Kürzel `v` (R00039: die Kürzel wirken bei geschlossenem Menü). */
 async function anordnungPerTastatur(page, anordnung) {
-  await page.locator(`${ANORDNUNG} [data-anordnung="${anordnung}"]`).focus();
-  await page.keyboard.press('Space');
+  await page.keyboard.press('v');
   await expect(page.locator('body')).toHaveAttribute('data-anordnung', anordnung);
 }
 
@@ -158,7 +160,7 @@ async function pruefeBreiteUndUmbruch(page, neu) {
   }, [ZEILE, neu]);
   await expect(page.locator(`${ZEILE}[data-neu="${neu}"]`)).toBeVisible();
   const mitUmbruch = await messen();
-  await page.locator('#diff .diff-kopf').getByLabel('Umbruch').click();
+  await diffSeite.umbruchUmschalten(page);
   await page.waitForFunction(([selektor, nummer]) => {
     const zeile = document.querySelector(`${selektor}[data-neu="${nummer}"]`);
     const roll = document.querySelector('#diff .df-sc');
@@ -258,9 +260,10 @@ async function entferntHinweis(page) {
   return page.locator('#diff .anmerkung-hinweis').textContent();
 }
 
-/** Klickt den Anordnungs-Knopf, ohne zu warten (für die Zeitmessung, Kriterium 14). */
+/** Klickt den Anordnungs-Eintrag im Menü, ohne zu warten (für die Zeitmessung, Kriterium 14). */
 async function anordnungKlicken(page, anordnung) {
-  await page.locator(`${ANORDNUNG} [data-anordnung="${anordnung}"]`).click();
+  await diffSeite.menueOeffnen(page);
+  await diffSeite.menueEintrag(page, anordnung).click();
 }
 
 /** Führt `aktion` aus und misst, bis die Tabellenzeile links `linksText` und rechts `rechtsText` steht (Kriterium 14). */

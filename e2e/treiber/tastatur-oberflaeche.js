@@ -2,6 +2,7 @@
 // Treiber Tastatur (R00030): der einzige Ort, der Selektoren und Tastennamen der Tastenschicht kennt; die Prüfungen der
 // Bedienung sitzen hier. Die Seite selbst rechnet im Browser — der Treiber drückt Tasten und liest Fokus, DOM und Stil.
 const { expect } = require('@playwright/test');
+const diffSeite = require('./diff-oberflaeche.js');
 
 const DIFFZEILE = '#diff .df-sc tr[data-art]';
 const DATEIZEILE = '#datei-zeilen .datei-zeile';
@@ -395,32 +396,21 @@ async function aufDiffWarten(page, pfad) {
   await expect(page.locator(DIFFZEILE).first()).toBeVisible({ timeout: 5000 });
 }
 
-/** Zustand eines Kästchen-/Radio-Schalters. */
-async function pruefeSchalter(page, selektor, erwartet) {
-  await expect(page.locator(selektor)).toHaveJSProperty('checked', erwartet);
-}
-
 async function pruefeUmbruch(page, an) {
-  await pruefeSchalter(page, '#diff .umbruch-schalter', an);
+  await diffSeite.pruefeMenueZustand(page, 'Umbruch', String(an));
 }
 
 async function pruefeLeerraum(page, an) {
-  await pruefeSchalter(page, '#diff .leerraum-schalter', an);
+  await diffSeite.pruefeMenueZustand(page, 'Leerraum ignorieren', String(an));
 }
 
-/** Die Anordnung (R00023): `body[data-anordnung]` und der gedrückte Knopf der Gruppe stimmen überein. */
+/** Die Anordnung (R00023): `body[data-anordnung]` und der Menüeintrag stimmen überein. */
 async function anordnung(page) {
-  return page.evaluate(() => {
-    const gedrueckt = document.querySelector('.anordnung-wahl [data-anordnung][aria-pressed="true"]');
-    return {
-      anordnung: document.body.dataset.anordnung || null,
-      gedrueckt: gedrueckt ? gedrueckt.dataset.anordnung : null,
-    };
-  });
+  return page.evaluate(() => ({ anordnung: document.body.dataset.anordnung || null }));
 }
 
 async function pruefeAnordnung(page, wert) {
-  await expect.poll(() => anordnung(page), { message: `Anordnung ${wert}`, timeout: 5000 }).toEqual({ anordnung: wert, gedrueckt: wert });
+  await expect.poll(() => anordnung(page), { message: `Anordnung ${wert}`, timeout: 5000 }).toEqual({ anordnung: wert });
 }
 
 /** Der Fokus steht auf der gewählten Commit-Zeile, nicht im Auswahlfeld (B2: ein `select` sperrt alle Kürzel). */
@@ -432,12 +422,9 @@ async function pruefeFokusCommitZeile(page) {
   }), { message: 'Fokus auf der gewählten Commit-Zeile', timeout: 5000 }).toBe(true);
 }
 
-/** Die gewählte Diff-Ansicht (`aenderungen` oder `ganz`). */
+/** Die gewählte Diff-Ansicht (`aenderungen` oder `ganz`) aus dem Zustand des Bereichs (R00039: das Menü zeigt ihn). */
 async function ansichtWert(page) {
-  return page.evaluate(() => {
-    const gewaehlt = [...document.querySelectorAll('#diff input[name="diffansicht"]')].find(feld => feld.checked);
-    return gewaehlt ? gewaehlt.value : null;
-  });
+  return page.evaluate(() => (window.gitreviewaDiff ? window.gitreviewaDiff.ansicht() : null));
 }
 
 async function pruefeAnsicht(page, wert) {
@@ -557,9 +544,9 @@ module.exports = {
   pruefeAnsage,
   pruefeAnsageLeer,
   diffZeilen,
-  pruefeSchalter,
   pruefeUmbruch,
   pruefeLeerraum,
+  anordnung,
   pruefeAnordnung,
   pruefeFokusCommitZeile,
   pruefeAnsicht,

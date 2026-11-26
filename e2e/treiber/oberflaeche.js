@@ -384,15 +384,15 @@ function abgehakteHinweis(page) {
 /* ── Suche im Diff (R00027) ── */
 
 function sucheFeld(page) {
-  return page.locator('#diff .diff-schalter #diff-suche');
+  return page.locator('#diff .diff-werkzeuge #diff-suche');
 }
 
 function sucheZaehler(page) {
-  return page.locator('#diff .diff-schalter .diff-suche-zaehler');
+  return page.locator('#diff .diff-werkzeuge .diff-suche-zaehler');
 }
 
 function sucheFehler(page) {
-  return page.locator('#diff .diff-schalter #diff-suche-fehler');
+  return page.locator('#diff .diff-werkzeuge #diff-suche-fehler');
 }
 
 /** Trägt den Begriff ein und bestätigt mit Enter (suchen und zum nächsten Treffer). */

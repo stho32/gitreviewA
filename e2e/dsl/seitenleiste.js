@@ -117,8 +117,8 @@ function seitenleisteSprache(gr, page) {
     abgehakt: (pfad, erwartet) => expect(page.locator(`#datei-zeilen .datei-zeile[data-pfad="${pfad}"] input.haken`)).toBeChecked({ checked: erwartet }),
 
     /* ── Anzeigeverfahren ── */
-    ansicht: wert => page.locator(`#diff input[name="diffansicht"][value="${wert}"]`).check(),
-    anordnung: wert => page.locator(`#diff .anordnung-wahl [data-anordnung="${wert}"]`).click(),
+    ansicht: wert => diffSeite.menueWaehlen(page, wert === 'ganz' ? 'ganze Datei' : 'nur Änderungen'),
+    anordnung: wert => diffSeite.menueWaehlen(page, wert),
     modus: wert => seite.modusWaehlen(page, wert),
     luecken: () => diffSeite.lueckenLesen(page),
     lueckeAufklappen: (nummer, ganz = false) => diffSeite.lueckeAufklappen(page, nummer, ganz),

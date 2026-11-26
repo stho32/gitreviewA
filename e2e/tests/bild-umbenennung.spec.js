@@ -170,13 +170,13 @@ test.describe('R00024 Anzeige (Browser-Eigenes)', () => {
     await gr.oberflaecheOeffnen(page, lauf, 'einzeln');
     await seite.dateiWaehlen(page, 'logo.png');
 
-    await page.locator('#diff .anordnung-wahl [data-anordnung="nebeneinander"]').click();
+    await diffSeite.menueWaehlen(page, 'nebeneinander');
     await expect(page.locator('body')).toHaveAttribute('data-anordnung', 'nebeneinander');
     expect(await diffSeite.bilderLesen(page), 'beide Fassungen in der Nebeneinander-Anordnung').toHaveLength(2);
     await expect(page.locator('#diff .dz')).toHaveCount(0);
     await diffSeite.pruefeNurImgImBildbereich(page);
 
-    await page.locator('#diff .anordnung-wahl [data-anordnung="untereinander"]').click();
+    await diffSeite.menueWaehlen(page, 'untereinander');
     await expect(page.locator('body')).toHaveAttribute('data-anordnung', 'untereinander');
     const bilder = await diffSeite.bilderLesen(page);
     expect(bilder, 'beide Fassungen nach dem Wechsel zurück').toHaveLength(2);

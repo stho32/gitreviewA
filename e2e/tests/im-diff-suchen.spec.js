@@ -25,8 +25,8 @@ test.describe('Im Diff suchen (R00027) — Suchfeld und Zähler (B2604)', () => 
 
     await expect(gr.sucheFeld(page)).toBeVisible();
     await expect(gr.sucheFeld(page)).toHaveAccessibleName(/^Suchen/);
-    await page.locator('.umbruch-schalter').focus();
-    await page.keyboard.press('Tab');
+    await page.locator('#ansicht-knopf').focus();
+    await page.keyboard.press('Shift+Tab');
     await expect(gr.sucheFeld(page)).toBeFocused();
   });
 
@@ -367,8 +367,8 @@ test.describe('Im Diff suchen (R00027) — alle Anzeigeverfahren (Lehre #7)', ()
     await gr.oberflaecheOeffnen(page, lauf, 'einzeln');
     await sucheTxtWaehlen(page, gr);
 
-    await page.locator('.anordnung-wahl [data-anordnung="nebeneinander"]').click();
-    await expect(page.locator('.anordnung-wahl [data-anordnung="nebeneinander"]')).toHaveAttribute('aria-pressed', 'true');
+    await diffSeite.menueWaehlen(page, 'nebeneinander');
+    await expect(page.locator('body')).toHaveAttribute('data-anordnung', 'nebeneinander');
     await gr.sucheSuchen(page, 'zwei');
     await expect(gr.sucheZaehler(page)).toHaveText('1 von 4');
   });

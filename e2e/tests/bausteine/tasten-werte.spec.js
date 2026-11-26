@@ -176,7 +176,7 @@ test.describe('Baustein Tasten-Werte — Statuszeile und Hinweise (B2904/B2906)'
     expect(hinweis('#diff .sprung-knopf').aria).toBe('o');
     expect(hinweis('#commit-waehler').anzeige).toEqual(['[', ']']);
     expect(hinweis('#hilfe-knopf').aria).toBe('?');
-    expect(hinweis('.anordnung-wahl')).toEqual({ selektor: '.anordnung-wahl', anzeige: ['v'], aria: 'v' });
+    expect(hinweis('#ansicht-knopf')).toEqual({ selektor: '#ansicht-knopf', anzeige: ['s', 'v', 'w', 'l'], aria: 's v w l' });
     expect(hinweis('#suche-eingabe').aria).toBe('/');
   });
 });

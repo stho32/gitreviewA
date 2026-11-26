@@ -143,16 +143,15 @@ function annotierSprache(gr, page) {
       await anmerkungSeite.pruefeFeldZu(page, bereichFeldname(datei, von, bis));
     },
     /** Ein Neuzeichnen desselben Diffs anstoßen, ohne den Fokus zu verschieben: der Leerraum-Vergleich liefert dieselben Zeilen,
-        der Schalter wird programmatisch betätigt (ein Klick mit der Maus nähme dem offenen Feld den Fokus). */
+        der Zustand wird über den öffentlichen Weg des Bereichs umgestellt (R00039; ein Klick nähme dem offenen Feld den Fokus). */
     neuzeichnen: async () => {
       await page.evaluate(() => {
         window.__zeichnungen = 0;
         document.addEventListener('diff-gezeichnet', () => { window.__zeichnungen += 1; });
       });
       await page.evaluate(() => {
-        const schalter = document.querySelector('#diff .leerraum-schalter');
-        schalter.checked = !schalter.checked;
-        schalter.dispatchEvent(new Event('change', { bubbles: true }));
+        const diff = window.gitreviewaDiff;
+        diff.setzeLeerraum(diff.leerraum() === 'ignorieren' ? 'beachten' : 'ignorieren');
       });
       await page.waitForFunction(() => window.__zeichnungen > 0);
     },
