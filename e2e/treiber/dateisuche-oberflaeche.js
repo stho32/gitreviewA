@@ -42,10 +42,6 @@ async function pruefeLeerfall(page, text) {
   await expect(page.locator(DATEIZEILE)).toHaveCount(0);
 }
 
-function listenMeldungText(page) {
-  return page.locator(LISTEN_MELDUNG).textContent();
-}
-
 function zaehlerText(page) {
   return page.locator(ZAEHLER).textContent();
 }
@@ -97,9 +93,9 @@ async function tabBisFeld(page) {
   throw new Error('das Suchfeld wurde über Tab nicht erreicht');
 }
 
-/** Wartet ereignisgenau (je Animationsbild), bis die Dateiliste `anzahl` Zeilen hat; liefert die Zeit seit `startMs`. */
-async function zeitBisZeilen(page, anzahl, startMs) {
-  await page.waitForFunction(erwartet => document.querySelectorAll('#datei-zeilen .datei-zeile').length === erwartet, anzahl, { polling: 'raf', timeout: 5000 });
+/** Wartet ereignisgenau (je Animationsbild), bis die Meldung am Feld steht; liefert die Zeit seit `startMs`. */
+async function zeitBisSuchmeldung(page, text, startMs) {
+  await page.waitForFunction(erwartet => document.querySelector('#dateisuche-fehler').textContent === erwartet, text, { polling: 'raf', timeout: 10000 });
   return Date.now() - startMs;
 }
 
@@ -110,6 +106,6 @@ async function pruefeCommitZaehler(page, text) {
 
 module.exports = {
   feld, sucheEingeben, sucheLeeren, sucheInhalt, sucheMeldung, pruefeSucheMeldung, pruefeLeerfall,
-  listenMeldungText, zaehlerText, pruefeZaehler, pruefeHinweis, pruefeFeldbeschriftung, pruefeKuerzelHinweis,
-  pruefeFokusImSuchfeld, pruefeFokusAufDateizeile, anfragenZaehlen, zeitBisZeilen, tabBisFeld, pruefeCommitZaehler,
+  zaehlerText, pruefeZaehler, pruefeHinweis, pruefeFeldbeschriftung, pruefeKuerzelHinweis,
+  pruefeFokusImSuchfeld, pruefeFokusAufDateizeile, anfragenZaehlen, zeitBisSuchmeldung, tabBisFeld, pruefeCommitZaehler,
 };

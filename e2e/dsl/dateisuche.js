@@ -3,6 +3,7 @@
 // Dateien `fremd<b>.txt` und `ab⟨U+202E⟩.sql`. Fachwörter: „suchen“ trägt den Text ins Feld (die Liste folgt ohne
 // Bestätigung), „Feld leeren“ nimmt ihn zurück, „Leerfall“ ist „Keine Datei passt zur Suche“, „Zähler“ ist der Grund-Zähler
 // im Kopf, „Fortschritt“ der Haken-Zähler. Die Treiber darunter kennen Seite, Prozess, HTTP, Tasten und git.
+const fs = require('fs');
 const path = require('path');
 const { test: basis, expect } = require('./gitreviewa.js');
 const seite = require('../treiber/oberflaeche.js');
@@ -13,6 +14,7 @@ const tastaturSeite = require('../treiber/tastatur-oberflaeche.js');
 const einkl = require('../treiber/einklappen-oberflaeche.js');
 const beobachtung = require('../treiber/beobachtung.js');
 const diffRepos = require('../treiber/diff-repos.js');
+const { git, dateiSchreiben, commitAnlegen } = require('../treiber/wegwerf-repo.js');
 
 const FENSTER = { width: 1280, height: 800 };
 
@@ -21,9 +23,24 @@ function repoPMitFremdtext(ordner) {
   return diffRepos.repoP(ordner, { 'fremd<b>.txt': 'fremd\n', 'ab\u202E.sql': 'bidi\n' });
 }
 
+/** Repo „Groß“ (Kriterium 11): `p` „Start“ legt `README.md` an, `u` „2000 Dateien“ legt 2 000 Dateien mit je ~55 Zeichen
+    langem Namen an — zusammen mit einem 200 Zeichen langen Muster überschreitet der Suchlauf das Aufwandsbudget. */
+function repoGross(ordner) {
+  fs.mkdirSync(ordner, { recursive: true });
+  git(ordner, 'init', '-q', '-b', 'main');
+  dateiSchreiben(ordner, 'README.md', 'Start\n');
+  const p = commitAnlegen(ordner, { betreff: 'Start' });
+  for (let nummer = 1; nummer <= 2000; nummer += 1) {
+    dateiSchreiben(ordner, `viele/datei-${String(nummer).padStart(4, '0')}-${'x'.repeat(40)}.txt`, `Zeile ${nummer}\n`);
+  }
+  const u = commitAnlegen(ordner, { betreff: '2000 Dateien' });
+  return { ordner, hashes: { p, u } };
+}
+
 const VORBEREITUNGEN = {
   P: { anlegen: ordner => diffRepos.repoP(ordner), commits: ['p1', 'p2'] },
   'P mit Fremdtext': { anlegen: ordner => repoPMitFremdtext(ordner), commits: ['p1', 'p2'] },
+  'Groß': { anlegen: ordner => repoGross(ordner), commits: ['p', 'u'], zeilen: 2001 },
 };
 
 function dateisucheSprache(gr, page) {
@@ -38,6 +55,7 @@ function dateisucheSprache(gr, page) {
     repo = art.anlegen(path.join(gr.eigenerOrdner(), 'repo'));
     hashes = repo.hashes;
     const auswahl = commits || art.commits;
+    const erwarteteZeilen = art.zeilen || zeilen;
     if (zaehlen) {
       zaehlerGit = beobachtung.gitZaehlerAnlegen(gr.eigenerOrdner());
     }
@@ -45,7 +63,10 @@ function dateisucheSprache(gr, page) {
     if (page) {
       await page.setViewportSize(FENSTER);
       await gr.oberflaecheOeffnen(page, lauf, modus);
-      await seite.aufDateizeilenWarten(page, zeilen);
+      await seite.aufDateizeilenWarten(page, erwarteteZeilen);
+      // Der Anfangslauf ist durch: der Haken-Stand ist gelesen (die späteste Anfrage der Ladung) — erst danach zählt
+      // eine Aufrufzählung wirklich nur noch, was das Suchen selbst auslöst.
+      await expect(page.locator('#kopf-fortschritt .haken-zaehler')).not.toHaveText('', { timeout: 5000 });
     }
     return lauf;
   }
@@ -73,7 +94,6 @@ function dateisucheSprache(gr, page) {
     feldInhalt: () => suchSeite.sucheInhalt(page),
     sucheMeldung: text => suchSeite.pruefeSucheMeldung(page, text),
     leerfall: text => suchSeite.pruefeLeerfall(page, text),
-    listenMeldung: () => suchSeite.listenMeldungText(page),
     zaehler: text => suchSeite.pruefeZaehler(page, text),
     zaehlerText: () => suchSeite.zaehlerText(page),
     hinweis: text => suchSeite.pruefeHinweis(page, text),
@@ -101,7 +121,7 @@ function dateisucheSprache(gr, page) {
     seitenleisteVerborgen: () => einkl.pruefeSeitenleisteVerborgen(page),
     anfragenZaehlen: () => suchSeite.anfragenZaehlen(page),
     commitZaehler: text => suchSeite.pruefeCommitZaehler(page, text),
-    zeitBisZeilen: (anzahl, startMs) => suchSeite.zeitBisZeilen(page, anzahl, startMs),
+    zeitBisSuchmeldung: (text, startMs) => suchSeite.zeitBisSuchmeldung(page, text, startMs),
     aufZeilen: anzahl => seite.aufDateizeilenWarten(page, anzahl),
     gitAufrufe: () => (zaehlerGit ? zaehlerGit.aufrufe() : []),
     beendenAnfordern: () => gr.beendenAnfordern(lauf),
