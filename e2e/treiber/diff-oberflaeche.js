@@ -632,12 +632,33 @@ async function zugeklapptRechtzeitigNachAktion(page, aktion, pfad, meldung, fris
   return dauerMs;
 }
 
-/** Wählt die Datei über `waehlen` und misst vom Klick, bis die Zeile mit Nummer neu `neu` im Dokument steht; liefert den Messwert. */
+/** Wählt die Datei über `waehlen` und misst ereignisgenau im Browser vom Klick-Ereignis bis das Produkt das Zeichnen meldet
+    (`diff-gezeichnet`, mit der Zeile `neu` im Dokument); liefert den Messwert. Gemessen wird das Produkt, nicht der Rahmen:
+    die Bedienzeit des Testrahmens (Prüfung der Bedienbarkeit, Scrollen, Protokollweg) und die Bildrate einer Abfrage sind
+    kein Leistungsurteil. Das Klick-Ereignis ist derselbe Nullpunkt wie „nach dem Klick“ in der Zusage. */
 async function pruefeZeileBinnenNachKlick(page, waehlen, { kopf, plus, neu }, fristMs) {
-  const klickUmMs = Date.now();
+  await page.evaluate(nummer => {
+    const vorige = window.gitreviewaZeitmessung ? window.gitreviewaZeitmessung.lauf : 0;
+    window.gitreviewaZeitmessung = { lauf: vorige + 1, klickUmMs: null, gezeichnetUmMs: null };
+    const lauf = window.gitreviewaZeitmessung.lauf;
+    document.addEventListener('click', ereignis => {
+      const ziel = ereignis.target;
+      if (window.gitreviewaZeitmessung.lauf === lauf && window.gitreviewaZeitmessung.klickUmMs === null && ziel instanceof Element && ziel.closest('#datei-zeilen')) {
+        window.gitreviewaZeitmessung.klickUmMs = performance.now();
+      }
+    }, { capture: true });
+    document.addEventListener('diff-gezeichnet', () => {
+      if (window.gitreviewaZeitmessung.lauf !== lauf || window.gitreviewaZeitmessung.gezeichnetUmMs !== null) {
+        return;
+      }
+      if (document.querySelector(`#diff .dz tr[data-art][data-neu="${nummer}"]`) !== null) {
+        window.gitreviewaZeitmessung.gezeichnetUmMs = performance.now();
+      }
+    });
+  }, neu);
   await waehlen();
-  await page.waitForFunction(([selektor, nummer]) => document.querySelector(`${selektor}[data-neu="${nummer}"]`) !== null, [ZEILE, neu], { polling: 'raf', timeout: 10000 });
-  const dauerMs = Date.now() - klickUmMs;
+  await page.waitForFunction(() => window.gitreviewaZeitmessung.gezeichnetUmMs !== null, undefined, { polling: 'raf', timeout: 10000 });
+  const dauerMs = await page.evaluate(() => Math.round(window.gitreviewaZeitmessung.gezeichnetUmMs - window.gitreviewaZeitmessung.klickUmMs));
   expect(dauerMs, `Zeile ${neu} nach ${dauerMs} ms`).toBeLessThanOrEqual(fristMs);
   await expect(page.locator(`${ZEILE}[data-art="kopf"]`).first()).toHaveText(kopf);
   await expect(page.locator(`${ZEILE}[data-neu="${neu}"] .c`)).toHaveText(`hinzugefügt: ${plus}`);
