@@ -151,14 +151,14 @@ internal static class Program
     {
         var uebersichtsquelle = new GitUebersichtsquelle(commits, arbeitsbaumwurzel);
         var zusammenquelle = new GitZusammenquelle(commits, arbeitsbaumwurzel);
-        await using var server = await Webserver.StartenAsync(startauftrag.Port, commits, new GitDateiquelle(arbeitsbaumwurzel), new GitDiffquelle(arbeitsbaumwurzel), uebersichtsquelle, zusammenquelle, Oberflaeche.AusDemProgramm(), protokoll, new GitSprungquelle(arbeitsbaumwurzel), startauftrag.Muster, new GitBildquelle(arbeitsbaumwurzel), arbeitsbaumwurzel);
+        await using var server = await Webserver.StartenAsync(startauftrag.Port, commits, new GitDateiquelle(arbeitsbaumwurzel), new GitDiffquelle(arbeitsbaumwurzel), uebersichtsquelle, zusammenquelle, Oberflaeche.AusDemProgramm(), protokoll, new GitSprungquelle(arbeitsbaumwurzel), startauftrag.Muster, new GitBildquelle(arbeitsbaumwurzel), arbeitsbaumwurzel, abbruchsignale.Laufende);
         protokoll.MeldeStart(server.Adresse);
         if (startauftrag.BrowserOeffnen)
         {
             OeffneBrowser(server.Adresse, protokoll);
         }
         await WartenBisBeendetOderAbgebrochen(server, abbruchsignale);
-        var ausgang = AbbruchEntscheidung.Entscheide(server.Anmerkungen.IstAbgeschlossen);
+        var ausgang = AbbruchEntscheidung.Entscheide(server.Laufende.Zustand);
         GibErgebnisOderAbbruchAus(ausgang, server, protokoll);
         return ausgang.ExitCode;
     }

@@ -281,6 +281,17 @@ function welt() {
     return { status: antwort.status, ...jsonOderLeer(antwort.koerper) };
   }
 
+  /** Fordert den Abbruch an (R00050); Standard ist die Befehlszeile: POST, JSON `{}`, ohne Origin. */
+  async function abbrechenAnfordern(lauf, { methode = 'POST', origin, host, inhaltstyp = JSON_INHALT } = {}) {
+    let koerper;
+    if (methode === 'POST') {
+      koerper = '{}';
+    }
+    const kopf = { Origin: origin, 'Content-Type': inhaltstypKopf(inhaltstyp) };
+    const antwort = await senden(lauf.adresse, '/api/abbrechen', { methode, host, kopf, koerper });
+    return { status: antwort.status, ...jsonOderLeer(antwort.koerper) };
+  }
+
   /** Beginnt eine Anfrage an `pfad` und sendet vom Körper nur `{` (angekündigt: 1000 Bytes); die Verbindung bleibt offen. */
   async function anfrageHalbGesendet(lauf, pfad) {
     const schliessen = await halbSenden(lauf.adresse, pfad, { laenge: 1000, teil: '{' });
@@ -334,7 +345,7 @@ function welt() {
     repoMitCommits, repoK, gitreviewAStarten, gitreviewAImHintergrundStarten, gitreviewAAufrufen, aufrufBeendet, aufEndeWarten, laeuftNoch, bisSekundenNachStart, laufAbbrechen,
     zustandAbfragen, commitsAbfragen, dateienAbfragen, commitsStatusOderNull, freierPort, startseiteAbfragen, stderrZeilen, portVon, hostDesLaufs,
     lauschendeAdressen, aufzeichnenderBrowser, gitAttrappe, aufraeumen,
-    anmerkungAnlegen, anmerkungAendern, anmerkungLoeschen, beendenAnfordern, anfrageHalbGesendet, beendenUndDauerMessen, fremdeSeite, ergebnis,
+    anmerkungAnlegen, anmerkungAendern, anmerkungLoeschen, beendenAnfordern, abbrechenAnfordern, anfrageHalbGesendet, beendenUndDauerMessen, fremdeSeite, ergebnis,
     hakenAnlegen, ergebnisAbfragen,
     beendenBetaetigen: oberflaeche.beendenBetaetigen,
     beendenKnopf: oberflaeche.beendenKnopf,

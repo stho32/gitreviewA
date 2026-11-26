@@ -18,6 +18,9 @@ internal sealed class Abbruchsignale : IDisposable
 
     public bool IstAbbruchAngefordert => istAbbruchAngefordert;
 
+    /// <summary>Der eine Einmal-Schalter (R00050): ein Signal nimmt denselben Weg wie der Knopf „Abbrechen“.</summary>
+    public Laufende Laufende { get; } = new();
+
     public static Abbruchsignale Abfangen()
     {
         StelleStandardbehandlungFuerStrgCHer();
@@ -52,5 +55,6 @@ internal sealed class Abbruchsignale : IDisposable
     {
         kontext.Cancel = true;
         istAbbruchAngefordert = true;
+        Laufende.Versuche(Laufentscheidung.Abbruch);
     }
 }

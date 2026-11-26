@@ -98,6 +98,40 @@ test.describe('Review abbrechen', () => {
     expect(gr.ergebnis(lauf)).toContain('> Test\n');
   });
 
+  test('soll nach Abbruch über POST /api/abbrechen mit zwei Anmerkungen kein Ergebnis ausgeben und mit 130 enden (R00050, Kriterium 9)', async ({ gr, abbruch }) => {
+    const repo = gr.repoMitCommits();
+    const [a, b] = repo.hashes;
+    const lauf = await gr.gitreviewAStarten(repo, [a, b]);
+    await gr.anmerkungAnlegen(lauf, { commit: a, datei: 'src/Foo.cs', zeile: 42, text: 'Null-Prüfung fehlt' });
+    await gr.anmerkungAnlegen(lauf, { commit: b, datei: 'README.md', text: 'Abschnitt Installation veraltet' });
+
+    const antwort = await gr.abbrechenAnfordern(lauf);
+
+    expect(antwort).toEqual({ status: 200, zustand: 'abgebrochen' });
+    await abbruch.sollOhneErgebnisAbgebrochenSein(lauf);
+  });
+
+  test('soll bei zweimaliger Abbruchanforderung über den Endpunkt die Abbruchzeile genau einmal nennen und mit 130 enden (R00050, Kriterium 10)', async ({ gr, abbruch }) => {
+    const repo = gr.repoMitCommits();
+    const lauf = await gr.gitreviewAStarten(repo, [repo.hashes[0]]);
+
+    const antworten = await Promise.allSettled([gr.abbrechenAnfordern(lauf), gr.abbrechenAnfordern(lauf)]);
+
+    expect(antworten.some(antwort => antwort.status === 'fulfilled' && antwort.value.status === 200)).toBe(true);
+    await abbruch.sollOhneErgebnisAbgebrochenSein(lauf);
+  });
+
+  test('soll einen nie ganz ankommenden Körper nicht als Abbruch nehmen und danach die Positivkontrolle wirken lassen (R00050, Kriterium 12)', async ({ gr, abbruch }) => {
+    const repo = gr.repoMitCommits();
+    const lauf = await gr.gitreviewAStarten(repo, [repo.hashes[0]]);
+    await gr.anfrageHalbGesendet(lauf, '/api/abbrechen');
+
+    expect(gr.laeuftNoch(lauf)).toBe(true);
+    expect(gr.ergebnis(lauf)).toBe('');
+    expect((await gr.abbrechenAnfordern(lauf)).status).toBe(200);
+    await abbruch.sollOhneErgebnisAbgebrochenSein(lauf);
+  });
+
   test('soll nach bestätigtem Beenden trotz folgendem Strg+C das Ergebnis liefern und mit 0 enden (US-5)', async ({ gr, abbruch }) => {
     const repo = gr.repoMitCommits();
     const [a] = repo.hashes;

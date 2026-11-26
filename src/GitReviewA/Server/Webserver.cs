@@ -19,13 +19,14 @@ internal sealed class Webserver : IAsyncDisposable
 
     private readonly WebApplication anwendung;
 
-    private Webserver(WebApplication anwendung, int port, Anmerkungsspeicher anmerkungen, DateiAbhakenInteractor dateiAbhaken, ErgebnisKopierenInteractor ergebnis)
+    private Webserver(WebApplication anwendung, int port, Anmerkungsspeicher anmerkungen, DateiAbhakenInteractor dateiAbhaken, ErgebnisKopierenInteractor ergebnis, Laufende laufende)
     {
         this.anwendung = anwendung;
         Adresse = $"http://{HostPruefung.Rechneradresse}:{port}/";
         Anmerkungen = anmerkungen;
         DateiAbhaken = dateiAbhaken;
         Ergebnis = ergebnis;
+        Laufende = laufende;
     }
 
     public string Adresse { get; }
@@ -37,7 +38,10 @@ internal sealed class Webserver : IAsyncDisposable
     /// <summary>Die eine Erzeugungsstelle des Ergebnisses (R00002/R00020/R00031); auch der Hauptablauf schreibt sie auf stdout.</summary>
     public ErgebnisKopierenInteractor Ergebnis { get; }
 
-    public static async Task<Webserver> StartenAsync(int port, Commitzeilen commits, IDateiquelle dateiquelle, IDiffquelle diffquelle, IUebersichtsquelle uebersichtsquelle, IZusammenquelle zusammenquelle, Oberflaeche oberflaeche, StderrProtokoll protokoll, ISprungquelle? sprungquelle = null, Musterliste? muster = null, Bild.IBildquelle? bildquelle = null, string? arbeitsordner = null)
+    /// <summary>Der eine Einmal-Schalter für „Beenden“ und „Abbrechen“ (R00050); der Hauptablauf liest ihn.</summary>
+    public Laufende Laufende { get; }
+
+    public static async Task<Webserver> StartenAsync(int port, Commitzeilen commits, IDateiquelle dateiquelle, IDiffquelle diffquelle, IUebersichtsquelle uebersichtsquelle, IZusammenquelle zusammenquelle, Oberflaeche oberflaeche, StderrProtokoll protokoll, ISprungquelle? sprungquelle = null, Musterliste? muster = null, Bild.IBildquelle? bildquelle = null, string? arbeitsordner = null, Laufende? laufende = null)
     {
         var lauscherPort = new Serverbau.LauscherPort();
         var anwendung = Serverbau.Baue(port, protokoll, lauscherPort);
@@ -61,10 +65,11 @@ internal sealed class Webserver : IAsyncDisposable
         {
             anwendung.MapGet(SprungEndpunkt.Muster, SprungEndpunkt.Fuer(new SprungInteractor(commits, dateien, sprungquelle, protokoll)));
         }
-        var ergebnis = BildeRueckkanal(anwendung, commits, anmerkungen, haken, dateiAbhaken, uebersicht, arbeitsordner, protokoll);
+        var laufendeSchalter = laufende ?? new Laufende();
+        var ergebnis = BildeRueckkanal(anwendung, commits, anmerkungen, haken, dateiAbhaken, uebersicht, arbeitsordner, laufendeSchalter, protokoll);
         await anwendung.StartAsync();
         lauscherPort.Wert = Serverbau.TatsaechlicherPort(anwendung);
-        return new Webserver(anwendung, lauscherPort.Wert, anmerkungen, dateiAbhaken, ergebnis);
+        return new Webserver(anwendung, lauscherPort.Wert, anmerkungen, dateiAbhaken, ergebnis, laufendeSchalter);
     }
 
     public Task WartenBisBeendetAsync()
@@ -117,7 +122,7 @@ internal sealed class Webserver : IAsyncDisposable
     }
 
     /// <summary>Baut den Rückkanal und liefert die eine Erzeugungsstelle des Ergebnisses (der Hauptablauf nutzt sie für stdout).</summary>
-    private static ErgebnisKopierenInteractor BildeRueckkanal(WebApplication anwendung, Commitzeilen commits, Anmerkungsspeicher anmerkungen, Hakenspeicher haken, DateiAbhakenInteractor dateiAbhaken, GemerkteUebersicht uebersicht, string? arbeitsordner, StderrProtokoll protokoll)
+    private static ErgebnisKopierenInteractor BildeRueckkanal(WebApplication anwendung, Commitzeilen commits, Anmerkungsspeicher anmerkungen, Hakenspeicher haken, DateiAbhakenInteractor dateiAbhaken, GemerkteUebersicht uebersicht, string? arbeitsordner, Laufende laufende, StderrProtokoll protokoll)
     {
         var sperre = new Stellensperre(uebersicht, protokoll);
         var interactor = new ZeileAnnotierenInteractor(anmerkungen, new CommitAuswahl(commits), sperre, protokoll);
@@ -130,8 +135,10 @@ internal sealed class Webserver : IAsyncDisposable
         anwendung.Map("/api/anmerkungen/{nummer}/loeschen", GeschuetzterEndpunkt.Mit(loeschen, protokoll));
         anwendung.MapGet("/api/haken", HakenEndpunkt.Stand(dateiAbhaken));
         anwendung.Map("/api/haken", GeschuetzterEndpunkt.Mit(HakenEndpunkt.Setzen(dateiAbhaken, protokoll), protokoll));
-        var beenden = BeendenEndpunkt.Fuer(anmerkungen, haken, anwendung.Lifetime, protokoll);
+        var beenden = BeendenEndpunkt.Fuer(anmerkungen, haken, laufende, anwendung.Lifetime, protokoll);
         anwendung.Map("/api/beenden", GeschuetzterEndpunkt.Mit(beenden, protokoll));
+        var abbrechen = AbbrechenEndpunkt.Fuer(laufende, anwendung.Lifetime);
+        anwendung.Map("/api/abbrechen", GeschuetzterEndpunkt.Mit(abbrechen, protokoll));
         var bereichszeilen = arbeitsordner is null ? null : new Bereichszeilen(uebersicht, arbeitsordner, Ausgabegrenze.Standard, protokoll);
         var ergebnis = new ErgebnisKopierenInteractor(anmerkungen, dateiAbhaken, bereichszeilen);
         anwendung.MapGet("/api/ergebnis", ErgebnisKopierenEndpunkt.Fuer(ergebnis, protokoll));
