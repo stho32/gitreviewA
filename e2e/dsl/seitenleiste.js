@@ -14,9 +14,9 @@ const anmerkungen = require('../treiber/anmerkungen-oberflaeche.js');
 const repos = require('../treiber/diff-repos.js');
 
 const FENSTER = { width: 1280, height: 800 };
-/** Die Mediengrenze der Anforderung: darunter eine Spalte, ab 566 px zwei (PO 2026-11-25). */
+/** Die Mediengrenze der Anforderung: darunter eine Spalte, ab 590 px zwei (PO 2026-11-25). */
 const SCHMAL = { width: 560, height: 800 };
-const ZWEI_SPALTEN_GENAU = { width: 566, height: 800 };
+const ZWEI_SPALTEN_GENAU = { width: 590, height: 800 };
 
 const VORBEREITUNGEN = {
   'Repo S': { anlegen: repos.repoS, commits: ['s1'] },

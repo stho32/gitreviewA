@@ -60,7 +60,7 @@ test.describe('Zwei getrennte Rollbereiche', () => {
 });
 
 test.describe('Schmales Fenster', () => {
-  test('unter 566 px eine Spalte ohne getrennte Rollbereiche, ab 566 px zwei Spalten mit getrennten Rollbereichen', async ({ seit }) => {
+  test('unter 590 px eine Spalte ohne getrennte Rollbereiche, ab 590 px zwei Spalten mit getrennten Rollbereichen', async ({ seit }) => {
     await seit.starten({ vorbereitung: 'Repo S' });
     await seit.dateiAnsehen('lang.txt');
 
@@ -70,7 +70,7 @@ test.describe('Schmales Fenster', () => {
     await seit.seitenbildlauf();
     await seit.keinTrennerKeinEinklappen();
 
-    await seit.fensterSetzen({ width: 566, height: 800 });
+    await seit.fensterSetzen({ width: 590, height: 800 });
 
     await seit.zweiSpalten();
     await seit.keinSeitenbildlauf();

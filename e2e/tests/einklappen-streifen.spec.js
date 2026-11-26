@@ -80,7 +80,7 @@ test.describe('Einklappen: Streifen und volle Breite (B3403)', () => {
     }
   });
 
-  test('unter 566 px gilt die eine Spalte: Liste und kein Knopf; zurück bleibt die Leiste eingeklappt (Grenzfall)', async ({ einklappen }) => {
+  test('unter 590 px gilt die eine Spalte: Liste und kein Knopf; zurück bleibt die Leiste eingeklappt (Grenzfall)', async ({ einklappen }) => {
     await einklappen.starten({ vorbereitung: 'Repo S' });
     await einklappen.knopfBetatigen();
     await einklappen.seitenleisteVerborgen();

@@ -129,7 +129,7 @@ test.describe('Anschluss an Nächste ungeprüfte und Fokus (B3404)', () => {
     await einklappen.druecke('h');
     await einklappen.meldungSichtbar('Alles abgehakt · Alle Dateien ausgeblendet');
 
-    // Unter 566 px fällt der Aufbau auf eine Spalte zurück: die Leiste steht sichtbar, die Meldung bleibt in ihr.
+    // Unter 590 px fällt der Aufbau auf eine Spalte zurück: die Leiste steht sichtbar, die Meldung bleibt in ihr.
     await einklappen.fensterSetzen({ width: 560, height: 800 });
     await einklappen.seitenleisteSichtbar();
     await einklappen.meldungInDerLeiste('Alles abgehakt');

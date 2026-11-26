@@ -35,9 +35,9 @@ test.describe('Baustein Einklappen-Werte — der eine Zustand (R00035)', () => {
     expect(pfeil(true)).toBe('»');
   });
 
-  test('soll den zweispaltigen Aufbau aus derselben Grenze wie der Trenner lesen (566 px)', () => {
+  test('soll den zweispaltigen Aufbau aus derselben Grenze wie der Trenner lesen (590 px)', () => {
     expect(passtZweiSpaltig(1280)).toBe(true);
-    expect(passtZweiSpaltig(566)).toBe(true);
-    expect(passtZweiSpaltig(565)).toBe(false);
+    expect(passtZweiSpaltig(590)).toBe(true);
+    expect(passtZweiSpaltig(589)).toBe(false);
   });
 });

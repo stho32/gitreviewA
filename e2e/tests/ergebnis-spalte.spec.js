@@ -1,7 +1,7 @@
 'use strict';
 // Spezifikation R00037 „Ergebnis-Spalte live“ (I0038, B3602/B3604/B3605): die Spalte als eigener Rollbereich mit Titel,
 // Text als `textContent` und Umbruch (B3602), das Einklappen ueber den Mechanismus aus I0036 samt `r` (B3604) und die drei
-// Bereiche in der Breite (1012/811/566, B3605). Browser-Eigenes (Darstellung, Fokus, `aria-*`); Playwright.
+// Bereiche in der Breite (1012/811/590, B3605). Browser-Eigenes (Darstellung, Fokus, `aria-*`); Playwright.
 const { test, expect } = require('../dsl/gitreviewa.js');
 
 /** Startet gitreviewA mit der verlangten Fensterbreite und wartet, bis Liste und Haken-Stand stehen. */
@@ -127,8 +127,8 @@ test.describe('Drei Bereiche in der Breite (B3605)', () => {
     await expect(spalte(page), 'gesperrt: bleibt eingeklappt').toBeHidden();
   });
 
-  test('bei 565 px gibt es weder Spalte noch Streifen (Kriterium 8)', async ({ gr, page }) => {
-    await starten(gr, page, 565);
+  test('bei 589 px gibt es weder Spalte noch Streifen (Kriterium 8)', async ({ gr, page }) => {
+    await starten(gr, page, 589);
     await expect(spalte(page)).toBeHidden();
     await expect(page.locator('.gr-ergebnis-streifen')).toBeHidden();
     await expect(knopf(page)).toHaveCount(0);

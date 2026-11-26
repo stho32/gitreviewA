@@ -193,7 +193,7 @@ async function pruefeKeinSeitenbildlauf(page) {
   expect(stand.ueberhang, `Seitenüberhang (scrollHeight ${stand.scrollHeight}, innerHeight ${stand.innerHeight})`).toBeLessThanOrEqual(0);
 }
 
-/** Die Seite scrollt (Rückfall unter 566 px: „die Seite scrollt wie bisher“). */
+/** Die Seite scrollt (Rückfall unter 590 px: „die Seite scrollt wie bisher“). */
 async function pruefeSeitenbildlauf(page) {
   const stand = await seite(page);
   expect(stand.ueberhang, `Seitenüberhang (scrollHeight ${stand.scrollHeight}, innerHeight ${stand.innerHeight})`).toBeGreaterThan(0);
@@ -239,7 +239,7 @@ async function pruefeDiffOben(page) {
  * Trägt der Aufbau die verlangte Fensterbreite? Eine neue Größe kommt asynchron an, und die Mediengrenze des CSS greift
  * erst mit dem nächsten Zeichnen — bis dahin steht im DOM die Lage (und der Zustand) der alten Größe, und die nächste
  * Prüfung träfe eine Aussage über die alte Größe. Gemessen wird deshalb gegen die **verlangte** Breite und nicht gegen
- * das, was die Seite gerade über sich selbst sagt: ab 566 px (die eine Quelle `passtZweiSpaltig` in `trenner-werte.js`)
+ * das, was die Seite gerade über sich selbst sagt: ab 590 px (die eine Quelle `passtZweiSpaltig` in `trenner-werte.js`)
  * stehen Seitenleiste und Diff nebeneinander, darunter liegt die Dateiliste über dem Diff; Trennzug und Ausklapp-Knopf
  * gehören nur in den zweispaltigen Aufbau; die Seitenleiste folgt ihrem Zustand (`hidden` ⇔ unsichtbar), und die
  * Einklapp-Stellung am Rahmen deckt sich mit dem Knopf. Jede Zeile, die noch zur alten Größe gehört, lässt die Messung
@@ -280,7 +280,7 @@ async function warteAufAufbau(page, breite) {
   await expect.poll(() => aufbauFolgtBreite(page, breite), `der Aufbau folgt der Fensterbreite (${breite} px)`).toBe(true);
 }
 
-/** Es gibt keinen Trenner und keinen Ausklapp-Knopf (Rückfall unter 566 px, R00034/R00035). */
+/** Es gibt keinen Trenner und keinen Ausklapp-Knopf (Rückfall unter 590 px, R00034/R00035). */
 async function pruefeKeinTrennerKeinEinklappen(page) {
   await expect(page.locator(TRENNER), 'Trenner').toHaveCount(0);
   await expect(page.locator(EINKLAPPEN), 'Ausklapp-Knopf').toHaveCount(0);

@@ -51,7 +51,7 @@ function trennerVorhanden(page) {
 
 /** Wartet, bis der Trennzug die ARIA-Angaben der aktuellen Fenstergröße trägt. Die Größenänderung kommt im Browser asynchron
     an; statt einer festen Zeit wird gepollt, bis `aria-valuemax` der Höchstbreite entspricht, die das Programm selbst aus dem
-    Fenster rechnet. Ob ein Trenner dazugehört (Rückfall unter 566 px), klärt die Sprache mit `rahmen.warteAufAufbau` — hier
+    Fenster rechnet. Ob ein Trenner dazugehört (Rückfall unter 590 px), klärt die Sprache mit `rahmen.warteAufAufbau` — hier
     steht nur noch der Wert; ein fehlender Trenner ist damit kein „nichts zu warten", sondern der Rückfall. */
 async function warteAufGroesse(page) {
   await expect.poll(
@@ -253,7 +253,7 @@ function lageRechts(page) {
 }
 
 /** Wartet, bis die Ergebnis-Spalte der aktuellen Fenstergröße folgt: `hidden` und `aria-valuenow` stimmen mit der einen
-    Breitenregel überein (kein Zustand von gestern, keine feste Zeit). Unter 566 px gilt die eine Spalte: dann steht die Spalte
+    Breitenregel überein (kein Zustand von gestern, keine feste Zeit). Unter 590 px gilt die eine Spalte: dann steht die Spalte
     ohne Trenner (R00033). */
 async function warteAufSpalte(page) {
   await expect.poll(

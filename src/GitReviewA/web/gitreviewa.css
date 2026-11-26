@@ -5,8 +5,8 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .gr-status:empty{display:none}
 .gr-status.fehler{color:var(--kd-status-error-ink)}
 .gr-commits{list-style:none;margin:0;padding:0;border:1px solid var(--kd-line);background:var(--kd-surface)}
-/* Eine Spalte ist der Rückfall (R00033, B3202): unter 566 px steht die Seitenleiste über dem Diff und die Seite scrollt
-   wie bisher; ab 566 px wird daraus der feste Rahmen mit zwei getrennten Rollbereichen (Regel am Ende dieser Datei). */
+/* Eine Spalte ist der Rückfall (R00033, B3202): unter 590 px steht die Seitenleiste über dem Diff und die Seite scrollt
+   wie bisher; ab 590 px wird daraus der feste Rahmen mit zwei getrennten Rollbereichen (Regel am Ende dieser Datei). */
 .gr-ansicht{display:grid;grid-template-columns:1fr;gap:var(--kd-s5);align-items:start}
 .commit-zeile{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--kd-s2) var(--kd-s3);padding:var(--kd-s2) var(--kd-s3);min-width:0;border-inline-start:3px solid transparent}
 .commit-zeile+.commit-zeile{border-top:1px solid var(--kd-line)}
@@ -308,22 +308,24 @@ kbd{font:11px/1.2 var(--kd-mono);padding:1px 4px;border:1px solid var(--kd-line-
 .kz{--gr-fokus:var(--kd-head-text)}
 .kz :focus-visible{outline-color:var(--gr-fokus)}
 
-/* Einklappen der Seitenleiste (R00035, I0036): der Streifen an der Grenze ist der Ort des Ausklapp-Knopfes. Unter 566 px gibt
+/* Einklappen der Seitenleiste (R00035, I0036): der Streifen an der Grenze ist der Ort des Ausklapp-Knopfes. Unter 590 px gibt
    es kein Einklappen (eine Spalte, R00033); der Knopf entsteht erst im zweispaltigen Aufbau (`einklappen.js`). */
 .gr-streifen{display:none}
-/* Ergebnis-Spalte (R00037): unter 566 px gibt es weder Spalte noch Streifen (eine Spalte, R00033). */
+/* Ergebnis-Spalte (R00037): unter 590 px gibt es weder Spalte noch Streifen (eine Spalte, R00033). */
 .gr-ergebnis-streifen{display:none}
 .gr-ergebnis{display:none}
 
-/* Fester Rahmen mit zwei getrennten Rollbereichen (R00033, B3201/B3202): ab 566 px — der Summe der Mindestbreiten 240
-   (Seitenleiste) + 320 (Diff) + 6 (Trenner, PO 2026-11-25) — füllt der Aufbau die Fensterhöhe. Kopf und Werkzeugzeilen
+/* Fester Rahmen mit zwei getrennten Rollbereichen (R00033, B3201/B3202): ab 590 px — der Summe der Mindestbelegung 24 (Streifen
+   der eingeklappten Ergebnis-Spalte) + 240 (Seitenleiste) + 6 (Trenner, PO 2026-11-25) + 320 (Diff, PO Zeile 249) — füllt der
+   Aufbau die Fensterhöhe. Kopf und Werkzeugzeilen
    bleiben stehen, die Dateiliste und der Diff-Bereich werden je ein eigener Rollbereich mit eigener Bildlaufleiste, und
-   die Seite selbst scrollt nicht. Unter 566 px gilt der Rückfall oben: eine Spalte, die Seite scrollt wie bisher, kein
+   die Seite selbst scrollt nicht. Unter 590 px gilt der Rückfall oben: eine Spalte, die Seite scrollt wie bisher, kein
    Trenner und kein Ausklappen (R00034/R00035). Die 6 px des Trennzugs (I0035) liegen zwischen den beiden Spalten und sind
-   hier noch nicht belegt. Die 566 stammen aus der einen Quelle `mindestFensterBreite()` in `trenner-werte.js`; der Test
-   `trenner-werte.spec.js` prüft, dass diese Mediengrenze dazu passt. Die Regel steht am Dateiende, damit sie die
+   hier noch nicht belegt. Die 590 stammen aus der einen Quelle `mindestFensterBreite()` in `trenner-werte.js`; der Test
+   `trenner-werte.spec.js` prüft, dass diese Mediengrenze der Summe der Konstanten entspricht. CSS kann nicht rechnen, deshalb
+   steht die Zahl hier als Literal und wird gegen die Konstante geprüft. Die Regel steht am Dateiende, damit sie die
    Grundregeln oben überschreibt. */
-@media (min-width:566px){
+@media (min-width:590px){
   html,body{block-size:100%;overflow:hidden}
   body{display:flex;flex-direction:column}
   .gr-inhalt{flex:1 1 auto;min-block-size:0;display:flex;flex-direction:column;padding:0}

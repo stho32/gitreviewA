@@ -13,8 +13,9 @@
    bleibt zu), danach die Seitenleiste (bis 240) — außer beim ausdrücklichen Ausklappen der Spalte im engen Fenster (Vorrang):
    dann gibt zuerst die Seitenleiste nach, danach die Spalte, und die Spalte klappt nicht wieder ein.
 
-   Unter der Summe der Mindestbreiten (566 px) gibt es keinen Trenner — dann gilt der Rückfall auf eine Spalte (R00033). Die Summe
-   ist `mindestFensterBreite()`; die CSS-Mediengrenze muss dazu passen (Test). */
+   Unter der Summe der Mindestbelegung (590 px) gibt es keinen Trenner — dann gilt der Rückfall auf eine Spalte (R00033). Die Summe
+   ist `mindestFensterBreite()` (Streifen 24 + Seitenleiste 240 + Trenner 6 + Diff 320, PO Zeile 249); die CSS-Mediengrenze muss
+   dazu passen (Test `trenner-werte.spec.js`). */
 (function (ziel) {
   'use strict';
 
@@ -41,12 +42,16 @@
     return KLEINSTE;
   }
 
-  /** Die Mindestfensterbreite für zwei Spalten: Seitenleiste + Diff + Trenner (240 + 320 + 6 = 566 px). */
+  /**
+   * Die Mindestfensterbreite für zwei Spalten: Streifen 24 + Seitenleiste 240 + Trenner 6 + Diff 320 = 590 px (PO Zeile 249).
+   * Der Streifen zählt mit, weil die Ergebnis-Spalte im schmalen Fenster eingeklappt ist (R00037) und der Diff trotzdem seine
+   * 320 px behält; darunter gilt der Rückfall auf eine Spalte (R00033).
+   */
   function mindestFensterBreite() {
-    return KLEINSTE + DIFF_MINDEST + TRENNER;
+    return ERGEBNIS_STREIFEN + KLEINSTE + TRENNER + DIFF_MINDEST;
   }
 
-  /** Passt der zweispaltige Aufbau? Die Grenze ist fest (566 px); darunter gilt der Rückfall auf eine Spalte (R00033). */
+  /** Passt der zweispaltige Aufbau? Die Grenze ist die Summe der Mindestbelegung (590 px); darunter eine Spalte (R00033). */
   function passtZweiSpaltig(fensterBreite) {
     return fensterBreite >= mindestFensterBreite();
   }
@@ -61,7 +66,7 @@
     return fensterBreite >= ERGEBNIS_AUSKLAPPBAR;
   }
 
-  /** Gibt es die Ergebnis-Spalte (und ihren Streifen) überhaupt? Nur im zweispaltigen Aufbau (ab 566 px, R00033). */
+  /** Gibt es die Ergebnis-Spalte (und ihren Streifen) überhaupt? Nur im zweispaltigen Aufbau (ab 590 px, R00033). */
   function ergebnisVorhanden(fensterBreite) {
     return passtZweiSpaltig(fensterBreite);
   }
@@ -82,7 +87,8 @@
     return eingeklappt ? ERGEBNIS_STREIFEN : TRENNER + breite;
   }
 
-  /** Der Platz, der einer offenen Seite bleibt, wenn die andere nur ihren Streifen belegt (Diff genau 320 px). */
+  /** Der Platz, der einer offenen Seite bleibt, wenn die andere nur den Streifen belegt (Diff genau 320 px); an der Grenze
+      590 px ist das genau die Mindestbreite 240 (PO Zeile 249). */
   function streifenPlatz(fensterBreite) {
     return Math.max(KLEINSTE, fensterBreite - ERGEBNIS_STREIFEN - TRENNER - DIFF_MINDEST);
   }
@@ -209,7 +215,7 @@
     ERGEBNIS, ERGEBNIS_MINDEST, ERGEBNIS_START, ERGEBNIS_AUSKLAPPBAR, ERGEBNIS_STREIFEN, VORRANG_RECHTS,
     kleinsteBreite, mindestFensterBreite, passtZweiSpaltig, ergebnisStartetAusgeklappt,
     ergebnisAusklappbar, ergebnisVorhanden,
-    klemme, belegung, anzeige, hoechstLinks, hoechstRechts,
+    klemme, belegung, streifenPlatz, anzeige, hoechstLinks, hoechstRechts,
     breiteNachZug, breiteNachZugRechts, breiteNachTaste,
   };
   if (typeof module !== 'undefined' && module.exports) {

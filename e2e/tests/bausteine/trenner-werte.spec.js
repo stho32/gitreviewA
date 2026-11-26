@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const { test, expect } = require('@playwright/test');
 const {
-  kleinsteBreite, hoechstLinks, hoechstRechts, anzeige, belegung, klemme, breiteNachZug, breiteNachZugRechts, breiteNachTaste,
+  kleinsteBreite, hoechstLinks, hoechstRechts, anzeige, belegung, streifenPlatz, klemme, breiteNachZug, breiteNachZugRechts, breiteNachTaste,
   passtZweiSpaltig, mindestFensterBreite, ergebnisStartetAusgeklappt, ergebnisAusklappbar, ergebnisVorhanden,
   KLEINSTE, GROESSTE, START, DIFF_MINDEST, TRENNER, SCHRITT,
   ERGEBNIS, ERGEBNIS_MINDEST, ERGEBNIS_START, ERGEBNIS_AUSKLAPPBAR, ERGEBNIS_STREIFEN,
@@ -55,8 +55,24 @@ test.describe('Baustein Trenner-Werte — gezeigte Breiten und Stellung (R00042)
     expect(anzeige(1280, { links: 480, rechts: 400 }, offen())).toEqual({ links: 480, rechts: 400, linksEin: false, rechtsEin: false, vorrang: null });
   });
 
-  test('soll unter der Summe der Mindestbreiten (566 px) die Wünsche lassen und keinen Vorrang tragen (R00033)', () => {
+  test('soll unter der Grenze für zwei Spalten (590 px) die Wünsche lassen und keinen Vorrang tragen (R00033)', () => {
     expect(anzeige(500, { links: 360, rechts: 320 }, offen())).toEqual({ links: 360, rechts: 320, linksEin: false, rechtsEin: false, vorrang: null });
+  });
+
+  test('soll an der Grenze 590 px zwei Spalten mit Diff genau 320 px zeigen (Befund B1, PO Zeile 249)', () => {
+    // 590: Streifen 24 + Seitenleiste 240 + Trenner 6 + Diff 320 — die Seitenleiste gibt bis zur Mindestbreite nach.
+    const lage590 = anzeige(590, { links: 360, rechts: 320 }, offen());
+    expect(lage590).toEqual({ links: 240, rechts: 320, linksEin: false, rechtsEin: true, vorrang: null });
+    expect(590 - belegung(lage590.links, lage590.linksEin) - belegung(lage590.rechts, lage590.rechtsEin)).toBe(DIFF_MINDEST);
+
+    // 591: der Diff wächst mit dem Fenster, die Seitenleiste bekommt den Überschuss.
+    const lage591 = anzeige(591, { links: 360, rechts: 320 }, offen());
+    expect(lage591).toEqual({ links: 241, rechts: 320, linksEin: false, rechtsEin: true, vorrang: null });
+    expect(591 - belegung(lage591.links, lage591.linksEin) - belegung(lage591.rechts, lage591.rechtsEin)).toBe(DIFF_MINDEST);
+
+    // 589 und 566: eine Spalte (R00033) — die Lücke 566–589 hat keinen Diff unter 320 px mehr.
+    expect(anzeige(589, { links: 360, rechts: 320 }, offen())).toEqual({ links: 360, rechts: 320, linksEin: false, rechtsEin: false, vorrang: null });
+    expect(anzeige(566, { links: 360, rechts: 320 }, offen())).toEqual({ links: 360, rechts: 320, linksEin: false, rechtsEin: false, vorrang: null });
   });
 
   test('soll beim Schrumpfen zuerst die Ergebnis-Spalte schmaler machen (Mutant „linke Seite gibt zuerst nach“ entlarvt)', () => {
@@ -130,29 +146,43 @@ test.describe('Baustein Trenner-Werte — Spannen und Grenzen (R00042)', () => {
     expect(hoechstRechts(900, { links: 360, linksEin: false })).toBe(240); // 208 → an der Mindestbreite gehalten
   });
 
+  test('soll die Grenzwerte der linken Seite an der Grenze 590 px belegen (Befund B1, Nacharbeit)', () => {
+    // Die alten Zeilen `hoechsteBreite(966, 0) = 616` und `hoechsteBreite(566, 0) = 240` mit der neuen Grenze:
+    expect(hoechstLinks(966, { rechts: 320, rechtsEin: true })).toBe(616); // 966 − 350
+    expect(hoechstLinks(590, { rechts: 320, rechtsEin: true })).toBe(240); // 590 − 350 = 240 → Diff genau 320
+    expect(streifenPlatz(590)).toBe(240); // derselbe Platz aus derselben Quelle
+    expect(streifenPlatz(966)).toBe(616);
+    expect(hoechstRechts(590, { linksEin: true })).toBe(240); // Spiegel: Streifen links
+    // Knapp darunter gilt der einspaltige Rückfall: keine Grenze zum Ziehen.
+    expect(hoechstLinks(589, { rechts: 320, rechtsEin: true })).toBe(640);
+    expect(hoechstRechts(589, { linksEin: true })).toBe(640);
+  });
+
   test('soll im einspaltigen Rückfall die volle Spanne zulassen (kein Trenner, R00033)', () => {
     expect(hoechstLinks(500, { linksEin: false, rechtsEin: false })).toBe(640);
     expect(hoechstRechts(500, { linksEin: false, rechtsEin: false })).toBe(640);
   });
 });
 
-test.describe('Baustein Trenner-Werte — eine Quelle für die 566-Grenze (R00034)', () => {
+test.describe('Baustein Trenner-Werte — eine Quelle für die 590-Grenze (R00034, PO Zeile 249)', () => {
   test('soll die Mindestfensterbreite als Summe der Mindestbreiten rechnen und mit der CSS-Mediengrenze übereinstimmen', () => {
-    expect(mindestFensterBreite()).toBe(566);
-    expect(mindestFensterBreite()).toBe(KLEINSTE + DIFF_MINDEST + TRENNER);
+    expect(mindestFensterBreite()).toBe(590);
+    expect(mindestFensterBreite()).toBe(KLEINSTE + DIFF_MINDEST + TRENNER + ERGEBNIS_STREIFEN);
 
     const css = fs.readFileSync(path.join(__dirname, '../../../src/GitReviewA/web/gitreviewa.css'), 'utf8');
     const stelle = css.indexOf('--gr-leiste-breite');
     const davor = css.slice(0, stelle);
     const treffer = [...davor.matchAll(/@media\s*\(min-width:(\d+)px\)/g)].pop();
     expect(treffer, 'Mediengrenze vor der Rahmen-Regel gefunden').toBeTruthy();
+    expect(Number(treffer[1]), 'CSS-Mediengrenze ist die Summe der Konstanten (Streifen 24 + Seitenleiste 240 + Trenner 6 + Diff 320)').toBe(KLEINSTE + DIFF_MINDEST + TRENNER + ERGEBNIS_STREIFEN);
     expect(Number(treffer[1]), 'CSS-Mediengrenze stimmt mit mindestFensterBreite() überein').toBe(mindestFensterBreite());
   });
 
-  test('soll den zweispaltigen Aufbau an 566 px festmachen (Fallback darunter, R00033)', () => {
+  test('soll den zweispaltigen Aufbau an 590 px festmachen (Fallback darunter, R00033)', () => {
     expect(passtZweiSpaltig(1280)).toBe(true);
-    expect(passtZweiSpaltig(566)).toBe(true);
-    expect(passtZweiSpaltig(565)).toBe(false);
+    expect(passtZweiSpaltig(590)).toBe(true);
+    expect(passtZweiSpaltig(589)).toBe(false);
+    expect(passtZweiSpaltig(566)).toBe(false);
     expect(passtZweiSpaltig(560)).toBe(false);
   });
 
@@ -161,8 +191,9 @@ test.describe('Baustein Trenner-Werte — eine Quelle für die 566-Grenze (R0003
     expect(ergebnisStartetAusgeklappt(1011)).toBe(false);
     expect(ergebnisAusklappbar(812)).toBe(true);
     expect(ergebnisAusklappbar(811)).toBe(false);
-    expect(ergebnisVorhanden(566)).toBe(true);
-    expect(ergebnisVorhanden(565)).toBe(false);
+    expect(ergebnisVorhanden(590)).toBe(true);
+    expect(ergebnisVorhanden(589)).toBe(false);
+    expect(ergebnisVorhanden(566)).toBe(false);
   });
 });
 

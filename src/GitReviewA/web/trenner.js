@@ -125,7 +125,7 @@
       element.setAttribute('aria-valuemax', String(hoechste()));
     }
 
-    /** Der Trenner gehört nur in den zweispaltigen Aufbau; unter 566 px gibt es ihn nicht (R00033). */
+    /** Der Trenner gehört nur in den zweispaltigen Aufbau; unter 590 px gibt es ihn nicht (R00033). */
     function sichere() {
       if (zweispaltig()) {
         if (!trenner()) {

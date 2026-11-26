@@ -2,7 +2,7 @@
    Grenze klappt den Bereich ein und wieder aus. Der Zustand ist nur RAM und bleibt beim Wechsel von Datei, Commit, Modus, Ansicht
    und Anordnung; er wirkt allein über das Layout — der Diff wird nicht neu gezeichnet (Lehre #23), und das Ausklappen bringt die
    gewählte Zeile in den Blick. Der Knopf trägt `aria-expanded` und `aria-controls`, sein Name und die Pfeilrichtung folgen dem
-   Zustand; beim Einklappen wandert ein Fokus aus dem Bereich auf den Knopf (nie ins Leere). Unter 566 px gibt es den Knopf nicht
+   Zustand; beim Einklappen wandert ein Fokus aus dem Bereich auf den Knopf (nie ins Leere). Unter 590 px gibt es den Knopf nicht
    (eine Spalte, kein Einklappen). Die Mechanik wird je Bereich angelegt (`anlegen`) — die Ergebnis-Spalte (I0038) nutzt sie ohne
    Kopie. Eine Seite nennt zusätzlich `ausklappbar` (darf ausgeklappt werden) und `grund` (warum nicht).
 
@@ -85,7 +85,7 @@
       anwenden();
     }
 
-    /** Die sichtbare Stellung: der Zustand wirkt nur im zweispaltigen Aufbau (unter 566 px gilt eine Spalte); ist der Bereich
+    /** Die sichtbare Stellung: der Zustand wirkt nur im zweispaltigen Aufbau (unter 590 px gilt eine Spalte); ist der Bereich
         nicht ausklappbar, bleibt er eingeklappt, egal was der Mensch zuletzt gewählt hat. */
     function eingeklappt() {
       if (!zweispaltig()) {
@@ -125,7 +125,7 @@
       document.dispatchEvent(new CustomEvent(seite.ereignis, { detail: { eingeklappt: eingeklapptJetzt } }));
     }
 
-    /** Der Knopf gehört nur in den zweispaltigen Aufbau; unter 566 px gibt es ihn nicht (R00033: eine Spalte). */
+    /** Der Knopf gehört nur in den zweispaltigen Aufbau; unter 590 px gibt es ihn nicht (R00033: eine Spalte). */
     function sichereKnopf() {
       if (!zweispaltig()) {
         entferneKnopf();

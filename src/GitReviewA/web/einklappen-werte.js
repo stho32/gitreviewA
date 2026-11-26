@@ -1,7 +1,7 @@
 /* gitreviewA — Zustand des Einklappens (R00035, B3401): die reine Rechnung um die eine Stellung der Seitenleiste. Im Browser und
    in Node, ohne DOM und ohne Zustand (testbarer Entwurf: entscheiden getrennt vom Handeln). Der Zustand ist nur RAM und startet
    ausgeklappt (nichts wird gespeichert, wie alle übrigen Schalter). `aria-expanded` und der Name des Knopfes hängen allein am
-   Zustand; die Pfeilrichtung zeigt die Wirkung. Der zweispaltige Aufbau kommt aus derselben Grenze wie der Trennzug (566 px):
+   Zustand; die Pfeilrichtung zeigt die Wirkung. Der zweispaltige Aufbau kommt aus derselben Grenze wie der Trennzug (590 px):
    `passtZweiSpaltig` reicht `trenner-werte.js` durch — keine zweite Quelle für die Mediengrenze. */
 (function (ziel) {
   'use strict';
@@ -47,7 +47,7 @@
     return trenner.passtZweiSpaltig(fensterBreite);
   }
 
-  /** Die Mindestfensterbreite des zweispaltigen Aufbaus (566 px) — der Wert der Medienabfrage, aus derselben Quelle. */
+  /** Die Mindestfensterbreite des zweispaltigen Aufbaus (590 px) — der Wert der Medienabfrage, aus derselben Quelle. */
   function mindestFensterBreite() {
     return trenner.mindestFensterBreite();
   }
