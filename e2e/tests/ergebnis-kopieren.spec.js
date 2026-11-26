@@ -87,7 +87,8 @@ test.describe('Befunde kopieren', () => {
     await ohneApi.goto(lauf.adresse);
     await gr.ergebnisKopierenBetaetigen(ohneApi);
     await expect(gr.kopierenStatus(ohneApi)).toHaveText('Kopieren nicht möglich: Zwischenablage nicht verfügbar');
-    expect(await ohneApi.locator('body').textContent()).not.toContain('Kopierprobe');
+    // R00037 loest die alte Zusage „die Seite zeigt den Ergebnisinhalt nirgends“ ab: die Ergebnis-Spalte zeigt ihn jetzt.
+    await expect(ohneApi.locator('#ergebnis-text')).toContainText('Kopierprobe');
     expect(gr.ergebnis(lauf)).toBe('');
     expect(gr.laeuftNoch(lauf)).toBe(true);
     await ohneApi.close();
@@ -102,7 +103,7 @@ test.describe('Befunde kopieren', () => {
     await verweigert.goto(lauf.adresse);
     await gr.ergebnisKopierenBetaetigen(verweigert);
     await expect(gr.kopierenStatus(verweigert)).toHaveText('Kopieren nicht möglich: Zwischenablage verweigert');
-    expect(await verweigert.locator('body').textContent()).not.toContain('Kopierprobe');
+    await expect(verweigert.locator('#ergebnis-text')).toContainText('Kopierprobe');
     expect(gr.ergebnis(lauf)).toBe('');
     expect(gr.laeuftNoch(lauf)).toBe(true);
     await verweigert.close();
