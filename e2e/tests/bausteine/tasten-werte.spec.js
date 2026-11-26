@@ -288,3 +288,30 @@ test.describe('Baustein Tasten-Werte — Katalog `r` der Ergebnis-Spalte (R00037
     expect(eintraege[0].verfuegbar).toBe(true);
   });
 });
+
+// R00039 (B3803): die vier Anzeigeverfahren hängen am Menüknopf „Ansicht ▾“ — ihr `ziel` nennt den sichtbaren Ort, die Hilfe
+// denselben Ort im Text.
+test.describe('Baustein Tasten-Werte — Menü „Ansicht ▾“ (R00039)', () => {
+  test('soll s, v, w, l mit dem Ziel des Menüknopfes führen', () => {
+    for (const taste of ['s', 'v', 'w', 'l']) {
+      const eintraege = werte.EINTRAEGE.filter(eintrag => eintrag.taste === taste);
+      expect(eintraege, `Taste ${taste}`).toHaveLength(1);
+      expect(eintraege[0].ziel, `Taste ${taste}`).toBe('#ansicht-knopf');
+    }
+  });
+
+  test('soll den Hinweis aller vier Kürzel am Menüknopf bündeln', () => {
+    const hinweis = werte.hinweise().find(eintrag => eintrag.selektor === '#ansicht-knopf');
+
+    expect(hinweis).toEqual({ selektor: '#ansicht-knopf', anzeige: ['s', 'v', 'w', 'l'], aria: 's v w l' });
+  });
+
+  test('soll in der Hilfe „Ansicht ▾“ als Ort der vier Anzeigeverfahren nennen', () => {
+    const diff = werte.belegung(lage({ vorhanden: GEBAUT })).find(gruppe => gruppe.kennung === 'diff');
+    for (const aktion of ['ansichtWechseln', 'anordnungWechseln', 'umbruchWechseln', 'leerraumWechseln']) {
+      const eintrag = diff.eintraege.find(kandidat => kandidat.aktion === aktion);
+      expect(eintrag, aktion).toBeTruthy();
+      expect(eintrag.text, `${aktion} nennt Ansicht ▾`).toContain('Ansicht ▾');
+    }
+  });
+});

@@ -50,7 +50,21 @@
       return;
     }
     knopfElement.addEventListener('click', () => (zustand.offen ? schliessen(true) : oeffnen(0)));
+    knopfElement.addEventListener('keydown', beiTasteAmKnopf);
     document.addEventListener('pointerdown', beiKlickDraussen);
+  }
+
+  /** Der Knopf öffnet mit Pfeil runter am ersten, mit Pfeil hoch am letzten Eintrag; Enter und Leertaste öffnen nativ. */
+  function beiTasteAmKnopf(ereignis) {
+    if (ereignis.key === 'ArrowDown') {
+      ereignis.preventDefault();
+      oeffnen(0);
+      return;
+    }
+    if (ereignis.key === 'ArrowUp') {
+      ereignis.preventDefault();
+      oeffnen(-1);
+    }
   }
 
   /** Baut das Menü aus den Zuständen, zeigt es und setzt den Fokus auf den gewählten (oder ersten) Eintrag. */
@@ -126,6 +140,7 @@
     text.textContent = eintrag.text;
     element.append(haken, text);
     element.addEventListener('click', () => waehlen(eintrag));
+    element.addEventListener('keydown', beiTasteImMenue);
     return element;
   }
 
@@ -133,6 +148,38 @@
   function waehlen(eintrag) {
     eintrag.waehlen();
     schliessen(true);
+  }
+
+  /** Pfeile wandern mit Umlauf, Pos1/Ende an die Ränder, Enter/Leertaste wählen nativ, Esc schließt, Tab lässt das Menü. */
+  function beiTasteImMenue(ereignis) {
+    const posten = eintragsKnoepfe();
+    const stelle = posten.indexOf(document.activeElement);
+    switch (ereignis.key) {
+      case 'ArrowDown':
+        ereignis.preventDefault();
+        posten[(stelle + 1) % posten.length].focus();
+        return;
+      case 'ArrowUp':
+        ereignis.preventDefault();
+        posten[(stelle - 1 + posten.length) % posten.length].focus();
+        return;
+      case 'Home':
+        ereignis.preventDefault();
+        posten[0].focus();
+        return;
+      case 'End':
+        ereignis.preventDefault();
+        posten[posten.length - 1].focus();
+        return;
+      case 'Escape':
+        ereignis.preventDefault();
+        schliessen(true);
+        return;
+      case 'Tab':
+        schliessen(false);
+        return;
+      default:
+    }
   }
 
   function eintragsKnoepfe() {
