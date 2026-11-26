@@ -1,10 +1,10 @@
 # gitreviewA
 
-gitreviewA ist ein Kommandozeilenwerkzeug für Reviews von Git-Commits: Sie rufen es in einem Repository mit einer Auswahl von Commits auf, sehen die Änderungen in einer schlichten Weboberfläche durch, haken geprüfte Dateien ab und hängen Anmerkungen an Stellen im Diff. Mit **Beenden** gibt es das „Ergebnis manueller Review“ auf stdout aus — an Sie im Terminal oder an die KI, die das Werkzeug aufgerufen hat und auf Ihr Urteil wartet.
+gitreviewA ist ein Kommandozeilenwerkzeug für Reviews von Git-Commits: Sie rufen es in einem Repository mit einer Auswahl von Commits auf, sehen die Änderungen in einer schlichten Weboberfläche durch, haken geprüfte Dateien ab und hängen Anmerkungen an Stellen im Diff. Mit **Beenden** gibt es das „Ergebnis manueller Review“ auf stdout aus — an Sie im Terminal oder an die KI, die das Werkzeug aufgerufen hat und auf Ihr Urteil wartet. Für einzelne Dateien, zum Beispiel ein SQL-Skript, aus dem Sie einen Bereich kopieren, gibt es die [Dateiansicht](#dateien-einzeln-ansehen-die-dateiansicht).
 
 Lizenz: MIT, siehe [LICENSE](LICENSE).
 
-![gitreviewA im Modus Zusammen: links die geänderten Dateien aller gewählten Commits, rechts der Diff der gewählten Datei](Dokumentation/Bilder/readme/01-zusammen.png)
+![gitreviewA nach dem Start: links die geänderten Dateien in den Gruppen Code und Doku, in der Mitte der Diff der gewählten Datei mit dem Block über dem Diff, rechts die Ergebnis-Spalte](Dokumentation/Bilder/readme/01-zusammen.png)
 
 Die Bilder in dieser Datei zeigen ein erfundenes Beispiel-Repository „Wetterstation“ ([so entstehen sie](Dokumentation/Bilder/readme/ERZEUGEN.md)).
 
@@ -14,10 +14,11 @@ Die Bilder in dieser Datei zeigen ein erfundenes Beispiel-Repository „Wetterst
 2. [Installation](#installation)
 3. [Erste Review in zwei Minuten](#erste-review-in-zwei-minuten)
 4. [Die Oberfläche](#die-oberfläche)
-5. [Für KI und Automatisierung: der Aufrufvertrag](#für-ki-und-automatisierung-der-aufrufvertrag)
-6. [Grenzen](#grenzen)
-7. [Für Mitentwickler](#für-mitentwickler)
-8. [Lizenz und Herkunft](#lizenz-und-herkunft)
+5. [Dateien einzeln ansehen: die Dateiansicht](#dateien-einzeln-ansehen-die-dateiansicht)
+6. [Für KI und Automatisierung: der Aufrufvertrag](#für-ki-und-automatisierung-der-aufrufvertrag)
+7. [Grenzen](#grenzen)
+8. [Für Mitentwickler](#für-mitentwickler)
+9. [Lizenz und Herkunft](#lizenz-und-herkunft)
 
 ## Wozu
 
@@ -64,7 +65,7 @@ Die Prüfsumme muss mit `gitreviewA-<tag>-linux-x64: OK` bestätigt sein. `~/.lo
 
 1. Im Arbeitsbaum des Repositories `gitreviewA HEAD~5..HEAD` eingeben (die fünf neuesten Commits des Beispiels). Das Terminal zeigt eine Zeile mit der Adresse (`… INFO [Start] gitreviewA läuft auf http://127.0.0.1:<Port>/`), und der Browser öffnet die Oberfläche.
 2. Links eine Datei wählen, zum Beispiel `src/Messwert.cs`. Rechts erscheint ihr Diff über alle gewählten Commits.
-3. Eine geänderte Zeile anklicken, die Anmerkung eintippen und **Speichern** wählen.
+3. Eine geänderte Zeile anklicken, bei **Art** zum Beispiel **Muss** wählen, die Anmerkung eintippen und **Speichern** wählen.
 4. Das Kästchen vor einer Datei in der Liste setzen, um sie abzuhaken. Der Kopf zeigt zum Beispiel **3 von 5 Dateien abgehakt**.
 5. **Beenden** wählen. Die Seite zeigt **Review beendet**, der Prozess endet mit Exit-Code 0, und im Terminal steht das Ergebnis (unverändert aus dem Lauf der Bilder):
 
@@ -75,78 +76,124 @@ Anmerkungen: 3
 
 ## 1. src/Messwert.cs:8
 
-Commit: 3f8bdc2391cfb2b0fb392c7c1aad546c4dfe2e4a
+Commit: d8cacccb4cf4022bb92093dbe13004f8da0b78b3
 
-> Rundung auf eine Stelle: Soll der Rohwert für die Anzeige unverändert bleiben? Bitte Test für -0,04 ergänzen.
+> [Muss] Rundung auf eine Stelle: Soll der Rohwert für die Anzeige unverändert bleiben? Bitte Test für -0,04 ergänzen.
 
 ## 2. src/Sensor.cs:18-19
 
-Commit: 0160cae50b3f566f5af420b64273c53236d6e7bf
+Commit: c13e91a4e52f7f3e7bba3f9b9bce0b37a46b186d
 
     18: 		var wert = lesen();
     19: 		return new Messwert(name, wert, einheit);
 
-> Die Einheit steht jetzt im Sensor. Wird sie irgendwo noch fest als °C angenommen?
+> [Frage] Die Einheit steht jetzt im Sensor. Wird sie irgendwo noch fest als °C angenommen?
 
 ## 3. web/anzeige.js (ganze Datei)
 
 Commit: eb842340d24c9640344f659ba231ddf999a2fde0
 
-> Bei einem Ausfall des Servers bleibt der Zähler stehen. Bitte eine Fehlermeldung in der Liste zeigen.
+> [Idee] Bei einem Ausfall des Servers bleibt der Zähler stehen. Eine Fehlermeldung in der Liste wäre hilfreich.
 
 ## Dateien
 
 Abgehakt: 3 von 5
 
-- src/Kalibrierung.cs (Commit 27d6ef5ebafd4abb5baac521ef8f1d985f3dbf72)
-- docs/betrieb.txt (Commit 2c56ed5a78b23ead8c29e96b88e1c3a3a39e9926)
-- src/Messwert.cs (Commit 3f8bdc2391cfb2b0fb392c7c1aad546c4dfe2e4a)
+- src/Kalibrierung.cs (Commit 74e3438e8ef3b48dab34fb582aeed7307d8bb655)
+- docs/betrieb.txt (Commit a23713d3908f51db91dd9a70174ee01590f1eead)
+- src/Messwert.cs (Commit d8cacccb4cf4022bb92093dbe13004f8da0b78b3)
 
 Ungeprüft: 2 von 5
 
-- src/Sensor.cs (Commit 0160cae50b3f566f5af420b64273c53236d6e7bf)
+- src/Sensor.cs (Commit c13e91a4e52f7f3e7bba3f9b9bce0b37a46b186d)
 - web/anzeige.js (Commit eb842340d24c9640344f659ba231ddf999a2fde0)
 ```
 
 ## Die Oberfläche
 
-Die Oberfläche läuft im Browser unter `127.0.0.1`. Nach dem Start steht **Zusammen** im Kopf gewählt: links die Dateien der ganzen Auswahl, rechts der Diff der gewählten Datei, die Commits als zugeklappte Zeile darüber. Alle Kürzel zeigt **Kürzel** im Kopf oder die Taste `?` (die Liste im Programm ist die Referenz; hier steht sie nicht noch einmal).
+Die Oberfläche läuft im Browser unter `127.0.0.1`. Sie hat drei Bereiche: links die **Seitenleiste** mit den Dateien der Auswahl, in der Mitte der **Diff** der gewählten Datei, rechts die **Ergebnis-Spalte** („Ergebnis für die KI“). Die Spalte zeigt schon während der Arbeit den Text, den **Beenden** ausgibt. Nach dem Start steht **Zusammen** im Kopf gewählt.
+
+![Arbeitsplatz mit drei Bereichen: Seitenleiste mit Dateien, Diff mit aufgeklappter Commit-Nachricht über den Änderungen, Ergebnis-Spalte mit drei Anmerkungen](Dokumentation/Bilder/readme/06-arbeitsplatz.png)
+
+Alle Kürzel zeigt **Kürzel** im Kopf oder die Taste `?` (die Liste im Programm ist die Referenz; hier steht sie nicht noch einmal).
 
 ![Dialog mit den Tastenkürzeln, gruppiert nach Bereichen](Dokumentation/Bilder/readme/05-tastaturhilfe.png)
 
-**Datei wählen und Diff lesen**: Datei in der Liste anklicken (Tasten `j` und `k`). **flach** und **Baum** schalten die Dateiliste um. Die Diffs entsprechen denen von `git`; Syntaxfarben erscheinen bei bekannten Sprachen.
+**Datei wählen und Diff lesen**: Datei in der Liste anklicken (Tasten `j` und `k`). **flach** und **Baum** schalten die Dateiliste um. Die Liste steht in Gruppen **Code**, **Tests** und **Doku**, je mit **n von m abgehakt**; leere Gruppen fehlen. Als **Tests** gelten Dateien in Ordnern wie `test`, `tests`, `spec` oder `e2e` und Namen wie `*Test.cs` oder `*.spec.js`, als **Doku** `.md`-Dateien, Ordner wie `docs` und Dateien wie `README` oder `LICENSE`, alles andere als **Code**. Die Diffs entsprechen denen von `git`; Syntaxfarben erscheinen bei bekannten Sprachen.
 
-![Dateiliste mit abgehakten und ungeprüften Dateien und Fortschrittsanzeige](Dokumentation/Bilder/readme/03-abhaken.png)
+**Die Absicht der KI lesen**: Über dem Diff steht ein Block mit den Commits, die die Datei ändern, je Kurz-Hash und Betreff. Hat ein Commit eine Nachricht, klappt **Nachricht** sie auf. Ab sechs Commits zeigt der Block fünf und eine Schaltfläche **k weitere**. In **Einzeln** steht nur der gewählte Commit.
+
+**Dateien finden**: `f` springt ins Feld **Dateien suchen**. Ein Wort oder ein Muster wie `*.sql` filtert die Liste, ohne auf Groß- und Kleinschreibung zu achten. Der Kopf zählt die Treffer mit, zum Beispiel **2 ausgeblendet, davon 2 Suche**. Gefilterte Dateien bleiben Teil der Auswahl und zählen im Fortschritt.
+
+![Dateiliste nach der Suche *.cs: nur die drei Code-Dateien stehen in der Liste, im Kopf steht 2 ausgeblendet, davon 2 Suche](Dokumentation/Bilder/readme/07-dateisuche.png)
 
 **Dateien abhaken und den Fortschritt sehen**: Kästchen in der Zeile (Taste `x`). Der Kopf zeigt **n von m Dateien abgehakt**. **Nächste ungeprüfte** (Taste `u`) springt zur nächsten Datei ohne Haken, **Abgehakte ausblenden** (Taste `h`) räumt die Liste auf.
 
-![Diff mit einer Anmerkung an einer geänderten Zeile](Dokumentation/Bilder/readme/02-zeile-annotieren.png)
+![Dateiliste mit abgehakten und ungeprüften Dateien und Fortschrittsanzeige](Dokumentation/Bilder/readme/03-abhaken.png)
 
-**Eine Zeile anmerken**: Zeile anklicken, Text eintippen, **Speichern** (oder Strg+Enter). Esc verwirft das Feld. Die Anmerkung steht danach unter der Zeile, mit **Ändern** und **Löschen**; **Löschen** fragt nicht nach.
+**Eine Zeile anmerken**: Zeile anklicken, bei **Art** **ohne**, **Muss**, **Frage** oder **Idee** wählen, Text eintippen, **Speichern** (oder Strg+Enter). Die Tasten `1`, `2` und `3` öffnen das Feld für die gewählte Zeile gleich mit **Muss**, **Frage** oder **Idee**. Esc verwirft das Feld. Die Anmerkung steht danach unter der Zeile, mit **Ändern** und **Löschen**; **Löschen** fragt nicht nach. Im Ergebnis steht die Art vor dem Text, zum Beispiel `> [Muss] …`; ohne Art entfällt die Klammer.
+
+![Diff mit einer Anmerkung der Art Muss an einer geänderten Zeile, rechts dieselbe Anmerkung im Ergebnis](Dokumentation/Bilder/readme/02-zeile-annotieren.png)
 
 **Einen Zeilenbereich anmerken**: erste Zeile anklicken, mit gedrückter Umschalttaste die zweite Zeile desselben Abschnitts anklicken. Die markierten Zeilen sind hervorgehoben, die Anmerkung steht unter der letzten.
 
 **Eine ganze Datei anmerken**: **Datei anmerken** (Taste `a`).
 
-**Anordnung und Darstellung wählen**: **untereinander** oder **nebeneinander** (alte Fassung links, neue rechts), **nur Änderungen** oder **ganze Datei**, **Umbruch** (beim Start an) und **Leerraum ignorieren**.
+**Darstellung wählen**: **Ansicht ▾** in der Werkzeugleiste über dem Diff öffnet die Wahl **nur Änderungen** oder **ganze Datei** (Taste `s`), **untereinander** oder **nebeneinander** (alte Fassung links, neue rechts; Taste `v`), **Leerraum ignorieren** (Taste `l`) und **Umbruch** (Taste `w`; beim Start an).
 
 ![Diff zweispaltig, links alte, rechts neue Fassung, mit Bereichsanmerkung und ignoriertem Leerraum](Dokumentation/Bilder/readme/04-nebeneinander.png)
 
-**Lücken aufklappen**: In **Einzeln** und in **Zusammen** zeigt der Diff vor dem ersten, zwischen zwei und nach dem letzten Abschnitt **n verborgene Zeilen** mit den Schaltflächen **20 aufklappen** und **Ganz aufklappen**.
+**Lücken aufklappen**: In **Einzeln** und in **Zusammen** zeigt der Diff vor dem ersten, zwischen zwei und nach dem letzten Abschnitt **n verborgene Zeilen** mit den Schaltflächen **n aufklappen** (höchstens 20 Zeilen je Klick) und **Ganz aufklappen**. Die Taste `g` springt zur nächsten Lücke.
 
-**Im Diff suchen**: Text in **Suchen** eintippen und Enter drücken. Die Treffer sind hervorgehoben, ein Zähler nennt ihre Zahl, zum Beispiel **1 von 2**.
+**Im Diff suchen**: Taste `/` oder ein Klick in **Suchen**, Text eintippen und Enter drücken. Die Treffer sind hervorgehoben, ein Zähler nennt ihre Zahl, zum Beispiel **1 von 3**.
+
+**Seitenleiste und Ergebnis-Spalte anpassen**: Die Seitenleiste bleibt stehen, während Sie im Diff blättern. Ziehen Sie den Trenner neben einer Spalte, um sie zu verbreitern oder zu verschmälern (je Spalte 240 bis 640 Pixel); am Trenner verstellen die Pfeiltasten um 16 Pixel, Pos1 und Ende setzen die Grenzen, ein Doppelklick die Ausgangsbreite. Die Taste `b` klappt die Seitenleiste ein und aus, `r` die Ergebnis-Spalte. Ab einer Fensterbreite von 1 012 Pixeln startet die Ergebnis-Spalte ausgeklappt; in einem engeren Fenster ist sie eingeklappt, bis Sie sie ausklappen.
 
 **Dateien ausblenden**: In **Muster ausblenden** ein Muster wie `*.lock` eintippen und mit Enter bestätigen; **Entfernen** nimmt es zurück. Der Kopf zeigt, wie viele Dateien ausgeblendet sind. Ausgeblendete Dateien bleiben Teil der Auswahl, zählen im Fortschritt und stehen im Ergebnis. Dieselben Muster setzt der Aufruf mit `--ignore`.
 
 **Commits einzeln durchgehen**: **Einzeln** (Taste `m`) zeigt eine Commit-Liste mit Vor- und Zurück-Schaltflächen (Tasten `[` und `]`). Der Haken gilt dort je Stelle, also je Commit und Datei; der Kopf zählt **Stellen**. **Zusammen** fasst die Commits je Datei zusammen — als Netto-Diff, wo die Commits eine lückenlose Kette bilden (die Commit-Zeile sagt **lückenlos · netto**), sonst je Commit beschriftet.
 
-**In den Editor springen**: **In VS Code** (Taste `o`) oder die Zeilennummer öffnet die Stelle über einen `vscode://`-Link. Liegt die Datei nicht im Arbeitsbaum, steht **Datei liegt nicht im Arbeitsbaum** im Kopf.
+**In den Editor springen**: **In VS Code** (Taste `o`) oder die Zeilennummer öffnet die Stelle über einen `vscode://`-Link. Liegt die Datei nicht im Arbeitsbaum, steht **Datei liegt nicht im Arbeitsbaum** im Kopf der Datei.
 
 **Ergebnis kopieren**: **Ergebnis kopieren** meldet **Ergebnis kopiert**; der Lauf geht weiter.
 
 **Beenden**: **Beenden** schließt den Lauf und gibt das Ergebnis aus.
 
+## Dateien einzeln ansehen: die Dateiansicht
+
+Die Dateiansicht zeigt einzelne Dateien, ohne Commits und ohne Anmerkungen. Sie hilft, wenn Sie aus einem Skript, etwa einer SQL-Datei, einen Bereich oder die ganze Datei kopieren wollen. Der Aufruf nennt die Dateien hinter `--dateien`:
+
+```bash
+gitreviewA --dateien datenbank/schema.sql datenbank/auswertung.sql
+gitreviewA --dateien d8caccc:src/Messwert.cs ../datenbank/schema.sql
+```
+
+- **Mehrere Dateien** stehen als Liste in der Seitenleiste, je Datei mit ihrer Zeilenzahl.
+- **`<commit>:<pfad>`** zeigt die Datei, wie sie in diesem Commit stand: 4 bis 64 Hexziffern, ein Doppelpunkt und der Pfad im Repository. Der Aufruf läuft dann im Repository. Datei vom Datenträger und Commit-Angabe lassen sich mischen.
+- Beginnt ein Dateiname mit `-`, setzen Sie `--` davor: `gitreviewA --dateien -- -x.sql`.
+
+![Dateiansicht mit zwei SQL-Dateien in der Seitenleiste, einem markierten Bereich von Zeile 2 bis 10 und der Suche nach messwert mit zwei Treffern](Dokumentation/Bilder/readme/08-dateiansicht.png)
+
+Der Kopf nennt Dateiname, Pfad (bei einer Commit-Angabe den vollen Hash) und zum Beispiel **456 Bytes · 16 Zeilen · UTF-8 · LF**.
+
+**Einen Bereich markieren und kopieren**: Zeilennummer anklicken, mit gedrückter Umschalttaste eine zweite Nummer anklicken (oder ziehen, oder Umschalt+↑ und Umschalt+↓). Die Meldung sagt zum Beispiel **Zeilen 2–10 markiert**. **Bereich kopieren** (Taste `y`) legt die Zeilen in die Zwischenablage und meldet **Zeilen 2–4 kopiert**; Esc hebt die Markierung auf.
+
+**Die ganze Datei kopieren**: **Datei kopieren** (Taste `c`) meldet **Datei kopiert (17 Zeilen)**.
+
+**In der Datei suchen**: Taste `/`, Text eintippen, Enter drücken; ein Zähler nennt die Treffer, zum Beispiel **1 von 2**. **Umbruch** (Taste `w`) ist beim Start an. Seitenleiste und Trenner verhalten sich wie im Review.
+
+**Aufrufvertrag der Dateiansicht**: stdout bleibt immer leer. **Schließen** beendet die Ansicht mit Exit 0 (die Seite sagt **Dateiansicht geschlossen**). Die Optionen sind `--port`, `--kein-browser`, `--verbose` und `--quiet`; ein Hash, ein Bereich, `-` oder `--ignore` daneben ist ein ungültiger Aufruf.
+
+| Code | Anlass | stderr |
+|---|---|---|
+| 0 | **Schließen** | Adresse |
+| 2 | ungültiger Aufruf: keine Angabe, Datei nicht gefunden, Verzeichnis, symbolischer Link, Binärdatei, UTF-16, ungültiges UTF-8, zu groß, Commit oder Pfad nicht gefunden | `FEHLER [Dateiansicht] <Angabe>: <Grund>` oder `FEHLER [Aufruf] …` |
+| 130 | Abbruch durch Strg+C, `SIGINT` oder `SIGTERM` | `WARNUNG [Abbruch] Review abgebrochen` |
+| 1 | Fehler nach dem Start, zum Beispiel der Port ist belegt | `FEHLER [Server] Server ließ sich nicht starten: …` |
+
 ## Für KI und Automatisierung: der Aufrufvertrag
+
+Dieser Abschnitt gilt für den Review. Die Dateiansicht (`gitreviewA --dateien …`) hat einen eigenen, kürzeren Vertrag: [siehe dort](#dateien-einzeln-ansehen-die-dateiansicht).
 
 **Aufruf**
 
@@ -192,7 +239,7 @@ gitreviewA <hash…> | <von>..<bis>… | - [--port <n>] [--kein-browser] [--igno
 **Ergebnisformat**: Markdown, UTF-8, Zeilenende LF, nur auf stdout. Das Beispiel oben zeigt es vollständig.
 
 - Überschrift `# Ergebnis manueller Review`, dann `Anmerkungen: <n>` oder `Keine Anmerkungen.`
-- Je Anmerkung ein Abschnitt `## <Nr>. <Stelle>` in der Reihenfolge des Anlegens, mit `Commit: <voller Hash>`; der Text steht als Zitat (`> …`).
+- Je Anmerkung ein Abschnitt `## <Nr>. <Stelle>` in der Reihenfolge des Anlegens, mit `Commit: <voller Hash>`; der Text steht als Zitat (`> …`). Hat die Anmerkung eine **Art**, steht sie vor dem Text: `> [Muss] …`, `> [Frage] …` oder `> [Idee] …`; ohne Art fehlt die Klammer.
 - **Stelle** ist `<Datei>:<Zeile>`, bei einem Bereich `<Datei>:<von>-<bis>` (zusätzlich ein Zitat der markierten Zeilen, höchstens 20, danach `… (k weitere Zeilen)`) oder `<Datei> (ganze Datei)`. Die Zeilennummern gelten für die neue Fassung.
 - Der Commit nennt den Stand, auf den sich die Anmerkung bezieht, nicht den Urheber. In **Zusammen** ist es der jüngste Commit der Auswahl, der die Datei ändert.
 - Ab dem ersten Haken folgt `## Dateien`: `Abgehakt: n von m` und `Ungeprüft: n von m`, je Stelle eine Zeile `- <Datei> (Commit <voller Hash>)`.
@@ -221,7 +268,17 @@ Das Ergebnis ist Text, kein Bild. Eine KI liest es direkt als Arbeitsauftrag.
 - **Kein Pull-Request-Ersatz**: keine Kommentare zurück zu GitHub, keine Freigabe-Workflows. **Kein Editor**: gitreviewA ändert keine Dateien und keine Commits.
 - **Kein Gesamturteil**: **Beenden** endet immer mit Exit 0; ein zweites Ausgabeformat (JSON) gibt es nicht.
 - **Git nur über die `git`-Kommandozeile**; nur Repositories mit Arbeitsbaum (ein nacktes Repository ist ein ungültiger Aufruf).
-- **Auswahl bis 1 000 Commits** je Lauf. Das Lastprofil der Vision — flüssig bis 200 Commits, 2 000 Dateien, 20 000 Diff-Zeilen je Datei und 500 Anmerkungen — ist die **Auslegung**, ein Ziel aus [`Anforderungen/R00000-vision.md`](Anforderungen/R00000-vision.md), keine Messung.
+- **Keine Geschwindigkeitszusage**: gitreviewA nennt keine Zeitziele. Verbindlich sind nur die Mengengrenzen unten.
+
+**Mengengrenzen, die Sie sehen**
+
+- **Auswahl**: bis 1 000 Commits je Lauf; ab 201 warnt gitreviewA auf stderr.
+- **8 MiB je Lesung aus git**: Ist die Ausgabe größer, zeigt der Diff statt einer gekürzten Anzeige **Diff zu groß — die Ausgabe von git überschreitet die Grenze von 8388608 Byte**.
+- **Commit-Nachricht**: Die Anzeige im Block **Absicht der KI** endet nach 20 000 Zeichen mit **… (n Zeichen nicht gezeigt)**.
+- **Dateiansicht**: höchstens 50 Dateien und zusammen 32 MiB, eine einzelne Datei höchstens 8 MiB. Der Aufruf endet sonst mit Exit 2 und sagt zum Beispiel `zu viele Dateien (51, höchstens 50)`, `zu groß (über 8 MiB)` oder `zusammen zu groß (über 32 MiB)`.
+
+**Stand der Plattformen**
+
 - **Plattformen**: gebaut werden die fünf oben genannten; von Hand geprüft ist Linux x64.
 - **Frameworkabhängig**: die .NET-10-Runtime (ASP.NET Core) muss installiert sein.
 - **macOS**: ohne Signatur und Notarisierung; Gatekeeper warnt.
@@ -253,13 +310,13 @@ Ohne Argument erzeugt das Skript `linux-x64`, `win-x64` und `osx-arm64`; bekannt
 
 | Ordner | Inhalt |
 |---|---|
-| `src/GitReviewA` | das Programm; ein Ordner je Thema (`Aufruf`, `Git`, `Server`, `Diff`, `Zusammen`, `Anmerkungen`, `Haken`, `Beenden`, `Sprung`, `Protokoll`, `Fremdtext` …) |
+| `src/GitReviewA` | das Programm; ein Ordner je Thema (`Aufruf`, `Git`, `Server`, `Diff`, `Zusammen`, `Dateiansicht`, `Anmerkungen`, `Haken`, `Beenden`, `Sprung`, `Protokoll`, `Fremdtext` …) |
 | `src/GitReviewA/web` | die eingebettete Weboberfläche (HTML, JavaScript, CSS, Schriften, Prism) |
 | `tests/GitReviewA.Tests` | NUnit: Unit- und Integrationstests, `Akzeptanz/` für die Akzeptanzkriterien |
 | `e2e` | Playwright-Tests gegen das echte Programm (`tests/`, `treiber/`, `dsl/`) |
 | `skripte` | `veroeffentlichen.sh` |
 | `Anforderungen` | die Vision `R00000` und die Anforderungen `R00001` ff., dazu `user-stories/` |
-| `Dokumentation` | `Planung/` (Arbeitsstrukturplan), `Sicherheit/`, `Wireframes/`, `Bilder/readme/` |
+| `Dokumentation` | `Planung/` (Arbeitsstrukturplan), `Sicherheit/`, `Wireframes/`, `Auftraege/`, `Bilder/readme/` |
 | `AI-Team` | Konfiguration und Entscheidungen des KI-Teams, das gitreviewA baut |
 
 **Release**: Ein Tag `v*` löst `.github/workflows/release.yml` aus. Der Lauf veröffentlicht je Plattform eine Datei, benennt sie `gitreviewA-<tag>-<plattform>` und hängt sie samt `SHA256SUMS.txt` an ein GitHub-Release.
