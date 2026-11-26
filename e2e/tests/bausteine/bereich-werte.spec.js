@@ -3,7 +3,7 @@
 // eine Markierung tragen. Die Zeilen sind die gezeichneten Diff-Zeilen in Reihenfolge; `abschnitt` ist der Schlüssel des
 // Abschnitts (Hunk und Commit) — die Oberfläche vergibt ihn, die Rechnung vergleicht ihn nur.
 const { test, expect } = require('@playwright/test');
-const { bereichsziel, bereichsstand, bereicheDerAnmerkungen, ABSCHNITTSGRUND, ENTFERNT_HINWEIS } = require('../../../src/GitReviewA/web/bereich-werte.js');
+const { bereichsziel, bereichsstand, bereicheDerAnmerkungen, bereich, ausschnitt, bereichsangabe, ABSCHNITTSGRUND, ENTFERNT_HINWEIS } = require('../../../src/GitReviewA/web/bereich-werte.js');
 const { ENTFERNT_HINWEIS: HINWEIS_AUS_ANMERKUNGEN } = require('../../../src/GitReviewA/web/anmerkungen-werte.js');
 
 /** Eine Zeile ohne Nummer neu (`−`), ein Abschnittskopf und die Hinweiszeile tragen kein `neu`. Der Commit gehört zur Zeile
@@ -90,6 +90,68 @@ test.describe('Baustein Bereichsziel', () => {
 
   test('soll den Hinweis der entfernten Zeile mit dem Text der Zeilenanmerkung teilen (eine Quelle)', () => {
     expect(ENTFERNT_HINWEIS).toBe(HINWEIS_AUS_ANMERKUNGEN);
+  });
+});
+
+/** `mig.sql` der User Story R00044: 8 Zeilen `-- Teil n`, mit CRLF getrennt, die letzte ohne Zeilenende. */
+const MIG = Array.from({ length: 8 }, (_, index) => `-- Teil ${index + 1}`).join('\r\n');
+
+test.describe('Baustein Bereich der Dateiansicht (R00044, B4221)', () => {
+  test('soll aus Anker und Ziel den Bereich von kleinster bis größter Nummer bilden', () => {
+    expect(bereich(3, 5, 8)).toEqual({ von: 3, bis: 5 });
+    expect(bereich(5, 3, 8)).toEqual({ von: 3, bis: 5 });
+    expect(bereich(3, 3, 8)).toEqual({ von: 3, bis: 3 });
+  });
+
+  test('soll den Bereich auf 1…Zeilenzahl klemmen', () => {
+    expect(bereich(0, 5, 8)).toEqual({ von: 1, bis: 5 });
+    expect(bereich(1, 99, 8)).toEqual({ von: 1, bis: 8 });
+    expect(bereich(-4, -2, 8)).toEqual({ von: 1, bis: 1 });
+  });
+
+  test('soll ohne Zeilen (leere Datei) keinen Bereich bilden', () => {
+    expect(bereich(1, 1, 0)).toEqual({ von: 0, bis: 0 });
+  });
+
+  test('soll „Zeile n“ bei einer Zeile und „Zeilen von–bis“ sonst nennen', () => {
+    expect(bereichsangabe(3, 3)).toBe('Zeile 3');
+    expect(bereichsangabe(3, 5)).toBe('Zeilen 3–5');
+    expect(bereichsangabe(1, 1)).toBe('Zeile 1');
+  });
+});
+
+test.describe('Baustein Ausschnitt der Dateiansicht (R00044, B4221)', () => {
+  test('soll die Zeilen von…bis samt ihren Zeilenenden schneiden (CRLF bleibt CRLF, 3 Zeilen = 33 Bytes)', () => {
+    const aus = ausschnitt(MIG, 3, 5);
+
+    expect(aus).toBe('-- Teil 3\r\n-- Teil 4\r\n-- Teil 5\r\n');
+    expect(Buffer.byteLength(aus, 'utf8')).toBe(33);
+  });
+
+  test('soll die letzte Zeile ohne Zeilenende ohne Zeilenende lassen', () => {
+    expect(ausschnitt(MIG, 7, 8)).toBe('-- Teil 7\r\n-- Teil 8');
+    expect(ausschnitt(MIG, 8, 8)).toBe('-- Teil 8');
+  });
+
+  test('soll LF, CRLF und gemischte Zeilenenden unverändert lassen', () => {
+    const gemischt = 'a\nb\r\nc\nd';
+
+    expect(ausschnitt(gemischt, 2, 3)).toBe('b\r\nc\n');
+    expect(ausschnitt(gemischt, 1, 1)).toBe('a\n');
+    expect(ausschnitt('nur-eine', 1, 1)).toBe('nur-eine');
+  });
+
+  test('soll ein einzelnes CR im Text byte-gleich lassen (kein LF daraus)', () => {
+    const cr = '-- harmlos\rDROP TABLE x;\n';
+
+    expect(ausschnitt(cr, 1, 1)).toBe('-- harmlos\rDROP TABLE x;\n');
+    expect(ausschnitt(cr, 1, 1).includes('\r')).toBe(true);
+  });
+
+  test('soll eine lange Zeile ganz schneiden und über die Zeilenzahl hinaus klemmen', () => {
+    const breit = 'x'.repeat(50000) + '\n';
+    expect(ausschnitt(breit, 1, 1)).toBe(breit);
+    expect(ausschnitt(breit, 1, 9)).toBe(breit);
   });
 });
 

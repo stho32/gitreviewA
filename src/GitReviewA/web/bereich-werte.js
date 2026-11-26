@@ -40,6 +40,70 @@
     return { art: 'bereich', von, bis, commit: anker.commit };
   }
 
+  /* ── Bereich der Dateiansicht (R00044, B4221): Zeilennummern ab 1, kein Abschnitt, kein Commit ── */
+
+  /** Aus Anker und Ziel (Zeilennummern) den Bereich `{von, bis}` bilden: kleinere und größere Nummer, geklemmt auf
+      `1…zeilenzahl`; dieselbe Zeile ergibt eine Zeile. Ohne Zeilen (leere Datei) bleibt der Bereich leer `{0, 0}`. */
+  function bereich(anker, ziel, zeilenzahl) {
+    const anzahl = Math.max(0, Math.trunc(zeilenzahl) || 0);
+    if (anzahl === 0) {
+      return { von: 0, bis: 0 };
+    }
+    const a = klemmeAufZeilen(anker, anzahl);
+    const b = klemmeAufZeilen(ziel, anzahl);
+    return { von: Math.min(a, b), bis: Math.max(a, b) };
+  }
+
+  function klemmeAufZeilen(nummer, anzahl) {
+    const zahl = Math.trunc(nummer);
+    if (!Number.isFinite(zahl) || zahl < 1) {
+      return 1;
+    }
+    return Math.min(zahl, anzahl);
+  }
+
+  /** Die Zeilen `von…bis` aus `text` **samt** ihren Zeilenenden schneiden: CRLF bleibt CRLF, LF bleibt LF; die letzte Zeile
+      ohne Zeilenende bleibt ohne; ein einzelnes CR ist kein Zeilenende und bleibt byte-gleich. Nur die Zeilen des Textes. */
+  function ausschnitt(text, von, bis) {
+    const zeilen = zeilenbereiche(text);
+    if (zeilen.length === 0) {
+      return '';
+    }
+    const erste = klemmeAufZeilen(von, zeilen.length);
+    const letzte = klemmeAufZeilen(bis, zeilen.length);
+    const a = Math.min(erste, letzte);
+    const b = Math.max(erste, letzte);
+    return text.slice(zeilen[a - 1].von, zeilen[b - 1].bis);
+  }
+
+  /** Die Zeilen als `{von, bis}` in Textstellen: `bis` zeigt hinter das Zeilenende (oder ans Textende ohne Zeilenende).
+      Ein Zeilenende ist LF oder CRLF; ein einzelnes CR ist Text und trennt nicht (dieselbe Definition wie `zeilenVon`). */
+  function zeilenbereiche(text) {
+    const zeilen = [];
+    let von = 0;
+    let stelle = 0;
+    while (stelle < text.length) {
+      if (text[stelle] === '\n') {
+        zeilen.push({ von, bis: stelle + 1 });
+        von = stelle + 1;
+      } else if (text[stelle] === '\r' && text[stelle + 1] === '\n') {
+        zeilen.push({ von, bis: stelle + 2 });
+        stelle += 1;
+        von = stelle + 1;
+      }
+      stelle += 1;
+    }
+    if (von < text.length) {
+      zeilen.push({ von, bis: text.length });
+    }
+    return zeilen;
+  }
+
+  /** „Zeile 3“ bei einer Zeile, sonst „Zeilen 3–5“ (R00044, Werkzeugleiste und Bestätigung). */
+  function bereichsangabe(von, bis) {
+    return von === bis ? `Zeile ${von}` : `Zeilen ${von}–${bis}`;
+  }
+
   /** Nur eine Zeile mit Nummer neu ist eine Grenze: `+` und Kontext; `−`, Kopf und Hinweiszeile sind es nicht. */
   function istGrenze(zeile) {
     const hatNummerNeu = (zeile.art === 'plus' || zeile.art === 'kontext') && Number.isInteger(zeile.neu);
@@ -97,5 +161,5 @@
       .map(anmerkung => ({ von: anmerkung.von, bis: anmerkung.bis }));
   }
 
-  Object.assign(ziel, { bereichsziel, bereichsstand, bereicheDerAnmerkungen, ABSCHNITTSGRUND, ENTFERNT_HINWEIS });
+  Object.assign(ziel, { bereichsziel, bereichsstand, bereicheDerAnmerkungen, bereich, ausschnitt, bereichsangabe, ABSCHNITTSGRUND, ENTFERNT_HINWEIS });
 })(typeof module !== 'undefined' ? module.exports : window);
