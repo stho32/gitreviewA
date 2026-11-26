@@ -557,3 +557,12 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Durchlauf: Bau 72 min, Code-Review 3 Muss (Zeilenzahl, Pfad abgeschnitten, `w`-Hinweis in der Dateiansicht; Test maß die Höhe nicht), Nacharbeit (Zeitgrenze, Fortsetzung), enge Nachprüfung (Pfadprüfungen auf zugänglichen Namen sind keine Abschwächung, Mutanten rot), Entwicklertest 1 Muss (Herkunft „ne…“, Rückschritt), Nacharbeit (Zeitgrenze; Zielkonflikt mit R00039 K1 belegt), PO: Kürzung mit `title`/`aria-label` gewollt (Zeile 247). Karte gesamt 1,98 $.
 - Lehre: `toHaveText` prüft Text, nicht Sichtbarkeit — für gekürzte Elemente immer auch den Überlauf messen. Und: ein belegter Zielkonflikt gehört an den PO, nicht in die dritte Nacharbeit.
 - Gate: NUnit 1648/1648 (4/5 Läufe; ein Lauf mit 2 namenlosen Rot zeitgleich mit einem Bau-Start), Playwright 973/973 zweimal.
+| 2026-11-26 | #53 | Entwicklung | entwickler | bestanden | 25 min | opencode: B4241–B4244, E2E 982 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 53-entwickler-1 · 0,58 $ · Karte gesamt 0,58 $ |
+| 2026-11-26 | #52 | Nacharbeit | entwickler | bestanden | 18 min | opencode: Rebase auf #48, ein Hinweis-Mechanismus (hinweise.js), 1004 E2E · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 52-entwickler-2 · 0,075 $ · Karte gesamt 0,67 $ |
+| 2026-11-26 | #53 | Reviews | code-reviewer | bestanden | 5 min | opencode: kein Muss; A6 (Markierung nach j/k) mit #52 prüfen · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 53-code-reviewer-1 · 0,051 $ · Karte gesamt 0,63 $ |
+| 2026-11-26 | #53 | Entwicklertest | entwicklertester | bestanden | 7 min | opencode: Betreiberfall drei SQL-Migrationen ohne Befund · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 53-entwicklertester-1 · 0,19 $ · Karte gesamt 0,82 $ |
+
+## Retrospektive #52 I0045 Stelle suchen und Bereich kopieren (2026-11-26)
+- Durchlauf: Bau 25 min, Code- und Security-Review ohne Muss, Entwicklertest (Betreiberfall SQL) ohne Befund; Rebase-Nacharbeit, weil #48 parallel einen zweiten Weg für Kürzel-Hinweise je Laufart gebaut hatte — aufgelöst auf den einen aus #48 (`hinweise.js`). Karte gesamt 0,67 $.
+- Lehre: Zwei Karten, die beide „das Katalogziel je Laufart“ brauchen, bauen es doppelt, wenn der Auftrag nur „wie #48 es einführt“ sagt — gemeinsame Bausteine zuerst auf main, dann die zweite Karte bauen (Braucht setzen).
+- Gate: NUnit 1648/1648, Playwright 1004/1004 zweimal.

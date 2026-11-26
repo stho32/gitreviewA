@@ -60,3 +60,4 @@ zuletzt: 2026-11-26
 | I0041 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | Szenarien R00040, Karte #49 |
 | I0048 | Entwicklertest | 2026-11-26 | entfällt | Claude (autonom, Director, Auftrag Stefan Hoffmann) | reine Teständerung ohne Oberfläche (Zeitschranken der E2E-Suite), Beleg Gate 944/944 zweimal, Karte #57 |
 | I0040 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester + Director, Auftrag Stefan Hoffmann) | Szenarien R00039, Herkunft-Befund per PO-Zeile 247 gewollt, Karte #48 |
+| I0045 | Entwicklertest | 2026-11-26 | bestanden | Claude (autonom, entwicklertester, Auftrag Stefan Hoffmann) | Betreiberfall SQL (Bereich, `y`, Strg+C, `?`), R00044, Karte #52 |
