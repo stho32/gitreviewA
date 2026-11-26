@@ -5,7 +5,7 @@ const ZEILE = '#commit-liste .commit-zeile';
 const DATEILISTE = '#dateiliste';
 const WAEHLER_MENUE = '#waehler-auswahl';
 const KOPFAKTIONEN = '.gr-kopfaktionen';
-const LISTENEINTRAG = '#datei-zeilen > li';
+const LISTENEINTRAG = '#datei-zeilen > .datei-zeile, #datei-zeilen > .ordner-zeile';
 const DATEIZEILE = '#datei-zeilen .datei-zeile';
 
 async function commitZeilenLesen(page) {

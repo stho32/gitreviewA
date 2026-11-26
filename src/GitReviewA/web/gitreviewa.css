@@ -95,6 +95,9 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .gr-dateien>li{display:flex;align-items:center;gap:var(--kd-s3);min-block-size:var(--kd-row);padding:var(--kd-s1) var(--kd-s3);padding-inline-start:calc(var(--kd-s3) + var(--tiefe,0) * var(--kd-s5));min-width:0;font-size:13px}
 .gr-dateien>li+li{border-top:1px solid var(--kd-line)}
 .ordner-zeile{color:var(--kd-muted);font-weight:600}
+.gruppe-kopf{background:var(--kd-sunken);color:var(--kd-muted);font-weight:600}
+.gruppe-kopf .gruppe-titel{display:flex;flex:1 1 auto;gap:var(--kd-s3);min-width:0;align-items:baseline}
+.gruppe-kopf .gruppe-zaehler{font-weight:400;font-size:12px}
 .datei-zeile{cursor:pointer;border-inline-start:3px solid transparent}
 .datei-zeile:hover{background:var(--kd-sunken)}
 .datei-zeile[aria-current="true"]{background:var(--kd-accent-weak);border-inline-start-color:var(--kd-accent)}

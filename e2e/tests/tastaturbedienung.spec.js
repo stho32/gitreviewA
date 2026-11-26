@@ -31,7 +31,12 @@ test.describe('R00030 Dateiliste und Haken — j, k, x, m, u, [, ]', () => {
     await tast.starten();
     await tast.inDieDateiliste();
 
+    // Die erste Zeile der gezeigten Liste ist `src/a.txt` (Gruppe Code, R00040); `j` geht eine Zeile weiter, `k` zurück.
     await tast.druecke('j');
+    await tast.gewaehlt('src/b.txt');
+    await tast.fokusAufDateizeile('src/b.txt');
+
+    await tast.druecke('k');
     await tast.gewaehlt('src/a.txt');
     await tast.fokusAufDateizeile('src/a.txt');
     await tast.diffZeigt({
@@ -48,10 +53,6 @@ test.describe('R00030 Dateiliste und Haken — j, k, x, m, u, [, ]', () => {
     await tast.druecke('j');
     await tast.gewaehlt('src/b.txt');
     await tast.fokusAufDateizeile('src/b.txt');
-
-    await tast.druecke('k');
-    await tast.gewaehlt('src/a.txt');
-    await tast.fokusAufDateizeile('src/a.txt');
   });
 
   test('x hakt die gewählte Datei ab, lässt Wahl und Diff stehen, nimmt den Haken wieder weg und sagt es an', async ({ tast }) => {
@@ -330,7 +331,7 @@ test.describe('R00030 Kürzel an den Bedienelementen', () => {
     await tast.starten();
 
     const kaestchen = await tast.hinweis('#datei-zeilen .datei-zeile input.haken');
-    expect(kaestchen).toEqual({ aria: 'x', kbd: 'x', kbdVerborgen: true, name: 'Abgehakt: README.md' });
+    expect(kaestchen).toEqual({ aria: 'x', kbd: 'x', kbdVerborgen: true, name: 'Abgehakt: src/a.txt' });
 
     const modus = await tast.hinweis('.kz-modus');
     expect(modus.aria).toBe('m');
@@ -567,8 +568,8 @@ test.describe('R00030 Gesperrte Stelle und kein neuer Weg', () => {
     await tast.inDieDateiliste();
 
     await tast.druecke('j');
-    await tast.gewaehlt('src/a.txt');
-    await tast.wartenAufDiff('src/a.txt');
+    await tast.gewaehlt('src/b.txt');
+    await tast.wartenAufDiff('src/b.txt');
     await tast.inDenDiffTabben();
     await tast.pfeilAbBis(2);
     await tast.druecke('Enter');
@@ -579,7 +580,7 @@ test.describe('R00030 Gesperrte Stelle und kein neuer Weg', () => {
 
     const { exitCode, ergebnis } = await tast.beendenUndErgebnisLesen();
     expect(exitCode).toBe(0);
-    expect(ergebnis).toContain('## 1. src/a.txt:2');
+    expect(ergebnis).toContain('## 1. src/b.txt:2');
     expect(ergebnis).toContain('> Tastaturpfad');
 
     const bekannt = [/^\/api\/zustand$/, /^\/api\/commits$/, /^\/api\/commits\/[^/]+\/dateien$/, /^\/api\/commits\/[^/]+\/diff$/,

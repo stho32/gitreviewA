@@ -4,12 +4,13 @@
 // Die Rechnung der Netto-Liste (Kriterium 4: Ausgabe je Commit) prüft I0010; hier geht es um das, was die Oberfläche daraus macht.
 const { test, expect } = require('../dsl/zeile-annotieren.js');
 
+/** Die Netto-Liste von Repo Z in der gezeigten Reihenfolge (R00040: Code vor Doku). */
 const NETTO_LISTE = {
   summe: '3 Dateien · +8 −0',
   eintraege: [
-    { name: 'README.md', zahlen: '+2 −0' },
     { name: 'src/a.txt', zahlen: '+4 −0' },
     { name: 'src/b.txt', zahlen: '+2 −0' },
+    { name: 'README.md', zahlen: '+2 −0' },
   ],
 };
 

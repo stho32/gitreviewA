@@ -464,6 +464,26 @@ function repoK(ordner) {
   return { ordner, hashes: { k: commitAnlegen(ordner, { betreff: 'Große Binärdateien' }) } };
 }
 
+/** Repo G der Gruppenkarte (R00040): `g1` „Anlegen“ legt acht Dateien der drei Gruppen an, `g2` „Ändern“ ändert `src/app.js`
+    und `docs/api.md`. Reihenfolge von git: README.md, docs/api.md, src/Contest.cs, src/a.txt, src/app.js, tests/README.md,
+    tests/app.test.js, web/haken-werte.spec.js. */
+function repoGruppen(ordner) {
+  repoAnlegen(ordner);
+  dateiSchreiben(ordner, 'src/app.js', 'app 1\n');
+  dateiSchreiben(ordner, 'src/Contest.cs', 'contest\n');
+  dateiSchreiben(ordner, 'src/a.txt', 'a\n');
+  dateiSchreiben(ordner, 'tests/app.test.js', 'test\n');
+  dateiSchreiben(ordner, 'web/haken-werte.spec.js', 'spec\n');
+  dateiSchreiben(ordner, 'tests/README.md', 'testdoku\n');
+  dateiSchreiben(ordner, 'docs/api.md', 'api 1\n');
+  dateiSchreiben(ordner, 'README.md', 'readme\n');
+  const g1 = commitAnlegen(ordner, { betreff: 'Anlegen' });
+  dateiSchreiben(ordner, 'src/app.js', 'app 2\n');
+  dateiSchreiben(ordner, 'docs/api.md', 'api 2\n');
+  const g2 = commitAnlegen(ordner, { betreff: 'Ändern' });
+  return { ordner, hashes: { g1, g2 } };
+}
+
 function zufallsBytes(anzahl) {
   const bytes = Buffer.alloc(anzahl);
   let zustand = 12345;
@@ -474,4 +494,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoV, repoG, repoKlammern, repoX, repoK, repoZ, repoZeilenbereich, repoQ, repoS, repoL, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, repoY, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoGruppen, repoV, repoG, repoKlammern, repoX, repoK, repoZ, repoZeilenbereich, repoQ, repoS, repoL, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, repoY, markerVorhanden, diffProgrammOhneSchutzStarten };

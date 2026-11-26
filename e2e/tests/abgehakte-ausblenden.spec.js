@@ -74,12 +74,12 @@ test.describe('Abgehakte ausblenden (R00029)', () => {
     await abgehakte.schalterBetatigen();
     await abgehakte.schalterIst(true);
 
-    await expect.poll(async () => await abgehakte.ordnernamen()).toEqual(['docs', 'src', 'generated']);
+    await expect.poll(async () => await abgehakte.ordnernamen()).toEqual(['src', 'generated', 'docs']);
     await expect.poll(async () => sortiert(await abgehakte.dateinamen())).toEqual(['README.md', 'README.md', 'a.txt', 'api.cs', 'app.lock', 'b.txt']);
 
     await abgehakte.abhaken('api.cs');
 
-    await expect.poll(async () => await abgehakte.ordnernamen()).toEqual(['docs', 'src']);
+    await expect.poll(async () => await abgehakte.ordnernamen()).toEqual(['src', 'docs']);
   });
 
   test('soll zwei Ausblendgründe nebeneinander nennen (Szenario 6)', async ({ abgehakte }) => {

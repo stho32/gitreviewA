@@ -55,6 +55,9 @@
         zeichneDateien(ansicht);
       }
     });
+    for (const ereignis of ['haken-stand-geladen', 'haken-geaendert']) {
+      document.addEventListener(ereignis, aktualisiereGruppenZaehler);
+    }
     ladeAnsicht(ansicht, false);
   }
 
@@ -192,13 +195,78 @@
       return;
     }
     const groesste = groessteAenderung(zustand.dateien);
-    const zeilen = sichtbareZeilen(sicht, zustand.darstellung);
+    const zaehler = zaehlerJeGruppe();
     const sammelElement = document.createDocumentFragment();
-    for (const zeile of zeilen) {
-      sammelElement.append(listeneintragElement(zeile, groesste));
+    for (const gruppe of sichtbareGruppen(sicht)) {
+      sammelElement.append(gruppenKopfElement(gruppe, zaehler));
+      const zeilen = sichtbareZeilen({ sichtbare: gruppe.eintraege }, zustand.darstellung);
+      for (const zeile of zeilen) {
+        sammelElement.append(listeneintragElement(zeile, groesste));
+      }
     }
     ansicht.zeilenElement.replaceChildren(sammelElement);
     meldeGezeichnet();
+  }
+
+  /** Die gezeigten Einträge nach Gruppen (R00040): je Gruppe ein Kopf, darunter ihre Einträge in der bisherigen Reihenfolge. */
+  function sichtbareGruppen(sicht) {
+    return gruppenWerte().nachGruppen(sicht.sichtbare.map(eintrag => ({ datei: eintrag.datei, anzeigename: sichtbarerName(eintrag.datei.pfad) })));
+  }
+
+  /** Der Fortschritt je Gruppe über **alle** Dateien der Auswahl — auch die ausgeblendeten zählen in b (R00040). */
+  function zaehlerJeGruppe() {
+    return gruppenWerte().zaehlerJeGruppe(zaehlEintraege());
+  }
+
+  function zaehlEintraege() {
+    const haken = hakenLeser();
+    return zustand.dateien.map(datei => ({
+      anzeigename: sichtbarerName(datei.pfad),
+      abgehakt: zustand.modus === 'zusammen' ? haken.dateiAbgehakt(datei) : haken.stelleAbgehakt(zustand.commit, datei.pfad),
+      gesperrt: zustand.modus === 'zusammen' ? haken.dateiGesperrt(datei) : haken.stelleGesperrt(zustand.commit, datei.pfad),
+    }));
+  }
+
+  /** Gruppenköpfe sind Überschriften der Liste (NFA Benutzerfreundlichkeit): der Screenreader springt von Gruppe zu Gruppe. */
+  function gruppenKopfElement(gruppe, zaehler) {
+    const element = document.createElement('li');
+    element.className = 'gruppe-kopf';
+    element.setAttribute('role', 'presentation');
+    element.dataset.gruppe = gruppe.schluessel;
+    const titelElement = document.createElement('span');
+    titelElement.className = 'gruppe-titel';
+    titelElement.setAttribute('role', 'heading');
+    titelElement.setAttribute('aria-level', '2');
+    titelElement.append(textElement('gruppe-name', gruppe.name), document.createTextNode(' '), textElement('gruppe-zaehler', zaehlerText(gruppe, zaehler)));
+    element.append(titelElement);
+    return element;
+  }
+
+  function zaehlerText(gruppe, zaehler) {
+    const gefunden = zaehler.find(eintrag => eintrag.schluessel === gruppe.schluessel);
+    return gefunden ? gefunden.text : '';
+  }
+
+  /** Nach jeder Änderung am Haken-Stand steht der Fortschritt der Gruppen neu — ohne die Liste neu zu zeichnen. */
+  function aktualisiereGruppenZaehler() {
+    if (zustand.dateien.length === 0) {
+      return;
+    }
+    const zaehler = zaehlerJeGruppe();
+    for (const element of document.querySelectorAll('#datei-zeilen .gruppe-kopf')) {
+      const eintrag = zaehler.find(gefunden => gefunden.schluessel === element.dataset.gruppe);
+      element.querySelector('.gruppe-zaehler').textContent = eintrag ? eintrag.text : '';
+    }
+  }
+
+  function gruppenWerte() {
+    return window.gitreviewaGruppenWerte;
+  }
+
+  function hakenLeser() {
+    return window.gitreviewaHaken || {
+      dateiAbgehakt: () => false, dateiGesperrt: () => false, stelleAbgehakt: () => false, stelleGesperrt: () => false,
+    };
   }
 
   /** Die Sicht auf die gezeigte Liste (R00029): Muster (R00025) und Abgehakte (Schalter). Ohne den Baustein bleibt es beim Muster-Abgleich. */

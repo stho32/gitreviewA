@@ -5,10 +5,10 @@ const { test, AUTOR_MIT_HTML, PFAD_MIT_RICHTUNGSZEICHEN } = require('../dsl/comm
 const DATEIEN_VON_P = {
   summe: '4 Dateien · +11 −0',
   eintraege: [
-    { status: 'A', name: 'README.md', zahlen: '+2 −0' },
     { status: 'A', name: 'alt.txt', zahlen: '+4 −0' },
     { status: 'A', name: 'src/a.txt', zahlen: '+3 −0' },
     { status: 'A', name: 'src/b.txt', zahlen: '+2 −0' },
+    { status: 'A', name: 'README.md', zahlen: '+2 −0' },
   ],
 };
 const DATEIEN_VON_Q = {
@@ -151,7 +151,7 @@ test.describe('Dateien eines Commits sehen', () => {
     await review.dateienZeigen({
       summe: DATEIEN_VON_Q.summe,
       eintraege: [
-        { ordner: true, name: 'src', tiefe: 0 }, { name: 'b.txt', tiefe: 1 }, { name: 'alt.txt', tiefe: 0 }, { name: 'LIESMICH.md ← README.md', tiefe: 0 }, { name: 'logo.bin', tiefe: 0 },
+        { ordner: true, name: 'src', tiefe: 0 }, { name: 'b.txt', tiefe: 1 }, { name: 'alt.txt', tiefe: 0 }, { name: 'logo.bin', tiefe: 0 }, { name: 'LIESMICH.md ← README.md', tiefe: 0 },
       ],
     });
 

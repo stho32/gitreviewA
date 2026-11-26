@@ -103,4 +103,4 @@
   }
 
   Object.assign(ziel, { GRUPPEN, gruppeDes, nachGruppen, zaehlerJeGruppe, summe, zaehlerText });
-})(typeof module !== 'undefined' ? module.exports : window);
+})(typeof module !== 'undefined' ? module.exports : (window.gitreviewaGruppenWerte = window.gitreviewaGruppenWerte || {}));

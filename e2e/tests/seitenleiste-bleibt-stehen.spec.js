@@ -5,7 +5,8 @@
 // (`s1` 200 Zeilen und 60 Dateien), Repo L (`l2`, Lücken im Diff), Repo Z (`z1 z3`, keine lückenlose Kette), Fenster 1280 × 800.
 const { test, expect } = require('../dsl/seitenleiste.js');
 
-const ERSTE_ZEILE = '#datei-zeilen .datei-zeile:first-child';
+// Die erste Dateizeile der Liste (der erste Eintrag der Gruppe Code; Gruppenköpfe stehen davor, R00040).
+const ERSTE_ZEILE = '#datei-zeilen .datei-zeile';
 const DATEI_ANMERKUNG = 'Die Umbenennung bricht den Aufrufer in der Auswertung; bitte die zweite Stelle nachziehen und den Test ergaenzen.';
 
 test.describe('Zwei getrennte Rollbereiche', () => {
