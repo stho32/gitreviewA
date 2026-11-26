@@ -178,10 +178,28 @@
       if (sicht === null || sicht.modus !== window.gitreviewaModusWerte.ZUSAMMEN) {
         return null;
       }
-      return naechsteWerte().eintraege(window.gitreviewaModusWerte.ZUSAMMEN, sichtbareListe(sicht.dateien), stand);
+      return geordnet(naechsteWerte().eintraege(window.gitreviewaModusWerte.ZUSAMMEN, sichtbareListe(sicht.dateien), stand));
     }
     // In „Einzeln“ sind die Stellen des Stands die Einträge — alle Stellen der Auswahl, also über Commits hinweg, aber nur die sichtbaren Dateien.
-    return naechsteWerte().eintraege(window.gitreviewaModusWerte.EINZELN, sichtbareStellen(haken.stellen()), stand);
+    return geordnet(naechsteWerte().eintraege(window.gitreviewaModusWerte.EINZELN, sichtbareStellen(haken.stellen()), stand));
+  }
+
+  /**
+   * Die Suche folgt der **gezeigten** Reihenfolge (R00040): Gruppe für Gruppe (Code, Tests, Doku), innerhalb einer Gruppe die
+   * Reihenfolge von Zeile 66 (Commits wie in der Leiste, je Commit die Reihenfolge von `git`). Die Regel selbst steht in
+   * `gruppen-werte.js` — hier nur der Anschluss.
+   */
+  function geordnet(eintraege) {
+    const werte = window.gitreviewaGruppenWerte;
+    if (!werte) {
+      return eintraege;
+    }
+    const mitNamen = eintraege.map(eintrag => ({ ...eintrag, anzeigename: sichtbarerName(eintrag.pfad) }));
+    return werte.nachGruppen(mitNamen).flatMap(gruppe => gruppe.eintraege);
+  }
+
+  function sichtbarerName(pfad) {
+    return window.sichtbarerName ? window.sichtbarerName(pfad) : pfad;
   }
 
   /** Der bestätigte Zustand je Stelle — dieselbe Auskunft für die Einträge der Suche und für die verdeckten Dateien der Meldung. */

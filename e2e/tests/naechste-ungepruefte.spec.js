@@ -12,7 +12,7 @@ test.describe('Sprung in „Zusammen“ (je Datei)', () => {
     const ohneSprung = await naechste.gewaehlteZeilen();
     expect(ohneSprung, 'ohne Sprung ist nichts gewählt').toEqual([]);
 
-    await naechste.reihe(['README.md', 'src/a.txt', 'src/b.txt', 'README.md']);
+    await naechste.reihe(['src/a.txt', 'src/b.txt', 'README.md', 'src/a.txt']);
   });
 
   test('soll ab der aktuellen Datei die nächste nehmen, nicht sie selbst (Szenario 2)', async ({ naechste }) => {
@@ -43,8 +43,8 @@ test.describe('Sprung in „Zusammen“ (je Datei)', () => {
       await naechste.springen();
     }
 
-    await naechste.stelle('viele/datei-0029.txt');
-    await naechste.zeileImBlick('viele/datei-0029.txt');
+    await naechste.stelle('viele/datei-0030.txt');
+    await naechste.zeileImBlick('viele/datei-0030.txt');
   });
 });
 
@@ -54,7 +54,7 @@ test.describe('Liste und Baum', () => {
     await naechste.dateienWarten(3);
     await naechste.darstellung('baum');
 
-    await naechste.reihe(['README.md', 'src/a.txt', 'src/b.txt', 'README.md']);
+    await naechste.reihe(['src/a.txt', 'src/b.txt', 'README.md', 'src/a.txt']);
   });
 });
 
@@ -63,11 +63,9 @@ test.describe('Sprung in „Einzeln“ (je Stelle, über Commits)', () => {
     await naechste.starten({ vorbereitung: 'Repo Z', modus: 'einzeln' });
     await naechste.dateienWarten(2);
 
-    await naechste.reihe([['README.md', 'z1'], ['src/a.txt', 'z1']]);
+    await naechste.reihe([['src/a.txt', 'z1'], ['src/a.txt', 'z2']]);
 
     // Der Commit wechselt mit dem Sprung: der Diff gehört zu z2 (dort steht in src/a.txt „ZWEI“).
-    await naechste.springen();
-    await naechste.stelle('src/a.txt', 'z2');
     await naechste.diffEnthaelt('ZWEI');
 
     await naechste.reihe([['src/b.txt', 'z2'], ['src/a.txt', 'z3'], ['src/b.txt', 'z3'], ['README.md', 'z1']]);
@@ -107,7 +105,7 @@ test.describe('Knopf und Meldung', () => {
 
     await naechste.leerenDiffKnopfBetaetigen();
 
-    await naechste.stelle('README.md');
+    await naechste.stelle('src/a.txt');
     await naechste.leererDiffKnopf(false);
   });
 
@@ -117,11 +115,11 @@ test.describe('Knopf und Meldung', () => {
     await naechste.knopfname();
 
     await naechste.springenPerTastatur();
-    await naechste.stelle('README.md');
+    await naechste.stelle('src/a.txt');
     await naechste.fokusAufKnopf();
 
     await naechste.springenPerTastatur();
-    await naechste.stelle('src/a.txt');
+    await naechste.stelle('src/b.txt');
   });
 
   test('soll in Repo N mit v nur lesbare Stellen anspringen und am Ende „Alles Lesbare abgehakt, 3 nicht lesbar“ melden (Kriterium 6)', async ({ naechste }) => {
@@ -146,6 +144,9 @@ test.describe('Knopf und Meldung', () => {
 // Repo Q in der Reihenfolge der Liste (git): sieben Einträge, `app.lock` ist der zweite.
 const REPO_Q_ALLE = ['README.md', 'app.lock', 'build/out.log', 'docs/README.md', 'src/a.txt', 'src/b.txt', 'src/generated/api.cs'];
 const REPO_Q_SICHTBAR = REPO_Q_ALLE.filter(pfad => pfad !== 'app.lock');
+/** Die gezeigte Reihenfolge von Repo Q (R00040): Gruppe für Gruppe (Code, dann Doku), innerhalb der Gruppe die von git. */
+const REPO_Q_GRUPPIERT = ['app.lock', 'build/out.log', 'src/a.txt', 'src/b.txt', 'src/generated/api.cs', 'README.md', 'docs/README.md'];
+const REPO_Q_GRUPPIERT_SICHTBAR = REPO_Q_GRUPPIERT.filter(pfad => pfad !== 'app.lock');
 
 /** Springt durch die Einträge, hakt jeden ab und prüft den Fortschritt (Repo Q: m = 7, der verdeckte Eintrag bleibt offen). */
 async function springtUndHaktAb(naechste, pfade, einheit) {
@@ -164,14 +165,14 @@ test.describe('Szenario 6: ausgeblendete Datei', () => {
     await naechste.ausblendenZaehler('1 ausgeblendet, davon 1 Muster');
 
     // Der achte Sprung läuft zur ersten ungeprüften um; app.lock ist nie ein Ziel (sonst stünde keine Zeile gewählt).
-    await naechste.reihe([...REPO_Q_SICHTBAR, 'README.md']);
+    await naechste.reihe([...REPO_Q_GRUPPIERT_SICHTBAR, 'build/out.log']);
   });
 
   test('soll in „Zusammen“ nach den sichtbaren Dateien „Alles Sichtbare abgehakt, 1 ausgeblendet“ melden', async ({ naechste }) => {
     await naechste.starten({ vorbereitung: 'Repo Q', modus: 'zusammen', zusatz: ['--ignore', '*.lock'] });
     await naechste.dateienWarten(6);
 
-    await springtUndHaktAb(naechste, REPO_Q_SICHTBAR, 'Dateien');
+    await springtUndHaktAb(naechste, REPO_Q_GRUPPIERT_SICHTBAR, 'Dateien');
 
     await naechste.knopfNichtBedienbar();
     await naechste.meldung('Alles Sichtbare abgehakt, 1 ausgeblendet');
@@ -181,7 +182,7 @@ test.describe('Szenario 6: ausgeblendete Datei', () => {
     await naechste.starten({ vorbereitung: 'Repo Q', modus: 'einzeln', zusatz: ['--ignore', '*.lock'] });
     await naechste.dateienWarten(6);
 
-    await springtUndHaktAb(naechste, REPO_Q_SICHTBAR, 'Stellen');
+    await springtUndHaktAb(naechste, REPO_Q_GRUPPIERT_SICHTBAR, 'Stellen');
 
     await naechste.knopfNichtBedienbar();
     await naechste.meldung('Alles Sichtbare abgehakt, 1 ausgeblendet');
@@ -223,7 +224,7 @@ test.describe('Szenario 6: ausgeblendete Datei', () => {
     await naechste.starten({ vorbereitung: 'Repo Q', modus: 'zusammen' });
     await naechste.dateienWarten(7);
 
-    await springtUndHaktAb(naechste, REPO_Q_ALLE, 'Dateien');
+    await springtUndHaktAb(naechste, REPO_Q_GRUPPIERT, 'Dateien');
 
     await naechste.knopfNichtBedienbar();
     await naechste.meldung('Alles abgehakt');
@@ -238,13 +239,13 @@ test.describe('Kein neuer Weg, späte Antwort, beide Modi', () => {
 
     await naechste.springen();
     await naechste.springen();
-    await naechste.stelle('src/a.txt');
-    await naechste.diffEnthaelt('ZWEI');
+    await naechste.stelle('src/b.txt');
+    await naechste.diffEnthaelt('Y');
 
-    // Die Antwort der ersten Wahl (README.md) kommt später — sie darf den Diff nicht mehr ändern.
+    // Die Antwort der ersten Wahl (src/a.txt) kommt später — sie darf den Diff nicht mehr ändern.
     await naechste.ruhezeitAbwarten(2000);
-    await naechste.stelle('src/a.txt');
-    await naechste.diffEnthaeltNicht('Lager');
+    await naechste.stelle('src/b.txt');
+    await naechste.diffEnthaeltNicht('ZWEI');
   });
 
   test('soll in beiden Modi über denselben Haken-Stand arbeiten (Szenario 8)', async ({ naechste }) => {
@@ -267,7 +268,7 @@ test.describe('Kein neuer Weg, späte Antwort, beide Modi', () => {
   });
 
   test('soll nicht mehr git-Aufrufe als die Wahl derselben Stelle starten (Kriterium 12, Prozessprobe)', async ({ naechste }) => {
-    // Von Hand gewählt: README.md (die erste ungeprüfte) ohne vorherige Wahl. Vor jeder Messung wartet die Probe, bis
+    // Von Hand gewählt: src/a.txt (die erste ungeprüfte) ohne vorherige Wahl. Vor jeder Messung wartet die Probe, bis
     // keine Anfrage mehr läuft (`ruhe`): die Wahl startet Diff-Ladung und Sprungziel-Prüfung als zwei unabhängige
     // Anfragen, und erst nach ihrer aller Antwort steht jeder ihrer git-Aufrufe im Zähler.
     await naechste.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });
@@ -276,8 +277,8 @@ test.describe('Kein neuer Weg, späte Antwort, beide Modi', () => {
     await naechste.ruhe();
     const vorherHand = await naechste.gitAufrufeJetzt();
     const anfragenVorherHand = naechste.anfragenJetzt();
-    await naechste.dateiWaehlen('README.md');
-    await naechste.stelle('README.md');
+    await naechste.dateiWaehlen('src/a.txt');
+    await naechste.stelle('src/a.txt');
     await naechste.ruhe();
     const vonHand = await naechste.neueGitAufrufe(vorherHand);
     const anfragenVonHand = naechste.neueAnfragen(anfragenVorherHand);
@@ -290,7 +291,7 @@ test.describe('Kein neuer Weg, späte Antwort, beide Modi', () => {
     const vorherSprung = await naechste.gitAufrufeJetzt();
     const anfragenVorher = naechste.anfragenJetzt();
     await naechste.springen();
-    await naechste.stelle('README.md');
+    await naechste.stelle('src/a.txt');
     await naechste.ruhe();
     const ueberDenSprung = await naechste.neueGitAufrufe(vorherSprung);
 
