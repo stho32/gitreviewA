@@ -102,5 +102,5 @@
     return nichtLesbar > 0 ? `${text} (${nichtLesbar} nicht lesbar)` : text;
   }
 
-  Object.assign(ziel, { GRUPPEN, gruppeDes, nachGruppen, zaehlerJeGruppe, summe, zaehlerText });
+  Object.assign(ziel, { gruppeDes, nachGruppen, zaehlerJeGruppe, summe, zaehlerText });
 })(typeof module !== 'undefined' ? module.exports : (window.gitreviewaGruppenWerte = window.gitreviewaGruppenWerte || {}));

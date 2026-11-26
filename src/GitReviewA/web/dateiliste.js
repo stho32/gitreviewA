@@ -194,18 +194,22 @@
       meldeGezeichnet();
       return;
     }
-    const groesste = groessteAenderung(zustand.dateien);
+    ansicht.zeilenElement.replaceChildren(gruppeninhalt(sicht));
+    meldeGezeichnet();
+  }
+
+  /** Je Gruppe der Kopf und darunter ihre Zeilen in der gezeigten Darstellung — ein eigener Baum je Gruppe (R00040). */
+  function gruppeninhalt(sicht) {
     const zaehler = zaehlerJeGruppe();
+    const groesste = groessteAenderung(zustand.dateien);
     const sammelElement = document.createDocumentFragment();
     for (const gruppe of sichtbareGruppen(sicht)) {
       sammelElement.append(gruppenKopfElement(gruppe, zaehler));
-      const zeilen = sichtbareZeilen({ sichtbare: gruppe.eintraege }, zustand.darstellung);
-      for (const zeile of zeilen) {
+      for (const zeile of sichtbareZeilen({ sichtbare: gruppe.eintraege }, zustand.darstellung)) {
         sammelElement.append(listeneintragElement(zeile, groesste));
       }
     }
-    ansicht.zeilenElement.replaceChildren(sammelElement);
-    meldeGezeichnet();
+    return sammelElement;
   }
 
   /** Die gezeigten Einträge nach Gruppen (R00040): je Gruppe ein Kopf, darunter ihre Einträge in der bisherigen Reihenfolge. */
