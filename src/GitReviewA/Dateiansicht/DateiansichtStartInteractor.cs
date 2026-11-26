@@ -62,6 +62,13 @@ internal sealed class DateiansichtStartInteractor
             if (eintrag is not null)
             {
                 eintraege.Add(eintrag);
+                continue;
+            }
+            if (fehler.Count > 0 && fehler[^1].Grund.Art == Quellengrundart.ZusammenZuGross)
+            {
+                // Die Summe ist überschritten: das Lesen bricht hier ab, die weiteren Angaben werden nicht gelesen
+                // (R00045 Kriterien 3 und 7, Angriffsmatrix G4). Die Gründe bis hierher bleiben stehen.
+                break;
             }
         }
         if (fehler.Count > 0)
