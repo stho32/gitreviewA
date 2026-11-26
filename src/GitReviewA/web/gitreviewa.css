@@ -318,10 +318,18 @@ kbd{font:11px/1.2 var(--kd-mono);padding:1px 4px;border:1px solid var(--kd-line-
   border:1px solid var(--kd-line-strong);box-shadow:var(--kd-shadow-mod,0 8px 24px rgb(0 0 0 / 25%));overflow:hidden}
 .beenden-dialog[hidden],.beenden-scrim[hidden]{display:none}
 .beenden-dialog h2{margin:0 0 var(--kd-s4);font-size:15px;min-block-size:0}
-.beenden-hinweise{display:flex;flex-direction:column;gap:var(--kd-s2);min-block-size:0;overflow:auto}
+.beenden-hinweise{display:flex;flex-direction:column;gap:var(--kd-s2);min-block-size:0;overflow:auto;flex:none}
 .beenden-hinweise p{margin:0;font-size:13px;line-height:1.45}
-.beenden-abschnitte{min-block-size:0;max-block-size:min(50vh,20rem);overflow:auto;margin-block-start:var(--kd-s3)}
+.beenden-abschnitte{display:flex;flex-direction:column;gap:var(--kd-s3);min-block-size:0;flex:1 1 auto;overflow:hidden;margin-block-start:var(--kd-s3)}
 .beenden-abschnitte[hidden]{display:none}
+.beenden-abschnitt{display:flex;flex-direction:column;min-block-size:0;flex:0 1 auto;overflow:auto;max-block-size:min(40vh,16rem)}
+.beenden-abschnitt-titel{margin:0 0 var(--kd-s2);font-size:13px;font-weight:600}
+.beenden-abschnitt-text{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.4 var(--kd-mono)}
+.beenden-eintraege{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.beenden-eintrag{display:block;width:100%;text-align:left;background:none;border:0;padding:2px 4px;font:inherit;color:inherit;cursor:pointer;overflow-wrap:anywhere}
+.beenden-eintrag:hover,.beenden-eintrag:focus-visible{background:var(--kd-sunken)}
+.beenden-eintrag-vermerk{margin-inline-start:var(--kd-s2);font-size:11px;color:var(--kd-text-muted,inherit);opacity:.75}
+.beenden-abschnitt-mehr{margin:var(--kd-s2) 0 0;font-size:12px;opacity:.8}
 .beenden-knoepfe{display:flex;justify-content:flex-end;gap:var(--kd-s3);margin-block-start:var(--kd-s5);flex:none}
 /* Hilfe-Overlay (R00030, B2905) nach Entwurf Fassung 2 (.hilfe) und Material 3 (Dialog): Scrim über der ganzen Seite, Panel unter dem
    Kopf, Schließen-Knopf; nicht verfügbare Aktionen tragen einen sichtbaren Vermerk, nicht nur eine Farbe. */

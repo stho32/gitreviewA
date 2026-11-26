@@ -1,7 +1,8 @@
 /* gitreviewA — Werte der Dialoge „Beenden“ und „Abbrechen“ (R00050, B4601): **die eine** Beschreibung aus Art und Lage.
    Anzeige, Fokus, Enter-Verhalten und Endzustand lesen alle dieselbe Beschreibung; es gibt keine zweite Stelle, die
    zwischen den beiden Arten unterscheidet. Dazu die eine Zählrechnung: Dateien über `fortschrittZusammen` (R00012), nie eine
-   zweite; Anmerkungen und Haken kommen von den Serverquellen. Reine Funktionen, im Browser und in Node; ohne DOM, ohne Zustand. */
+   zweite; Anmerkungen und Haken kommen von den Serverquellen. Für „Beenden“ der Abschlussschritt (R00041, B4003): die
+   Abschnitte „Nicht angesehen (n)“ und „Ergebnis für die KI“. Reine Funktionen, im Browser und in Node; ohne DOM, ohne Zustand. */
 (function (ziel) {
   'use strict';
 
@@ -10,10 +11,20 @@
 
   const hakenWerte = typeof module !== 'undefined' ? require('./haken-werte.js') : null;
   const dateilisteWerte = typeof module !== 'undefined' ? require('./dateiliste-werte.js') : null;
+  const abschlussWerte = typeof module !== 'undefined' ? require('./abschluss-werte.js') : null;
 
   const fortschrittZusammen = hakenWerte ? hakenWerte.fortschrittZusammen : window.fortschrittZusammen;
   const stellenSchluessel = hakenWerte ? hakenWerte.stellenSchluessel : window.stellenSchluessel;
   const sichtbarerName = dateilisteWerte ? dateilisteWerte.sichtbarerName : window.sichtbarerName;
+  const abschnittDerEintraege = abschlussWerte ? abschlussWerte.abschnitt : window.gitreviewaAbschlussWerte.abschnitt;
+
+  const NICHT_ANGESEHEN = 'Nicht angesehen';
+  const ALLE_ANGESEHEN = 'Alle Dateien angesehen';
+  const NICHT_ANGESEHEN_UNBESTIMMT = 'Nicht angesehene Dateien konnten nicht bestimmt werden';
+  const ERGEBNIS = 'Ergebnis für die KI';
+  const ERGEBNIS_UNBESTIMMT = 'Ergebnis konnte nicht geladen werden';
+  const ART_NICHT_ANGESEHEN = 'nicht-angesehen';
+  const ART_ERGEBNIS = 'ergebnis';
 
   const NICHT_BESTIMMT = {
     anmerkungen: 'Anmerkungen konnten nicht bestimmt werden',
@@ -52,7 +63,7 @@
         titel: 'Review beendet',
         hinweis: 'Das Ergebnis steht in der Konsole. Dieses Fenster kann geschlossen werden.',
       },
-      abschnitte: [],
+      abschnitte: lage.abschnitte || [],
     };
   }
 
@@ -206,5 +217,34 @@
     };
   }
 
-  Object.assign(ziel, { BEENDEN, ABBRECHEN, BEREITS_ZU_ENDE, dialogBeschreibung, lageAusQuellen });
+  /**
+   * Die Abschnitte des Bestätigungsdialogs „Beenden“ (R00041, B4003): „Nicht angesehen (n)“ aus den nicht angesehenen
+   * Einträgen (B4002) und „Ergebnis für die KI“ mit dem Text, der auf stdout geht. `standBestimmbar` sagt, ob Ansichtsstand
+   * und Liste gelesen sind — ist eines davon nicht da, sagt der Abschnitt das, statt „alle angesehen“ zu behaupten.
+   */
+  function abschlussAbschnitte(standBestimmbar, eintraege, ergebnis) {
+    return [nichtAngesehenAbschnitt(standBestimmbar, eintraege), ergebnisAbschnitt(ergebnis)];
+  }
+
+  function nichtAngesehenAbschnitt(standBestimmbar, eintraege) {
+    if (!standBestimmbar) {
+      return { art: ART_NICHT_ANGESEHEN, titel: NICHT_ANGESEHEN, text: NICHT_ANGESEHEN_UNBESTIMMT, eintraege: [], weitere: 0 };
+    }
+    const gefunden = abschnittDerEintraege(eintraege);
+    const titel = `${NICHT_ANGESEHEN} (${gefunden.anzahl})`;
+    if (gefunden.anzahl === 0) {
+      return { art: ART_NICHT_ANGESEHEN, titel, text: ALLE_ANGESEHEN, eintraege: [], weitere: 0 };
+    }
+    return { art: ART_NICHT_ANGESEHEN, titel, eintraege: gefunden.eintraege, weitere: gefunden.weitere };
+  }
+
+  function ergebnisAbschnitt(ergebnis) {
+    let text = ergebnis;
+    if (typeof text !== 'string') {
+      text = ERGEBNIS_UNBESTIMMT;
+    }
+    return { art: ART_ERGEBNIS, titel: ERGEBNIS, text };
+  }
+
+  Object.assign(ziel, { BEENDEN, ABBRECHEN, BEREITS_ZU_ENDE, dialogBeschreibung, lageAusQuellen, abschlussAbschnitte });
 })(typeof module !== 'undefined' ? module.exports : (window.gitreviewaBeendenWerte = window.gitreviewaBeendenWerte || {}));

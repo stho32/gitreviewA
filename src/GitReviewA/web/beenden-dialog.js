@@ -1,7 +1,9 @@
 /* gitreviewA — Hülle des einen Dialogs „Beenden“/„Abbrechen“ (R00050, B4602): Zeichnen aus `beenden-werte.js`, modaler
    Rahmen mit Scrim, Hintergrund inert, Fokusfalle und Fokusrückgabe wie die Hilfe (R00030), Esc/Zurück/Scrim schließen,
-   Enter wirkt auf den fokussierten Knopf, sonst als Vorgabe der Beschreibung. Die Fokusfalle fragt ihre Elemente bei jedem
-   Tab neu ab (Anschluss I0042); `schliesse({ grund })` ist der eine Weg zum Schließen. Nur `textContent`. */
+   Enter wirkt auf den fokussierten Knopf, sonst als Vorgabe der Beschreibung. Die Abschnitte des Abschlussschritts
+   (R00041, B4003) bekommen je eine Überschrift und ihren eigenen Rollbereich, ihre Einträge sind Knöpfe. Die Fokusfalle
+   fragt ihre Elemente bei jedem Tab neu ab (Anschluss I0042); `schliesse({ grund })` ist der eine Weg zum Schließen.
+   Nur `textContent`. */
 (function () {
   'use strict';
 
@@ -39,9 +41,7 @@
     document.getElementById('beenden-titel').textContent = beschreibung.titel;
     const hinweise = dialogElement().querySelector('.beenden-hinweise');
     hinweise.replaceChildren(...beschreibung.zeilen.map(hinweisElement));
-    const abschnitte = dialogElement().querySelector('.beenden-abschnitte');
-    abschnitte.replaceChildren();
-    abschnitte.hidden = beschreibung.abschnitte.length === 0;
+    zeichneAbschnitte(beschreibung.abschnitte);
     document.getElementById('beenden-zurueck').textContent = beschreibung.zurueck;
     document.getElementById('beenden-bestaetigen').textContent = beschreibung.bestaetigen;
     zeigeFehler('');
@@ -52,6 +52,77 @@
     const absatz = document.createElement('p');
     absatz.textContent = text;
     return absatz;
+  }
+
+  /** Die Abschnitte des Abschlussschritts (R00041, B4003): je Abschnitt eine Überschrift und sein eigener Rollbereich. */
+  function zeichneAbschnitte(abschnitte) {
+    const behaelter = dialogElement().querySelector('.beenden-abschnitte');
+    behaelter.replaceChildren(...abschnitte.map(abschnittElement));
+    behaelter.hidden = abschnitte.length === 0;
+  }
+
+  function abschnittElement(abschnitt) {
+    const bereich = document.createElement('section');
+    bereich.className = 'beenden-abschnitt';
+    bereich.dataset.art = abschnitt.art;
+    const titel = document.createElement('h3');
+    titel.className = 'beenden-abschnitt-titel';
+    titel.textContent = abschnitt.titel;
+    bereich.append(titel);
+    if (abschnitt.text) {
+      bereich.append(abschnittText(abschnitt));
+    }
+    if (abschnitt.eintraege && abschnitt.eintraege.length > 0) {
+      bereich.append(eintragsListe(abschnitt.eintraege));
+    }
+    if (abschnitt.weitere > 0) {
+      const mehr = document.createElement('p');
+      mehr.className = 'beenden-abschnitt-mehr';
+      mehr.textContent = `… und ${abschnitt.weitere} weitere`;
+      bereich.append(mehr);
+    }
+    return bereich;
+  }
+
+  /** Der Ergebnistext steht wie in der Ergebnis-Spalte (R00037) als vorformatierten Block, nie als Markup. */
+  function abschnittText(abschnitt) {
+    const element = document.createElement('pre');
+    element.className = 'beenden-abschnitt-text';
+    element.textContent = abschnitt.text;
+    return element;
+  }
+
+  function eintragsListe(eintraege) {
+    const liste = document.createElement('ul');
+    liste.className = 'beenden-eintraege';
+    for (const eintrag of eintraege) {
+      const zeile = document.createElement('li');
+      zeile.append(eintragElement(eintrag));
+      liste.append(zeile);
+    }
+    return liste;
+  }
+
+  function eintragElement(eintrag) {
+    const knopf = document.createElement('button');
+    knopf.type = 'button';
+    knopf.className = 'beenden-eintrag';
+    knopf.dataset.pfad = eintrag.schluessel;
+    knopf.textContent = eintrag.pfad;
+    if (eintrag.ausgeblendet) {
+      const vermerk = document.createElement('span');
+      vermerk.className = 'beenden-eintrag-vermerk';
+      vermerk.textContent = 'ausgeblendet';
+      knopf.append(' ', vermerk);
+    }
+    knopf.addEventListener('click', () => waehleEintrag(eintrag));
+    return knopf;
+  }
+
+  /** Ein Eintrag schließt den Dialog und meldet den Weg zur Datei (R00041, B4004); der Lauf läuft weiter. */
+  function waehleEintrag(eintrag) {
+    schliesse({ grund: 'eintrag' });
+    document.dispatchEvent(new CustomEvent('abschluss-eintrag', { detail: { pfad: eintrag.schluessel, commit: eintrag.commit } }));
   }
 
   function fokusVorgabe() {

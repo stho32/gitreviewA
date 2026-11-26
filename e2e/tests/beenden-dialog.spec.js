@@ -101,18 +101,21 @@ test.describe('Dialog Beenden und Abbrechen (B4602)', () => {
     expect(gr.ergebnis(lauf)).toBe('');
   });
 
+  // Die Fokusfalle fragt ihre Elemente bei jedem Tab neu ab (R00050, „Anschluss an I0042“): der Abbrechen-Dialog trägt
+  // keine Abschnitte (R00041 füllt sie nur für „Beenden“), hier laufen also allein seine Knöpfe durch; dass die Einträge
+  // des Abschlussschritts im Beenden-Dialog per Tab erreichbar sind, prüft `abschluss-dialog.spec.js`.
   test('Kriterium 5 (Anschluss I0042): Tab läuft durch die Knöpfe und fragt die Elemente bei jedem Tab neu ab', async ({ gr, page }) => {
     const repo = gr.repoMitCommits();
     const lauf = await gr.gitreviewAStarten(repo, repo.hashes);
     await gr.oberflaecheOeffnen(page, lauf);
-    await gr.beendenDialogOeffnen(page);
+    await gr.abbrechenDialogOeffnen(page);
 
     await page.keyboard.press('Tab');
-    await expect(gr.beendenDialogKnopf(page, 'Zurück (Esc)')).toBeFocused();
+    await expect(gr.beendenDialogKnopf(page, 'Abbrechen')).toBeFocused();
     await page.keyboard.press('Tab');
-    await expect(gr.beendenDialogKnopf(page, 'Beenden (Enter)')).toBeFocused();
-    await page.keyboard.press('Shift+Tab');
     await expect(gr.beendenDialogKnopf(page, 'Zurück (Esc)')).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(gr.beendenDialogKnopf(page, 'Abbrechen')).toBeFocused();
     await expect(page.locator('header.kz')).toHaveAttribute('inert', '');
   });
 
