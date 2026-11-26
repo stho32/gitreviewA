@@ -3,6 +3,9 @@
 (function (ziel) {
   'use strict';
 
+  const nachrichtWerte = typeof module !== 'undefined' ? require('./nachricht-werte.js') : window.gitreviewaNachrichtWerte;
+  const nachrichtText = nachrichtWerte.nachrichtText;
+
   const zweistellig = zahl => String(zahl).padStart(2, '0');
 
   /** Fremder Text: Steuerzeichen der Schreibrichtung (Einbettungen, Isolierungen, LRM, RLM, ALM) würden die Zeile umdrehen
@@ -45,5 +48,5 @@
     return commit ? ohneSteuerzeichen(commit.betreff) : '';
   }
 
-  Object.assign(ziel, { datumText, zeilenwerte, betreffVon });
+  Object.assign(ziel, { datumText, zeilenwerte, betreffVon, nachrichtText });
 })(typeof module !== 'undefined' ? module.exports : window);
