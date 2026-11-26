@@ -5,6 +5,7 @@
 // Eintippen erzeugt keine Serveranfrage und keinen git-Aufruf; über dem Aufwandsbudget bricht der Lauf ab, meldet am Feld
 // und lässt die Liste stehen. Ebene: Playwright (Neuladen, Einklappen, Tastatur, stdout-Vergleich) und Integration.
 const { test, expect } = require('../dsl/dateisuche.js');
+const { erwarteUnterEinfrierSchranke } = require('../dsl/schranken.js');
 
 const SQL_DATEIEN = ['db/001_anlegen.sql', 'db/002_aendern.sql', 'src/data/app.sql'];
 
@@ -111,7 +112,7 @@ test.describe('Zustand, Tastatur, Ergebnis und Grenzen (B4507)', () => {
     await dateisuche.suchen('?'.repeat(200));
     const dauerMs = await dateisuche.zeitBisSuchmeldung('Suche zu aufwendig — Text kürzen', beginn);
 
-    expect(dauerMs, `Abbruch nach ${dauerMs} ms`).toBeLessThanOrEqual(2000);
+    erwarteUnterEinfrierSchranke(dauerMs, `Abbruch über dem Aufwandsbudget nach ${dauerMs} ms`);
     expect(await dateisuche.dateinamen()).toHaveLength(2000);
     await dateisuche.zaehler('1 ausgeblendet, davon 1 Suche');
   });
