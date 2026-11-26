@@ -646,3 +646,9 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Durchlauf: Abgleich der alten Planung (planer Claude Opus, 2,82 $) — sieben Abweichungen zum Code, u. a. wäre der Block bei jedem Umschalten verschwunden (`.df-sc` an vier Stellen neu befüllt) → B3705; Befund im Commit-Leser → eigene Karte #60 vorgezogen; PO Zeile 250 (20 000 Zeichen). Bau 61 min; Code-Review und Security-Review (Sonnet) ohne Muss; Entwicklertest ohne Befund. Karte gesamt 3,99 $.
 - Lehre: Eine Planung, die älter ist als die Umbauten an ihrer Oberfläche, vor dem Bau gegen den Code abgleichen — der Abgleich kostete 2,82 $ und ersparte einen Bau gegen ein verschwundenes Ziel und einen ungesicherten Leser.
 - Gate: NUnit 1823/1823, Playwright 1156/1156 zweimal.
+| 2026-11-26 | #59 | Entwicklung | dokumentar | bestanden | 18 min | Claude Sonnet: README 335 Zeilen, 8 Bilder neu (3 neu), Verhalten am Programm belegt (f4aec0b) · claude · sonnet · Lauf 59-dokumentar-1 · 3,79 $ · Karte gesamt 3,79 $ |
+
+## Retrospektive #59 README am Ende aktualisieren (2026-11-26)
+- dokumentar Claude Sonnet, 18 min, 3,79 $: README 335 Zeilen, acht Bilder im erfundenen Repo „Wetterstation“ neu (drei neu: Arbeitsplatz mit drei Bereichen und Absicht-Block, Dateisuche, Dateiansicht mit SQL), jede Verhaltensaussage am laufenden Programm belegt (Exit-Codes, Tasten, Grenzen). „Grenzen“ ohne Geschwindigkeitszusage. I0028/I0042 nicht beschrieben (nicht gebaut). Drei UI-Beobachtungen als Karte #63 im Backlog.
+- Lehre: Der Durchgang mit echten Screenshots ist zugleich ein UX-Rundgang — er fand drei Dinge, die keine Karte gesehen hatte.
+- Nur Dokumente — Gate Build + NUnit 1823/1823, kein Release-Tag.
