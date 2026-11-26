@@ -43,6 +43,8 @@ const VORBEREITUNGEN = {
   'Repo Y': { anlegen: repos.repoY, commits: ['y3', 'y1'] },
   // Karte #48 (R00039): ein Pfad von rund 300 Zeichen mit U+202E — für die Kürzung in der Leiste (Szenario 5).
   'Langer Pfad': { anlegen: repos.repoLangerPfad, commits: ['l1', 'l2'] },
+  // R00012: Repo Z mit `z1`, `z2`, `z3` (lückenlose Kette) — die Vorbereitung der R00039-Kriterien.
+  'Repo Z': { anlegen: repos.repoZ, commits: ['z1', 'z2', 'z3'] },
 };
 
 function diffSprache(gr, page) {
