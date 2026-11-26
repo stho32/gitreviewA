@@ -50,6 +50,10 @@ internal sealed class OrdnerD : IDisposable
             File.SetUnixFileMode(d.Pfad("gesperrt.sql"), UnixFileMode.None);
         }
         File.Copy(d.Pfad("a.sql"), d.Pfad("haken.sql"));
+        foreach (var nummer in new[] { "001", "002", "003" })
+        {
+            File.WriteAllText(d.Pfad($"{nummer}.sql"), $"-- Migration {nummer}\nSELECT {nummer};\n");
+        }
         return d;
     }
 

@@ -7,7 +7,7 @@ namespace GitReviewA.Dateiansicht;
 internal sealed record Quellenfehler(string Angabe, Quellengrund Grund);
 
 /// <summary>Der Ausgang des Startinteractors: ein Stand im RAM oder alle Gründe; nie eine halbe Ansicht (PO 2026-11-25, Zeile 203).</summary>
-internal sealed record Startausgang(Dateiansichtsstand? Stand, IReadOnlyList<Quellenfehler> Fehler)
+internal sealed record Startausgang(Dateiansichtsstand? Stand, IReadOnlyList<Quellenfehler> Fehler, string? Grenzenmeldung = null)
 {
     public bool IstErfolg => Stand is not null;
 
@@ -19,6 +19,12 @@ internal sealed record Startausgang(Dateiansichtsstand? Stand, IReadOnlyList<Que
     public static Startausgang Abgelehnt(IReadOnlyList<Quellenfehler> fehler)
     {
         return new Startausgang(null, fehler);
+    }
+
+    /// <summary>Der ganze Start abgelehnt mit einer Meldung für die Liste — ohne eine Datei zu prüfen (mehr als 50 Angaben).</summary>
+    public static Startausgang Grenzen(string meldung)
+    {
+        return new Startausgang(null, [], meldung);
     }
 }
 
@@ -39,10 +45,19 @@ internal sealed class DateiansichtStartInteractor
 
     public Startausgang Starte(Dateiaufruf aufruf)
     {
+        if (Quellengrenzen.Zahlmeldung(aufruf.Quellen.Count) is string zuviele)
+        {
+            return Startausgang.Grenzen(zuviele);
+        }
         var fehler = new List<Quellenfehler>();
         var eintraege = new List<Dateieintrag>();
+        var gesehen = new HashSet<string>(StringComparer.Ordinal);
         foreach (var angabe in aufruf.Quellen)
         {
+            if (!gesehen.Add(angabe))
+            {
+                continue;
+            }
             var eintrag = LiesUndOrdne(angabe, eintraege.Count, fehler);
             if (eintrag is not null)
             {

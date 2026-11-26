@@ -43,12 +43,21 @@ public class AufrufleserDateiansichtTests
     }
 
     [Test]
-    public void Wenn_zwei_Angaben_dann_Fehler_Die_Dateiansicht_zeigt_eine_Datei()
+    public void Wenn_zwei_Angaben_genannt_sind_dann_stehen_beide_in_Aufrufreihenfolge()
     {
         var ergebnis = Aufrufleser.Lesen(["--dateien", "a.sql", "b.sql"]);
 
-        Assert.That(ergebnis.IstGueltig, Is.False);
-        Assert.That(ergebnis.Fehlermeldung, Does.Contain("Die Dateiansicht zeigt eine Datei"));
+        Assert.That(GueltigerDateiaufruf(ergebnis).Quellen, Is.EqualTo(new[] { "a.sql", "b.sql" }));
+    }
+
+    [Test]
+    public void Wenn_fuenfzig_Angaben_genannt_sind_dann_ist_der_Aufruf_gueltig()
+    {
+        var angaben = Enumerable.Range(0, 50).Select(nummer => $"kopie-{nummer}.sql").ToArray();
+
+        var ergebnis = Aufrufleser.Lesen(["--dateien", .. angaben]);
+
+        Assert.That(GueltigerDateiaufruf(ergebnis).Quellen, Has.Count.EqualTo(50));
     }
 
     [TestCase("a1b2c3d4")]

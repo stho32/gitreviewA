@@ -86,6 +86,11 @@ internal static class Program
         var ausgang = interactor.Starte(aufruf);
         if (!ausgang.IstErfolg)
         {
+            if (ausgang.Grenzenmeldung is string grenzenmeldung)
+            {
+                protokoll.Melde(Protokollstufe.Fehler, "Dateiansicht", grenzenmeldung);
+                return AufruffehlerMeldungen.ExitCode;
+            }
             foreach (var fehler in ausgang.Fehler)
             {
                 var grundzeile = $"{UnsichtbareZeichen.AlsMarken(fehler.Angabe)}: {QuellengrundMeldungen.Meldung(fehler.Grund)}";

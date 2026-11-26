@@ -271,6 +271,61 @@ public class DateiansichtLaufTests
         Assert.That(bash.StandardOutput.ReadToEnd(), Is.Empty);
     }
 
+    [Test]
+    public async Task Wenn_mehrere_Angaben_fehlerhaft_sind_dann_Exit_2_mit_allen_Gruenden_in_Reihenfolge()
+    {
+        using var d = OrdnerD.Anlegen();
+        using var lauf = await Dateiansichtprozess.StarteAsync(d.Ordner, "--dateien", "a.sql", "fehlt.sql", "ordner", "bin.dat", "--kein-browser");
+
+        var ende = await lauf.WarteAufEndeAsync();
+
+        Assert.That(ende, Is.EqualTo(2));
+        Assert.That(lauf.Ausgabe, Is.Empty);
+        Assert.That(lauf.Fehler, Does.Not.Contain("http://127.0.0.1"));
+        Assert.That(Fehlerzeilen(lauf.Fehler), Is.EqualTo(3));
+        var zeilen = Fehlertexte(lauf.Fehler).ToArray();
+        Assert.That(zeilen[0], Does.Contain("fehlt.sql: Datei nicht gefunden"));
+        Assert.That(zeilen[1], Does.Contain("ordner: ist ein Verzeichnis"));
+        Assert.That(zeilen[2], Does.Contain("bin.dat: Binärdatei — enthält Null-Bytes"));
+    }
+
+    [Test]
+    public async Task Wenn_51_Angaben_genannt_sind_dann_Exit_2_mit_zu_viele_Dateien_und_kein_Server()
+    {
+        using var d = OrdnerD.Anlegen();
+        var angaben = Enumerable.Range(0, 51).Select(nummer => $"kopie-{nummer}.sql").ToArray();
+        using var lauf = await Dateiansichtprozess.StarteAsync(d.Ordner, [.. new[] { "--dateien" }, .. angaben, "--kein-browser"]);
+
+        var ende = await lauf.WarteAufEndeAsync();
+
+        Assert.That(ende, Is.EqualTo(2));
+        Assert.That(lauf.Ausgabe, Is.Empty);
+        Assert.That(lauf.Fehler, Does.Contain("zu viele Dateien (51, höchstens 50)"));
+        Assert.That(lauf.Fehler, Does.Not.Contain("http://127.0.0.1"));
+        Assert.That(Fehlerzeilen(lauf.Fehler), Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task Wenn_mehrere_Dateien_zeigbar_sind_dann_stehen_sie_als_Liste_mit_Nummern_in_Aufrufreihenfolge()
+    {
+        using var d = OrdnerD.Anlegen();
+        using var lauf = await Dateiansichtprozess.StarteAsync(d.Ordner, "--dateien", "003.sql", "001.sql", "002.sql", "--kein-browser", "--port", "0");
+
+        var liste = await lauf.AbrufenAsync("api/dateiansicht");
+        var text = await lauf.AbrufenAsync("api/dateiansicht/0");
+        await lauf.SchliessenAsync();
+        var ende = await lauf.WarteAufEndeAsync();
+
+        using var dokument = JsonDocument.Parse(liste.Koerper);
+        var dateien = dokument.RootElement.GetProperty("dateien").EnumerateArray().ToList();
+        Assert.That(dateien.Select(datei => datei.GetProperty("nummer").GetInt32()), Is.EqualTo(new[] { 0, 1, 2 }));
+        Assert.That(dateien.Select(datei => datei.GetProperty("anzeigename").GetString()), Is.EqualTo(new[] { "003.sql", "001.sql", "002.sql" }));
+        using var textdokument = JsonDocument.Parse(text.Koerper);
+        Assert.That(textdokument.RootElement.GetProperty("text").GetString(), Is.EqualTo(File.ReadAllText(d.Pfad("003.sql"))));
+        Assert.That(ende, Is.EqualTo(0));
+        Assert.That(lauf.Ausgabe, Is.Empty);
+    }
+
     private static async Task WarteAufInhalt(string pfad, string text)
     {
         var frist = System.Diagnostics.Stopwatch.StartNew();
@@ -296,6 +351,13 @@ public class DateiansichtLaufTests
     private static int Fehlerzeilen(string fehler)
     {
         return fehler.Split('\n').Count(zeile => zeile.Contains("[Dateiansicht]", StringComparison.Ordinal));
+    }
+
+    private static IEnumerable<string> Fehlertexte(string fehler)
+    {
+        return fehler.Split('\n')
+            .Where(zeile => zeile.Contains("[Dateiansicht]", StringComparison.Ordinal) && zeile.Trim().Length > 0)
+            .Select(zeile => zeile.TrimEnd('\r'));
     }
 
     private static int NichtLeereZeilen(string fehler)

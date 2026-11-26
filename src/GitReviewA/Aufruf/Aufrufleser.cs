@@ -168,10 +168,6 @@ internal static class Aufrufleser
         {
             return Aufrufergebnis.Ungueltig($"Die Dateiansicht braucht eine Angabe: {Dateienform}");
         }
-        if (quellen.Count > 1)
-        {
-            return Aufrufergebnis.Ungueltig("Die Dateiansicht zeigt eine Datei.");
-        }
         var dateiaufruf = new Dateiaufruf(quellen, sammlung.Port, sammlung.BrowserOeffnen, Mindeststufe(sammlung));
         return Aufrufergebnis.Gueltig(dateiaufruf);
     }

@@ -188,9 +188,109 @@ public class DateiansichtStartInteractorTests
         Assert.That(ausgang.Stand?[0].Anzeigename, Is.EqualTo("zeile⟨U+000A⟩umbruch.sql"));
     }
 
-    private static Startausgang Starte(string angabe)
+    [Test]
+    public void Wenn_drei_Dateien_in_Aufrufreihenfolge_genannt_sind_dann_stehen_sie_so_mit_den_Nummern_0_bis_2()
     {
-        var aufruf = new Dateiaufruf([angabe], 0, BrowserOeffnen: false, Protokollstufe.Warnung);
+        using var d = OrdnerD.Anlegen();
+
+        var ausgang = InOrdner(d, () => Starte("003.sql", "001.sql", "002.sql"));
+
+        Assert.That(ausgang.IstErfolg, Is.True);
+        var stand = ausgang.Stand ?? throw new InvalidOperationException();
+        Assert.That(stand.Anzahl, Is.EqualTo(3));
+        Assert.That(new[] { stand[0].Nummer, stand[1].Nummer, stand[2].Nummer }, Is.EqualTo(new[] { 0, 1, 2 }));
+        Assert.That(new[] { stand[0].Anzeigename, stand[1].Anzeigename, stand[2].Anzeigename },
+            Is.EqualTo(new[] { "003.sql", "001.sql", "002.sql" }));
+    }
+
+    [Test]
+    public void Wenn_mehrere_Angaben_fehlerhaft_sind_dann_stehen_alle_Gruende_in_Aufrufreihenfolge()
+    {
+        using var d = OrdnerD.Anlegen();
+
+        var ausgang = InOrdner(d, () => Starte("a.sql", "fehlt.sql", "ordner", "bin.dat"));
+
+        Assert.That(ausgang.IstErfolg, Is.False);
+        Assert.That(ausgang.Stand, Is.Null);
+        Assert.That(ausgang.Fehler.Select(fehler => fehler.Angabe), Is.EqualTo(new[] { "fehlt.sql", "ordner", "bin.dat" }));
+        Assert.That(ausgang.Fehler.Select(fehler => fehler.Grund.Art), Is.EqualTo(new[]
+        {
+            Quellengrundart.DateiNichtGefunden,
+            Quellengrundart.IstEinVerzeichnis,
+            Quellengrundart.Binaerdatei,
+        }));
+    }
+
+    [Test]
+    public void Wenn_dieselbe_Angabe_zweimal_und_ein_Umweg_genannt_sind_dann_steht_sie_einmal_der_Umweg_daneben()
+    {
+        using var d = OrdnerD.Anlegen();
+
+        var ausgang = InOrdner(d, () => Starte("a.sql", "a.sql", "./a.sql"));
+
+        Assert.That(ausgang.IstErfolg, Is.True);
+        var stand = ausgang.Stand ?? throw new InvalidOperationException();
+        Assert.That(stand.Anzahl, Is.EqualTo(2));
+        Assert.That(stand[0].Anzeigename, Is.EqualTo("a.sql"));
+        Assert.That(stand[1].Anzeigename, Is.EqualTo("./a.sql"));
+        Assert.That(stand[0].EchterPfad, Is.EqualTo(stand[1].EchterPfad));
+        Assert.That(stand[0].EchterPfad, Is.EqualTo(d.Pfad("a.sql")));
+    }
+
+    [Test]
+    public void Wenn_51_Angaben_genannt_sind_dann_zu_viele_Dateien_ohne_eine_Datei_zu_oeffnen()
+    {
+        using var d = OrdnerD.Anlegen();
+        var angaben = Enumerable.Range(0, 51).Select(nummer => $"kopie-{nummer}.sql").ToArray();
+
+        var ausgang = InOrdner(d, () => Starte(angaben));
+
+        Assert.That(ausgang.IstErfolg, Is.False);
+        Assert.That(ausgang.Stand, Is.Null);
+        Assert.That(ausgang.Grenzenmeldung, Is.EqualTo("zu viele Dateien (51, höchstens 50)"));
+        Assert.That(ausgang.Fehler, Is.Empty);
+    }
+
+    [Test]
+    public void Wenn_vier_Dateien_zu_je_8_MiB_und_eine_von_einem_Byte_genannt_sind_dann_zusammen_zu_gross()
+    {
+        using var d = OrdnerD.Anlegen();
+        var acht = new byte[8_388_608];
+        Array.Fill(acht, (byte)'a');
+        for (var nummer = 0; nummer < 4; nummer++)
+        {
+            File.WriteAllBytes(d.Pfad($"gross-{nummer}.sql"), acht.ToArray());
+        }
+        File.WriteAllBytes(d.Pfad("eins.sql"), [(byte)'x']);
+
+        var ausgang = InOrdner(d, () => Starte("gross-0.sql", "gross-1.sql", "gross-2.sql", "gross-3.sql", "eins.sql"));
+
+        Assert.That(ausgang.IstErfolg, Is.False);
+        Assert.That(ausgang.Fehler, Has.Count.EqualTo(1));
+        Assert.That(ausgang.Fehler[0].Angabe, Is.EqualTo("eins.sql"));
+        Assert.That(ausgang.Fehler[0].Grund.Art, Is.EqualTo(Quellengrundart.ZusammenZuGross));
+    }
+
+    [Test]
+    public void Wenn_vier_Dateien_zu_je_8_MiB_genannt_sind_dann_genau_32_MiB_und_zeigbar()
+    {
+        using var d = OrdnerD.Anlegen();
+        var acht = new byte[8_388_608];
+        Array.Fill(acht, (byte)'a');
+        for (var nummer = 0; nummer < 4; nummer++)
+        {
+            File.WriteAllBytes(d.Pfad($"genau-{nummer}.sql"), acht.ToArray());
+        }
+
+        var ausgang = InOrdner(d, () => Starte("genau-0.sql", "genau-1.sql", "genau-2.sql", "genau-3.sql"));
+
+        Assert.That(ausgang.IstErfolg, Is.True);
+        Assert.That(ausgang.Stand?.Anzahl, Is.EqualTo(4));
+    }
+
+    private static Startausgang Starte(params string[] angaben)
+    {
+        var aufruf = new Dateiaufruf(angaben, 0, BrowserOeffnen: false, Protokollstufe.Warnung);
         return new DateiansichtStartInteractor(new DateiLeser(new Quellenbuchung()), Ausgabegrenze.Standard).Starte(aufruf);
     }
 

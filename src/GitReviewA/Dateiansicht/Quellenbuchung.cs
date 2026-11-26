@@ -8,7 +8,7 @@ namespace GitReviewA.Dateiansicht;
 internal sealed class Quellenbuchung
 {
     /// <summary>32 MiB für Datenträger- und Commitquellen gemeinsam (PO 2026-11-25, Zeile 204).</summary>
-    public static readonly long StandardSumme = 32L * 1024 * 1024;
+    public static readonly long StandardSumme = Quellengrenzen.Hoechstsumme;
 
     public Quellenbuchung(long hoechstsumme = 0)
     {
