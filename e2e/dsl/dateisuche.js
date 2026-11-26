@@ -84,7 +84,10 @@ function dateisucheSprache(gr, page) {
     fortschritt: text => hakenSeite.pruefeFortschritt(page, text),
     abhaken: pfad => hakenSeite.kaestchenMitPfadBetaetigen(page, pfad),
     schalterBetatigen: () => seite.abgehakteSchalterBetatigen(page),
-    dateiAnsehen: pfad => seite.dateiMitPfadWaehlen(page, pfad),
+    dateiAnsehen: async pfad => {
+      await seite.dateiMitPfadWaehlen(page, pfad);
+      await naechsteSeite.pruefeDiffGeladen(page, pfad);
+    },
     gewaehlt: pfad => naechsteSeite.pruefeGewaehlt(page, pfad),
     diffPfad: () => page.locator('#diff .diff-pfad').getAttribute('aria-label'),
     druecke: taste => tastaturSeite.taste(page, taste),
@@ -97,6 +100,7 @@ function dateisucheSprache(gr, page) {
     ausgeklappt: () => einkl.pruefeZustand(page, false),
     seitenleisteVerborgen: () => einkl.pruefeSeitenleisteVerborgen(page),
     anfragenZaehlen: () => suchSeite.anfragenZaehlen(page),
+    commitZaehler: text => suchSeite.pruefeCommitZaehler(page, text),
     zeitBisZeilen: (anzahl, startMs) => suchSeite.zeitBisZeilen(page, anzahl, startMs),
     aufZeilen: anzahl => seite.aufDateizeilenWarten(page, anzahl),
     gitAufrufe: () => (zaehlerGit ? zaehlerGit.aufrufe() : []),

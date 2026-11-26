@@ -210,9 +210,20 @@
     };
   }
 
-  /** Ausblenden ist eine Sicht (R00025): hier gilt dieselbe wie in der Dateiliste — kein eigener Filter, nur `gitreviewaAusblenden`. */
+  /** Ausblenden (R00025) und Suche (R00049) sind Sichten auf dieselbe Liste: hier gilt dieselbe wie in der Dateiliste —
+      kein eigener Filter, nur `gitreviewaAusblenden` und der Suchlauf aus `dateisuche.js`. */
   function istSichtbar(pfad) {
+    if (!passtZurSuche(pfad)) {
+      return false;
+    }
     return !window.gitreviewaAusblenden || window.gitreviewaAusblenden.istSichtbar(pfad);
+  }
+
+  /** Ob der Pfad zum Suchtext passt; ohne Suche (`null`) passt jeder. */
+  function passtZurSuche(pfad) {
+    const suche = window.gitreviewaDateisuche;
+    const treffer = suche ? suche.treffer() : null;
+    return treffer === null || treffer.has(pfad);
   }
 
   function sichtbareListe(dateien) {

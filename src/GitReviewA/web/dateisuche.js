@@ -94,6 +94,7 @@
      Eigener Name, weil `suche.js` (R00027, Suche im Diff) `gitreviewaSuche` schon belegt. */
   window.gitreviewaDateisuche = {
     text: () => zustand.text,
+    treffer: () => zustand.treffer,
     trefferFuer,
   };
 

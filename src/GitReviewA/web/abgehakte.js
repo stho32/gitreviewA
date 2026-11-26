@@ -30,6 +30,7 @@
       zustand.gewaehlterPfad = null;
       zeichneHinweis();
     });
+    document.addEventListener('suche-geaendert', zeichneHinweis);
   }
 
   function setzen(an) {
@@ -83,13 +84,14 @@
     return { datei, pfad: datei.pfad, abgehakt: haken.stelleAbgehakt(commit, datei.pfad), gesperrt: haken.stelleGesperrt(commit, datei.pfad) };
   }
 
-  /** Der Hinweis nennt die gewählte Datei, solange sie ausgeblendet und der Schalter an ist; sonst steht er leer. */
+  /** Der Hinweis nennt die gewählte Datei, solange sie ausgeblendet ist — für **jeden** Grund (Muster R00025, Suche R00049,
+      Haken R00029, dessen Schalter die Sicht schon berücksichtigt); sonst steht er leer. */
   function zeichneHinweis() {
     const element = document.querySelector('#dateiliste .abgehakte-hinweis');
     if (!element) {
       return;
     }
-    const ausgeblendet = zustand.an && zustand.gewaehlterPfad !== null
+    const ausgeblendet = zustand.gewaehlterPfad !== null
       && !sicht(zustand.dateien, zustand.modus, zustand.commit).sichtbare.some(eintrag => eintrag.pfad === zustand.gewaehlterPfad);
     element.textContent = ausgeblendet ? 'Die gewählte Datei ist ausgeblendet' : '';
   }

@@ -103,8 +103,13 @@ async function zeitBisZeilen(page, anzahl, startMs) {
   return Date.now() - startMs;
 }
 
+/** Der Zähler des gewählten Commits (R00012, Kriterium 8): der Eintrag des Commit-Menüs endet auf „k von n“. */
+async function pruefeCommitZaehler(page, text) {
+  await expect(page.locator('#waehler-auswahl option:checked')).toHaveText(new RegExp(`${text}$`));
+}
+
 module.exports = {
   feld, sucheEingeben, sucheLeeren, sucheInhalt, sucheMeldung, pruefeSucheMeldung, pruefeLeerfall,
   listenMeldungText, zaehlerText, pruefeZaehler, pruefeHinweis, pruefeFeldbeschriftung, pruefeKuerzelHinweis,
-  pruefeFokusImSuchfeld, pruefeFokusAufDateizeile, anfragenZaehlen, zeitBisZeilen, tabBisFeld,
+  pruefeFokusImSuchfeld, pruefeFokusAufDateizeile, anfragenZaehlen, zeitBisZeilen, tabBisFeld, pruefeCommitZaehler,
 };
