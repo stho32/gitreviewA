@@ -592,3 +592,10 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - Durchlauf: Detailplanung Claude Sonnet (6 Bubbles, drei Abweichungen Code/Anforderung gefunden, K7–K10), PO: Ausklappen im engen Fenster A (Zeile 248); Bau 52 min, Code-Review Muss B1 (Diff 296–319 bei 566–589 px, Streifen aus #41 nicht in der Grenze), PO: Grenze 590 aus Konstanten (Zeile 249), planer-Folgearbeit Flash, Nacharbeit mit Mutant; Entwicklertest ohne Befund. Karte gesamt 3,25 $ (Planung 1,23 $, Code-Review 1,09 $).
 - Lehre: Eine neue Spaltenbreite (Streifen 24 px aus #41) muss in jede Grenze, die die Spalten summiert — eine Unterscheidung, ein Ort: die Grenze aus den Konstanten rechnen, CSS per Test gleichhalten.
 - Gate: NUnit 1665/1665, Playwright 1050/1050 zweimal.
+| 2026-11-26 | #47 | Detailplanung | planer | bestanden | 8 min | Claude Opus: Plan abgeglichen (7 Abweichungen), B3705 neu, K1–K9, Befund Commit-Leser · claude · opus · Lauf 47-planer-1 · 2,82 $ · Karte gesamt 2,82 $ |
+| 2026-11-26 | #47 | Detailplanung | product-owner | bestanden | 0 min | Claude Sonnet: Nachricht höchstens 20 000 Zeichen, sichtbar gekürzt (Zeile 250, 3f33720) · claude · sonnet · Lauf 47-product-owner-1 · 0,16 $ · Karte gesamt 2,98 $ |
+
+## Retrospektive #54 I0047 Datei aus einem Commit (2026-11-26)
+- Durchlauf: Bau 31 min; Code-Review Muss B1 (Commitquelle ungefärbt — ein Feld `EchterPfad` mit zwei Lesern: Kopf und Sprachwahl), Sollte A1; Security-Review Claude Sonnet ohne Muss (C1–C13, P14, G5 halten; 0 Marker nach ~45 Läufen mit Fallen-Konfiguration); Nacharbeit trennt `Sprachpfad`, Tests für A1 und C2-Kollision; Entwicklertest (SQL in zwei Commits) ohne Befund. Karte gesamt 1,29 $.
+- Lehre: Ein Feld mit zwei Bedeutungen fällt erst auf, wenn eine neue Quelle die beiden auseinanderzieht — eine Unterscheidung, ein Ort gilt auch für Datenfelder.
+- Gate: NUnit 1768/1768, Playwright 1055/1055 zweimal.
