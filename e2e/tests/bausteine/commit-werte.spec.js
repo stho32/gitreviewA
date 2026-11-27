@@ -63,7 +63,7 @@ test.describe('Baustein Commit-Werte', () => {
     expect(betreffVon(commits, 'fedcba9')).toBe('');
   });
 
-  test('Kriterium 7: Betreff, Autor und Rumpf werden auf 20 000 Zeichen gekürzt', () => {
+  test('Kriterium 4: Betreff, Autor und Rumpf werden auf 20 000 Zeichen gekürzt', () => {
     const werte = zeilenwerte({
       kurzHash: 'a',
       betreff: 'B'.repeat(25000),
@@ -77,7 +77,7 @@ test.describe('Baustein Commit-Werte', () => {
     expect(werte.rumpf).toBe(`${'r'.repeat(20000)}… (5000 Zeichen nicht gezeigt)`);
   });
 
-  test('Kriterium 5: erst kürzen, dann markieren — die Zahl n zählt das Zeichen mit, die Marke steht ganz', () => {
+  test('Kriterium 4: erst kürzen, dann markieren — die Zahl n zählt das Zeichen mit, die Marke steht ganz', () => {
     const werte = zeilenwerte({
       kurzHash: 'a',
       betreff: 'B',
@@ -98,7 +98,7 @@ test.describe('Baustein Commit-Werte', () => {
     expect(zeilenwerte({ kurzHash: 'a', betreff: 'B', autor: 'A', rumpf: '', datum: '' }).hatRumpf).toBe(false);
   });
 
-  test('Kriterium 7: betreffVon kürzt den Betreff und zeigt die Marke', () => {
+  test('Kriterium 4: betreffVon kürzt den Betreff und zeigt die Marke', () => {
     const commits = [{ hash: 'a', kurzHash: 'a', betreff: `${'B'.repeat(19999)}\u202E${'b'.repeat(10)}`, rumpf: 'r' }];
 
     expect(betreffVon(commits, 'a')).toBe(`${'B'.repeat(19999)}⟨U+202E⟩… (10 Zeichen nicht gezeigt)`);
@@ -177,6 +177,11 @@ test.describe('Baustein Commit-Werte — die eine Zeichenliste (R00054)', () => 
       { name: 'Zeichenklasse mit U+200B', muster: /\\u200[BCDEF]/i },
       { name: 'Zeichenklasse mit U+061C', muster: /\\u061C/i },
       { name: 'literales Format- oder Trennezeichen', muster: /[\p{Cf}\u2028\u2029]/u },
+      // Nacharbeit B1: die Sonde fand nur literale Escapes; die Eigenschaftsklassen `\p{Cc}`/`\p{Cf}`/`\p{Zl}`/`\p{Zp}`
+      // und gleichwertige Schreibweisen (`\p{Control}`/`\p{Format}`, `\u2028`/`\u2029`) standen daneben unentdeckt.
+      { name: 'Zeichenklasse Cc/Cf/Zl/Zp', muster: /\\p\{(?:Cc|Cf|Zl|Zp)\}/i },
+      { name: 'gleichwertige Zeichenklasse Control/Format', muster: /\\p\{(?:Control|Format)\}/i },
+      { name: 'Zeilen-/Absatztrenner als Escape', muster: /\\u202[89]/i },
     ];
     const quellen = fs.readdirSync(WEB).filter(name => name.endsWith('.js')).map(name => ({ name, text: fs.readFileSync(path.join(WEB, name), 'utf8') }));
     const dateiliste = quellen.find(quelle => quelle.name === 'dateiliste-werte.js');
@@ -195,6 +200,7 @@ test.describe('Baustein Commit-Werte — die eine Zeichenliste (R00054)', () => 
     // Positivkontrolle: die eine Liste steht da, die Suche greift.
     expect(dateiliste.text).toContain('UNSICHTBARE_ZEICHEN');
     expect(verbotene[0].muster.test(dateiliste.text)).toBe(false);
+    expect(verbotene.find(regel => regel.name === 'Zeichenklasse Cc/Cf/Zl/Zp').muster.test(dateiliste.text)).toBe(true);
     expect(funde).toEqual([]);
   });
 });
