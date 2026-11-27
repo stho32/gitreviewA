@@ -6,6 +6,8 @@ const vm = require('vm');
 const { test, expect } = require('@playwright/test');
 const { datumText, zeilenwerte, betreffVon } = require('../../../src/GitReviewA/web/commit-werte.js');
 const { sichtbarerName } = require('../../../src/GitReviewA/web/dateiliste-werte.js');
+const { markiert } = require('../../../src/GitReviewA/web/absicht-werte.js');
+const { nachrichtText } = require('../../../src/GitReviewA/web/nachricht-werte.js');
 
 const WEB = path.resolve(__dirname, '../../../src/GitReviewA/web');
 
@@ -194,5 +196,68 @@ test.describe('Baustein Commit-Werte — die eine Zeichenliste (R00054)', () => 
     expect(dateiliste.text).toContain('UNSICHTBARE_ZEICHEN');
     expect(verbotene[0].muster.test(dateiliste.text)).toBe(false);
     expect(funde).toEqual([]);
+  });
+});
+
+test.describe('Baustein Commit-Werte — Marken der Leiste (R00054, B5402)', () => {
+  const HINWEIS = anzahl => `… (${anzahl} Zeichen nicht gezeigt)`;
+
+  test('Kriterium 1: ubidi zeigt im Betreff und im Autor die Marke und kein rohes Zeichen', () => {
+    const werte = zeilenwerte({ kurzHash: 'a', betreff: 'abc\u202Efed.exe', autor: 'Anna\u200BBeispiel', rumpf: '', datum: '2026-01-01T00:00:00Z' });
+
+    expect(werte.betreff).toBe('abc⟨U+202E⟩fed.exe');
+    expect(werte.autor).toBe('Anna⟨U+200B⟩Beispiel');
+    expect(`${werte.betreff}${werte.autor}`).not.toMatch(/[\u202E\u200B]/);
+  });
+
+  test('Kriterium 2: die Message behält LF als Zeilenumbruch, Tab bleibt, CR wird Marke', () => {
+    const werte = zeilenwerte({
+      kurzHash: 'a',
+      betreff: 'Start\u2066x\u2069',
+      autor: 'A',
+      rumpf: 'a\u202Eb\nc\u200Bd\ne\u{E0041}\tf\u000Dg',
+      datum: '2026-01-01T00:00:00Z',
+    });
+
+    expect(werte.rumpf).toBe('a⟨U+202E⟩b\nc⟨U+200B⟩d\ne⟨U+E0041⟩\tf⟨U+000D⟩g');
+    expect(werte.betreff).toBe('Start⟨U+2066⟩x⟨U+2069⟩');
+  });
+
+  test('Kriterium 2: in Betreff und Autor wird auch LF eine Marke, in der Message nicht', () => {
+    const werte = zeilenwerte({ kurzHash: 'a', betreff: 'Start\nNext', autor: 'Anna\nBeispiel', rumpf: 'eins\nzwei', datum: '' });
+
+    expect(werte.betreff).toBe('Start⟨U+000A⟩Next');
+    expect(werte.autor).toBe('Anna⟨U+000A⟩Beispiel');
+    expect(werte.rumpf).toBe('eins\nzwei');
+  });
+
+  test('Kriterium 4: an der Schnittkante steht eine ganze Marke, keine halbe', () => {
+    // 19 998 × a, U+202E, bb = 20 001 Zeichen; gezeigt werden 20 000 (a + Marke + b), 1 bleibt übrig.
+    const werte = zeilenwerte({ kurzHash: 'a', betreff: 'Kante', autor: 'A', rumpf: `${'a'.repeat(19998)}\u202Ebb`, datum: '' });
+
+    expect(werte.rumpf).toBe(`${'a'.repeat(19998)}⟨U+202E⟩b${HINWEIS(1)}`);
+    const marken = werte.rumpf.match(/⟨/g) || [];
+    const schliesser = werte.rumpf.match(/⟩/g) || [];
+    expect(marken).toHaveLength(schliesser.length);
+    expect(werte.rumpf).not.toContain('\u202E');
+  });
+
+  test('Kriterium 5: Leiste und Streifen zeigen für kr denselben Text mit derselben Zahl', () => {
+    const rumpf = `${'a'.repeat(19999)}\u202E${'b'.repeat(10)}`;
+
+    const leiste = zeilenwerte({ kurzHash: 'a', betreff: 'Richtung', autor: 'A', rumpf, datum: '' }).rumpf;
+    const streifen = markiert(nachrichtText(rumpf));
+
+    expect(streifen).toBe(`${'a'.repeat(19999)}⟨U+202E⟩${HINWEIS(10)}`);
+    expect(leiste).toBe(streifen);
+  });
+
+  test('Kriterium 7: unur hat einen Rumpf mit Marke, uleer keinen', () => {
+    const unur = zeilenwerte({ kurzHash: 'a', betreff: 'Nur unsichtbar', autor: 'A', rumpf: '\u200B', datum: '' });
+    const uleer = zeilenwerte({ kurzHash: 'b', betreff: 'Leer', autor: 'A', rumpf: '', datum: '' });
+
+    expect(unur.hatRumpf).toBe(true);
+    expect(unur.rumpf).toBe('⟨U+200B⟩');
+    expect(uleer.hatRumpf).toBe(false);
   });
 });
