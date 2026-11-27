@@ -769,3 +769,11 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-27 | #66 | Reviews | security-reviewer | bestanden | 1 min | Kurzblick: DOM-Knoten statt HTML, Marken bleiben · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 66-security-reviewer-1 · 0,017 $ · Karte gesamt 2,37 $ |
 | 2026-11-27 | #66 | Reviews | code-reviewer | bestanden | 3 min | kein Muss, 2 Sollte (K5-Filter, overflow-anchor ohne Rotprobe), 3 Optional · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 66-code-reviewer-1 · 0,12 $ · Karte gesamt 2,49 $ |
 | 2026-11-27 | #66 | Entwicklertest | entwicklertester | bestanden | 26 min | S1-S6 + Zusatz R00042/6 + Sollte-Probe bestanden, main-Vergleich: Fehler behoben · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 66-entwicklertester-1 · 0,19 $ · Karte gesamt 2,68 $ |
+
+## Retrospektive #66 I0056 Dateinamen in schmaler Seitenleiste (2026-11-27)
+
+- **Gerechnet statt gemessen:** Die Rechnung der Planung (149 px für den Pfad) ließ Polsterung und Tastenhinweis aus. Gemessen waren es 101 px. Mit dem entschiedenen Wert von 8rem war Kriterium 5 deshalb unerreichbar. Das hat erst der Bau gezeigt, die PO-Zeilen 279 und 280 beruhten auf der Rechnung. Lehre: Eine Grenze, die eine Gestaltungsentscheidung trägt, wird vor der Entscheidung am echten Programm gemessen, nicht aus CSS-Werten addiert. Die Messprobe der Vorprüfung hätte das gezeigt.
+- **Rückschritt in einem fremden Kriterium:** Die Zeilenhöhe hängt jetzt von der Breite ab, deshalb kippte R00042 Kriterium 6 (Bildlauf in Pixeln). Die volle Suite des Entwicklers hat ihn gefunden. Der product-owner hat das Kriterium sinngemäß neu gefasst: Die oberste sichtbare Datei bleibt.
+- **Schleife:** Entwicklung → Detailplanung → Entwicklung, einmal, unter der Bremse. Kosten 2,68 $.
+- **Ehrlich gemeldet:** Die Rot-Probe mit `overflow-anchor:none` blieb grün. Der Entwickler hat das offen berichtet, statt die Probe zu verbiegen.
+- **Gate auf main:** NUnit 1883 zweimal, Playwright 1343 zweimal grün.
