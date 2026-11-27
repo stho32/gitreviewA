@@ -278,6 +278,12 @@ function annotierSprache(gr, page) {
     ergebnisSpalteSichtbar: () => trennerSeite.pruefeErgebnisSpalteSichtbar(page),
     ergebnisSpalteVerborgen: () => trennerSeite.pruefeErgebnisSpalteVerborgen(page),
     ergebnisSpalteUmschalten: () => trennerSeite.spaltenKnopfBetatigen(page),
+    /** Zieht den Trenner auf die Zielbreite der Seitenleiste (240–640 px, R00034) und wartet, bis er sie führt. */
+    seitenleisteZiehenAuf: async ziel => {
+      const jetzt = Number((await trennerSeite.trennerAngaben(page)).jetzt);
+      await trennerSeite.ziehen(page, ziel - jetzt);
+      await expect.poll(async () => Number((await trennerSeite.trennerAngaben(page)).jetzt), `Breite der Seitenleiste ${ziel}`).toBe(ziel);
+    },
     /** Feld, Diff-Bereich und Rollbereich in einem Zug: rechte Kanten, waagerechter Bildlauf, Treffer an der rechten Kante. */
     lageDesFeldes: name => anmerkungSeite.lageDesFeldes(page, name),
     /** Dieselbe Lage des „Ändern“-Felds über die Nummer der Anmerkung (zwei Felder an einer Zeile tragen denselben Namen). */
