@@ -788,3 +788,20 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-27 | #68 | Reviews | code-reviewer | bestanden | 6 min | kein Muss; Sollte: Sonde fängt Escape-Schreibweise nicht · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 68-code-reviewer-1 · 0,043 $ · Karte gesamt 3,57 $ |
 | 2026-11-27 | #68 | Reviews | security-reviewer | bestanden | 11 min | kein Muss; Matrix Abschnitt F nachgezogen · claude · sonnet · Lauf 68-security-reviewer-1 · 1,57 $ · Karte gesamt 5,14 $ |
 | 2026-11-27 | #69 | Entwicklung | entwickler | bestanden | 1 h 21 min | B5701–B5704 grün, 1887/1368; Abweichung: Einzeilig-Grenze 600→620 px im Bestandstest, PO-Frage · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 69-entwickler-1 · 0,75 $ · Karte gesamt 3,02 $ |
+| 2026-11-27 | #69 | Entwicklung | product-owner | bestanden | 1 min | PO 289: ohne Suche ab 610 px eine Zeile · claude · sonnet · Lauf 69-product-owner-2 · 0,23 $ · Karte gesamt 3,25 $ |
+| 2026-11-27 | #69 | Entwicklung | planer | bestanden | 1 min | R00057 K5 auf 610 px, 8df0f07 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 69-planer-3 · 0,033 $ · Karte gesamt 3,28 $ |
+| 2026-11-27 | #68 | Entwicklertest | entwicklertester | bestanden | 28 min | 5 von 5 Szenarien bestanden, Gegenprobe gleich main, keine Befunde · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 68-entwicklertester-1 · 0,043 $ · Karte gesamt 5,18 $ |
+| 2026-11-27 | #69 | Entwicklung | entwickler | bestanden | 5 min | Tests auf 610 px, Mutationsprobe 600 rot, 4f165b6 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 69-entwickler-2 · 0,10 $ · Karte gesamt 3,38 $ |
+| 2026-11-27 | #69 | Reviews | security-reviewer | bestanden | 11 min | reines Layout, Angriffsfläche unverändert · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 69-security-reviewer-1 · 0,013 $ · Karte gesamt 3,39 $ |
+| 2026-11-27 | #69 | Reviews | code-reviewer | bestanden | 10 min | kein Muss; Sollte: zwei Maße für Zeile · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 69-code-reviewer-1 · 0,077 $ · Karte gesamt 3,47 $ |
+
+## Retrospektive #68 I0058 Unsichtbare Zeichen: Variationsselektoren, Füller und Tag-Block (2026-11-27)
+
+- **Bestand zuerst geprüft:** Die Karte war zum Teil überholt. Die zwei weiteren Literale hatte #64 schon ersetzt. Der planer hat das am Code belegt und die Kartenliste durch eine nachprüfbare Unicode-Eigenschaft (`Default_Ignorable_Code_Point`) ersetzt, statt Lücken zu übernehmen.
+- **Eine Tabelle, drei Laufzeiten:** Server, Node und Chromium tasten gegen dieselbe Datei ab. Code-Reviewer und Security-Reviewer haben das mit Mutanten auf beiden Seiten gegengeprüft. Das Muster lohnt sich für jede Regel, die in zwei Sprachen gilt.
+- **Ablehnende Nutzer der Klasse:** Ein Erweitern der Anzeige ändert auch, was abgelehnt wird (Muster, Dateisuche, Sprung). Der planer hat das vorab gesehen, deshalb gab es keine Nacharbeit.
+- **Lastgrenze wieder verletzt:** Der entwickler hat bei Last 5–7,5 gebaut und getestet (Spitze 7,9). Der entwicklertester hat zwei Zwischenläufe bei 6,3 gestartet. Das ist die dritte Karte in Folge mit diesem Verstoß, der Vorschlag „Lastsperre als Befehl“ steht in der Factory offen.
+- **Pflichtlektüre des security-reviewers unvollständig**, wie bei #64. Drei Dateien waren nur gezählt, und Secret-Suche und Gates wurden nicht gefahren. Die Proben selbst waren gründlich, es blieb kein Muss offen.
+- **Merge-Wache:** Es gab einen WBS-Konflikt mit den Planungszeilen von #69, die auf main schon standen. Er war mechanisch lösbar, beide Seiten sind erhalten.
+- **Gate auf main:** NUnit 1940 zweimal, Playwright 1350 zweimal grün.
+| 2026-11-27 | #68 | Kennzahlen | — | — | 1 h 48 min | Läufe 7 (bestanden 7) · Rollenzeit 1 h 53 min · Wartezeit 0 s · Nacharbeiten 0 · Kosten 5,19 $ · Durchlauf 1 h 48 min |
