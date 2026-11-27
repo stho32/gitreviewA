@@ -743,3 +743,11 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
   - #67: Beenden-Test prüft noch 5 s statt 15 s nach PO 273.
   - #69: Das Diff-Suchfeld wird von Zähler und Knopf „Ansicht“ überdeckt. Das war schon vorher so.
   - #70: der Wettlauf oben.
+| 2026-11-27 | #65 | Kennzahlen | — | — | 1 h 14 min | Läufe 7 (bestanden 7) · Rollenzeit 1 h 11 min · Wartezeit 2 min · Nacharbeiten 0 · Kosten 2,15 $ · Durchlauf 1 h 14 min |
+| 2026-11-27 | #66 | Detailplanung | product-owner | bestanden | 1 min | PO 279: (a) Umbruch an Trennern, Pfad min. 8rem, Zeile bricht um · claude · sonnet · Lauf 66-product-owner-1 · 0,26 $ · Karte gesamt 0,26 $ |
+| 2026-11-27 | #66 | Detailplanung | planer | bestanden | 3 min | I0056/R00056 B5601-B5603, 7 Kriterien, 1 PO-Frage (Baumtiefe bei 1280 px) · claude · sonnet · Lauf 66-planer-1 · 0,56 $ · Karte gesamt 0,82 $ |
+| 2026-11-27 | #66 | Detailplanung | product-owner | bestanden | 0 min | PO 280: Probe 5 nur Tiefe 0/1 ohne Bildlaufleiste · claude · sonnet · Lauf 66-product-owner-2 · 0,15 $ · Karte gesamt 0,97 $ |
+| 2026-11-27 | #66 | Detailplanung | planer | bestanden | 1 min | PO 280 eingearbeitet · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 66-planer-2 · 0,020 $ · Karte gesamt 0,99 $ |
+| 2026-11-27 | #64 | Nacharbeit | entwickler | bestanden | 30 min | B1 behoben: eine Liste, K3-Sonde rot→grün, NUnit 1883, E2E 1319 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 64-entwickler-2 · 0,21 $ · Karte gesamt 1,89 $ |
+| 2026-11-27 | #64 | Entwicklertest | entwicklertester | bestanden | 8 min | US-1..US-6 bestanden, Gegenprobe B1 gleich main · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 64-entwicklertester-1 · 0,17 $ · Karte gesamt 2,06 $ |
+| 2026-11-27 | #64 | Entwicklertest | security-reviewer | bestanden | 1 min | Angriffsmatrix nachgetragen (Ablage, Director committet) · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 64-security-reviewer-2 · 0,050 $ · Karte gesamt 2,11 $ |
