@@ -54,20 +54,10 @@ function mass(page) {
       meldung: r(werkzeuge.querySelector('#diff-suche-fehler')),
       menue: r(werkzeuge.querySelector('.ansicht-menue')),
     };
-    // Zeilen der Leiste: die sichtbaren Kinder des Kopfs nach ihrer senkrechten Mitte gruppieren (Toleranz 12 px, wie
-    // `leistenmass` in `diff-oberflaeche.js`). Die Werkzeugleiste selbst ist ein Kind; bricht sie um, wächst der Kopf.
-    const traeger = [...kopf.children].filter(element => element.getClientRects().length > 0);
-    const mitte = element => {
-      const b = element.getBoundingClientRect();
-      return (b.top + b.bottom) / 2;
-    };
-    const reihen = [];
-    for (const element of traeger) {
-      const m = mitte(element);
-      if (!reihen.some(reihe => Math.abs(reihe - m) < 12)) {
-        reihen.push(m);
-      }
-    }
+    // Zeilen der Leiste (R00057 Kriterium 5): die Höhe des Kopfs durch die Zeilenhöhe 30 px geteilt — die Anforderung
+    // zählt so (30 px eine Zeile, 56 px zwei, 94 px drei, 122 px vier). Die Höhe ist das belastbare Maß; die Bänder der
+    // sichtbaren Kopf-Kinder (`leistenmass` in `diff-oberflaeche.js`) liegen bei knapp umbrochenen Zeilen darunter.
+    const zeilenDerLeiste = element => Math.max(1, Math.round(element.getBoundingClientRect().height / 30));
     const schneidet = (a, b) => a && b && Math.min(a.rechts, b.rechts) > Math.max(a.links, b.links)
       && Math.min(a.unten, b.unten) > Math.max(a.oben, b.oben);
     const paare = [['feld', 'zaehler'], ['feld', 'meldung'], ['feld', 'menue'], ['zaehler', 'meldung'], ['zaehler', 'menue'], ['meldung', 'menue']];
@@ -88,7 +78,7 @@ function mass(page) {
       diffBildlauf: diff.scrollWidth > diff.clientWidth,
       kopfBildlauf: kopf.scrollWidth > kopf.clientWidth,
       rollbereichHoehe: roll ? Math.round(roll.getBoundingClientRect().height) : 0,
-      zeilen: reihen.length,
+      zeilen: zeilenDerLeiste(kopf),
       wurzelSchriftPx: parseFloat(getComputedStyle(document.documentElement).fontSize),
       zaehlerText: werkzeuge.querySelector('.diff-suche-zaehler').textContent,
       meldungText: werkzeuge.querySelector('#diff-suche-fehler').textContent,

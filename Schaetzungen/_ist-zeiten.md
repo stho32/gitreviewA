@@ -186,3 +186,4 @@ Nie vom User erfragen.
 | 2026-11-27 | R00057 Suchfeld in der Werkzeugleiste bleibt sichtbar | I0057 B5703 Höhenregel nachziehen (K5-Zeilenregel in B5701; ergebnis-bereiche 320→≤3, werkzeugleiste-einzeilig 588→≤2) | Standard | 2h | 0.6h | – | autonom |
 | 2026-11-27 | R00057 Suchfeld in der Werkzeugleiste bleibt sichtbar | I0057 B5704 Wächter um flex/flex-basis/min-inline-size erweitern (Mutationsprobe rot) | Standard | 2h | 0.4h | – | autonom |
 | 2026-11-27 | R00057 Suchfeld in der Werkzeugleiste bleibt sichtbar | I0057 Nacharbeit B5702/B5703: Richtwerte 14rem/7rem (Pfad bleibt ganz; Rand der Höhenregel 606 px) | Nacharbeit | – | 0.5h | – | autonom |
+| 2026-11-27 | R00057 Suchfeld in der Werkzeugleiste bleibt sichtbar | I0057 Nacharbeit B5701: Zeilenzahl der Leiste aus der Höhe (K5 zählt in 30-px-Zeilen) | Nacharbeit | – | 0.2h | – | autonom |
