@@ -1,6 +1,6 @@
 'use strict';
 // Treiber Oberfläche „Dateinamen in schmaler Seitenleiste“ (R00056, B5601): der einzige Ort, der die Selektoren der Dateiliste
-// und die Geometrie messung kennt — Pfadbreite gegen 8rem, Zeilenlage jedes Zeichens (Range.getClientRects), Umbruch nur nach
+// und die Geometriemessung kennt — Pfadbreite gegen 5rem, Zeilenlage jedes Zeichens (Range.getClientRects), Umbruch nur nach
 // einem Trenner (`/`, `-`, `_`, `.`) oder im Notfall-Stück, Überlauf (`scrollWidth ≤ clientWidth`) von Liste und Zeile, die
 // rechten Kanten der Kinder und die erreichbaren Marken (`.haken-ziel`, `.status`, `.balken`, `.zahlen`).
 const { expect } = require('@playwright/test');
@@ -12,13 +12,13 @@ const DATEIZEILE = '#datei-zeilen .datei-zeile';
 /** Trenner der Anforderung, nach denen ein Umbruch fallen darf. */
 const TRENNER = '/-_.';
 
-/** Die Schriftgröße der Wurzel und 8rem in Pixeln (die Kriterien 1 und 5 lesen den Wert aus der Wurzelschrift). */
+/** Die Schriftgröße der Wurzel und die Pfad-Basis 5rem in Pixeln (die Kriterien 1 und 5 lesen den Wert aus der Wurzelschrift). */
 function wurzelmasse(page) {
   return page.evaluate(() => {
     const schrift = parseFloat(getComputedStyle(document.documentElement).fontSize);
     const ziel = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--kd-ziel')) || 0;
     const zeile = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--kd-row')) || 0;
-    return { schrift, achtesRem: 8 * schrift, ziel, zeile };
+    return { schrift, basisRem: 5 * schrift, ziel, zeile };
   });
 }
 
