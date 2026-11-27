@@ -751,3 +751,13 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-27 | #64 | Nacharbeit | entwickler | bestanden | 30 min | B1 behoben: eine Liste, K3-Sonde rot→grün, NUnit 1883, E2E 1319 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 64-entwickler-2 · 0,21 $ · Karte gesamt 1,89 $ |
 | 2026-11-27 | #64 | Entwicklertest | entwicklertester | bestanden | 8 min | US-1..US-6 bestanden, Gegenprobe B1 gleich main · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 64-entwicklertester-1 · 0,17 $ · Karte gesamt 2,06 $ |
 | 2026-11-27 | #64 | Entwicklertest | security-reviewer | bestanden | 1 min | Angriffsmatrix nachgetragen (Ablage, Director committet) · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 64-security-reviewer-2 · 0,050 $ · Karte gesamt 2,11 $ |
+
+## Retrospektive #64 I0054 Commit-Texte zeigen unsichtbare Zeichen als Marke (2026-11-27)
+
+- **Planung mit Opus** (Label `sicherheit`) hat das Zusammenspiel von Kürzung und Marke vorab gelöst: erst kürzen, dann markieren, Marke zählt als ein Zeichen. Dazu die Falle der Ladereihenfolge. Entwicklung und Test haben beides ohne Befund bestätigt.
+- **Eine Nacharbeit:** Die Sonde für „eine Zeichenliste“ suchte nur Escapes und übersah zwei `\p{…}`-Klassen. Gefunden hat das der code-reviewer, nicht der security-reviewer, der sie nur als Anmerkung führte. Lehre: Eine Quelltext-Sonde muss jede gleichwertige Schreibweise suchen, nicht nur die, die man kennt.
+- **Nachprüfung der Nacharbeit** durch den Director am Diff, nach dem Ablauf „kleiner Fix mit Test, vorher rot, jetzt grün“, ohne zweiten Lauf des Reviews.
+- **Angriffsmatrix:** Mein Auftrag verlangte vom security-reviewer einen Commit. Nach `routing.md` liefert die Rolle in die Ablage, und ich committe. So habe ich es dann gemacht. Mein Auftrag war falsch, nicht die Rolle.
+- **Regelverstoß:** Der security-reviewer (Sonnet) hat die Pflichtlektüre aus `gemeinsam/` und `routing.md` nicht gelesen, das hat er selbst angegeben. Das Ergebnis war trotzdem belegt.
+- **Gate auf main:** NUnit 1883 zweimal, Playwright 1319 zweimal grün.
+- **Neue Backlog-Karte #68:** Variationsselektoren und Füllzeichen in die eine Klasse.
