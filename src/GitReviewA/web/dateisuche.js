@@ -50,7 +50,7 @@
     }
   }
 
-  /** Jede Eingabe wirkt sofort. Ein ungültiger Text (zu lang, Steuer- oder Richtungszeichen) meldet am Feld und lässt den
+  /** Jede Eingabe wirkt sofort. Ein ungültiger Text (zu lang, unsichtbare Zeichen) meldet am Feld und lässt den
       Suchtext **und** die Liste, wie der letzte gültige Text sie gemacht hat. */
   function beiEingabe(text) {
     const fehler = werte().suchtextFehler(text);

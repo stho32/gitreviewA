@@ -76,8 +76,11 @@ test.describe('Baustein Ausblenden-Werte', () => {
     expect(musterFehler('*', 0)).toBeNull();
     expect(musterFehler('', 0)).toBe('Ein Muster darf nicht leer sein.');
     expect(musterFehler('   ', 0)).toBe('Ein Muster darf nicht leer sein.');
-    expect(musterFehler('a\nb', 0)).toBe('Ein Muster darf keine Steuer- oder Richtungszeichen enthalten.');
-    expect(musterFehler('a\u202Eb', 0)).toBe('Ein Muster darf keine Steuer- oder Richtungszeichen enthalten.');
+    expect(musterFehler('a\nb', 0)).toBe('Ein Muster darf keine unsichtbaren Zeichen enthalten.');
+    expect(musterFehler('a\u202Eb', 0)).toBe('Ein Muster darf keine unsichtbaren Zeichen enthalten.');
+    expect(musterFehler('*\u2764\uFE0F*', 0)).toBe('Ein Muster darf keine unsichtbaren Zeichen enthalten.');
+    expect(musterFehler('\u3164', 0)).toBe('Ein Muster darf keine unsichtbaren Zeichen enthalten.');
+    expect(musterFehler('a\u2800b', 0)).toBe('Ein Muster darf keine unsichtbaren Zeichen enthalten.');
     expect(musterFehler(new Array(202).join('a'), 0)).toBe('Ein Muster darf höchstens 200 Zeichen haben.');
     expect(musterFehler('*.lock', 20)).toBe('Höchstens 20 Muster sind erlaubt.');
   });

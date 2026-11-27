@@ -22,11 +22,13 @@ test.describe('Eine Zeichenliste im Browser (R00054, B1)', () => {
     await gr.oberflaecheOeffnen(page, lauf, 'zusammen');
     await gr.aufDateizeilenWarten(page, 2);
 
-    // Ein Formatzeichen (Cf) und ein Steuerzeichen (Cc) — beide aus der einen Klasse.
+    // Ein Formatzeichen (Cf), ein Steuerzeichen (Cc) und ein Variationsselektor (Mn) — alle aus der einen Klasse.
     await gr.musterEingeben(page, 'a\u202Eb');
-    await expect(gr.ausblendenFehler(page)).toHaveText('Ein Muster darf keine Steuer- oder Richtungszeichen enthalten.');
+    await expect(gr.ausblendenFehler(page)).toHaveText('Ein Muster darf keine unsichtbaren Zeichen enthalten.');
     await gr.musterEingeben(page, 'a\u0007b');
-    await expect(gr.ausblendenFehler(page)).toHaveText('Ein Muster darf keine Steuer- oder Richtungszeichen enthalten.');
+    await expect(gr.ausblendenFehler(page)).toHaveText('Ein Muster darf keine unsichtbaren Zeichen enthalten.');
+    await gr.musterEingeben(page, '*\u2764\uFE0F*');
+    await expect(gr.ausblendenFehler(page)).toHaveText('Ein Muster darf keine unsichtbaren Zeichen enthalten.');
 
     // Ein gültiges Muster wirkt unverändert.
     await gr.musterEingeben(page, '*.lock');

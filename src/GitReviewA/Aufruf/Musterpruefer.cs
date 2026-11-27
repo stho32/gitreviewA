@@ -2,7 +2,7 @@ using GitReviewA.Fremdtext;
 
 namespace GitReviewA.Aufruf;
 
-/// <summary>Prüft ein Ausblendmuster nach R00025: 1 bis 200 Zeichen ohne Steuer- und Richtungszeichen, höchstens 20 Muster je Lauf. Reine Operation.</summary>
+/// <summary>Prüft ein Ausblendmuster nach R00025: 1 bis 200 Zeichen ohne unsichtbare Zeichen, höchstens 20 Muster je Lauf. Reine Operation.</summary>
 internal static class Musterpruefer
 {
     public const int HoechsteLaenge = 200;
@@ -18,7 +18,7 @@ internal static class Musterpruefer
         var traegtUnsichtbares = UnsichtbareZeichen.EnthaeltUnsichtbares(text);
         if (traegtUnsichtbares)
         {
-            return MusterpruefungsErgebnis.Abgelehnt(Musterablehnungsgrund.Steuerzeichen);
+            return MusterpruefungsErgebnis.Abgelehnt(Musterablehnungsgrund.UnsichtbareZeichen);
         }
         var istZuLang = text.Length > HoechsteLaenge;
         if (istZuLang)
@@ -39,7 +39,7 @@ internal static class Musterpruefer
         {
             Musterablehnungsgrund.Leer => "Ein --ignore-Muster darf nicht leer sein.",
             Musterablehnungsgrund.ZuLang => $"Ein --ignore-Muster darf höchstens {HoechsteLaenge} Zeichen haben.",
-            Musterablehnungsgrund.Steuerzeichen => "Ein --ignore-Muster darf keine Steuer- oder Richtungszeichen enthalten.",
+            Musterablehnungsgrund.UnsichtbareZeichen => "Ein --ignore-Muster darf keine unsichtbaren Zeichen enthalten.",
             Musterablehnungsgrund.ZuViele => $"Höchstens {Hoechstzahl} --ignore-Muster sind erlaubt.",
             _ => throw new ArgumentOutOfRangeException(nameof(grund), grund, "Unbekannter Ablehnungsgrund."),
         };

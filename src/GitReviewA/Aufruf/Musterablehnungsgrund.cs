@@ -5,6 +5,6 @@ internal enum Musterablehnungsgrund
 {
     Leer,
     ZuLang,
-    Steuerzeichen,
+    UnsichtbareZeichen,
     ZuViele,
 }

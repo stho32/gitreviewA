@@ -53,7 +53,7 @@
       return `Höchstens ${hoechstzahl} Muster sind erlaubt.`;
     }
     if (traegtUnsichtbares(text)) {
-      return 'Ein Muster darf keine Steuer- oder Richtungszeichen enthalten.';
+      return 'Ein Muster darf keine unsichtbaren Zeichen enthalten.';
     }
     if (text.length > hoechsteLaenge) {
       return `Ein Muster darf höchstens ${hoechsteLaenge} Zeichen haben.`;
@@ -82,7 +82,8 @@
   }
 
   /* Die eine Zeichenliste der Oberfläche (`dateiliste-werte.js`, R00054, Lehre #17): Steuerzeichen außer Tab, alle
-     Formatzeichen, Zeilen- und Absatztrenner. `index.html` lädt `ausblenden-werte.js` vor `dateiliste-werte.js`, deshalb
+     Formatzeichen, Zeilen- und Absatztrenner und die standardmäßig unsichtbaren Zeichen außerhalb der Formatzeichen.
+     `index.html` lädt `ausblenden-werte.js` vor `dateiliste-werte.js`, deshalb
      wird die Liste beim Aufruf geholt, nicht beim Laden — sonst fehlt sie im Browser (dieselbe Vorsicht wie in `commit-werte.js`). */
   const namensWerte = () => (typeof module !== 'undefined' ? require('./dateiliste-werte.js') : window);
 

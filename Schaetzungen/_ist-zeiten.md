@@ -177,3 +177,4 @@ Nie vom User erfragen.
 | 2026-11-27 | R00056/R00042 Karte #66 | Lauf 66-entwickler-2: Bericht, WBS, Gelerntes, Ist-Zeiten | Nacharbeit | – | 0,2h | – | autonom |
 | 2026-11-27 | R00058 Unsichtbare Zeichen eine Klasse | I0058 B5801 Gemeinsame Tabelle und Abtastung (rote Spezifikation) | unklar | 2-4h | 0,2h | – | autonom |
 | 2026-11-27 | R00058 Unsichtbare Zeichen eine Klasse | I0058 B5802 Klasse im Server erweitert (Bereichstabelle, Abtastung grün) | Standard | 2h | 0,1h | – | autonom |
+| 2026-11-27 | R00058 Unsichtbare Zeichen eine Klasse | I0058 B5803 Klasse in der Oberfläche erweitert, Sonde und Meldung | unklar | 2h | 0,2h | – | autonom |

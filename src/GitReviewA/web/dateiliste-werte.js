@@ -46,10 +46,16 @@
     return { plus: anteil(datei.plus), minus: anteil(datei.minus) };
   }
 
-  /** Richtungs-, Format- und Steuerzeichen (außer Tab) sowie Zeilen- und Absatztrenner: dieselbe Klasse wie
-      `Fremdtext/UnsichtbareZeichen` im Server, keine zweite Zeichenliste. Die Klasse selbst steht einmal hier; wer sie
-      braucht (`sichtbarerName`, die Diff-Anzeige), holt sie aus diesem Modul statt sie nachzubauen. */
-  const UNSICHTBARE_KLASSE = '\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}';
+  /** Richtungs-, Format- und Steuerzeichen (außer Tab) sowie Zeilen- und Absatztrenner, dazu die standardmäßig unsichtbaren
+      Codepunkte außerhalb der Formatzeichen (`Default_Ignorable_Code_Point`: Variationsselektoren, Hangul-Füller, reservierte
+      Tag-Bereiche) und U+2800: dieselbe Klasse wie `Fremdtext/UnsichtbareZeichen` im Server, keine zweite Zeichenliste. Die
+      Klasse selbst steht einmal hier; wer sie braucht (`sichtbarerName`, die Diff-Anzeige), holt sie aus diesem Modul statt
+      sie nachzubauen. Die Bereiche außerhalb der Kategorien stehen ausgeschrieben, nicht als `\p{Default_Ignorable_Code_Point}`:
+      Node und Chromium können verschiedene Unicode-Versionen tragen, und beide Seiten sollen wörtlich dieselbe Liste führen
+      (Herkunft: Unicode `DerivedCoreProperties.txt` 15.1 ohne die schon als `\p{Cf}` gezählten Codepunkte, dazu U+2800). */
+  const UNSICHTBARE_KLASSE = '\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}'
+    + '\\u034F\\u115F-\\u1160\\u17B4-\\u17B5\\u180B-\\u180D\\u180F\\u2065\\u2800\\u3164'
+    + '\\uFE00-\\uFE0F\\uFFA0\\uFFF0-\\uFFF8\\u{E0000}\\u{E0002}-\\u{E001F}\\u{E0080}-\\u{E0FFF}';
   const UNSICHTBARE_ZEICHEN = new RegExp(`[${UNSICHTBARE_KLASSE}]`, 'gu');
   const UNSICHTBARER_TEXT = new RegExp(`[${UNSICHTBARE_KLASSE}]`, 'u');
 

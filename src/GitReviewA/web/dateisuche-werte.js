@@ -15,7 +15,7 @@
     return text.includes('*') || text.includes('?') || text.includes('[');
   }
 
-  /** Prüft den Suchtext nach derselben Regel wie das Musterfeld (R00025): 1 bis 200 Zeichen ohne Steuer- und Richtungszeichen.
+  /** Prüft den Suchtext nach derselben Regel wie das Musterfeld (R00025): 1 bis 200 Zeichen ohne unsichtbare Zeichen.
       Leer oder nur Leerraum ist **keine** Suche und kein Fehler — dann steht die ganze Liste da, ohne Zähler und Meldung. */
   function suchtextFehler(text) {
     if (text.trim().length === 0) {

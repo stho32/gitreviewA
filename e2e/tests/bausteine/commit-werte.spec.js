@@ -182,6 +182,13 @@ test.describe('Baustein Commit-Werte — die eine Zeichenliste (R00054)', () => 
       { name: 'Zeichenklasse Cc/Cf/Zl/Zp', muster: /\\p\{(?:Cc|Cf|Zl|Zp)\}/i },
       { name: 'gleichwertige Zeichenklasse Control/Format', muster: /\\p\{(?:Control|Format)\}/i },
       { name: 'Zeilen-/Absatztrenner als Escape', muster: /\\u202[89]/i },
+      // R00058 (Kriterium 6): auch die standardmäßig unsichtbaren Zeichen dürfen nur in der einen Liste stehen — als
+      // Eigenschaft (`\p{Default_Ignorable_Code_Point}`/`\p{DI}`), als Escape (`\u{E0000}`) oder literal.
+      { name: 'Zeichenklasse Default_Ignorable_Code_Point', muster: /\\p\{(?:Default_Ignorable_Code_Point|DI)\}/i },
+      { name: 'Variationsselektor literal', muster: /[\uFE00-\uFE0F]/ },
+      { name: 'Hangul-Füller literal', muster: /[\u115F\u1160\u3164\uFFA0]/ },
+      { name: 'leeres Braille-Muster literal', muster: /\u2800/ },
+      { name: 'Zeichenklasse mit U+E0000', muster: /\\u\{E0000\}/i },
     ];
     const quellen = fs.readdirSync(WEB).filter(name => name.endsWith('.js')).map(name => ({ name, text: fs.readFileSync(path.join(WEB, name), 'utf8') }));
     const dateiliste = quellen.find(quelle => quelle.name === 'dateiliste-werte.js');
@@ -201,6 +208,7 @@ test.describe('Baustein Commit-Werte — die eine Zeichenliste (R00054)', () => 
     expect(dateiliste.text).toContain('UNSICHTBARE_ZEICHEN');
     expect(verbotene[0].muster.test(dateiliste.text)).toBe(false);
     expect(verbotene.find(regel => regel.name === 'Zeichenklasse Cc/Cf/Zl/Zp').muster.test(dateiliste.text)).toBe(true);
+    expect(verbotene.find(regel => regel.name === 'Zeichenklasse mit U+E0000').muster.test(dateiliste.text)).toBe(true);
     expect(funde).toEqual([]);
   });
 });

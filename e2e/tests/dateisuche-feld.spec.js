@@ -9,7 +9,7 @@ const suchSeite = require('../treiber/dateisuche-oberflaeche.js');
 
 const SQL_DATEIEN = ['db/001_anlegen.sql', 'db/002_aendern.sql', 'src/data/app.sql'];
 const ZU_LANG = 'Ein Muster darf höchstens 200 Zeichen haben.';
-const UNSICHTBAR = 'Ein Muster darf keine Steuer- oder Richtungszeichen enthalten.';
+const UNSICHTBAR = 'Ein Muster darf keine unsichtbaren Zeichen enthalten.';
 
 test.describe('Suchfeld und Meldung (B4504)', () => {
   test('soll einen ungültigen Text am Feld melden und die Liste des letzten gültigen Textes lassen (Kriterium 2)', async ({ dateisuche }) => {

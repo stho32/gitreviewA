@@ -32,9 +32,10 @@ test.describe('Baustein Dateisuche-Werte: Prüfung des Suchtextes', () => {
     expect(suchtextFehler('a'.repeat(201))).toBe('Ein Muster darf höchstens 200 Zeichen haben.');
   });
 
-  test('soll Steuer- und Richtungszeichen ablehnen (dieselbe Prüfung wie das Musterfeld)', () => {
-    expect(suchtextFehler('a\nb')).toBe('Ein Muster darf keine Steuer- oder Richtungszeichen enthalten.');
-    expect(suchtextFehler('ab\u202E.sql')).toBe('Ein Muster darf keine Steuer- oder Richtungszeichen enthalten.');
+  test('soll unsichtbare Zeichen ablehnen (dieselbe Prüfung wie das Musterfeld)', () => {
+    expect(suchtextFehler('a\nb')).toBe('Ein Muster darf keine unsichtbaren Zeichen enthalten.');
+    expect(suchtextFehler('ab\u202E.sql')).toBe('Ein Muster darf keine unsichtbaren Zeichen enthalten.');
+    expect(suchtextFehler('\u3164')).toBe('Ein Muster darf keine unsichtbaren Zeichen enthalten.');
   });
 
   test('soll führenden und folgenden Leerraum als Teil des Textes tragen', () => {
