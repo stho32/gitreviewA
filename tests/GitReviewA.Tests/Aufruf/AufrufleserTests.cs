@@ -205,12 +205,24 @@ public class AufrufleserTests
     [TestCase("   ")]
     [TestCase("\n")]
     [TestCase("a\u202Eb")]
+    [TestCase("a\uFE0Fb")]
+    [TestCase("a\u3164b")]
+    [TestCase("a\u2800b")]
     public void Wenn_ignore_Muster_ungueltig_dann_Fehler(string muster)
     {
         var ergebnis = Aufrufleser.Lesen([HashA, "--ignore", muster]);
 
         Assert.That(ergebnis.IstGueltig, Is.False);
         Assert.That(ergebnis.Fehlermeldung, Is.Not.Empty);
+    }
+
+    [Test]
+    public void Wenn_ignore_Muster_ein_unsichtbares_Zeichen_traegt_dann_Meldung_woertlich()
+    {
+        var ergebnis = Aufrufleser.Lesen([HashA, "--ignore", "a\u2800b"]);
+
+        Assert.That(ergebnis.IstGueltig, Is.False);
+        Assert.That(ergebnis.Fehlermeldung, Is.EqualTo("Ein --ignore-Muster darf keine unsichtbaren Zeichen enthalten."));
     }
 
     [Test]

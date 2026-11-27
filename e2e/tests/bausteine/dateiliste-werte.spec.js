@@ -1,7 +1,7 @@
 'use strict';
 // Bausteintests (ohne Browser) der reinen Funktionen der Dateiliste: Summe, Zahlen, Balken, flache und Baum-Zeilen.
 const { test, expect } = require('@playwright/test');
-const { summeText, zahlenText, groessteAenderung, balkenTeile, flacheZeilen, baumZeilen, sichtbareZeilen, umbenennungsText } = require('../../../src/GitReviewA/web/dateiliste-werte.js');
+const { summeText, zahlenText, groessteAenderung, balkenTeile, sichtbarerName, flacheZeilen, baumZeilen, sichtbareZeilen, umbenennungsText } = require('../../../src/GitReviewA/web/dateiliste-werte.js');
 
 const datei = (pfad, plus = 1, minus = 0, status = 'A') => ({ status, pfad, alterPfad: null, plus, minus });
 const binaer = pfad => ({ status: 'A', pfad, alterPfad: null, plus: null, minus: null });
@@ -145,5 +145,15 @@ test.describe('Baustein Dateiliste-Werte', () => {
     for (const code of sichtbare) {
       expect(markiert(code)).toBe(`x${String.fromCodePoint(code)}y`);
     }
+  });
+
+  test('soll legitime Emoji-, koreanische und Braille-Texte tragen und nur das Unsichtbare markieren (R00058, Kriterium 5)', () => {
+    expect(sichtbarerName('Gut ❤\uFE0F 👨\u200D👩\u200D👧 😀')).toBe('Gut ❤⟨U+FE0F⟩ 👨⟨U+200D⟩👩⟨U+200D⟩👧 😀');
+    expect(sichtbarerName('a\u2800b')).toBe('a⟨U+2800⟩b');
+    expect(sichtbarerName('안녕하세요')).toBe('안녕하세요');
+    expect(sichtbarerName('안녕하세요.txt')).toBe('안녕하세요.txt');
+    // NFD (Dateiname von macOS): Anlaut, Vokal und Auslaut je Silbe, kein Füller.
+    expect(sichtbarerName('\u110B\u1161\u11AB\u1102\u1167\u11BC\u1112\u1161\u1109\u1166\u110B\u1169.txt')).toBe('\u110B\u1161\u11AB\u1102\u1167\u11BC\u1112\u1161\u1109\u1166\u110B\u1169.txt');
+    expect(sichtbarerName('⠁⠃⠉')).toBe('⠁⠃⠉');
   });
 });

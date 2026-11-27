@@ -63,6 +63,10 @@ public class SprungpfadTests
     [TestCase("\n")]
     [TestCase("\r")]
     [TestCase("\u0007")]
+    [TestCase("\uFE0F")]
+    [TestCase("\u3164")]
+    [TestCase("\u2800")]
+    [TestCase("\U000E0000")]
     public void Wenn_der_Name_ein_unsichtbares_Zeichen_traegt_dann_nicht_uebergebbar(string unsichtbar)
     {
         var datei = new Dateiaenderung("A", $"x{unsichtbar}y.txt", null, 1, 0);

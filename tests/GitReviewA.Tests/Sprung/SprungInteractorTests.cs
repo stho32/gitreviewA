@@ -169,6 +169,24 @@ public class SprungInteractorTests
         Assert.That(quelle.Arbeitsbaumpruefungen, Is.Zero);
     }
 
+    [Test]
+    public void Wenn_der_Name_einen_Variationsselektor_oder_einen_Fueller_traegt_dann_Grund_nicht_uebergebbar_ohne_Arbeitsbaumpruefung()
+    {
+        var mitSelektor = new Dateiaenderung("A", "v\u2764\uFE0F.txt", null, 1, 0);
+        var mitBraille = new Dateiaenderung("A", "b\u2800.txt", null, 1, 0);
+        var mitFueller = new Dateiaenderung("A", "h\u3164.txt", null, 1, 0);
+        var aufbau = Aufbau.MitDateien(mitSelektor, mitBraille, mitFueller);
+
+        var selektor = aufbau.Lesen(HashA, "v\u2764\uFE0F.txt");
+        var braille = aufbau.Lesen(HashA, "b\u2800.txt");
+        var fueller = aufbau.Lesen(HashA, "h\u3164.txt");
+
+        Assert.That(selektor, Is.EqualTo(Sprungergebnis.KeinSprung(Sprunggruende.NameNichtUebergebbar)));
+        Assert.That(braille, Is.EqualTo(Sprungergebnis.KeinSprung(Sprunggruende.NameNichtUebergebbar)));
+        Assert.That(fueller, Is.EqualTo(Sprungergebnis.KeinSprung(Sprunggruende.NameNichtUebergebbar)));
+        Assert.That(aufbau.Quelle.Arbeitsbaumpruefungen, Is.Zero, "ein abgewiesener Name erreicht den Arbeitsbaum nicht");
+    }
+
     private sealed class Aufbau
     {
         private readonly SprungInteractor interactor;

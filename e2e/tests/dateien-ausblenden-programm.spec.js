@@ -10,7 +10,7 @@ const EINUNDZWANZIG = [...ZWANZIG, '--ignore', '*.lock'];
 
 test.describe('Ausblenden — Programm', () => {
   test('soll jedes ungültige --ignore vor dem Server mit Exit 2, einer Meldung und ohne git abweisen (Kriterium 3)', async ({ ausblendenProgramm: p }) => {
-    const ungueltigeWerte = ['', '   ', 'a'.repeat(201), 'a\nb', 'a\u202Eb'];
+    const ungueltigeWerte = ['', '   ', 'a'.repeat(201), 'a\nb', 'a\u202Eb', 'a\uFE0Fb', 'a\u3164b', 'a\u2800b'];
 
     for (const muster of ungueltigeWerte) {
       await p.starten({ zusatz: ['--ignore', muster], erwarteStart: false });
@@ -21,6 +21,16 @@ test.describe('Ausblenden — Programm', () => {
       expect(p.stdout()).toBe('');
       expect(p.stderrZeilen().filter(zeile => zeile.length > 0)).toHaveLength(1);
       expect(p.stderr()).not.toContain('127.0.0.1');
+      expect(p.gitAufrufe()).toEqual([]);
+    }
+  });
+
+  test('soll ein --ignore mit unsichtbarem Zeichen mit dem Wortlaut aus PO 285 abweisen (R00058, Kriterium 4)', async ({ ausblendenProgramm: p }) => {
+    for (const muster of ['*\u2764\uFE0F*', 'a\u2800b', '\u3164']) {
+      await p.starten({ zusatz: ['--ignore', muster], erwarteStart: false });
+
+      expect(await p.aufEnde(), `Exit-Code für Muster ${JSON.stringify(muster)}`).toBe(2);
+      expect(p.stderr()).toContain('Ein --ignore-Muster darf keine unsichtbaren Zeichen enthalten.');
       expect(p.gitAufrufe()).toEqual([]);
     }
   });

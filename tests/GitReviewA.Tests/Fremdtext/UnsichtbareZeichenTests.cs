@@ -33,11 +33,25 @@ public class UnsichtbareZeichenTests
     [TestCase("a\tb ä ß ≥ <b>")]
     [TestCase("\U0001F600 Emoji")]
     [TestCase("日本語/ملف.txt")]
+    [TestCase("안녕하세요")]
+    [TestCase("안녕하세요.txt")]
+    [TestCase("\u110B\u1161\u11AB\u1102\u1167\u11BC\u1112\u1161\u1109\u1166\u110B\u1169.txt")] // NFD: kein Füller
+    [TestCase("⠁⠃⠉")]
     public void Wenn_Text_nur_sichtbare_Zeichen_und_Tab_enthaelt_dann_bleibt_er_unveraendert(string text)
     {
         var markiert = UnsichtbareZeichen.AlsMarken(text);
 
         Assert.That(markiert, Is.EqualTo(text));
+    }
+
+    /// <summary>Legitime Inhalte der User Story R00058 (Kriterium 5): nur der unsichtbare Teil wird markiert, der Rest bleibt.</summary>
+    [TestCase(@"Gut ❤\uFE0F 👨\u200D👩\u200D👧 😀", @"Gut ❤⟨U+FE0F⟩ 👨⟨U+200D⟩👩⟨U+200D⟩👧 😀")]
+    [TestCase(@"a\u2800b", @"a⟨U+2800⟩b")]
+    public void Wenn_Text_Emoji_oder_Braille_traegt_dann_steht_nur_das_Unsichtbare_als_Marke(string maskiert, string erwartet)
+    {
+        var markiert = UnsichtbareZeichen.AlsMarken(Regex.Unescape(maskiert));
+
+        Assert.That(markiert, Is.EqualTo(erwartet));
     }
 
     /// <summary>Die Bereiche außerhalb der Unicode-Kategorien, mit ihren Grenzen (R00058).</summary>
