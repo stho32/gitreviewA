@@ -770,7 +770,7 @@
     zelleElement.colSpan = 4;
     zelleElement.className = 'anm-zelle';
     feld.eingabeElement = document.createElement('textarea');
-    feld.eingabeElement.className = 'inp anm-eingabe';
+    feld.eingabeElement.className = 'inp anm-eingabe formularfeld';
     feld.eingabeElement.rows = 3;
     feld.eingabeElement.setAttribute('aria-label', feld.feldname);
     feld.eingabeElement.value = feld.vorbelegung;
