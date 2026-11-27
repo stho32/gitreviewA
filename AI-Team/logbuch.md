@@ -780,3 +780,6 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-27 | #66 | Kennzahlen | — | — | 2 h 1 min | Läufe 11 (befund 1, bestanden 10) · Rollenzeit 1 h 51 min · Wartezeit 9 min · Nacharbeiten 0 · Kosten 2,67 $ · Durchlauf 2 h 1 min |
 | 2026-11-27 | #68 | Detailplanung | planer | bestanden | 9 min | I0058/R00058 bis Bubble, d7a0582; 3 Produktfragen an den PO · claude · opus · Lauf 68-planer-1 · 2,90 $ · Karte gesamt 2,90 $ |
 | 2026-11-27 | #68 | Detailplanung | product-owner | bestanden | 1 min | PO 283–285: U+FE0F überall markieren, U+2800 ja, Wortlaut unsichtbare Zeichen · claude · sonnet · Lauf 68-product-owner-1 · 0,20 $ · Karte gesamt 3,10 $ |
+| 2026-11-27 | #68 | Detailplanung | planer | bestanden | 1 min | Offene Fragen geschlossen, eaa8821 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 68-planer-2 · 0,057 $ · Karte gesamt 3,16 $ |
+| 2026-11-27 | #69 | Detailplanung | planer | bestanden | 14 min | I0057/R00057, 8b9f3ac, Messreihe 8 Fälle × 5 Zustände; 2 Fragen an den PO · claude · sonnet · Lauf 69-planer-1 · 1,95 $ · Karte gesamt 1,95 $ |
+| 2026-11-27 | #69 | Detailplanung | product-owner | bestanden | 1 min | PO 286–288: Leiste umbrechen, Höhenregel gelockert, Fehlermeldung eigene Karte · claude · sonnet · Lauf 69-product-owner-1 · 0,18 $ · Karte gesamt 2,13 $ |
