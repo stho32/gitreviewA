@@ -114,6 +114,14 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .ausblenden-chip .muster-entfernen{font:inherit;font-size:12px;padding:0 var(--kd-s2);min-block-size:calc(var(--kd-ziel) - 4px);border:0;background:transparent;color:var(--kd-accent);cursor:pointer}
 .ausblenden-chip .muster-entfernen:focus-visible{outline:2px solid var(--kd-accent);outline-offset:-2px}
 .ausblenden-fehler{margin:0}
+/* ── Formularfelder im Rollbereich (R00055): die eine Stelle, an der ein Textfeld oder eine Auswahl eine Breite bekommt.
+   Jedes Feld trägt die Klasse `formularfeld`; es nimmt die Breite seines Behälters (`inline-size:100%`, `box-sizing:border-box`)
+   und schrumpft mit (`min-inline-size:0`), gedeckelt durch die Obergrenze `--feld-max` in `ch` (Vorgabe `32ch`; je Feld
+   überschreibbar, `none` = ohne Obergrenze, etwa für die Auswahl). Keine andere Stelle setzt eine Feldbreite; die Marken
+   `>>> eine-Feldbreite >>>` und `<<< eine-Feldbreite <<<` grenzen den Abschnitt für den Quelltext-Wächter ab (B5506). */
+/* >>> eine-Feldbreite >>> */
+.formularfeld{inline-size:100%;box-sizing:border-box;min-inline-size:0;max-inline-size:var(--feld-max,32ch)}
+/* <<< eine-Feldbreite <<< */
 .gr-dateien{list-style:none;margin:0;padding:0;border:1px solid var(--kd-line);background:var(--kd-surface)}
 .gr-dateien:empty{display:none}
 .gr-dateien>li{display:flex;align-items:center;gap:var(--kd-s3);min-block-size:var(--kd-row);padding:var(--kd-s1) var(--kd-s3);padding-inline-start:calc(var(--kd-s3) + var(--tiefe,0) * var(--kd-s5));min-width:0;font-size:13px}
