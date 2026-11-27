@@ -32,10 +32,10 @@ Fünf verschiedene Schreibweisen für dieselbe Aussage (`rem`, `vw`, `%`, `ch`, 
 
 ## Ziel
 
-- Eine Regel (eine Klasse bzw. ein Selektor, Stelle in `gitreviewa.css`, Abschnitt „Formularfelder im Rollbereich“): Textfeld und Auswahl nehmen `inline-size:100%` des Behälters, `box-sizing:border-box`, `min-inline-size:0`, `max-inline-size` aus einer Eigenschaft `--feld-max` in `ch` (Vorgabe in der Regel, je Feld überschreibbar, z. B. `72ch` für das Anmerkungsfeld). Wert und Name sind Sache des Entwicklers; maßgeblich ist, dass **keine andere Stelle eine Breite für ein Feld setzt**.
+- Eine Regel (eine Klasse bzw. ein Selektor, Stelle in `gitreviewa.css`, Abschnitt „Formularfelder im Rollbereich“): Textfeld und Auswahl nehmen `inline-size:100%` des Behälters, `box-sizing:border-box`, `min-inline-size:0`, `max-inline-size` aus einer Eigenschaft `--feld-max` in `ch`. Vorgabe `--feld-max:32ch` (Richtwert für die Suchfelder, keine enge Grenze), je Feld überschreibbar (`72ch` für das Anmerkungsfeld); die Auswahl bekommt keine Obergrenze. Wert und Name sind Sache des Entwicklers; maßgeblich ist, dass **keine andere Stelle eine Breite für ein Feld setzt**. Die Regel gilt für jede Ansicht der Oberfläche, auch die Dateiansicht (`dateiansicht.css`, `.da-suche`).
 - Die Elternzeilen eines Felds dürfen es nicht über den Behälter schieben (`min-inline-size:0` bzw. Umbruch) — das gehört zur Regel, nicht zu je einem Feld.
 - Neue Felder: ein Eintrag der Regel (Klasse) genügt; eine Probe über **alle** Felder der DOM findet ein Feld, das sie vergessen hat.
-- Der Standardwert im sichtbaren Ergebnis bleibt: `16rem` des Suchfelds und `72ch` des Anmerkungsfelds ändern sich nicht (Startwerte der heutigen Specs bleiben grün).
+- Der Standardwert im sichtbaren Ergebnis bleibt: `16rem` des Suchfelds und `72ch` des Anmerkungsfelds ändern sich nicht (Startwerte der heutigen Specs bleiben grün). Erreicht der Richtwert `32ch` die 256 px des Suchfelds nicht, gibt der Entwickler ihm einen eigenen `--feld-max` — die Spec gewinnt (Kriterium 5).
 
 ## Mikro-Refactoring-Schritte
 
@@ -75,9 +75,9 @@ Testebene nach Projektregel: Playwright nur, weil Geometrie nur im Browser prüf
 
 1. **Kein Feld ragt über seinen Behälter** (Playwright). Gegeben Repo P und eine Ergebnisauswahl mit Anmerkung im Ändern-Modus, Fenster 1280 × 800 und 812 × 800, Ergebnis-Spalte offen und zu, Seitenleiste 240 und 640 px, wenn jede Ansicht der Oberfläche geöffnet ist (Seitenleiste, Diff, Dateiansicht), dann liegt für **jedes** Eingabefeld (`input` mit Text, `textarea`, `select`) die rechte Kante ≤ der rechten Innenkante seines Rollbereichs, und dessen `scrollLeft` ist 0.
 2. **Auch mit dem längsten Inhalt** (Playwright). Gegeben dieselben Fälle und ein Suchtext von 200 Zeichen (Grenze aus B4501), ein Ausblendmuster von 200 Zeichen, eine bestehende Anmerkung und ein Notizfeld mit 2 000 Zeichen ohne Leerzeichen (Hypothese: längster Fall; Grenze der Anmerkung steht nicht in der WBS), dann gilt Kriterium 1 unverändert, und die Feldbreite hängt nicht vom Inhalt ab.
-3. **Alle Anzeigeverfahren** (Playwright, Pflichtpunkt 2). Kriterium 1 gilt im Standardmodus „Zusammen“ zuerst, dann „Einzeln“, mit und ohne Umbruch, untereinander und nebeneinander.
+3. **Alle Anzeigeverfahren** (Playwright, Pflichtpunkt 2). Kriterium 1 gilt im Standardmodus „Zusammen“ zuerst (netto und je Abschnitt ohne Kette), dann „Einzeln“, mit und ohne Umbruch, untereinander und nebeneinander sowie mit geöffneter Suche im Diff (Suchleiste `.diff-suche` samt Trefferzähler; sie ist selbst ein Feld der Regel). Lücken und große Diffs sind nicht betroffen: beide ändern den Diff-Inhalt, nicht die Behälterbreite eines Feldes (die Felder stehen in den Köpfen von Seitenleiste, Diff und Dateiansicht, über dem Rollbereich), und tragen kein Eingabefeld.
 4. **Die Regel steht an einer Stelle** (Unit-Test über die CSS-Dateien, Pflichtpunkt 5). Außerhalb des Abschnitts „Formularfelder im Rollbereich“ setzt kein Selektor eines Textfelds oder einer Auswahl eine Längenbreite; die Regel nennt `ch`. Ein neues Feld mit der Klasse besteht Kriterium 1 ohne eigene Breite.
-5. **Keine sichtbare Änderung der Startwerte** (Playwright, vorhandene Specs). Suchfeld der Dateiliste 256 px bei Platz, Anmerkungsfeld höchstens 72ch; `dateisuche-geometrie.spec.js` und `anmerkungen-geometrie.spec.js` laufen unverändert grün.
+5. **Keine sichtbare Änderung der Startwerte** (Playwright, vorhandene Specs). Suchfeld der Dateiliste 256 px bei Platz, Anmerkungsfeld höchstens 72ch; `dateisuche-geometrie.spec.js` und `anmerkungen-geometrie.spec.js` laufen unverändert grün. Diese beiden Specs haben Vorrang: weicht ein gewählter Wert (etwa die genaue `ch`-Zahl) von ihrem Ergebnis ab, wird der Wert angepasst, nicht die Spec.
 
 Nicht betroffen: Grenzen je Eingabe und Ausgabe (Pflichtpunkt 1; keine Längengrenze ändert sich, Kriterium 2 nutzt sie nur), NFA zum Ausführungsort (Pflichtpunkt 4; reines Browser-Layout, keine stderr-Zeile).
 
@@ -91,8 +91,10 @@ Zwei Befunde der Karte #63 hatten dieselbe Ursache, an zwei Stellen einzeln beho
 
 ## Offene Fragen
 
-1. An den product-owner: **Gilt die Dateiansicht (`--dateien`) mit?** Empfehlung: ja — ein Browser-Layout, kein neues Verhalten; sonst bliebe das einzige feste Feld (`12rem`) außerhalb der Regel. Bis zur Antwort gilt ja.
-2. An den product-owner: **Obergrenze der Felder in `ch`** außer Anmerkung (72ch). Empfehlung: Suchfelder 32ch (entspricht heutigen `16rem` bei 13 px, Start bleibt sichtbar gleich), Auswahl ohne Obergrenze. Sichtbare Folge nur bei sehr breiten Behältern.
+Keine offenen. Der product-owner hat die beiden Fragen am 2026-11-27 entschieden (`AI-Team/po-entscheidungen.md`, Zeilen 276, 277); die Antworten sind oben eingearbeitet:
+
+1. **Gilt die Dateiansicht (`--dateien`) mit?** **Ja** — die Regel gilt für jedes Textfeld und jede Auswahl der Oberfläche, auch in `dateiansicht.html`/`dateiansicht.css`; `.da-suche` bindet an die Regel, `.da-suche-feld` und `.da-werkzeug` schrumpfen bzw. brechen um.
+2. **Obergrenze der Felder in `ch`** außer Anmerkung (72ch)? **`--feld-max:32ch`** als Vorgabe (Richtwert, nicht enge Grenze; der Entwickler darf ihn anpassen), Anmerkungsfeld bleibt 72ch (je Feld überschrieben), die Auswahl ohne Obergrenze; bei Konflikt gewinnen `dateisuche-geometrie.spec.js` und `anmerkungen-geometrie.spec.js`.
 
 ## Notizen
 
@@ -104,3 +106,4 @@ Zwei Befunde der Karte #63 hatten dieselbe Ursache, an zwei Stellen einzeln beho
 | Datum | Änderung | Grund |
 |---|---|---|
 | 2026-11-27 | Angelegt | Karte #65, Konsolidierung nach R00052/R00053 |
+| 2026-11-27 | PO-Entscheidungen eingearbeitet (Dateiansicht gilt mit; `--feld-max` Vorgabe 32ch als Richtwert, Anmerkung 72ch, Auswahl ohne Obergrenze; die beiden Geometrie-Specs haben Vorrang) und Pflichtpunkt 2 vervollständigt (Suche im Diff in der Probe, Lücken und große Diffs nicht betroffen) | Karte #65; PO `AI-Team/po-entscheidungen.md` Zeilen 276/277; `/anforderung abschliessen` |
