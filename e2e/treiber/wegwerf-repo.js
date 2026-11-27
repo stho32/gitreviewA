@@ -157,6 +157,31 @@ function repoKNachrichtenAnlegen() {
   return { ordner, hashes };
 }
 
+/** Repo U der User Story R00054: jeder Commit ändert `u.txt` um eine Zeile; Betreff, Autor und Message legt python3 fest,
+    `git commit -F` liest die Message aus dieser Datei (die Story schreibt die Bytes so vor). Die Message-Datei liegt unter
+    `.git/`, damit sie nicht im Arbeitsbaum des Repos landet. */
+function repoUNachrichtenAnlegen() {
+  const ordner = leeresRepoAnlegen();
+  const { GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, GIT_COMMITTER_NAME, GIT_COMMITTER_EMAIL, ...ohneStandards } = GIT_UMGEBUNG;
+  const anlegen = (name, { betreff, autor, nachricht = '' }) => {
+    dateiSchreiben(ordner, 'u.txt', `${name}\n`);
+    const datei = path.join(ordner, '.git', `${name}.nachricht`);
+    execFileSync('python3', ['-c', 'import json, pathlib, sys\npathlib.Path(sys.argv[1]).write_text(json.loads(sys.argv[2]), encoding="utf-8")', datei, JSON.stringify(`${betreff}\n\n${nachricht}`)]);
+    git(ordner, 'add', '-A');
+    execFileSync('git', ['-C', ordner, '-c', `user.name=${autor}`, '-c', 'user.email=test@example.invalid', 'commit', '-q', '--allow-empty', '--allow-empty-message', '-F', datei], { env: ohneStandards });
+    return git(ordner, 'rev-parse', 'HEAD');
+  };
+  const hashes = {
+    ubidi: anlegen('ubidi', { betreff: 'abc\u202Efed.exe', autor: 'Anna\u200BBeispiel' }),
+    uwege: anlegen('uwege', { betreff: 'Start\u2066x\u2069', autor: 'Uwe Beispiel', nachricht: 'a\u202Eb\nc\u200Bd\ne\u{E0041}\tf\u000Dg' }),
+    ukante: anlegen('ukante', { betreff: 'Kante', autor: 'Uwe Beispiel', nachricht: `${'a'.repeat(19998)}\u202Ebb` }),
+    uviele: anlegen('uviele', { betreff: 'Viele', autor: 'Uwe Beispiel', nachricht: '\u200B'.repeat(25000) }),
+    unur: anlegen('unur', { betreff: 'Nur unsichtbar', autor: 'Uwe Beispiel', nachricht: '\u200B' }),
+    uleer: anlegen('uleer', { betreff: 'Leer', autor: 'Uwe Beispiel' }),
+  };
+  return { ordner, hashes };
+}
+
 /** Entfernt die lose Objektdatei eines Commits (das Repo ist frisch, also nicht gepackt). */
 function commitObjektEntfernen(ordner, hash) {
   fs.rmSync(path.join(ordner, '.git', 'objects', hash.slice(0, 2), hash.slice(2)));
@@ -168,6 +193,6 @@ function repoEntfernen(ordner) {
 
 module.exports = {
   repoAnlegen, repoEntfernen, repoMitVorbereitungAnlegen, repoMitDateienAnlegen, repoMitFremdemTextAnlegen, repoMitVielenCommitsAnlegen, repoMitUnterordnerAnlegen,
-  leeresRepoAnlegen, dateiSchreiben, commitAnlegen, commitObjektEntfernen, repoKAnlegen, repoKNachrichtenAnlegen,
+  leeresRepoAnlegen, dateiSchreiben, commitAnlegen, commitObjektEntfernen, repoKAnlegen, repoKNachrichtenAnlegen, repoUNachrichtenAnlegen,
   git, GIT_UMGEBUNG,
 };

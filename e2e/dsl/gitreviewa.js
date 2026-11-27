@@ -50,6 +50,11 @@ function welt() {
     return gemerkt(repos.repoKNachrichtenAnlegen());
   }
 
+  /** Repo U der User Story R00054: unsichtbare Zeichen in Betreff, Autor und Message an jeder Länge. */
+  function repoUNachrichten() {
+    return gemerkt(repos.repoUNachrichtenAnlegen());
+  }
+
   /** Ein anderswo angelegtes Repo, das beim Aufräumen mit entfernt wird. */
   function gemerktesRepo(repo) {
     return gemerkt(repo);
@@ -376,7 +381,7 @@ function welt() {
   }
 
   return {
-    repoMitCommits, repoK, repoKNachrichten, gitreviewAStarten, gitreviewAImHintergrundStarten, gitreviewAAufrufen, aufrufBeendet, aufEndeWarten, laeuftNoch, bisSekundenNachStart, laufAbbrechen,
+    repoMitCommits, repoK, repoKNachrichten, repoUNachrichten, gitreviewAStarten, gitreviewAImHintergrundStarten, gitreviewAAufrufen, aufrufBeendet, aufEndeWarten, laeuftNoch, bisSekundenNachStart, laufAbbrechen,
     zustandAbfragen, commitsAbfragen, dateienAbfragen, commitsStatusOderNull, freierPort, startseiteAbfragen, stderrZeilen, portVon, hostDesLaufs,
     lauschendeAdressen, aufzeichnenderBrowser, gitAttrappe, aufraeumen,
     anmerkungAnlegen, anmerkungAendern, anmerkungLoeschen, beendenAnfordern, abbrechenAnfordern, anfrageHalbGesendet, beendenUndDauerMessen, fremdeSeite, ergebnis,
