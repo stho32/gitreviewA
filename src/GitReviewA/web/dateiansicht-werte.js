@@ -6,8 +6,10 @@
 
   const HOECHSTZEICHENJEZEILE = 10000;
 
-  /** Steuerzeichen außer Tab, alle Formatzeichen, Zeilen- und Absatztrenner und einzelne Surrogate — die Klasse aus `UnsichtbareZeichen`. */
-  const UNSICHTBAR = /^(?:(?!\t)\p{Cc}|\p{Cf}|\p{Zl}|\p{Zp})$/u;
+  /* Die eine Zeichenliste der Oberfläche (`dateiliste-werte.js`, R00054, Lehre #17): Steuerzeichen außer Tab, alle
+     Formatzeichen, Zeilen- und Absatztrenner. `dateiansicht.html` lädt `dateiliste-werte.js` vor diesem Modul; die Liste
+     wird trotzdem beim Aufruf geholt, nicht beim Laden (dieselbe Vorsicht wie in `commit-werte.js`). */
+  const namensWerte = () => (typeof module !== 'undefined' ? require('./dateiliste-werte.js') : window);
 
   function istEinzelnesSurrogat(zeichen) {
     if (zeichen.length !== 1) {
@@ -21,7 +23,7 @@
     if (zeichen === '\t') {
       return false;
     }
-    return UNSICHTBAR.test(zeichen) || istEinzelnesSurrogat(zeichen);
+    return namensWerte().UNSICHTBARER_TEXT.test(zeichen) || istEinzelnesSurrogat(zeichen);
   }
 
   function marke(zeichen) {

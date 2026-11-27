@@ -81,9 +81,14 @@
     return pfad.slice(schnitt + 1);
   }
 
+  /* Die eine Zeichenliste der Oberfläche (`dateiliste-werte.js`, R00054, Lehre #17): Steuerzeichen außer Tab, alle
+     Formatzeichen, Zeilen- und Absatztrenner. `index.html` lädt `ausblenden-werte.js` vor `dateiliste-werte.js`, deshalb
+     wird die Liste beim Aufruf geholt, nicht beim Laden — sonst fehlt sie im Browser (dieselbe Vorsicht wie in `commit-werte.js`). */
+  const namensWerte = () => (typeof module !== 'undefined' ? require('./dateiliste-werte.js') : window);
+
+  /** Ein Muster trägt Unsichtbares, wenn nach dem Entfernen der Tabs ein Zeichen der einen Liste bleibt. */
   function traegtUnsichtbares(text) {
-    const unsichtbareZeichen = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u;
-    return unsichtbareZeichen.test(text.replace(/\t/g, ''));
+    return namensWerte().UNSICHTBARER_TEXT.test(text.replace(/\t/g, ''));
   }
 
   /** Das Muster in Teile: `*` innerhalb eines Segments, `**` über Segmente, zwei Sterne mit Schrägstrich als ganze Segmente, `?`, Zeichenklasse, Literal. */
