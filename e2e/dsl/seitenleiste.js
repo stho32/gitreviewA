@@ -24,6 +24,7 @@ const VORBEREITUNGEN = {
   'Repo L': { anlegen: repos.repoL, commits: ['l2'] },
   'Repo Z': { anlegen: repos.repoZ, commits: ['z1', 'z3'] },
   'Repo U': { anlegen: repos.repoU, commits: ['u'] },
+  'Repo N': { anlegen: repos.repoN, commits: ['p1', 'p2'] },
 };
 
 function seitenleisteSprache(gr, page) {
@@ -70,6 +71,8 @@ function seitenleisteSprache(gr, page) {
     seitenstand: () => rahmen.seite(page),
     rollstand: selektor => rahmen.rollstand(page, selektor),
     listeStand: () => rahmen.rollstand(page, rahmen.LISTE),
+    obersteSichtbareDatei: () => rahmen.obersteSichtbareDatei(page),
+    setzeObersteDatei: rang => rahmen.setzeObersteDatei(page, rang),
     diffStand: () => rahmen.rollstand(page, rahmen.DIFF),
     setzeListenVersatz: wert => rahmen.setzeRollversatz(page, rahmen.LISTE, wert),
     setzeDiffVersatz: wert => rahmen.setzeRollversatz(page, rahmen.DIFF, wert),
@@ -121,6 +124,7 @@ function seitenleisteSprache(gr, page) {
     ansicht: wert => diffSeite.menueWaehlen(page, wert === 'ganz' ? 'ganze Datei' : 'nur Änderungen'),
     anordnung: wert => diffSeite.menueWaehlen(page, wert),
     modus: wert => seite.modusWaehlen(page, wert),
+    darstellung: art => seite.darstellungWaehlen(page, art),
     luecken: () => diffSeite.lueckenLesen(page),
     lueckeAufklappen: (nummer, ganz = false) => diffSeite.lueckeAufklappen(page, nummer, ganz),
     zeilenzahl: () => diffSeite.zeilenZaehlen(page),

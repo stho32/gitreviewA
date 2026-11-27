@@ -2,11 +2,21 @@
 // Spezifikation R00042 „Ergebnis-Spalte ziehen“ (I0043, B4105): die drei Rollbereiche scrollen je für sich, Kopf und Statuszeile
 // stehen (Kriterium 3); die gezogenen Breiten bleiben über Datei-, Commit-, Modus-, Ansichts- und Anordnungswechsel und fallen
 // beim Neuladen auf 360/320 zurück (Kriterium 5); das Ziehen beider Trenner verwirft nichts und stellt keine neue Diff-Anfrage
-// (Kriterium 6, Lehre #23); bei Diff 320 px bleibt der Diff-Kopf höchstens zwei Zeilen, bei 668 px eine, die Herkunft ist nie
-// still gekürzt (Kriterium 10, R00039/PO Zeile 247). Browser-Eigenes (Darstellung, gemessene Höhe und Breite).
+// (Kriterium 6, Lehre #23) — in der Dateiliste bleibt die oberste sichtbare Dateizeile (PO Zeile 282: die Zeilenhöhe wechselt
+// mit der Breite, weil Namen umbrechen, R00056), Diff und Ergebnis-Spalte behalten ihre Bildlaufposition in Pixeln; bei Diff
+// 320 px bleibt der Diff-Kopf höchstens zwei Zeilen, bei 668 px eine, die Herkunft ist nie still gekürzt (Kriterium 10,
+// R00039/PO Zeile 247). Browser-Eigenes (Darstellung, gemessene Höhe und Breite).
 const { test, expect } = require('../dsl/breite.js');
 const { erwarteUnterEinfrierSchranke } = require('../dsl/schranken.js');
 const diffSeite = require('../treiber/diff-oberflaeche.js');
+
+/** Vergleicht die oberste sichtbare Dateizeile: dieselbe Datei oder höchstens eine Zeile Abweichung am Rand (PO Zeile 282);
+    ein Pixelwert bleibt nicht, weil die Zeilenhöhe der Liste mit der Breite wechselt, sobald Namen umbrechen (R00056). */
+function erwarteObersteDatei(nachher, vorher, kontext) {
+  expect(nachher, `oberste sichtbare Dateizeile ${kontext} — Liste vorhanden`).not.toBeNull();
+  const gleich = nachher.pfad === vorher.pfad || Math.abs(nachher.rang - vorher.rang) <= 1;
+  expect(gleich, `oberste sichtbare Dateizeile ${kontext}: ${JSON.stringify(nachher)} statt ${JSON.stringify(vorher)}`).toBe(true);
+}
 
 /** 400 Zeilen für die Ergebnis-Spalte: sie wird damit zu einem eigenen Rollbereich (Vorbereitung). */
 function spaltenText(zeilen = 400) {
@@ -100,11 +110,13 @@ test.describe('Ziehen verwirft nichts (B4105, Kriterium 6)', () => {
       diffZeilen: await breite.diffZeilen(),
       diffVersatz: (await breite.diffStand()).scrollTop,
       listenVersatz: (await breite.listeStand()).scrollTop,
+      obersteDatei: await breite.obersteSichtbareDatei(),
       spaltenVersatz: (await breite.spaltenStand()).scrollTop,
       anfragen: anfragen(),
     };
     expect(vorher.felder, 'Notizfeld offen (Vorbedingung)').toBe(1);
     expect(vorher.diffVersatz, 'Diff gescrollt (Vorbedingung)').toBeGreaterThan(0);
+    expect(vorher.listenVersatz, 'Liste gescrollt (Vorbedingung)').toBeGreaterThan(0);
 
     await breite.ziehen(80);
     await breite.rechtesZiehen(-80);
@@ -116,9 +128,31 @@ test.describe('Ziehen verwirft nichts (B4105, Kriterium 6)', () => {
     expect(await breite.marken(), 'Suchtreffer bleiben').toBe(vorher.marken);
     expect(await breite.diffZeilen(), 'Diff-Zeilen unverändert (kein Neuzeichnen)').toBe(vorher.diffZeilen);
     expect((await breite.diffStand()).scrollTop, 'Diff-Bildlauf bleibt').toBe(vorher.diffVersatz);
-    expect((await breite.listeStand()).scrollTop, 'Listen-Bildlauf bleibt').toBe(vorher.listenVersatz);
+    erwarteObersteDatei(await breite.obersteSichtbareDatei(), vorher.obersteDatei, 'bleibt über die drei Züge');
     expect((await breite.spaltenStand()).scrollTop, 'Spalten-Bildlauf bleibt').toBe(vorher.spaltenVersatz);
     expect(anfragen(), 'keine neue Diff-Anfrage').toBe(vorher.anfragen);
+  });
+
+  test('Zusatzfall: die oberste Dateizeile bleibt beim Wechsel 360 → 240 → 360 px (Repo N, Baum)', async ({ breite }) => {
+    await breite.starten({ vorbereitung: 'Repo N' });
+    await breite.darstellung('baum');
+    await breite.setzeObersteDatei(2); // die dritte Dateizeile der Liste steht oben
+    const anfang = await breite.listeStand();
+    const vorher = await breite.obersteSichtbareDatei();
+    expect(anfang.scrollTop, 'die Liste ist gescrollt (Vorbedingung)').toBeGreaterThan(0);
+    expect(vorher, 'oberste Dateizeile (Vorbedingung)').not.toBeNull();
+
+    await breite.ziehen(-120); // 360 → 240 px
+    await breite.breiteIst(240);
+    const nach240 = await breite.listeStand();
+    erwarteObersteDatei(await breite.obersteSichtbareDatei(), vorher, 'nach 240 px');
+
+    await breite.ziehen(120); // 240 → 360 px
+    await breite.breiteIst(360);
+    erwarteObersteDatei(await breite.obersteSichtbareDatei(), vorher, 'nach 360 px');
+
+    // Die Zeilenhöhe wechselt nachweislich mit der Breite: bei 240 px ist der Listeninhalt höher, weil Namen umbrechen (R00056).
+    expect(nach240.scrollHeight, 'die Liste ist bei 240 px höher (Zeilenhöhe wechselt)').toBeGreaterThan(anfang.scrollHeight);
   });
 
   test('Ziehen über 20 000 Zeilen und eine lange Spalte friert keine Aufgabe über die Schranke (Positivkontrolle: Knotenzähler)', async ({ breite, page }) => {

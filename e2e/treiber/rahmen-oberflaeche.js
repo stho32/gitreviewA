@@ -60,6 +60,45 @@ function setzeRollversatz(page, selektor, wert) {
   }, [selektor, wert]);
 }
 
+/** Die oberste sichtbare Dateizeile der Liste: ihr Rang unter den Dateizeilen und ihr Pfad (`data-pfad`, ohne Ordner- und
+    Gruppenzeilen). Eine Zeile gilt als sichtbar, wenn ihre Unterkante unter der Innenkante der Liste liegt — die oberste
+    angeschnittene Zeile zählt mit. Die Messgröße für „der Bildlauf bleibt“ in der Liste (R00042 Kriterium 6, PO Zeile 282):
+    die Zeilenhöhe wechselt mit der Breite, weil Namen umbrechen (R00056), ein Pixelwert also nicht bleibt. */
+function obersteSichtbareDatei(page) {
+  return page.evaluate(sel => {
+    const liste = document.querySelector(sel);
+    if (!liste) {
+      return null;
+    }
+    const innenOben = liste.getBoundingClientRect().top + parseFloat(getComputedStyle(liste).borderTopWidth || '0');
+    const zeilen = [...document.querySelectorAll(`${sel} .datei-zeile`)];
+    for (let rang = 0; rang < zeilen.length; rang += 1) {
+      if (zeilen[rang].getBoundingClientRect().bottom > innenOben + 0.5) {
+        return { rang, pfad: zeilen[rang].dataset.pfad };
+      }
+    }
+    return null;
+  }, LISTE);
+}
+
+/** Rollt die Liste so, dass die Dateizeile mit diesem Rang (0-basiert, nur Dateizeilen) oben steht — die Vorbereitung für
+    „die Liste ist gescrollt“ (R00042 Kriterium 6). Liefert den neuen Versatz. */
+function setzeObersteDatei(page, rang) {
+  return page.evaluate(([sel, rang1]) => {
+    const liste = document.querySelector(sel);
+    if (!liste) {
+      return null;
+    }
+    const zeilen = [...document.querySelectorAll(`${sel} .datei-zeile`)];
+    if (rang1 >= zeilen.length) {
+      return null;
+    }
+    const innenOben = liste.getBoundingClientRect().top + parseFloat(getComputedStyle(liste).borderTopWidth || '0');
+    liste.scrollTop += zeilen[rang1].getBoundingClientRect().top - innenOben;
+    return liste.scrollTop;
+  }, [LISTE, rang]);
+}
+
 /** Die Lage eines Elements im Fenster (links, Oberkante und Unterkante), auf Hundertstel gerundet. */
 function lage(page, selektor) {
   return page.evaluate(sel => {
@@ -317,7 +356,7 @@ async function letzteLueckeInDenBlick(page) {
 
 module.exports = {
   KOPF, COMMIT_ZEILE, DATEIEN_KOPF, DATEIEN_WERKZEUGE, LISTE, DIFF_KOPF, DIFF, STATUSZEILE, DATEIZEILE,
-  seite, rollstand, setzeRollversatz, lage, standbild, stehendeTeile, ganzImRollbereich, abstandZumRand, lageDerWahl, letzteLueckeInDenBlick,
+  seite, rollstand, setzeRollversatz, lage, obersteSichtbareDatei, setzeObersteDatei, standbild, stehendeTeile, ganzImRollbereich, abstandZumRand, lageDerWahl, letzteLueckeInDenBlick,
   masseDerAnmerkungen, pruefeDiffRollbereichBenutzbar, pruefeLetzteAnmerkungImFenster, pruefeLetzteAnmerkungErreichbar,
   pruefeKeinSeitenbildlauf, pruefeSeitenbildlauf, pruefeRollbereich, pruefeKeinRollbereich, pruefeUnveraendert,
   pruefeVersatzGleich, pruefeVersatzGeaendert, pruefeDiffOben, pruefeKeinTrennerKeinEinklappen, pruefeEineSpalte, pruefeZweiSpalten,
