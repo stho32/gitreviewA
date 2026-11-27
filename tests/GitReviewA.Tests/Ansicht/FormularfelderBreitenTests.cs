@@ -5,9 +5,11 @@ using GitReviewA.Server;
 namespace GitReviewA.Tests.Ansicht;
 
 /// <summary>
-/// B5506 (R00055, Kriterium 4): eine Feldbreite steht an **einer** Stelle — im Abschnitt „Formularfelder im Rollbereich“ in
-/// `gitreviewa.css`. Dieser Wächter liest die beiden Stylesheets des Rollbereichs als Quelltext und meldet jede Längenbreite an
-/// einem Feld-Selektor außerhalb des Abschnitts. Mutation: ein eingefügtes `.diff-suche{inline-size:20rem}` lässt ihn rot werden.
+/// B5506 (R00055, Kriterium 4) und B5704 (R00057, Kriterium 6): eine Feldbreite steht an **einer** Stelle — im Abschnitt
+/// „Formularfelder im Rollbereich“ in `gitreviewa.css`. Dieser Wächter liest die beiden Stylesheets des Rollbereichs als
+/// Quelltext und meldet jede Längenbreite an einem Feld-Selektor außerhalb des Abschnitts. Breite heißt hier auch `flex`
+/// (die Kurzform setzt `flex-basis`), `flex-basis` und `min-inline-size`. Mutationen: ein eingefügtes
+/// `.diff-suche{inline-size:20rem}` oder `.diff-suche{flex:0 0 20rem}` lässt ihn rot werden.
 /// </summary>
 public class FormularfelderBreitenTests
 {
@@ -26,8 +28,10 @@ public class FormularfelderBreitenTests
         "da-suche",
     ];
 
-    /// <summary>Nur diese Eigenschaften zählen als Längenbreite (WBS B5506); `min-inline-size` gehört zur Regel, nicht dazu.</summary>
-    private static readonly string[] BreitenEigenschaften = ["width", "inline-size", "max-inline-size"];
+    /// <summary>Diese Eigenschaften zählen als Längenbreite (WBS B5506 und B5704): `width`, `inline-size` und
+    /// `max-inline-size` aus R00055, dazu `flex` (die Kurzform setzt `flex-basis`), `flex-basis` und `min-inline-size`
+    /// aus R00057. `flex:none` und `min-inline-size:0` tragen keinen Längenwert in der Einheit — ein `0` zählt nicht.</summary>
+    private static readonly string[] BreitenEigenschaften = ["width", "inline-size", "max-inline-size", "flex", "flex-basis", "min-inline-size"];
 
     /// <summary>Ein Selektor, der ein Textfeld-Element nennt (`input`, `textarea`, `select`) — irgendwo im Verbund.</summary>
     private static readonly Regex FeldElement = new(@"(^|[\s>+~,])(input|textarea|select)(?![\w-])", RegexOptions.Compiled);
@@ -53,6 +57,22 @@ public class FormularfelderBreitenTests
         var feldbreiten = FeldbreitenImQuelltext(ausserhalbDesAbschnitts);
 
         Assert.That(feldbreiten, Is.Empty, $"Feldbreiten außerhalb des Abschnitts: {string.Join(" | ", feldbreiten)}");
+    }
+
+    /// <summary>
+    /// Die Kontrolle zum Wächter (R00057 Kriterium 6, B5704): ein Feld-Selektor, der außerhalb des Abschnitts ein `flex`,
+    /// `flex-basis` oder `min-inline-size` setzt, wird gemeldet. Ohne diese Kontrolle bliebe unbemerkt, wenn eine der
+    /// Eigenschaften aus der Liste fiele — der Wächter wäre grün, ohne die neue Breite zu sehen.
+    /// </summary>
+    [TestCase(".diff-suche{flex:0 0 20rem}", "flex")]
+    [TestCase(".diff-suche{flex-basis:20rem}", "flex-basis")]
+    [TestCase(".diff-suche{min-inline-size:3rem}", "min-inline-size")]
+    [TestCase(".diff-suche{flex:0 0 20rem;min-inline-size:3rem}", "min-inline-size")]
+    public void Wenn_ein_Feld_ausserhalb_des_Abschnitts_eine_Breite_setzt_dann_meldet_der_Waechter_es(string quelltext, string erwarteteEigenschaft)
+    {
+        var befunde = FeldbreitenImQuelltext(quelltext);
+
+        Assert.That(befunde.Any(befund => befund.Contains($"{erwarteteEigenschaft}:")), Is.True, $"gemeldet: {string.Join(" | ", befunde)}");
     }
 
     [Test]
