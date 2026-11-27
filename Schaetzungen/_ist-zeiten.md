@@ -183,3 +183,4 @@ Nie vom User erfragen.
 | 2026-11-27 | R00058 Unsichtbare Zeichen eine Klasse | Lauf 68-entwickler-1: Gate, Messprobe, Fix der Bereichstabelle, Gelerntes | Nacharbeit | – | – | 0,7h | autonom |
 | 2026-11-27 | R00057 Suchfeld in der Werkzeugleiste bleibt sichtbar | I0057 B5701 Messprobe (Treiber + Spec: 8 Fälle × 4 Zustände, längster Zähler, Bedienbar, Anzeigeverfahren; rot vor dem Umbau) | unklar | 2-4h | 0,6h | – | autonom |
 | 2026-11-27 | R00057 Suchfeld in der Werkzeugleiste bleibt sichtbar | I0057 B5702 Leiste bricht um, Feld bekommt seinen Platz (Basis 13.4rem/6.6rem, kein flex am Feld) | Standard | 2h | 1.0h | – | autonom |
+| 2026-11-27 | R00057 Suchfeld in der Werkzeugleiste bleibt sichtbar | I0057 B5703 Höhenregel nachziehen (K5-Zeilenregel in B5701; ergebnis-bereiche 320→≤3, werkzeugleiste-einzeilig 588→≤2) | Standard | 2h | 0.6h | – | autonom |

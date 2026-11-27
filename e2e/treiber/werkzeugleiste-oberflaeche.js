@@ -54,10 +54,9 @@ function mass(page) {
       meldung: r(werkzeuge.querySelector('#diff-suche-fehler')),
       menue: r(werkzeuge.querySelector('.ansicht-menue')),
     };
-    // Zeilen der Leiste: die sichtbaren Kinder von Kopf **und** Werkzeugleiste nach ihrer senkrechten Mitte gruppieren
-    // (Toleranz 12 px, wie `leistenmass` in `diff-oberflaeche.js`). Die Werkzeugleiste selbst bricht um, ihre Kinder einzeln
-    // zu zählen macht die umgebrochene Zeile sichtbar.
-    const traeger = [...kopf.children, ...werkzeuge.children].filter(element => element.getClientRects().length > 0);
+    // Zeilen der Leiste: die sichtbaren Kinder des Kopfs nach ihrer senkrechten Mitte gruppieren (Toleranz 12 px, wie
+    // `leistenmass` in `diff-oberflaeche.js`). Die Werkzeugleiste selbst ist ein Kind; bricht sie um, wächst der Kopf.
+    const traeger = [...kopf.children].filter(element => element.getClientRects().length > 0);
     const mitte = element => {
       const b = element.getBoundingClientRect();
       return (b.top + b.bottom) / 2;

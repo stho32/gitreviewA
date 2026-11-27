@@ -24,7 +24,9 @@ test.describe('R00039 Werkzeugleiste einzeilig', () => {
     await expect(page.locator('#diff .diffansicht-wahl, #diff .anordnung-wahl, #diff .leerraum-schalter, #diff .umbruch-schalter')).toHaveCount(0);
 
     const mass = await diffSeite.leistenmass(page);
-    expect(mass.zeilen, `eine Zeile (${JSON.stringify(mass)})`).toBe(1);
+    // R00057 Kriterium 5 (PO 287) löst die Höhenregel für 400–599 px Diff-Breite: höchstens zwei Zeilen — bei 1280 × 800
+    // mit offener Ergebnis-Spalte (Diff 588 px) steht die Werkzeugzeile darum in der zweiten Zeile.
+    expect(mass.zeilen, `höchstens zwei Zeilen (${JSON.stringify(mass)})`).toBeLessThanOrEqual(2);
   });
 
   test('Kriterium 2: das Menü schaltet alle vier Verfahren in beiden Modi; die Wahl bleibt über Datei- und Moduswechsel, das Neuladen setzt die Startwerte', async ({ diff, page }) => {

@@ -71,6 +71,24 @@ function erwarteZustand(m, art, kontext) {
   }
 }
 
+/** Kriterium 5: die Höhenregel der Leiste. Ohne aktive Suche ab 600 px Diff-Breite eine Zeile, bei 400–599 px höchstens
+    zwei, darunter höchstens drei; mit aktiver Suche ab 600 px höchstens zwei, darunter höchstens vier. */
+function erwarteHoehenregel(m, art, kontext) {
+  const ohneSuche = art === 'leer';
+  const mitSuche = art === '1 von 1' || art === 'keine Treffer';
+  if (ohneSuche && m.diff.breite >= 600) {
+    expect(m.zeilen, `ohne Suche bei Diff ${m.diff.breite} px eine Zeile (${kontext})`).toBe(1);
+  } else if (ohneSuche && m.diff.breite >= 400) {
+    expect(m.zeilen, `ohne Suche bei Diff ${m.diff.breite} px höchstens zwei Zeilen (${kontext})`).toBeLessThanOrEqual(2);
+  } else if (ohneSuche) {
+    expect(m.zeilen, `ohne Suche bei Diff ${m.diff.breite} px höchstens drei Zeilen (${kontext})`).toBeLessThanOrEqual(3);
+  } else if (mitSuche && m.diff.breite >= 600) {
+    expect(m.zeilen, `mit Suche bei Diff ${m.diff.breite} px höchstens zwei Zeilen (${kontext})`).toBeLessThanOrEqual(2);
+  } else if (mitSuche) {
+    expect(m.zeilen, `mit Suche bei Diff ${m.diff.breite} px höchstens vier Zeilen (${kontext})`).toBeLessThanOrEqual(4);
+  }
+}
+
 /** Die Messzeile für die Tabelle (Feld, Kopfhöhe, Zeilen, Rollbereich, Überdeckung). */
 function messzeile(fall, zustand, m) {
   return `MASS ${fall} | ${zustand} | Feld ${m.feldSichtbarPx}px | Feldbreite ${m.teile.feld.breite}px | Kopf ${m.kopf.hoehe}px | Zeilen ${m.zeilen} | Rollbereich ${m.rollbereichHoehe}px | Überschneidung ${m.ueberschneidungen.join(',') || 'keine'} | Zähler „${m.zaehlerText}“`;
@@ -88,6 +106,7 @@ test.describe('R00057 Kriterium 1 und 2: Feld sichtbar, nichts überdeckt etwas 
         const m = await mass(page);
         erwarteZustand(m, art, `${name}, ${art}`);
         erwarteImBereich(m, `${name}, ${art}`);
+        erwarteHoehenregel(m, art, `${name}, ${art}`);
         if (art === 'Fehlermeldung') {
           expect(m.kopf.hoehe, `Leiste mit Fehlermeldung höchstens 170 px (${name}: ${m.kopf.hoehe} px)`).toBeLessThanOrEqual(170);
         }
@@ -136,6 +155,7 @@ test.describe('R00057 Kriterium 1: auch der längste Zähler „10000 von 10000+
       const m = await mass(page);
       expect(m.zaehlerText, `Zähler (${name})`).toBe(LANGER_ZAEHLER);
       erwarteImBereich(m, `${name}, längster Zähler`);
+      erwarteHoehenregel(m, '1 von 1', `${name}, längster Zähler`);
       console.log(messzeile(name, 'längster', m));
     });
   }
@@ -146,9 +166,10 @@ test.describe('R00057 Kriterium 3: das Feld ist bedienbar', () => {
     // Der Fall der Karte: 1280 × 800, Ergebnis-Spalte offen, Standard-Seitenleiste.
     await fallVorbereiten(anm, FENSTER, true, null);
 
-    // Klick in die Mitte des Feldes und tippen wie der Mensch.
-    const kasten = await page.locator('#diff-suche').boundingBox();
-    await page.mouse.click(kasten.x + kasten.width / 2, kasten.y + kasten.height / 2);
+    // Klick in die Mitte des Feldes und tippen wie der Mensch: `click()` prüft, dass das Feld an seiner Mitte den Klick
+    // bekommt (kein anderes Element dazwischen) — genau der Fall der Karte.
+    await warteAufRuhe(page);
+    await page.locator('#diff-suche').click();
     await expect(page.locator('#diff-suche'), 'Fokus nach Klick in die Feldmitte').toBeFocused();
     await page.keyboard.type('app');
     await expect(page.locator('#diff-suche'), 'das Feld zeigt den Suchbegriff').toHaveValue('app');

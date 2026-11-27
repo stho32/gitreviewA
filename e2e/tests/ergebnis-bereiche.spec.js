@@ -173,7 +173,7 @@ test.describe('Ziehen verwirft nichts (B4105, Kriterium 6)', () => {
 });
 
 test.describe('Der Diff bleibt lesbar (B4105, Kriterium 10)', () => {
-  test('bei Diff 320 px höchstens zwei Kopfzeilen, bei 668 px eine; die Herkunft nie still gekürzt; die Spalte ohne waagerechten Bildlauf', async ({ breite, page }) => {
+  test('bei Diff 320 px höchstens drei Kopfzeilen, bei 668 px eine; die Herkunft nie still gekürzt; die Spalte ohne waagerechten Bildlauf', async ({ breite, page }) => {
     await breite.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });
     await breite.dateiAnsehen('src/a.txt');
     await breite.dateiAnmerkungenAnlegen(1, 'x'.repeat(5000));
@@ -188,11 +188,12 @@ test.describe('Der Diff bleibt lesbar (B4105, Kriterium 10)', () => {
           await breite.modus(modus);
           await breite.dateiAnsehen('src/a.txt');
 
-          // Diff 320 px (Spalte 588): höchstens zwei Zeilen, kein waagerechter Überlauf.
+          // Diff 320 px (Spalte 588): höchstens drei Zeilen (R00057 Kriterium 5, PO 287: unter 400 px höchstens drei,
+          // gemessen 94 px), kein waagerechter Überlauf.
           await breite.setzeSpaltenBreite(588);
           await breite.spalteBreiteIst(588);
           const bei320 = await breite.leistenmass();
-          expect(bei320.zeilen, `bei Diff 320 px höchstens zwei Zeilen (${anordnung}/${umbruch}/${modus}: ${JSON.stringify(bei320)})`).toBeLessThanOrEqual(2);
+          expect(bei320.zeilen, `bei Diff 320 px höchstens drei Zeilen (${anordnung}/${umbruch}/${modus}: ${JSON.stringify(bei320)})`).toBeLessThanOrEqual(3);
           expect(bei320.ueberlauf, `kein waagerechter Überlauf (${anordnung}/${umbruch}/${modus})`).toBeLessThanOrEqual(0);
           await pruefeHerkunftNieStill(page, breite, modus);
 
