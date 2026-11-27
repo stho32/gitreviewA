@@ -719,3 +719,15 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - **Rebase-Konflikte mit #61** nur in angehängten Dokumentzeilen (WBS, Ist-Zeiten), vom Director mechanisch je Zeilen-ID vereint. Passt zum offenen Factory-Vorschlag e50e08d.
 - **Gate auf main**: NUnit 1881 zweimal, Playwright 1287 zweimal grün, mit vollem Protokoll.
 - Neue Backlog-Karte #66 (Dateinamen brechen in schmaler Seitenleiste zeichenweise um, Bestand).
+| 2026-11-27 | #65 | Detailplanung | planer | bestanden | 2 min | I0055/R00055 bis B5506, 2 PO-Fragen, Pflichtpunkt 2 lückenhaft (Suche, Lücken, große Diffs) · claude · sonnet · Lauf 65-planer-1 · 0,90 $ · Karte gesamt 0,90 $ |
+| 2026-11-27 | #65 | Detailplanung | product-owner | bestanden | 0 min | PO 276/277: Dateiansicht mit, 32ch Richtwert · claude · sonnet · Lauf 65-product-owner-1 · 0,17 $ · Karte gesamt 1,07 $ |
+| 2026-11-27 | #64 | Detailplanung | planer | bestanden | 5 min | I0054/R00054 B5401-B5403, 7 Kriterien, 1 PO-Frage · claude · opus · Lauf 64-planer-1 · 0,46 $ · Karte gesamt 0,46 $ |
+| 2026-11-27 | #64 | Detailplanung | product-owner | bestanden | 0 min | PO 278: Rumpf ja, Knopf mit Marken · claude · sonnet · Lauf 64-product-owner-1 · 0,15 $ · Karte gesamt 0,61 $ |
+| 2026-11-27 | #65 | Detailplanung | planer | bestanden | 3 min | PO 276/277 eingearbeitet, Pflichtpunkt 2 vollständig · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 65-planer-2 · 0,061 $ · Karte gesamt 1,13 $ |
+| 2026-11-27 | #64 | Detailplanung | planer | bestanden | 3 min | PO 278 eingearbeitet · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 64-planer-2 · 0,037 $ · Karte gesamt 0,65 $ |
+| 2026-11-27 | #65 | Entwicklung | entwickler | bestanden | 42 min | B5501-B5506 grün, NUnit 1883, E2E 1303 (2. Lauf), 1. Lauf 1 Wackler beenden-story 5 s · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 65-entwickler-1 · 0,55 $ · Karte gesamt 1,68 $ |
+| 2026-11-27 | #65 | Reviews | security-reviewer | bestanden | 0 min | Kurzblick: keine Grenze berührt · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 65-security-reviewer-1 · 0,015 $ · Karte gesamt 1,70 $ |
+| 2026-11-27 | #65 | Reviews | code-reviewer | bestanden | 6 min | kein Muss, 4 Optional; E2E-Einzellauf bei Last 7,9 gestartet · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 65-code-reviewer-1 · 0,10 $ · Karte gesamt 1,80 $ |
+| 2026-11-27 | #64 | Entwicklung | entwickler | bestanden | 51 min | B5401-B5403, NUnit 1881, E2E 1301, diff-werte.js mit in die eine Liste · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 64-entwickler-1 · 0,17 $ · Karte gesamt 0,82 $ |
+| 2026-11-27 | #64 | Reviews | security-reviewer | bestanden | 3 min | kein Muss, 1 Optional (Variationsselektoren u. a. nicht in Cc/Cf/Zl/Zp), Matrix-Vorschlag · claude · sonnet · Lauf 64-security-reviewer-1 · 0,52 $ · Karte gesamt 1,34 $ |
+| 2026-11-27 | #65 | Entwicklertest | entwicklertester | bestanden | 14 min | US-1..US-5 bestanden, A1 Diff-Suche überdeckt (Bestand) · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 65-entwicklertester-1 · 0,36 $ · Karte gesamt 2,16 $ |
