@@ -114,7 +114,7 @@
             <span id="waehler-stand" class="gr-waehler-stand"></span>
             <button type="button" id="waehler-weiter" class="btn" aria-label="Nächster Commit">▶</button>
           </div>
-          <select id="waehler-auswahl" class="gr-waehler-auswahl" aria-label="Commit wählen"></select>
+          <select id="waehler-auswahl" class="gr-waehler-auswahl formularfeld" aria-label="Commit wählen"></select>
         </div>
       </section>
       <section id="dateiliste" class="gr-dateiliste" aria-label="Dateien">
@@ -135,14 +135,14 @@
         <div class="dateisuche">
           <label class="dateisuche-feld">
             <span class="dateisuche-label">Dateien suchen</span>
-            <input type="search" id="dateiliste-suche" class="dateisuche-eingabe" autocomplete="off" spellcheck="false" placeholder="Name oder Muster, z. B. *.sql" aria-describedby="dateisuche-fehler">
+            <input type="search" id="dateiliste-suche" class="dateisuche-eingabe formularfeld" autocomplete="off" spellcheck="false" placeholder="Name oder Muster, z. B. *.sql" aria-describedby="dateisuche-fehler">
           </label>
           <p id="dateisuche-fehler" class="dateisuche-fehler gr-status fehler" role="alert"></p>
         </div>
         <div class="ausblenden">
           <div class="ausblenden-feld">
             <label class="ausblenden-label" for="ausblenden-eingabe">Muster ausblenden</label>
-            <input type="text" id="ausblenden-eingabe" class="ausblenden-eingabe" autocomplete="off" spellcheck="false" aria-describedby="ausblenden-fehler">
+            <input type="text" id="ausblenden-eingabe" class="ausblenden-eingabe formularfeld" autocomplete="off" spellcheck="false" aria-describedby="ausblenden-fehler">
           </div>
           <ul id="ausblenden-muster" class="ausblenden-muster" aria-label="Aktive Muster"></ul>
           <p id="ausblenden-fehler" class="ausblenden-fehler gr-status fehler" role="alert"></p>
