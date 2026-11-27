@@ -55,6 +55,11 @@ function welt() {
     return gemerkt(repos.repoUNachrichtenAnlegen());
   }
 
+  /** Repo V der User Story R00058: `vsel` mit Autor `Anna`+U+FE0F und Betreff `Gut`+U+3164. */
+  function repoV() {
+    return gemerkt(repos.repoVNachrichtenAnlegen());
+  }
+
   /** Ein anderswo angelegtes Repo, das beim Aufräumen mit entfernt wird. */
   function gemerktesRepo(repo) {
     return gemerkt(repo);
@@ -381,7 +386,7 @@ function welt() {
   }
 
   return {
-    repoMitCommits, repoK, repoKNachrichten, repoUNachrichten, gitreviewAStarten, gitreviewAImHintergrundStarten, gitreviewAAufrufen, aufrufBeendet, aufEndeWarten, laeuftNoch, bisSekundenNachStart, laufAbbrechen,
+    repoMitCommits, repoK, repoKNachrichten, repoUNachrichten, repoV, gitreviewAStarten, gitreviewAImHintergrundStarten, gitreviewAAufrufen, aufrufBeendet, aufEndeWarten, laeuftNoch, bisSekundenNachStart, laufAbbrechen,
     zustandAbfragen, commitsAbfragen, dateienAbfragen, commitsStatusOderNull, freierPort, startseiteAbfragen, stderrZeilen, portVon, hostDesLaufs,
     lauschendeAdressen, aufzeichnenderBrowser, gitAttrappe, aufraeumen,
     anmerkungAnlegen, anmerkungAendern, anmerkungLoeschen, beendenAnfordern, abbrechenAnfordern, anfrageHalbGesendet, beendenUndDauerMessen, fremdeSeite, ergebnis,

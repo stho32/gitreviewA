@@ -182,6 +182,28 @@ function repoUNachrichtenAnlegen() {
   return { ordner, hashes };
 }
 
+/** Repo V der User Story R00058: `vsel` trägt einen Autor mit Variationsselektor (`Anna`+U+FE0F) und einen Betreff mit
+    Hangul-Füller (`Gut`+U+3164); Betreff und Autor legt python3 fest, `git commit -F` liest die Nachricht aus dieser Datei.
+    Die Nachrichtendatei liegt unter `.git/`, damit sie nicht im Arbeitsbaum des Repos landet. */
+function repoVNachrichtenAnlegen() {
+  const ordner = leeresRepoAnlegen();
+  const { GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, GIT_COMMITTER_NAME, GIT_COMMITTER_EMAIL, ...ohneStandards } = GIT_UMGEBUNG;
+  const anlegen = (name, { betreff, autor, dateien }) => {
+    for (const [pfad, inhalt] of Object.entries(dateien)) {
+      dateiSchreiben(ordner, pfad, inhalt);
+    }
+    const datei = path.join(ordner, '.git', `${name}.nachricht`);
+    execFileSync('python3', ['-c', 'import json, pathlib, sys\npathlib.Path(sys.argv[1]).write_text(json.loads(sys.argv[2]), encoding="utf-8")', datei, JSON.stringify(betreff)]);
+    git(ordner, 'add', '-A');
+    execFileSync('git', ['-C', ordner, '-c', `user.name=${autor}`, '-c', 'user.email=test@example.invalid', 'commit', '-q', '--allow-empty', '--allow-empty-message', '-F', datei], { env: ohneStandards });
+    return git(ordner, 'rev-parse', 'HEAD');
+  };
+  const hashes = {
+    vsel: anlegen('vsel', { betreff: 'Gut\u3164', autor: 'Anna\uFE0F', dateien: { 'v.txt': 'Stand 1\n' } }),
+  };
+  return { ordner, hashes };
+}
+
 /** Entfernt die lose Objektdatei eines Commits (das Repo ist frisch, also nicht gepackt). */
 function commitObjektEntfernen(ordner, hash) {
   fs.rmSync(path.join(ordner, '.git', 'objects', hash.slice(0, 2), hash.slice(2)));
@@ -193,6 +215,6 @@ function repoEntfernen(ordner) {
 
 module.exports = {
   repoAnlegen, repoEntfernen, repoMitVorbereitungAnlegen, repoMitDateienAnlegen, repoMitFremdemTextAnlegen, repoMitVielenCommitsAnlegen, repoMitUnterordnerAnlegen,
-  leeresRepoAnlegen, dateiSchreiben, commitAnlegen, commitObjektEntfernen, repoKAnlegen, repoKNachrichtenAnlegen, repoUNachrichtenAnlegen,
+  leeresRepoAnlegen, dateiSchreiben, commitAnlegen, commitObjektEntfernen, repoKAnlegen, repoKNachrichtenAnlegen, repoUNachrichtenAnlegen, repoVNachrichtenAnlegen,
   git, GIT_UMGEBUNG,
 };

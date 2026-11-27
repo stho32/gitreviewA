@@ -107,6 +107,21 @@ test.describe('Commit-Leiste zeigt Marken (R00054)', () => {
     await gr.dateiWaehlen(page, 'u.txt');
   });
 
+  // R00058 (Karte #68), B5805, Kriterium 1 — Abnahme-Probe der Karte: Autor `Anna`+U+FE0F und Betreff `Gut`+U+3164 aus Repo V.
+  test('R00058 Kriterium 1: die Leiste zeigt Anna⟨U+FE0F⟩ und Gut⟨U+3164⟩, kein rohes Zeichen', async ({ gr, page }) => {
+    const repo = gr.repoV();
+    const lauf = await gr.gitreviewAStarten(repo, [repo.hashes.vsel]);
+    await gr.oberflaecheOeffnen(page, lauf, 'zusammen');
+    await gr.aufZeilenWarten(page, 1);
+
+    const [zeile] = await gr.commitDetailsLesen(page);
+    expect(zeile.autor).toBe('Anna⟨U+FE0F⟩');
+    expect(zeile.betreff).toBe('Gut⟨U+3164⟩');
+    const leiste = await page.locator('#commit-liste').textContent();
+    expect(leiste.includes('\uFE0F')).toBe(false);
+    expect(leiste.includes('\u3164')).toBe(false);
+  });
+
   test('Szenario 6: unur hat den Knopf „Message“ mit Marke, uleer keinen', async ({ gr, page }) => {
     const repo = gr.repoUNachrichten();
     const unur = repo.hashes.unur.slice(0, 7);
