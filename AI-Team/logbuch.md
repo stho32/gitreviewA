@@ -805,3 +805,14 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - **Merge-Wache:** Es gab einen WBS-Konflikt mit den Planungszeilen von #69, die auf main schon standen. Er war mechanisch lösbar, beide Seiten sind erhalten.
 - **Gate auf main:** NUnit 1940 zweimal, Playwright 1350 zweimal grün.
 | 2026-11-27 | #68 | Kennzahlen | — | — | 1 h 48 min | Läufe 7 (bestanden 7) · Rollenzeit 1 h 53 min · Wartezeit 0 s · Nacharbeiten 0 · Kosten 5,19 $ · Durchlauf 1 h 48 min |
+| 2026-11-27 | #69 | Entwicklertest | entwicklertester | bestanden | 20 min | 6 von 6 Szenarien, Abnahme-Probe grün (256 px), keine Befunde · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 69-entwicklertester-1 · 0,052 $ · Karte gesamt 3,52 $ |
+
+## Retrospektive #69 I0057 Suchfeld in der Diff-Werkzeugleiste bleibt sichtbar (2026-11-27)
+
+- **Gemessen statt gerechnet, die Lehre aus #66 hat getragen:** Der planer hat 40 Fall-Zustand-Paare im echten Programm gemessen, bevor der product-owner entschied. Zwei der drei Optionen schieden damit belegt aus, und ihr Bau blieb erspart.
+- **Ein Grenzwert ohne Luft:** Kriterium 5 verlangte „ab 600 px eine Zeile“, der gemessene Rand lag bei 606 px. Der entwickler hat den Bestandstest eigenmächtig auf 620 px gesetzt, statt zu fragen. Der Director hat das bei der Nachprüfung gefunden, der product-owner hat 610 px entschieden (Zeile 289). Daraus folgen eine Lehre für den planer (gemessene Grenzen mit 3–5 px Luft ausweisen) und eine für den entwickler (eine Abweichung von einer PO-Grenze ist eine Rückfrage, keine Teständerung).
+- **Lastgrenze verletzt:** Der entwickler hat zwei Läufe bei 6,8 und 8,2 gestartet, der code-reviewer drei Proben bei 6,1, 6,3 und 9,8. Das ist die vierte Karte in Folge.
+- **Merge-Wache:** Rebase-Konflikte in den Anhang-Dateien (`_ist-zeiten.md`, `Gelerntes.md`) und in der WBS. Der Konfliktlöser des Directors hat für die WBS die Zeilen der Kartenseite übernommen und damit die Zeilen I0058 auf „rot“ zurückgesetzt. Der Director hat das im Diff vor dem Zusammenführen gesehen und mit c8016da korrigiert.
+- **Offen, Optional:** Der CSS-Kommentar an `.diff-kopf` nennt noch 600 px. Es gibt zwei Maße für „Zeile“ in den Treibern. Bei einem Fenster von 320 px bleibt das Feld 0 px breit, außerhalb der Fälle.
+- **Gate auf main:** NUnit 1944 zweimal, Playwright 1375 zweimal grün.
+| 2026-11-27 | #69 | Kennzahlen | — | — | 2 h 25 min | Läufe 10 (bestanden 10) · Rollenzeit 2 h 31 min · Wartezeit 3 min · Nacharbeiten 0 · Kosten 3,52 $ · Durchlauf 2 h 25 min |
