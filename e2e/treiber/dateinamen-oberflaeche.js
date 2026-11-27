@@ -196,4 +196,44 @@ async function kaestchenMitPfadBetaetigen(page, pfad) {
   await page.locator(`${DATEIZEILE}[data-pfad="${pfad}"] input.haken`).click();
 }
 
-module.exports = { LISTE, ZEILE, DATEIZEILE, TRENNER, wurzelmasse, messen, messung, dateizeilen, pfadtexte, kaestchenMitPfadBetaetigen };
+/**
+ * Textprobe je Dateizeile (R00056, Kriterium 7): `textContent` des Pfadelements, die Art seiner Kindknoten (Text oder `<wbr>`),
+ * ob ein `<wbr>` in einer Marke `⟨…⟩` liegt, und was Markieren der Zeile liefert. Der Text ohne Zusätze ist der Anzeigename.
+ */
+function textproben(page) {
+  return page.evaluate(sel => [...document.querySelectorAll(sel)].map(li => {
+    const pfadEl = li.querySelector('.pfad');
+    let inMarke = false;
+    let wbrInMarke = false;
+    for (const kind of pfadEl.childNodes) {
+      if (kind.nodeType === Node.TEXT_NODE) {
+        for (const zeichen of kind.textContent) {
+          if (zeichen === '⟨') {
+            inMarke = true;
+          } else if (zeichen === '⟩') {
+            inMarke = false;
+          }
+        }
+      } else if (kind.tagName === 'WBR' && inMarke) {
+        wbrInMarke = true;
+      }
+    }
+    const bereich = document.createRange();
+    bereich.selectNodeContents(pfadEl);
+    const auswahl = document.getSelection();
+    auswahl.removeAllRanges();
+    auswahl.addRange(bereich);
+    const textAuswahl = auswahl.toString();
+    auswahl.removeAllRanges();
+    return {
+      roherPfad: li.dataset.pfad,
+      textContent: pfadEl.textContent,
+      kindarten: [...pfadEl.childNodes].map(kind => (kind.nodeType === Node.TEXT_NODE ? 'text' : kind.tagName.toLowerCase())),
+      wbrZahl: pfadEl.querySelectorAll('wbr').length,
+      wbrInMarke,
+      textAuswahl,
+    };
+  }), DATEIZEILE);
+}
+
+module.exports = { LISTE, ZEILE, DATEIZEILE, TRENNER, wurzelmasse, messen, messung, dateizeilen, pfadtexte, kaestchenMitPfadBetaetigen, textproben };

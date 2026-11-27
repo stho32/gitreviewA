@@ -86,4 +86,28 @@ function repoMitGleichemAnzeigenamen(ordner) {
   return { ordner, hashes: { c1: git(ordner, 'rev-parse', 'HEAD') } };
 }
 
-module.exports = { repoN, repoNMitV, repoMitGleichemAnzeigenamen, repoMitMarken };
+const SKRIPT_TRENNER = String.raw`set -e
+git init -q -b main
+mkdir -p 'a_b.c-d'
+printf 'eins\n' > 'a_b.c-d/e'
+printf 'zwei\n' > $'x\u202ey.txt'
+printf 'drei\n' > $'f\xff.txt'
+git add -A && git commit -q -m "Namen mit Trennern und Marken"
+printf 'eins2\n' > 'a_b.c-d/e'
+printf 'zwei2\n' > $'x\u202ey.txt'
+printf 'drei2\n' > $'f\xff.txt'
+git add -A && git commit -q -m "Geaendert"
+`;
+
+/**
+ * Repo der Umbruchstellen (R00056, Kriterium 7): `t1` „Namen mit Trennern und Marken“ legt `a_b.c-d/e` (Ordner `a_b.c-d` mit
+ * Datei `e`, alle Trenner im Pfad), `x`U+202E`y.txt` (Marke `⟨U+202E⟩`) und `f`+FF+`.txt` (ungültiges Byte, Marke `⟨0xFF⟩`) an;
+ * `t2` „Geaendert“ ändert alle drei. „Zusammen“ zeigt die drei Anzeigenamen mit Trennern und Marken.
+ */
+function repoTrennerUndMarken(ordner) {
+  fs.mkdirSync(ordner, { recursive: true });
+  execFileSync('bash', ['-c', SKRIPT_TRENNER], { cwd: ordner, env: GIT_UMGEBUNG, stdio: ['ignore', 'ignore', 'pipe'] });
+  return { ordner, hashes: { t1: git(ordner, 'rev-parse', 'HEAD~1'), t2: git(ordner, 'rev-parse', 'HEAD') } };
+}
+
+module.exports = { repoN, repoNMitV, repoMitGleichemAnzeigenamen, repoMitMarken, repoTrennerUndMarken };

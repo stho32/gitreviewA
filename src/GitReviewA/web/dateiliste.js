@@ -317,7 +317,7 @@
     if (zeile.art === 'ordner') {
       const ordnerElement = eintragElement('ordner-zeile', zeile.tiefe);
       ordnerElement.setAttribute('role', 'presentation');
-      ordnerElement.append(textElement('pfad', zeile.name));
+      ordnerElement.append(pfadElement('pfad', zeile.name));
       return ordnerElement;
     }
     const datei = zeile.datei;
@@ -328,7 +328,7 @@
     dateiElement.setAttribute('aria-current', String(istGewaehlt));
     dateiElement.dataset.pfad = datei.pfad;
     const statusElement = textElement(`status status-${datei.status}`, datei.status);
-    dateiElement.append(hakenElement(datei), statusElement, textElement('pfad', pfadText(datei, zeile)), textElement('haken-grund', ''), balkenElement(datei, groesste), textElement('zahlen mono', zahlenText(datei)));
+    dateiElement.append(hakenElement(datei), statusElement, pfadElement('pfad', pfadText(datei, zeile)), textElement('haken-grund', ''), balkenElement(datei, groesste), textElement('zahlen mono', zahlenText(datei)));
     return dateiElement;
   }
 
@@ -380,6 +380,23 @@
     const element = document.createElement('span');
     element.className = klassen;
     element.textContent = text;
+    return element;
+  }
+
+  /** Der Pfad als Element mit Umbruchstellen (R00056): der Anzeigename in Abschnitten, dazwischen je ein `<wbr>` (leer, kein
+      Text — `textContent`, Markieren und Kopieren bleiben unverändert, R00011). Die Abschnitte kommen aus dem einen Baustein
+      `dateinamen-umbruch-werte.js`, den Datei- und Ordnerzeile teilen. */
+  function pfadElement(klassen, text) {
+    const element = document.createElement('span');
+    element.className = klassen;
+    const werte = window.gitreviewaUmbruchStellen;
+    const teile = werte ? werte.abschnitte(text) : [{ text, umbruchDanach: false }];
+    for (const teil of teile) {
+      element.append(document.createTextNode(teil.text));
+      if (teil.umbruchDanach) {
+        element.append(document.createElement('wbr'));
+      }
+    }
     return element;
   }
 

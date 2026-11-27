@@ -10,6 +10,7 @@ const trennerSeite = require('../treiber/trenner-oberflaeche.js');
 const hakenSeite = require('../treiber/haken-oberflaeche.js');
 const dateisucheSeite = require('../treiber/dateisuche-oberflaeche.js');
 const dateinamenSeite = require('../treiber/dateinamen-oberflaeche.js');
+const fremdeNamen = require('../treiber/fremde-namen-repo.js');
 const repos = require('../treiber/diff-repos.js');
 
 const SCHMAL = { width: 812, height: 800 };
@@ -69,8 +70,20 @@ function dateinamenSprache(gr, page) {
     await expect.poll(async () => (await seite.gewaehlteDateien(page))).toContain('src/app.js');
   }
 
+  /** Unabhängiges Repo für Kriterium 7: `a_b.c-d/e` (alle Trenner), `x⟨U+202E⟩y.txt` und `f⟨0xFF⟩.txt` in „Zusammen“. */
+  async function markenStarten() {
+    seitenfehlerSammeln();
+    repo = fremdeNamen.repoTrennerUndMarken(path.join(gr.eigenerOrdner(), 'repo-marken'));
+    lauf = await gr.gitreviewAStarten({ ordner: repo.ordner }, [hash('t1'), hash('t2')]);
+    await page.setViewportSize(SCHMAL);
+    await gr.oberflaecheOeffnen(page, lauf, 'zusammen');
+    await seite.aufDateizeilenWarten(page, 3);
+    return lauf;
+  }
+
   return {
     starten,
+    markenStarten,
     page,
     schmalOffen,
     breit,
@@ -94,6 +107,7 @@ function dateinamenSprache(gr, page) {
     messen: () => dateinamenSeite.messung(page),
     wurzelmasse: () => dateinamenSeite.wurzelmasse(page),
     pfadtexte: () => dateinamenSeite.pfadtexte(page),
+    textproben: () => dateinamenSeite.textproben(page),
     gewaehlteDateien: () => seite.gewaehlteDateien(page),
     dateilisteLesen: () => seite.dateilisteLesen(page),
     seitenfehler: () => seitenfehler,
