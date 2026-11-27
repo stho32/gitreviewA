@@ -731,3 +731,15 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 | 2026-11-27 | #64 | Entwicklung | entwickler | bestanden | 51 min | B5401-B5403, NUnit 1881, E2E 1301, diff-werte.js mit in die eine Liste · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 64-entwickler-1 · 0,17 $ · Karte gesamt 0,82 $ |
 | 2026-11-27 | #64 | Reviews | security-reviewer | bestanden | 3 min | kein Muss, 1 Optional (Variationsselektoren u. a. nicht in Cc/Cf/Zl/Zp), Matrix-Vorschlag · claude · sonnet · Lauf 64-security-reviewer-1 · 0,52 $ · Karte gesamt 1,34 $ |
 | 2026-11-27 | #65 | Entwicklertest | entwicklertester | bestanden | 14 min | US-1..US-5 bestanden, A1 Diff-Suche überdeckt (Bestand) · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 65-entwicklertester-1 · 0,36 $ · Karte gesamt 2,16 $ |
+| 2026-11-27 | #64 | Reviews | code-reviewer | befund | 21 min | Muss B1: zweite Klassen in ausblenden-werte.js:85 und dateiansicht-werte.js:10 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 64-code-reviewer-1 · 0,34 $ · Karte gesamt 1,68 $ |
+
+## Retrospektive #65 I0055 Eine Breitenregel für Formularfelder (2026-11-27)
+
+- **Konsolidierung mit roter Probe über alle Felder:** Die DOM-Sammlung fand das einzige echte Überlauffeld (Muster-Feld, 19 px), das keine Karte genannt hatte. Bei der Dateiansicht war die Annahme der Planung falsch, B5505 hat dort nur vereinheitlicht.
+- **Ein Durchlauf ohne Nacharbeit:** Planung mit Sonnet, dann PO-Antworten und Pflichtpunkt 2 mit Flash nachgetragen. Kosten 2,16 $.
+- **Regelverstöße bei der Last:** Der code-reviewer startete einen E2E-Einzellauf bei Last 7,9, der entwicklertester wartete richtig. Zwei Karten mit Build parallel treiben die Last regelmäßig über 6. Der Auftrag „uptime vor jedem Lauf“ wirkt nicht bei jeder Rolle.
+- **Gate auf main:** NUnit 1883 zweimal. Playwright 1303, dann 1302 mit einem Wettlauf in `abschluss-endpunkt.spec.js:32`, der einzeln 25 von 25 Mal grün war. Dazu Vorrang-Karte #70 im Backlog.
+- **Neue Backlog-Karten:**
+  - #67: Beenden-Test prüft noch 5 s statt 15 s nach PO 273.
+  - #69: Das Diff-Suchfeld wird von Zähler und Knopf „Ansicht“ überdeckt. Das war schon vorher so.
+  - #70: der Wettlauf oben.
