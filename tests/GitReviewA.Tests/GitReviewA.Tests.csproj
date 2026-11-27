@@ -16,6 +16,10 @@
     <Using Include="NUnit.Framework" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Der Pfad der Repo-Wurzel zur Bauzeit: die Abtastung liest die gemeinsame Tabelle aus dem Quellbaum (R00058, B5801). -->
+    <AssemblyMetadata Include="RepoWurzel" Value="$(MSBuildThisFileDirectory)../../" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\..\src\GitReviewA\GitReviewA.csproj" />
   </ItemGroup>
 </Project>

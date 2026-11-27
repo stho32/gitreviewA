@@ -1,0 +1,40 @@
+# Die eine Klasse unsichtbarer Zeichen (R00058, B5801): die gemeinsame Tabelle im Repo.
+#
+# Klasse = Steuerzeichen (Cc) außer Tab | Formatzeichen (Cf) | Zeilentrenner (Zl) | Absatztrenner (Zp)
+#          | Default_Ignorable_Code_Point ohne Cf | U+2800 (leeres Braille-Muster).
+# Herkunft der Bereiche außerhalb der Kategorien: Unicode `DerivedCoreProperties.txt`,
+# Eigenschaft `Default_Ignorable_Code_Point` (Version 15.1), ohne die schon als Cf gezählten Codepunkte,
+# dazu U+2800 (Entscheidung des product-owner 2026-11-27).
+#
+# Eine Zeile je Bereich, aufsteigend: `XXXX` oder `XXXX-YYYY` (Hex, mindestens vier Stellen). `#` beginnt einen Kommentar.
+# Gelesen von der NUnit-Abtastung, der Node-Abtastung und der Abtastung im Browser.
+# Summe: 4273 Codepunkte.
+0000-0008
+000A-001F
+007F-009F
+00AD
+034F
+0600-0605
+061C
+06DD
+070F
+0890-0891
+08E2
+115F-1160
+17B4-17B5
+180B-180F
+200B-200F
+2028-202E
+2060-206F
+2800
+3164
+FE00-FE0F
+FEFF
+FFA0
+FFF0-FFFB
+110BD
+110CD
+13430-1343F
+1BCA0-1BCA3
+1D173-1D17A
+E0000-E0FFF
