@@ -9,6 +9,6 @@ test('soll den Betreff im Abschnittskopf ohne Kette so zeigen wie die Commit-Zei
 
   await diff.dateiAnsehen('a.txt');
   const kurz = name => diff.hash(name).slice(0, 7);
-  await diff.abschnittskopfZeigt('b1', `Commit ${kurz('b1')} · Start oberflaeche`, '\u202E');
+  await diff.abschnittskopfZeigt('b1', `Commit ${kurz('b1')} · Start ⟨U+202E⟩oberflaeche`, '\u202E');
   await diff.abschnittskopfZeigt('b3', `Commit ${kurz('b3')} · a wächst`, '\u202E');
 });

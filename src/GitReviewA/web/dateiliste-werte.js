@@ -47,8 +47,16 @@
   }
 
   /** Richtungs-, Format- und Steuerzeichen (außer Tab) sowie Zeilen- und Absatztrenner: dieselbe Klasse wie
-      `Fremdtext/UnsichtbareZeichen` im Server, keine zweite Zeichenliste. */
-  const UNSICHTBARE_ZEICHEN = /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu;
+      `Fremdtext/UnsichtbareZeichen` im Server, keine zweite Zeichenliste. Die Klasse selbst steht einmal hier; wer sie
+      braucht (`sichtbarerName`, die Diff-Anzeige), holt sie aus diesem Modul statt sie nachzubauen. */
+  const UNSICHTBARE_KLASSE = '\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}';
+  const UNSICHTBARE_ZEICHEN = new RegExp(`[${UNSICHTBARE_KLASSE}]`, 'gu');
+  const UNSICHTBARER_TEXT = new RegExp(`[${UNSICHTBARE_KLASSE}]`, 'u');
+
+  /** Richtungsändernde Zeichen innerhalb der Klasse (Einbettungen, Isolierungen, LRM, RLM, ALM). Nur die Anzeige
+      unterscheidet sie: sie bekommen Klammern (`⟨U+202E⟩`), Steuerzeichen ein Bildzeichen (R00038, R00054). */
+  const RICHTUNGSZEICHEN = /[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/;
+  const istRichtungszeichen = zeichen => RICHTUNGSZEICHEN.test(zeichen);
 
   /** Fremder Pfad („Trojan Source“): unsichtbare Zeichen stehen als Marke `⟨U+202E⟩`; nur der angezeigte Name ist markiert,
       `datei.pfad` bleibt roh für Auswahl und Anfragen. Tab bleibt sichtbar wie im Server. */
@@ -136,5 +144,5 @@
     return flacheZeilen(dateien);
   }
 
-  Object.assign(ziel, { summeText, zahlenText, groessteAenderung, balkenTeile, sichtbarerName, flacheZeilen, baumZeilen, sichtbareZeilen, umbenennungsText });
+  Object.assign(ziel, { summeText, zahlenText, groessteAenderung, balkenTeile, sichtbarerName, UNSICHTBARER_TEXT, istRichtungszeichen, flacheZeilen, baumZeilen, sichtbareZeilen, umbenennungsText });
 })(typeof module !== 'undefined' ? module.exports : window);

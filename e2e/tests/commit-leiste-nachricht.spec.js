@@ -54,7 +54,7 @@ test.describe('Commit-Leiste kürzt lange Nachrichten (R00051)', () => {
     expect(await gr.rumpf(page, kurz).textContent()).toBe('x'.repeat(20000) + HINWEIS(5000));
   });
 
-  test('Szenario 4: kr nennt in Leiste und Absicht-Streifen dieselbe Zahl, die Leiste ohne Steuerzeichen', async ({ gr, page }) => {
+  test('Szenario 4: kr zeigt in Leiste und Absicht-Streifen denselben Text mit Marke (R00054 ersetzt die Leisten-Hälfte)', async ({ gr, page }) => {
     const repo = gr.repoKNachrichten();
     const kurz = repo.hashes.kr.slice(0, 7);
     const lauf = await gr.gitreviewAStarten(repo, [repo.hashes.kr]);
@@ -64,7 +64,7 @@ test.describe('Commit-Leiste kürzt lange Nachrichten (R00051)', () => {
     await gr.commitZeileAufklappen(page);
     await gr.messageUmschalten(page, kurz);
     const leiste = await gr.rumpf(page, kurz).textContent();
-    expect(leiste).toBe('a'.repeat(19999) + HINWEIS(10));
+    expect(leiste).toBe('a'.repeat(19999) + '⟨U+202E⟩' + HINWEIS(10));
     expect(leiste).not.toContain('\u202E');
 
     await gr.aufDateizeilenWarten(page, 1);
@@ -78,6 +78,7 @@ test.describe('Commit-Leiste kürzt lange Nachrichten (R00051)', () => {
     expect(streifen).toBe('a'.repeat(19999) + '⟨U+202E⟩' + HINWEIS(10));
     expect(streifen).toContain('⟨U+202E⟩');
     expect(streifen).toContain(HINWEIS(10));
+    expect(leiste, 'Leiste und Streifen zeigen denselben Text').toBe(streifen);
   });
 
   test('Szenario 5: khtml zeigt Auszeichnung als Text, kein Dialog, kein Bild', async ({ gr, page }) => {

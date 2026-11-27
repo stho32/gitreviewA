@@ -84,6 +84,13 @@ test.describe('Baustein Diff-Werte', () => {
     }
   });
 
+  test('soll jedes Zeichen der einen Klasse sichtbar machen, auch die, die der alte Katalog nicht kannte (R00054, Kriterium 3)', () => {
+    // U+E0041 (Sprach-Tag) und U+0600 (arabisches Zahlzeichen) sind Formatzeichen der einen Klasse; mit der alten
+    // Liste Diff-Anzeige verschwanden sie unsichtbar im Zeilentext.
+    expect(sichtbarTeile('a\u{E0041}b')).toEqual([{ text: 'a' }, { marke: 'steuer', code: 'U+E0041', text: 'U+E0041' }, { text: 'b' }]);
+    expect(sichtbarTeile('a\u0600b')).toEqual([{ text: 'a' }, { marke: 'steuer', code: 'U+0600', text: 'U+0600' }, { text: 'b' }]);
+  });
+
   test('soll gleiche Steuerzeichen in Folge zu einer Marke mit Anzahl zusammenfassen', () => {
     expect(sichtbarTeile('a\u0000\u0000\u0000b')).toEqual([{ text: 'a' }, { marke: 'steuer', code: 'U+0000', text: '␀ U+0000 ×3', anzahl: 3 }, { text: 'b' }]);
     expect(sichtbarTeile('\u0000\u0001\u0000')).toHaveLength(3);

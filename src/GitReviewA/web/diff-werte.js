@@ -50,12 +50,11 @@
     return { art: 'kontext', alt: zaehler.alt++, neu: zaehler.neu++, text };
   }
 
-  /** Richtungsändernde Zeichen: Einbettungen und Isolierungen, dazu LRM, RLM und ALM. */
-  const BIDI = /[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/;
-  /** Steuerzeichen außer Tab, dazu Unsichtbares: weiches Trennzeichen, Nullbreiten, Zeilen- und Absatztrenner, Wortverbinder, BOM. */
-  // eslint-disable-next-line no-control-regex
-  const STEUER = /[\u0000-\u0008\u000A-\u001F\u007F-\u009F\u00AD\u200B-\u200D\u2028\u2029\u2060\uFEFF]/;
-  const UNSICHTBAR = new RegExp(`${BIDI.source}|${STEUER.source}`);
+  /* Die eine Zeichenklasse der Oberfläche (`dateiliste-werte.js`, R00054): kein zweiter Zeichenkatalog hier. `index.html`
+     lädt `dateiliste-werte.js` vor diesem Modul, deshalb stehen die beiden Zugriffe beim Laden als Konstanten. */
+  const namensWerte = typeof module !== 'undefined' ? require('./dateiliste-werte.js') : window;
+  const UNSICHTBAR = namensWerte.UNSICHTBARER_TEXT;
+  const istRichtungszeichen = namensWerte.istRichtungszeichen;
 
   /** Fremder Text → Teile; Unsichtbares wird sichtbar, nie entfernt („Trojan Source“): Bidi-Steuerzeichen als Marke `⟨U+202E⟩`,
       Steuerzeichen außer Tab als Bildzeichen mit Code (ohne Bildzeichen nur der Code), ein `\r` am Ende als `␍`.
@@ -73,9 +72,9 @@
     let stelle = 0;
     while (stelle < zeichenfolge.length) {
       const zeichen = zeichenfolge[stelle];
-      const istBidi = BIDI.test(zeichen);
-      const istSteuer = STEUER.test(zeichen);
-      if (!istBidi && !istSteuer) {
+      const istBidi = istRichtungszeichen(zeichen);
+      const istUnsichtbar = zeichen !== '\t' && UNSICHTBAR.test(zeichen);
+      if (!istUnsichtbar) {
         gewoehnlich += zeichen;
         stelle += 1;
         continue;

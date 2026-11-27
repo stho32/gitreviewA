@@ -1,16 +1,21 @@
 /* gitreviewA — Anzeigewerte einer Zeile der Commit-Leiste. Reine Funktionen, im Browser und in Node (Bausteintests).
-   Herkunft: kanbanD web/commits.js (zeilenwerte, datumText, ohneSteuerzeichen) und web/kultur.js (zeitpunktAusMs). */
+   Herkunft: kanbanD web/commits.js (zeilenwerte, datumText) und web/kultur.js (zeitpunktAusMs). */
 (function (ziel) {
   'use strict';
 
   const nachrichtWerte = typeof module !== 'undefined' ? require('./nachricht-werte.js') : window.gitreviewaNachrichtWerte;
   const nachrichtText = nachrichtWerte.nachrichtText;
 
-  const zweistellig = zahl => String(zahl).padStart(2, '0');
+  /* Die eine Zeichenliste der Oberfläche (R00054): `markiert` je Zeile für die Message, `sichtbarerName` für Betreff und
+     Autor. `commit-werte.js` steht in `index.html` vor `dateiliste-werte.js`; deshalb wird die Liste beim Aufruf geholt,
+     nicht beim Laden — sonst fehlt sie im Browser, während der Node-Test sie per `require` findet. */
+  const namensWerte = () => (typeof module !== 'undefined' ? require('./dateiliste-werte.js') : window);
+  const markierungsWerte = () => (typeof module !== 'undefined' ? require('./absicht-werte.js') : window.gitreviewaAbsichtWerte);
 
-  /** Fremder Text: Steuerzeichen der Schreibrichtung (Einbettungen, Isolierungen, LRM, RLM, ALM) würden die Zeile umdrehen
-      und Hash oder Datum verdecken. */
-  const ohneSteuerzeichen = text => text.replace(/[\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, '');
+  const sichtbarerName = text => namensWerte().sichtbarerName(text);
+  const markiert = text => markierungsWerte().markiert(text);
+
+  const zweistellig = zahl => String(zahl).padStart(2, '0');
 
   /** ISO-Zeitpunkt → `TT.MM.JJJJ HH:MM` in der Ortszeit des Browsers; ein Wert, der kein Zeitpunkt ist, bleibt unverändert.
       Ein leeres Datum zeigt „Datum nicht lesbar“: git gibt bei einem NUL im Autorkopf kein Datum aus (R00048 Kriterium 11),
@@ -28,18 +33,18 @@
   }
 
   /** Alle Anzeigewerte einer Zeile; der volle Zeitpunkt mit der Zeitzone des Autors ist der Hinweistext am Datum.
-      Gekürzt wird vor dem DOM und vor dem Entfernen der Richtungszeichen, damit Leiste und Streifen dieselbe Zahl n
-      nennen (R00051, Kriterium 5). */
+      Jedes Feld wird erst gekürzt und dann markiert (R00051, R00054): eine Marke zählt als ein Zeichen, der Hinweis
+      nennt dieselbe Zahl wie der Streifen „Absicht der KI“, und eine Marke wird nie halbiert. In der Message bleibt LF
+      ein Zeilenumbruch (`markiert`), in Betreff und Autor wird auch LF eine Marke. */
   function zeilenwerte(commit) {
-    const rumpf = ohneSteuerzeichen(nachrichtText(commit.rumpf));
     return {
       kurz: commit.kurzHash,
-      betreff: ohneSteuerzeichen(nachrichtText(commit.betreff)),
-      autor: ohneSteuerzeichen(nachrichtText(commit.autor)),
+      betreff: sichtbarerName(nachrichtText(commit.betreff)),
+      autor: sichtbarerName(nachrichtText(commit.autor)),
       datum: datumText(commit.datum),
       datumHinweis: commit.datum,
-      rumpf,
-      hatRumpf: ohneSteuerzeichen(commit.rumpf).length > 0,
+      rumpf: markiert(nachrichtText(commit.rumpf)),
+      hatRumpf: commit.rumpf.length > 0,
     };
   }
 
@@ -47,7 +52,7 @@
       Jede andere Ansicht (etwa der Abschnittskopf ohne Kette) nimmt ihn hier, damit fremder Text nirgends roh erscheint. */
   function betreffVon(commits, hash) {
     const commit = commits.find(eintrag => eintrag.hash === hash);
-    return commit ? ohneSteuerzeichen(nachrichtText(commit.betreff)) : '';
+    return commit ? sichtbarerName(nachrichtText(commit.betreff)) : '';
   }
 
   Object.assign(ziel, { datumText, zeilenwerte, betreffVon, nachrichtText });
