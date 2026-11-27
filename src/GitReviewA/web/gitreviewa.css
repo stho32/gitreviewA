@@ -124,7 +124,7 @@ body{background:var(--kd-bg);min-block-size:100vh}
 /* <<< eine-Feldbreite <<< */
 .gr-dateien{list-style:none;margin:0;padding:0;border:1px solid var(--kd-line);background:var(--kd-surface)}
 .gr-dateien:empty{display:none}
-.gr-dateien>li{display:flex;align-items:center;gap:var(--kd-s3);min-block-size:var(--kd-row);padding:var(--kd-s1) var(--kd-s3);padding-inline-start:calc(var(--kd-s3) + var(--tiefe,0) * var(--kd-s5));min-width:0;font-size:13px}
+.gr-dateien>li{display:flex;flex-wrap:wrap;align-items:center;gap:var(--kd-s3);min-block-size:var(--kd-row);padding:var(--kd-s1) var(--kd-s3);padding-inline-start:calc(var(--kd-s3) + var(--tiefe,0) * var(--kd-s5));min-width:0;font-size:13px}
 .gr-dateien>li+li{border-top:1px solid var(--kd-line)}
 .ordner-zeile{color:var(--kd-muted);font-weight:600}
 .gruppe-kopf{background:var(--kd-sunken);color:var(--kd-muted);font-weight:600}
@@ -133,7 +133,12 @@ body{background:var(--kd-bg);min-block-size:100vh}
 .datei-zeile{cursor:pointer;border-inline-start:3px solid transparent}
 .datei-zeile:hover{background:var(--kd-sunken)}
 .datei-zeile[aria-current="true"]{background:var(--kd-accent-weak);border-inline-start-color:var(--kd-accent)}
-.datei-zeile .pfad{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+/* Dateiname in der Dateiliste (R00056, Karte #66, PO Zeilen 279/280): der Pfad bekommt die Mindestbreite 8rem als flex-Basis
+   und bricht nur im Notfall mitten im Wort (`overflow-wrap:break-word` statt `anywhere`); reicht der Platz nicht, rückt der
+   Rest (Haken, Status, Balken, Zahlen) über `flex-wrap:wrap` der Zeile unter den Pfad. Datei- und Ordnerzeile teilen die Regel
+   (der Ordnername von 60 Zeichen bricht nach Kriterium 3), die Umbruchstellen nach `/`, `-`, `_`, `.` setzt
+   `dateinamen-umbruch-werte.js` (R00011: kein Textzusatz). */
+.datei-zeile .pfad,.ordner-zeile .pfad{flex:1 1 8rem;min-width:0;overflow-wrap:break-word}
 .datei-zeile .status{flex:none;inline-size:18px;text-align:center;font:600 12px/18px var(--kd-mono);border:1px solid currentColor}
 .status-A{color:var(--kd-status-ok-ink)}.status-M{color:var(--kd-status-warn-ink)}.status-D{color:var(--kd-status-error-ink)}.status-R{color:var(--kd-accent)}
 .datei-zeile .zahlen{flex:none;min-inline-size:72px;text-align:end;color:var(--kd-muted)}
