@@ -35,6 +35,15 @@ internal static class UnsichtbareZeichen
         (0xE0080, 0xE0FFF),
     ];
 
+    /// <summary>
+    /// Erster und letzter Codepunkt der Bereiche oben: fast jeder Codepunkt eines fremden Namens ist mit zwei Vergleichen abgetan,
+    /// ohne die Tabelle zu durchlaufen (der Markierpfad läuft über jeden Codepunkt jedes Namens). Die Abtastung über alle
+    /// Codepunkte (R00058, Kriterium 2) wacht darüber, dass die Grenzen zur Tabelle passen.
+    /// </summary>
+    private const int ErsterWeitererCodepunkt = 0x034F;
+
+    private const int LetzterWeitererCodepunkt = 0xE0FFF;
+
     /// <summary>Ob der Text ein Zeichen trägt, das man nicht sieht oder das die Anzeige verdreht (dieselbe Klasse wie <see cref="AlsMarken"/>).</summary>
     public static bool EnthaeltUnsichtbares(string text)
     {
@@ -88,10 +97,12 @@ internal static class UnsichtbareZeichen
         var istSteuerzeichen = kategorie == UnicodeCategory.Control && zeichen.Value != '\t';
         var istFormatzeichen = kategorie == UnicodeCategory.Format;
         var istZeilenOderAbsatztrenner = kategorie is UnicodeCategory.LineSeparator or UnicodeCategory.ParagraphSeparator;
-        var istStandardmaessigUnsichtbar = LiegtInWeiteremBereich(zeichen.Value);
+        var koennteInWeiteremBereichLiegen = zeichen.Value >= ErsterWeitererCodepunkt && zeichen.Value <= LetzterWeitererCodepunkt;
+        var istStandardmaessigUnsichtbar = koennteInWeiteremBereichLiegen && LiegtInWeiteremBereich(zeichen.Value);
         return istSteuerzeichen || istFormatzeichen || istZeilenOderAbsatztrenner || istStandardmaessigUnsichtbar;
     }
 
+    /// <summary>Nur für Codepunkte zwischen <see cref="ErsterWeitererCodepunkt"/> und <see cref="LetzterWeitererCodepunkt"/> aufzurufen.</summary>
     private static bool LiegtInWeiteremBereich(int codepunkt)
     {
         foreach (var (anfang, ende) in WeitereUnsichtbareBereiche)
