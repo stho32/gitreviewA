@@ -172,3 +172,6 @@ Nie vom User erfragen.
 | 2026-11-27 | R00056 Dateinamen in schmaler Seitenleiste | I0056 B5601 Messprobe (Repo N, Treiber, DSL; rot vor dem Umbau) | unklar | 2-4h | 0,6h | – | autonom |
 | 2026-11-27 | R00056 Dateinamen in schmaler Seitenleiste | I0056 B5602 Pfad mit Mindestbreite 8rem, Zeile bricht um | Standard | 2h | 0,4h | – | autonom |
 | 2026-11-27 | R00056 Dateinamen in schmaler Seitenleiste | I0056 B5603 Umbruchstellen nach _ und . (wbr-Funktion, Einheitstest, Kriterium 7) | Standard | 2h | 0,5h | – | autonom |
+| 2026-11-27 | R00056 Dateinamen in schmaler Seitenleiste | I0056 B5602 Nacharbeit: Pfad-Basis 5rem, Kriterium 5 scharf (rot→grün) | Standard | 2h | 0,3h | – | autonom |
+| 2026-11-27 | R00042 Ergebnis-Spalte ziehen | I0056 B5604 Bildlaufprobe der Liste (oberste Dateizeile, ± eine Zeile) | Standard | 2h | 0,3h | – | autonom |
+| 2026-11-27 | R00056/R00042 Karte #66 | Lauf 66-entwickler-2: Bericht, WBS, Gelerntes, Ist-Zeiten | Nacharbeit | – | 0,2h | – | autonom |
