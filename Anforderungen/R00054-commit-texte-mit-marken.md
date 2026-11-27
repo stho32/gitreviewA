@@ -27,7 +27,7 @@ Heute entfernt die Leiste U+202E, U+2066 und ihre Verwandten aus Betreff, Autor 
 - Die Marke ersetzt das Zeichen; das rohe Zeichen steht nicht mehr im angezeigten Text.
 - Reihenfolge: erst kürzen nach R00051 (20 000 Zeichen des Rohtextes, Hinweis `… (n Zeichen nicht gezeigt)`), dann markieren. Eine Marke zählt in `n` und in der Grenze als **ein** Zeichen; der Hinweis selbst enthält keine Marke.
 - Alle Wege der Leiste nehmen die markierten Werte: Zeile der Leiste (Betreff, Autor), ausgeklappte Message, Stand und Menü des Commit-Wählers in „Einzeln“, Abschnittskopf „ohne Kette“ (`betreffVon`) und die `title`-Texte, die aus diesen Elementen kopiert werden.
-- Eine Message, die nur aus Zeichen der Klasse besteht (etwa ein einzelnes U+200B), hat einen Rumpf: Der Knopf „Message“ erscheint und zeigt die Marken. Eine leere Message bleibt ohne Knopf (R00003). Vorläufig, bis der product-owner Frage 1 entschieden hat.
+- Eine Message, die nur aus Zeichen der Klasse besteht (etwa ein einzelnes U+200B), hat einen Rumpf: Der Knopf „Message“ erscheint und zeigt die Marken. Eine leere Message bleibt ohne Knopf (R00003). Entschieden (product-owner 2026-11-27, `AI-Team/po-entscheidungen.md` Zeile 278): endgültig, `hatRumpf` ist der rohe Serverrumpf.
 - Ersetzt den Teil von R00051, Kriterium 5, nach dem die Leiste das Richtungszeichen entfernt: Leiste und Streifen zeigen künftig **denselben** Text.
 - Der Server bleibt unverändert: `GET /api/commits` liefert die Texte roh (Marken entstehen nur im Browser, beim Zeichnen).
 
@@ -59,7 +59,7 @@ Vorbereitung: Repo U aus `user-stories/R00054.md` (Wegwerf-Ordner, Messages übe
 
 ### Leerfall
 
-- [ ] 7. Gegeben Commit `unur` mit der Message U+200B allein und Commit `uleer` ohne Message, wenn die Leiste geladen ist, dann trägt `unur` den Knopf „Message“, der ausgeklappt `⟨U+200B⟩` zeigt, und `uleer` trägt keinen Knopf (R00003). Vorläufig, bis der product-owner Frage 1 entschieden hat. (Unit `hatRumpf`)
+- [ ] 7. Gegeben Commit `unur` mit der Message U+200B allein und Commit `uleer` ohne Message, wenn die Leiste geladen ist, dann trägt `unur` den Knopf „Message“, der ausgeklappt `⟨U+200B⟩` zeigt, und `uleer` trägt keinen Knopf (R00003). Endgültig (product-owner 2026-11-27, `AI-Team/po-entscheidungen.md` Zeile 278): `hatRumpf` ist der rohe Serverrumpf. (Unit `hatRumpf`)
 
 Grenz- und Leerfälle bedacht: leere Felder (7; Betreff und Autor leer zeigen weiter leer); Marke an der Schnittkante (4); längste Marke und dichtester Text (6); Tab und LF bleiben, CR wird Marke (2); Zeichen über U+FFFF (`⟨U+E0041⟩`, 2, 3). **Verworfen**: einzelne Surrogate in Commit-Texten — der Decoder des Servers macht aus ungültigem UTF-8 Bytemarken `⟨0xED⟩` (Angriffsmatrix F10), es kommt kein einzelnes Surrogat im Browser an; die eine Liste bleibt dafür unverändert. Datum und Kurz-Hash: nicht fremd gesetzt (`%aI`, Hex geprüft), nicht betroffen.
 
@@ -103,7 +103,10 @@ Nach Skill `test-pyramide`; alles liegt im Browser: Unit für die Anzeigewerte (
 - Blockiert: —
 
 ## Offene Fragen
-1. **Message nur aus unsichtbaren Zeichen: Knopf „Message“ zeigen?** Heute zählt eine Message aus Richtungszeichen allein als leer, die Leiste zeigt keinen Knopf. Empfehlung: Knopf zeigen, ausgeklappt mit den Marken (Kriterium 7) — genau das soll der Mensch sehen; der Streifen „Absicht der KI“ zeigt ihn schon. Alternative: wie heute ohne Knopf, dann bleibt eine solche Message in der Leiste unsichtbar. Gilt vorläufig nach Empfehlung.
+
+Keine offenen. Der product-owner hat die Frage am 2026-11-27 entschieden (`AI-Team/po-entscheidungen.md` Zeile 278); die Antwort ist oben eingearbeitet:
+
+1. **Message nur aus unsichtbaren Zeichen: Knopf „Message“ zeigen?** **Ja** — eine Message nur aus unsichtbaren Zeichen hat einen Rumpf (`hatRumpf` = der Rumpf vom Server ist roh nicht leer), die Leiste zeigt den Knopf „Message“, ausgeklappt mit den Marken (Kriterium 7); nur eine wirklich leere Message bleibt ohne Knopf (R00003).
 
 ## Manuelle Vorbereitungstätigkeiten
 - keine
@@ -125,3 +128,4 @@ Auslöser: Ein fremdes Repo setzt U+202E in einen Betreff, damit `abc‮fed.exe`
 | Datum | Änderung | Grund |
 |---|---|---|
 | 2026-11-27 | angelegt | Karte #64, planer, Lauf 64-planer-1 |
+| 2026-11-27 | PO-Entscheidung eingearbeitet: Message nur aus unsichtbaren Zeichen hat einen Rumpf, Knopf „Message“ mit Marken; Vorbehalt „vorläufig“ entfällt (Kriterium 7 endgültig), Frage 1 geschlossen | Karte #64; PO `AI-Team/po-entscheidungen.md` Zeile 278 |
