@@ -761,3 +761,11 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - **Regelverstoß:** Der security-reviewer (Sonnet) hat die Pflichtlektüre aus `gemeinsam/` und `routing.md` nicht gelesen, das hat er selbst angegeben. Das Ergebnis war trotzdem belegt.
 - **Gate auf main:** NUnit 1883 zweimal, Playwright 1319 zweimal grün.
 - **Neue Backlog-Karte #68:** Variationsselektoren und Füllzeichen in die eine Klasse.
+| 2026-11-27 | #64 | Kennzahlen | — | — | 2 h 11 min | Läufe 9 (befund 1, bestanden 8) · Rollenzeit 2 h 6 min · Wartezeit 7 min · Nacharbeiten 1 · Kosten 2,10 $ · Durchlauf 2 h 11 min |
+| 2026-11-27 | #66 | Entwicklung | entwickler | befund | 44 min | 6/7 grün; K5 unerreichbar (Pfad 101 px statt 149), Rückschritt ergebnis-bereiche B4105 K6 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 66-entwickler-1 · 0,65 $ · Karte gesamt 1,64 $ |
+| 2026-11-27 | #66 | Detailplanung | product-owner | bestanden | 2 min | PO 281: flex 1 1 5rem; PO 282: R00042 K6 Liste = oberste sichtbare Datei · claude · sonnet · Lauf 66-product-owner-3 · 0,33 $ · Karte gesamt 1,97 $ |
+| 2026-11-27 | #66 | Detailplanung | planer | bestanden | 4 min | PO 281/282 in R00056, R00042, WBS (B5604) · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 66-planer-3 · 0,084 $ · Karte gesamt 2,05 $ |
+| 2026-11-27 | #66 | Entwicklung | entwickler | bestanden | 21 min | 5rem, K5 scharf grün, B5604, NUnit 1883, E2E 1343 · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 66-entwickler-2 · 0,30 $ · Karte gesamt 2,35 $ |
+| 2026-11-27 | #66 | Reviews | security-reviewer | bestanden | 1 min | Kurzblick: DOM-Knoten statt HTML, Marken bleiben · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 66-security-reviewer-1 · 0,017 $ · Karte gesamt 2,37 $ |
+| 2026-11-27 | #66 | Reviews | code-reviewer | bestanden | 3 min | kein Muss, 2 Sollte (K5-Filter, overflow-anchor ohne Rotprobe), 3 Optional · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 66-code-reviewer-1 · 0,12 $ · Karte gesamt 2,49 $ |
+| 2026-11-27 | #66 | Entwicklertest | entwicklertester | bestanden | 26 min | S1-S6 + Zusatz R00042/6 + Sollte-Probe bestanden, main-Vergleich: Fehler behoben · opencode · openrouter/deepseek/deepseek-v4.1-flash · Lauf 66-entwicklertester-1 · 0,19 $ · Karte gesamt 2,68 $ |
