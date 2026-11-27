@@ -24,6 +24,20 @@ function seitenfehlerSammeln(page) {
   return () => fehler;
 }
 
+/** Die Werkzeugleiste der Dateiansicht läuft nicht über ihren Bereich: „Bereich kopieren“ ist ganz sichtbar, kein Bildlauf
+    (R00055, Szenario 5 der User Story). */
+async function erwarteWerkzeugImBereich(page, kontext) {
+  const lage = await page.evaluate(() => {
+    const diff = document.getElementById('diff').getBoundingClientRect();
+    const knopf = document.getElementById('bereich-kopieren').getBoundingClientRect();
+    const werkzeug = document.getElementById('da-werkzeug');
+    return { knopfRechts: Math.round(knopf.right), diffRechts: Math.round(diff.right), bildlauf: Math.round(werkzeug.scrollLeft), sichtbar: knopf.width > 0 };
+  });
+  expect(lage.sichtbar, `„Bereich kopieren“ sichtbar (${kontext})`).toBe(true);
+  expect(lage.knopfRechts, `„Bereich kopieren“ rechts ${lage.knopfRechts} ≤ Diff rechts ${lage.diffRechts} (${kontext})`).toBeLessThanOrEqual(lage.diffRechts);
+  expect(lage.bildlauf, `scrollLeft der Werkzeugleiste (${kontext})`).toBe(0);
+}
+
 /** Den Spaltenzustand der Abnahme-Probe herstellen: 1280 startet mit offener Spalte, 812 mit zugeklappter (R00037/R00042). */
 async function spaltenzustand(anm, fenster, spalteOffen) {
   await anm.fensterSetzen(fenster);
@@ -164,6 +178,7 @@ test.describe('Kriterium 1 in der Dateiansicht (--dateien)', () => {
 
         await formularFelder.erwarteFelder(page, ['da-suche'], name);
         await formularFelder.erwarteFelderImBereich(page, name);
+        await erwarteWerkzeugImBereich(page, name);
         expect(seitenfehler(), `Seitenfehler (${name})`).toEqual([]);
       } finally {
         await dTreiber.beenden(lauf);
