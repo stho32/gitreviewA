@@ -85,9 +85,11 @@
   min-block-size: 0;
 }
 
-/* Werkzeugleiste (R00044, Pflichtpunkt 3): Suche, „Zeilen 3–7 markiert“ und „Bereich kopieren“ in **einer** Zeile. */
+/* Werkzeugleiste (R00044, Pflichtpunkt 3): Suche, „Zeilen 3–7 markiert“ und „Bereich kopieren“ in **einer** Zeile. Reicht der
+   Platz nicht, bricht die Leiste um, statt über den Bereich zu laufen (R00055): das Suchfeld schrumpft mit. */
 .da-werkzeug {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--kd-s3);
   padding: 0 1rem;
@@ -99,7 +101,8 @@
   display: inline-flex;
   align-items: center;
   gap: var(--kd-s2);
-  flex: none;
+  flex: 0 1 auto;
+  min-inline-size: 0;
 }
 
 .da-suche-label {
@@ -113,7 +116,6 @@
   border-radius: 3px;
   background: var(--kd-bg);
   color: inherit;
-  inline-size: 12rem;
 }
 
 .da-suche-zaehler {

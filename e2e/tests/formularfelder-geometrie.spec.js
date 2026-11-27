@@ -6,6 +6,7 @@
 // Feld auffällt. Browser-Eigenes (Geometrie), Repo P. Die Messung führt der Treiber `formularfelder-oberflaeche.js`.
 const { test, expect } = require('../dsl/zeile-annotieren.js');
 const dTreiber = require('../treiber/dateiansicht-d.js');
+const trennerSeite = require('../treiber/trenner-oberflaeche.js');
 const formularFelder = require('../treiber/formularfelder-oberflaeche.js');
 
 const FENSTER = { width: 1280, height: 800 };
@@ -140,13 +141,25 @@ test.describe('Kriterium 1 in der Dateiansicht (--dateien)', () => {
     dTreiber.entfernen(d);
   });
 
-  for (const [name, fenster] of [['1280 × 800', FENSTER], ['812 × 800', SCHMAL]]) {
+  // Die Leiste der Dateiansicht lässt sich wie im Review ziehen (R00045): die schmalste Breite 240 und ein Zug bis an die
+  // Höchstbreite (er wird dort geklemmt) geben die engste Werkzeugleiste — dort bricht sie um, statt über den Bereich zu laufen.
+  const FAELLE = [
+    ['1280 × 800, Leiste 360', FENSTER, null],
+    ['812 × 800, Leiste 240', SCHMAL, 240],
+    ['812 × 800, Leiste an die Höchstbreite gezogen', SCHMAL, 640],
+  ];
+  for (const [name, fenster, zielBreite] of FAELLE) {
     test(`soll bei ${name} das Suchfeld der Dateiansicht ganz in seinem Rollbereich halten`, async ({ page }) => {
       const seitenfehler = seitenfehlerSammeln(page);
       const lauf = await dTreiber.starten(d, 'mig.sql');
       try {
         await page.setViewportSize(fenster);
         await dTreiber.oeffnen(page, lauf);
+        if (zielBreite !== null) {
+          await trennerSeite.warteAufGroesse(page);
+          const jetzt = Number((await trennerSeite.trennerAngaben(page)).jetzt);
+          await trennerSeite.ziehen(page, zielBreite - jetzt);
+        }
         await page.locator('#da-suche').fill('Teil');
 
         await formularFelder.erwarteFelder(page, ['da-suche'], name);
