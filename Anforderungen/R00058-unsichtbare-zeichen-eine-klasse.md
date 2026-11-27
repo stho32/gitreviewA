@@ -42,9 +42,9 @@ Ein fremdes Repo kann heute einen Autor, Betreff oder Dateinamen mit einem Varia
   | U+180B–U+180D | 3 | Mn | MONGOLIAN FREE VARIATION SELECTOR ONE–THREE |
   | U+180F | 1 | Mn | MONGOLIAN FREE VARIATION SELECTOR FOUR |
   | U+2065 | 1 | Cn | (nicht zugewiesen, im Bereich U+2060–U+206F) |
-  | U+2800 | 1 | So | BRAILLE PATTERN BLANK (nicht `Default_Ignorable`, aus der Karte; Frage 2) |
+  | U+2800 | 1 | So | BRAILLE PATTERN BLANK (nicht `Default_Ignorable`, aus der Karte; entschieden, PO-Zeile 284) |
   | U+3164 | 1 | Lo | HANGUL FILLER |
-  | U+FE00–U+FE0F | 16 | Mn | VARIATION SELECTOR-1–16 (Frage 1) |
+  | U+FE00–U+FE0F | 16 | Mn | VARIATION SELECTOR-1–16 (entschieden, PO-Zeile 283) |
   | U+FFA0 | 1 | Lo | HALFWIDTH HANGUL FILLER |
   | U+FFF0–U+FFF8 | 9 | Cn | (nicht zugewiesen) |
   | U+E0000, U+E0002–U+E001F | 1 + 30 | Cn | (nicht zugewiesen, Tag-Block) |
@@ -54,7 +54,7 @@ Ein fremdes Repo kann heute einen Autor, Betreff oder Dateinamen mit einem Varia
 - Rechnung: heute 236 Codepunkte (ohne Tab, ohne Surrogate) + 4036 aus `Default_Ignorable_Code_Point` + 1 (U+2800) = **4273** Codepunkte, gezählt mit .NET 10.0.100 und Node 20.20.2 am 2026-11-27. Die Zahl hängt an der Unicode-Version der Laufzeit; maßgeblich ist die gemeinsame Tabelle (Kriterium 2).
 - Server und Oberfläche markieren genau die Codepunkte einer gemeinsamen Tabelle im Repo (Bereichsliste als Text), die beide Testseiten lesen.
 - Jede Stelle, die die Klasse heute nutzt (Bestand oben), nutzt die erweiterte Klasse ohne eigene Änderung an ihrer Logik: Marken in allen Anzeigen und Ausgaben, Ablehnung von Mustern und Suchtexten, kein VS-Code-Sprung.
-- Die Meldung bei abgelehnten Mustern nennt das Zeichen richtig: „Ein Muster darf keine unsichtbaren Zeichen enthalten.“ (Musterfeld, Dateisuche) bzw. „Ein --ignore-Muster darf keine unsichtbaren Zeichen enthalten.“ (Aufruf) — gilt bis zur Antwort auf Frage 3.
+- Die Meldung bei abgelehnten Mustern nennt das Zeichen richtig: „Ein Muster darf keine unsichtbaren Zeichen enthalten.“ (Musterfeld, Dateisuche) bzw. „Ein --ignore-Muster darf keine unsichtbaren Zeichen enthalten.“ (Aufruf) — entschieden, PO-Zeile 285.
 - In `web/` steht die Klasse genau einmal (`dateiliste-werte.js`); die Sonde aus R00054 Kriterium 3 kennt auch die neuen Zeichen.
 
 ## Nicht-funktionale Anforderungen
@@ -81,7 +81,7 @@ Vorbereitung: Repo V aus `user-stories/R00058.md` (Wegwerf-Ordner; Autor über `
 - [ ] 3. Gegeben Commit `vnamen` mit den Dateien `v❤️.txt` (U+2764 U+FE0F) und `hㅤ.txt` (U+3164), wenn der Mensch beide in „Zusammen“ abhakt, `hㅤ.txt` eine Zeile anmerkt und beendet, dann zeigen Dateiliste und Diff-Kopf `v❤⟨U+FE0F⟩.txt` und `h⟨U+3164⟩.txt`, das Ergebnis auf stdout nennt `h⟨U+3164⟩.txt` mit der Anmerkung und kein rohes U+FE0F oder U+3164, und der Diff-Kopf von `hㅤ.txt` trägt keinen VS-Code-Link, sondern den Grund wie bei einem Namen mit U+200B (R00021). (Integration gegen Ergebnis- und Sprung-Interactor; Unit `sichtbarerName`; kein neuer Playwright-Lauf)
 - [ ] 4. Gegeben ein laufendes gitreviewA, wenn der Mensch im Musterfeld `*❤️*` (U+2764 U+FE0F) eingibt, in der Dateisuche `ㅤ` (U+3164) eingibt oder gitreviewA mit `--ignore 'a⠀b'` (U+2800) startet, dann wird jedes abgelehnt: Musterfeld und Dateisuche melden „Ein Muster darf keine unsichtbaren Zeichen enthalten.“, der Start endet mit der Meldung „Ein --ignore-Muster darf keine unsichtbaren Zeichen enthalten.“ und demselben Exit-Code wie heute bei U+202E; `*❤*` (ohne Selektor) wird angenommen. (Unit `musterFehler`, Unit `Musterpruefer`; die bestehende Spec `eine-zeichenliste.spec.js` auf den neuen Wortlaut umgestellt, ein Fall U+FE0F dazu)
 
-### Legitime Inhalte (Entscheidungen, siehe Fragen)
+### Legitime Inhalte (entschieden, PO-Zeilen 283–285)
 
 - [ ] 5. Gegeben eine Message `Gut ❤️ 👨‍👩‍👧 😀`, ein Betreff `안녕하세요` (NFC) und ein Dateiname `안녕하세요.txt` in NFD (U+110B U+1161 U+11AB …), ein Betreff `⠁⠃⠉` und ein Betreff `a⠀b`, wenn die Leiste und die Dateiliste sie zeigen, dann steht `Gut ❤⟨U+FE0F⟩ 👨⟨U+200D⟩👩⟨U+200D⟩👧 😀` (der ZWJ war schon vorher markiert), beide koreanischen Texte und `⠁⠃⠉` erscheinen unverändert, `a⠀b` als `a⟨U+2800⟩b`. (Unit `sichtbarerName` und `AlsMarken`)
 
@@ -105,7 +105,7 @@ Grenz- und Leerfälle bedacht: Ränder der Bereiche (2); Zeichen über U+FFFF (`
 1. **Tabelle zuerst** (rot) — Bereichsliste als Textdatei (`0000-0008`, `000A-001F`, …, je Zeile ein Bereich); NUnit tastet `EnthaeltUnsichtbares`/`AlsMarken` über alle Codepunkte ab und fasst zu Bereichen zusammen, Node tastet `UNSICHTBARER_TEXT`/`sichtbarerName` ebenso ab; beide vergleichen mit der Datei. Eine Playwright-Probe fährt dieselbe Abtastung in der Seite.
 2. **Server** — `IstUnsichtbar(Rune)`: Kategorien wie heute **oder** Treffer in einer festen Bereichstabelle (die 13 Bereiche + U+2800). .NET kennt `Default_Ignorable_Code_Point` nicht als API; die Tabelle stammt aus `DerivedCoreProperties.txt` (Unicode) und ist Teil des Codes.
 3. **Oberfläche** — `UNSICHTBARE_KLASSE` um dieselben Bereiche erweitern; Empfehlung: ausgeschriebene Bereiche (`͏ᅟᅠ…\u{E0000}\u{E0002}-\u{E001F}\u{E0080}-\u{E0FFF}`) statt `\p{Default_Ignorable_Code_Point}`, damit beide Seiten wörtlich dieselbe Liste tragen und keine Laufzeit-Unicode-Version die Oberfläche still verschiebt; die Abtastung (1) entscheidet.
-4. **Meldungen** — Wortlaut in `Musterpruefer` und `musterFehler` nach Frage 3.
+4. **Meldungen** — Wortlaut in `Musterpruefer` und `musterFehler` nach PO-Zeile 285.
 5. **Sonde** — `bausteine/commit-werte.spec.js` Kriterium 3 um die neuen Muster erweitern.
 
 ### Grobentwurf (Klassen-Entwurf ohne Implementierungen)
@@ -120,7 +120,7 @@ Grenz- und Leerfälle bedacht: Ränder der Bereiche (2); Zeichen über U+FFFF (`
 ### Änderungen an bestehenden Klassen
 - `Fremdtext/UnsichtbareZeichen.cs`: `IstUnsichtbar` um die Bereichstabelle; Doku-Kommentar nennt die neuen Gruppen.
 - `web/dateiliste-werte.js`: `UNSICHTBARE_KLASSE` erweitert, Kommentar nennt die Tabelle.
-- `Aufruf/Musterpruefer.cs`, `web/ausblenden-werte.js`: Meldungstext (Frage 3).
+- `Aufruf/Musterpruefer.cs`, `web/ausblenden-werte.js`: Meldungstext (PO-Zeile 285).
 
 ## Tests
 
@@ -136,14 +136,11 @@ Nach Skill `test-pyramide`: die Klasse ist reine Logik — Unit auf beiden Seite
 
 ## Offene Fragen
 
-An den product-owner; bis zur Antwort gilt die Empfehlung (sie ist oben eingearbeitet):
+Keine offenen. Der product-owner hat die drei Fragen am 2026-11-27 entschieden (`AI-Team/po-entscheidungen.md` Zeilen 283–285); je Frage wurde die Empfehlung übernommen und ist oben eingearbeitet:
 
-1. **Emoji-Variationsselektor U+FE0F (❤️, ♻️, ⚠️) immer markieren?**
-   - (a) **Ja, überall gleich** (Empfehlung) — `❤️` erscheint als `❤⟨U+FE0F⟩` in Leiste, Dateiliste, Diff und Ergebnis. Folge: Emoji in Commit-Texten und Diffs sehen technischer aus; gleich wie heute schon ZWJ-Folgen (`👨⟨U+200D⟩👩`) und Flaggen-Tags. Eine Klasse, keine Kontextregel, kein Täuschungsrest. Ein Review-Werkzeug soll zeigen, was im Text steht.
-   - (b) Selektor nach einem Emoji-Zeichen nicht markieren (Kontextregel; `Anna`+U+FE0F bleibt markiert) — Folge: in .NET eine zweite Tabelle (Emoji-Eigenschaft, gut 1 400 Codepunkte) und eine Paar-Regel in zwei Sprachen, Abtastung über Paare; Ziffern, `#`, `*` sind Emoji-Zeichen (`1`+U+FE0F sähe aus wie `1`), bräuchten eine Ausnahme; ZWJ bliebe markiert, also bleibt Emoji-Text uneinheitlich. Etwa 2 Bubbles mehr (Hypothese).
-   - (c) Selektoren nur in Namen (Autor, Dateiname) markieren, nicht in Message und Diff — zwei Klassen, widerspricht Lehre #17; verworfen.
-2. **U+2800 (leeres Braille-Muster) aufnehmen?** (a) **Ja** (Empfehlung, Vorschlag der Karte) — bekanntes „unsichtbarer Name“-Zeichen; Folge: Braille-Kunst in einem Diff zeigt je Leerpunkt `⟨U+2800⟩` (gleiche Folgen als eine Marke mit Anzahl, R00054/diff-werte), alle anderen Braille-Muster (U+2801–U+28FF) bleiben unverändert. (b) Nein — Braille-Kunst bleibt lesbar, ein leer aussehender Name bleibt möglich.
-3. **Wortlaut der Ablehnung**: heute „… keine Steuer- oder Richtungszeichen …“; für U+FE0F oder U+3164 falsch. (a) **„Ein Muster darf keine unsichtbaren Zeichen enthalten.“ / „Ein --ignore-Muster darf keine unsichtbaren Zeichen enthalten.“** (Empfehlung) — drei Bestandstests werden umgestellt. (b) Wortlaut bleibt.
+1. **Emoji-Variationsselektor U+FE0F (❤️, ♻️, ⚠️) immer markieren?** — **entschieden, PO-Zeile 283: (a) ja, überall gleich** — `❤️` erscheint als `❤⟨U+FE0F⟩` in Leiste, Dateiliste, Diff und Ergebnis; gleich wie heute schon ZWJ-Folgen (`👨⟨U+200D⟩👩`) und Flaggen-Tags. Eine Klasse, keine Kontextregel, kein Täuschungsrest. Ein Review-Werkzeug soll zeigen, was im Text steht. Verworfen: (b) Selektor nach einem Emoji-Zeichen nicht markieren (Kontextregel; `Anna`+U+FE0F bleibt markiert) — in .NET eine zweite Tabelle (Emoji-Eigenschaft, gut 1 400 Codepunkte) und eine Paar-Regel in zwei Sprachen, Abtastung über Paare; Ziffern, `#`, `*` sind Emoji-Zeichen (`1`+U+FE0F sähe aus wie `1`), bräuchten eine Ausnahme; ZWJ bliebe markiert, also bliebe Emoji-Text uneinheitlich — etwa 2 Bubbles mehr (Hypothese); (c) Selektoren nur in Namen (Autor, Dateiname) markieren, nicht in Message und Diff — zwei Klassen, widerspricht Lehre #17.
+2. **U+2800 (leeres Braille-Muster) aufnehmen?** — **entschieden, PO-Zeile 284: (a) ja** (Vorschlag der Karte) — bekanntes „unsichtbarer Name“-Zeichen; Folge: Braille-Kunst in einem Diff zeigt je Leerpunkt `⟨U+2800⟩` (gleiche Folgen als eine Marke mit Anzahl, R00054/diff-werte), alle anderen Braille-Muster (U+2801–U+28FF) bleiben unverändert. Verworfen: (b) nein — Braille-Kunst bliebe lesbar, ein leer aussehender Name bliebe möglich.
+3. **Wortlaut der Ablehnung**: heute „… keine Steuer- oder Richtungszeichen …“; für U+FE0F oder U+3164 falsch. — **entschieden, PO-Zeile 285: (a) „Ein Muster darf keine unsichtbaren Zeichen enthalten.“ / „Ein --ignore-Muster darf keine unsichtbaren Zeichen enthalten.“** — drei Bestandstests werden umgestellt. Verworfen: (b) Wortlaut bleibt.
 
 Vom planer entschieden (mit Beleg, keine Produktfrage):
 - **Hangul-Füller** U+115F, U+1160, U+3164, U+FFA0 werden markiert: echter koreanischer Text nutzt sie nicht — NFC verwendet Silben U+AC00–U+D7A3, NFD (z. B. Dateinamen von macOS) zerlegt jede Silbe in Anlaut, Vokal, ggf. Auslaut ohne Füller (geprobt: `안녕하세요` NFD = U+110B U+1161 U+11AB …); Füller stehen nur in unvollständigen Silben und als bekannter „leerer Name“-Trick.
@@ -176,3 +173,4 @@ Auslöser: Der security-reviewer fand nach #64, dass `Anna`+U+FE0F, ein Name aus
 | Datum | Änderung | Grund |
 |---|---|---|
 | 2026-11-27 | angelegt | Karte #68, planer, Lauf 68-planer-1 |
+| 2026-11-27 | Offene Fragen geschlossen (PO-Entscheidungen 283–285, alle Empfehlungen übernommen); Vorbehalte „bis zur Antwort auf Frage n“ entfernt | Karte #68, planer, Lauf 68-planer-2 |
