@@ -778,3 +778,5 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - **Ehrlich gemeldet:** Die Rot-Probe mit `overflow-anchor:none` blieb grün. Der Entwickler hat das offen berichtet, statt die Probe zu verbiegen.
 - **Gate auf main:** NUnit 1883 zweimal, Playwright 1343 zweimal grün.
 | 2026-11-27 | #66 | Kennzahlen | — | — | 2 h 1 min | Läufe 11 (befund 1, bestanden 10) · Rollenzeit 1 h 51 min · Wartezeit 9 min · Nacharbeiten 0 · Kosten 2,67 $ · Durchlauf 2 h 1 min |
+| 2026-11-27 | #68 | Detailplanung | planer | bestanden | 9 min | I0058/R00058 bis Bubble, d7a0582; 3 Produktfragen an den PO · claude · opus · Lauf 68-planer-1 · 2,90 $ · Karte gesamt 2,90 $ |
+| 2026-11-27 | #68 | Detailplanung | product-owner | bestanden | 1 min | PO 283–285: U+FE0F überall markieren, U+2800 ja, Wortlaut unsichtbare Zeichen · claude · sonnet · Lauf 68-product-owner-1 · 0,20 $ · Karte gesamt 3,10 $ |
