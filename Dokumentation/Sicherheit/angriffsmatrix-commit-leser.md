@@ -6,6 +6,8 @@ Geschrieben vom security-reviewer **vor dem Bau** (2026-11-26); der Entwickler b
 `git hash-object -t commit -w --literally`), die Anwendung selbst wurde nicht neu gebaut: „heute“ stammt aus den Proben des planers an `1b405a3` (R00048) und aus
 eigenen git-Proben; `n.g.` = nicht geprobt (Unit am Code lesbar).
 
+Nachtrag 2026-11-27 (R00054, Karte #64): Zeile **F-Trojan-Source** in Abschnitt B schließt den Punkt „Zeichenliste der Anzeige in `web/commit-werte.js`“ (R00048, Notizen) aus „Nicht abgedeckt“; die Füllzeichen (Variationsselektoren, U+034F, Hangul-/Braille-Füller) bleiben dort offen (eigene Karte #68).
+
 ## Schutzziel, Akteure, Linien
 
 **Schutzziel.** (1) Autor, Datum, Betreff und Message eines Commits erscheinen genau so, wie git sie ausgibt — kein Byte im fremden Commit verschiebt ein
@@ -15,13 +17,13 @@ nicht, sichtbar, nie still gekürzt, Arbeit und Speicher höchstens Grenze plus 
 
 **Akteure.** A0 berechtigt (Kontrolle) · A3 Autor des fremden Repos (Commit-Kopf, Message, `.git/config`, Objekte) · A1 aufrufende KI oder Mensch (Auswahl, stdin).
 **Linien.** U Unit (Zerleger, Format) · I Integration (Interactor/Endpunkt in-process, Wegwerf-Repo, kleine Grenze als Testparameter) · P Prozess (echte Instanz,
-Exit-Code, stdout/stderr getrennt, Start auch über `bash -c '… &'`, Lehre #21, und aus einem Unterordner, Lehre #6). Kein vorgelagerter Server: keine Linie L3.
+Exit-Code, stdout/stderr getrennt, Start auch über `bash -c '… &'`, Lehre #21, und aus einem Unterordner, Lehre #6) · B Playwright (Chromium, headless; Browser-Eigenes, R00054). Kein vorgelagerter Server: keine Linie L3.
 
 **Spalte „heute“** = Stand vor dem Bau (`a44781e`). Der Stand nach dem Bau (`a5c359b`) steht am Ende im Abschnitt „Stand nach dem Bau“.
 
 **Kontrollpaar:** K1 und K2 müssen heute und danach dasselbe liefern; sonst misst keine Zeile.
 
-Legende `Kriterium`: Nummer aus R00048, `Test-Strategie` = Abschnitt Regressionstests ohne eigene Nummer, **LÜCKE Ln** = Kriterium fehlt (Vorschlag unten).
+Legende `Kriterium`: Nummer aus R00048, `R54-x` = Kriterium x aus R00054 (Karte #64), `Test-Strategie` = Abschnitt Regressionstests ohne eigene Nummer, **LÜCKE Ln** = Kriterium fehlt (Vorschlag unten).
 `heute`: geprobt = gemessen; `grün` = schützt der Bestand schon (Regression bleibt drin).
 
 ## A. Kontrolle
@@ -53,6 +55,7 @@ Jede Zeile läuft gegen **alle drei Wege**; der Test der Wege teilt den Zerleger
 | F13 | Zerleger bekommt Unsinn: Teilzahl nicht durch 5 teilbar, Hash mit 39 oder 41 Hexziffern, Hash mit Großbuchstaben/Leerraum/`\n` davor, leere Ausgabe, nur ein NUL | leere Ausgabe → keine Commits; sonst `GitFehler` mit **einer** Zeile, ohne Feldinhalt (nur Längen, wie im Bestand) | U | Test-Strategie | grün für Teilzahl (Bestand prüft `< 5`), n.g. für Hashform |
 | F14 | Zwei Commits, bei denen der erste Rumpf mit LF endet und der zweite Hash mit Leerraum beginnen könnte (Rumpf endet auf `\n`, Hash folgt nach NUL) | Rumpf `TrimEnd('\n')` nimmt nur LF vom Ende des **Felds**; Hash des Folgecommits bleibt unberührt | U | Test-Strategie | n.g. |
 | F15 | Zwei Commits mit gleicher Sekunde und gleichen Feldern, nur Hash verschieden | Reihenfolge wie bisher (Auswahl-/Neueste-zuerst-Regel), nichts doppelt | I | Test-Strategie (Lehre #2) | grün (n.g.) |
+| F-Trojan-Source | Richtungs- (U+202A–U+202E, U+2066–U+2069), Format- (`Cf`), Nullbreiten- (U+200B–U+200F), Tag- (U+E0001, U+E0020–U+E007F), Steuer- (`Cc` außer Tab), Zeilen- (U+2028) und Absatztrenner (U+2029) in Betreff, Autor und Message | jedes Zeichen der **einen** Klasse als Marke `⟨U+…⟩`; Tab bleibt, LF nur in der Message, sonst `⟨U+000A⟩`, CR überall `⟨U+000D⟩`; **erst kürzen** (20 000 Zeichen Rohtext), **dann markieren**, Marke nie halbiert, `n` stimmt; Leiste = Streifen „Absicht der KI“; `GET /api/commits` roh; dieselbe Liste wie `sichtbarerName`, keine zweite in `web/` | U+B+I | R54-1…7 | **grün** (Regression; vorher wurden Richtungszeichen entfernt und die übrigen Zeichen unsichtbar gelassen) — Abtastung U+0000–U+10FFFF gegen `sichtbarerName`, `⟨U+202E⟩`/`⟨U+200B⟩`/`⟨U+E0041⟩`/`⟨U+000D⟩`/`⟨U+000A⟩` in Betreff/Autor/Message; Specs `commit-leiste-marken`, `eine-zeichenliste`; Kontrollpaar: Mutant „erst markieren, dann kürzen“ wird rot; schließt R00048 „Nicht abgedeckt“ (Zeichenliste der Anzeige in `web/commit-werte.js`) |
 
 ## C. Größe, Abbruch, Speicher (Leser je Zeile der Tabelle in R00048, Ursachenanalyse: zehn Zeilen)
 
@@ -115,8 +118,8 @@ Alle Zeilen in einem Repo mit gesetzter fremder `.git/config`; Vergleich: Ausgab
 
 - Zeitgrenze für hängende git-Aufrufe (R00017 Frage 3, eigene Karte).
 - Summe mehrerer Lesungen in der Ansicht „Zusammen“ (Elternfolge, Netto, Übersicht, je höchstens 8 MiB, nacheinander): je Lesung begrenzt, die Summe ist es nicht. Gewollt (PO #60, Grenze je Lesung); bei nur 8 MiB je Aufruf und nacheinander kein Weg zu mehr als einem Puffer.
-- Zeichenliste der Anzeige in `web/commit-werte.js` (R00048, Notizen): entfernt Richtungszeichen, statt sie wie `UnsichtbareZeichen` zu markieren; eigene Karte.
 - Anzeigegrenze von 20 000 Zeichen je Message in der Commit-Leiste: eigene neue Karte (PO #60 Folgefrage).
+- Variationsselektoren (U+FE00–U+FE0F, U+E0100–U+E01EF), U+034F und Hangul-/Braille-Füller (U+115F, U+1160, U+3164, U+FFA0, U+2800) — unsichtbar, aber **nicht** in `Cc`/`Cf`/`Zl`/`Zp`: die eine Liste `sichtbarerName` markiert sie nicht, in **allen** Ausgaben (Leiste, Streifen, Dateiliste, Dateiansicht); eigene Karte (#68).
 - Hash-Auflösung (`rev-parse`, Hashpräfix gegen Tag-Namen): R00006/Lehre #2, unverändert.
 - Browser (Playwright): keine neue Spec, die Darstellung der Leiste ändert sich nicht (R00048, Test-Strategie).
 
