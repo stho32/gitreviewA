@@ -582,6 +582,34 @@ function repoPLang(ordner) {
   return { ordner, hashes: { q1, q2 } };
 }
 
+/** Repo N der User Story R00056 (Karte #66): Namenslängen und vorhandener Zustand der Dateiliste. `p1` „Anlegen“ legt die
+    Dateien an (README.md, `db/001_anlegen.sql`, `db/002_aendern.sql`, `src/app.js`, ein langer Name mit `-`, `_`, `.`,
+    `alt/name.js`, eine Datei mit 255 Zeichen ohne Trenner, ein Ordner mit 60 Zeichen Namen samt Datei, eine Binärdatei);
+    `p2` „Ändern“ ändert `src/app.js`, benennt `alt/name.js` in `neu/ein-sehr-langer-ordnername/name.js` um, löscht `README.md`
+    und ändert `db/002_aendern.sql` um mehr als 10 000 Zeilen (fünfstellige Zahl). */
+function repoN(ordner) {
+  repoAnlegen(ordner);
+  const langerName = `${'a'.repeat(251)}.txt`;         // 255 Zeichen, keine Trenner außer `.txt`
+  const ordner60 = 'o'.repeat(60);
+  dateiSchreiben(ordner, 'README.md', 'readme\n');
+  dateiSchreiben(ordner, 'db/001_anlegen.sql', 'anlegen 1\n');
+  dateiSchreiben(ordner, 'db/002_aendern.sql', 'aendern 1\n');
+  dateiSchreiben(ordner, 'src/app.js', 'app 1\n');
+  dateiSchreiben(ordner, 'src/modul-mit-sehr-langem-dateinamen_und_unterstrichen.konfiguration.json', '{}\n');
+  dateiSchreiben(ordner, 'alt/name.js', 'name 1\n');
+  dateiSchreiben(ordner, langerName, 'lang\n');
+  dateiSchreiben(ordner, `${ordner60}/datei.txt`, 'ordner\n');
+  fs.writeFileSync(path.join(ordner, 'bild.bin'), Buffer.from([0x41, 0, 0x42, 0, 1, 2]));
+  const p1 = commitAnlegen(ordner, { betreff: 'Anlegen' });
+  dateiSchreiben(ordner, 'src/app.js', 'app 2\n');
+  fs.mkdirSync(path.join(ordner, 'neu/ein-sehr-langer-ordnername'), { recursive: true });
+  git(ordner, 'mv', 'alt/name.js', 'neu/ein-sehr-langer-ordnername/name.js');
+  fs.rmSync(path.join(ordner, 'README.md'));
+  dateiSchreiben(ordner, 'db/002_aendern.sql', zeilen(10001, nummer => `z${nummer}`));
+  const p2 = commitAnlegen(ordner, { betreff: 'Aendern' });
+  return { ordner, hashes: { p1, p2 }, langerName };
+}
+
 function zufallsBytes(anzahl) {
   const bytes = Buffer.alloc(anzahl);
   let zustand = 12345;
@@ -592,4 +620,4 @@ function zufallsBytes(anzahl) {
   return bytes;
 }
 
-module.exports = { repoGruppen, repoAbsicht, repoUmbenennung, repoP, repoPLang, repoV, repoG, repoKlammern, repoX, repoK, repoZ, repoZeilenbereich, repoQ, repoS, repoL, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, repoY, repoLangerPfad, markerVorhanden, diffProgrammOhneSchutzStarten };
+module.exports = { repoGruppen, repoAbsicht, repoUmbenennung, repoP, repoPLang, repoN, repoV, repoG, repoKlammern, repoX, repoK, repoZ, repoZeilenbereich, repoQ, repoS, repoL, repoStill, repoMitRumpf, repoMitBidiPfad, repoMitUnsichtbarenNamen, repoMitBidiBetreff, repoA, repoAAusUnterordner, repoMitSubmodulAlsLog, repoMitVerstecktemCode, repoMitBinaerausgabe, repoAMitDiffProgrammen, repoAMitFremdenEinstellungen, repoM, repoU, repoUMitV, repoGross, repoGrossOhneKette, repoW, repoC, repoY, repoLangerPfad, markerVorhanden, diffProgrammOhneSchutzStarten };

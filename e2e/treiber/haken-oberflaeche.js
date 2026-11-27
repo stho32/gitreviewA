@@ -205,6 +205,7 @@ async function zeitBisFortschritt(page, text, startMs) {
 }
 
 module.exports = {
+  zaehler,
   kaestchen, kaestchenBetaetigen, kaestchenMitPfad, kaestchenMitPfadBetaetigen, perTastaturAbhaken, hakenSetzenScheitert, hakenSetzenVerzoegern, standLesenScheitert,
   pruefeFortschritt, pruefeBalkenanteil, pruefeAbgehakt, pruefeKaestchenName, pruefeFokusAufKaestchen, pruefeHakenMeldung, pruefeKaestchenGesperrt,
   pruefeKaestchenflaeche, zeitBisFortschritt, gesperrtesKaestchenBetaetigen, hakenAnfragenZaehlen, pruefeGesperrt, pruefeBedienbar,

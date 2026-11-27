@@ -169,3 +169,4 @@ Nie vom User erfragen.
 | 2026-11-26 | R00053 Anmerkungsfeld im Diff-Bereich | I0053 B4901 Feldbreite am Behälter (max-inline-size:72ch) | Standard | 2h | 0,2h | – | autonom |
 | 2026-11-26 | R00053 Anmerkungsfeld im Diff-Bereich | I0053 B4904 Nacharbeit Befund 1 (Knopfzeile bricht um, lange Zeile) | Standard | 2h | 0,8h | – | autonom |
 | 2026-11-26 | R00053 Anmerkungsfeld im Diff-Bereich | I0053 B4905 Nacharbeit Befund 2 (Anmerkungskopf bricht um, Ändern/zweites Feld) | Standard | 2h | 0,5h | – | autonom |
+| 2026-11-27 | R00056 Dateinamen in schmaler Seitenleiste | I0056 B5601 Messprobe (Repo N, Treiber, DSL; rot vor dem Umbau) | unklar | 2-4h | 0,6h | – | autonom |
