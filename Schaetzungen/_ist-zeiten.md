@@ -181,3 +181,4 @@ Nie vom User erfragen.
 | 2026-11-27 | R00058 Unsichtbare Zeichen eine Klasse | I0058 B5804 Wege mit Folge: Ergebnis, Sprung, Muster | Standard | 2h | 0,3h | – | autonom |
 | 2026-11-27 | R00058 Unsichtbare Zeichen eine Klasse | I0058 B5805 Browser: Leiste und Unicode-Daten der Seite | unklar | 2-4h | 0,2h | – | autonom |
 | 2026-11-27 | R00058 Unsichtbare Zeichen eine Klasse | Lauf 68-entwickler-1: Gate, Messprobe, Fix der Bereichstabelle, Gelerntes | Nacharbeit | – | – | 0,7h | autonom |
+| 2026-11-27 | R00057 Suchfeld in der Werkzeugleiste bleibt sichtbar | I0057 B5701 Messprobe (Treiber + Spec: 8 Fälle × 4 Zustände, längster Zähler, Bedienbar, Anzeigeverfahren; rot vor dem Umbau) | unklar | 2-4h | 0,6h | – | autonom |
