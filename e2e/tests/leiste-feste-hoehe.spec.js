@@ -1,6 +1,6 @@
 'use strict';
 // Spezifikation R00039 „Werkzeugleiste einzeilig mit Ansicht ▾“, Teil Leiste (B3802) — Höhenregel nachgezogen mit R00057
-// Kriterium 5 (PO 287): ohne aktive Suche ab 600 px Diff-Breite eine Zeile (gemessener Rand 606 px), 400–599 px höchstens
+// Kriterium 5 (PO 289): ohne aktive Suche ab 610 px Diff-Breite eine Zeile (gemessener Rand 606 px), 400–609 px höchstens
 // zwei, darunter höchstens drei; der lange Pfad ist in der Mitte gekürzt und steht ganz im zugänglichen Namen. Browser-Eigenes
 // (Darstellung, gemessene Höhe).
 const { test, expect } = require('../dsl/diff-lesen.js');
@@ -9,20 +9,25 @@ const diffSeite = require('../treiber/diff-oberflaeche.js');
 const PFAD = '#diff .diff-pfad';
 
 test.describe('Leiste mit fester Höhe (R00039, B3802)', () => {
-  test('soll ohne aktive Suche ab 600 px eine Zeile und bei 400 px zwei Zeilen hoch sein — ohne Überlauf', async ({ diff, page }) => {
+  test('soll ohne aktive Suche ab 610 px eine Zeile und bei 400 px zwei Zeilen hoch sein — ohne Überlauf', async ({ diff, page }) => {
     await diff.starten({ vorbereitung: 'Langer Pfad', modus: 'zusammen' });
     await diff.dateizeileAnsehen(diff.langerPfad());
     await expect(page.locator(PFAD)).toBeVisible();
 
-    // R00057 Kriterium 5 (PO 287): ohne aktive Suche ab 600 px Diff-Breite eine Zeile. Der Rand liegt gemessen bei 606 px:
+    // R00057 Kriterium 5 (PO 289): ohne aktive Suche ab 610 px Diff-Breite eine Zeile. Der Rand liegt gemessen bei 606 px:
     // bei genau 600 px braucht die Werkzeugzeile für ein 3rem sichtbares Feld ihre eigene Zeile (die Alternative wäre ein
-    // Suchfeld unter 3rem — R00057 Kriterium 1 und damit ein Messfall, der nicht verhandelbar ist). 620 px liegt sicher
-    // darüber und prüft die Regel unverändert scharf.
-    await diffSeite.setzeDiffBreite(page, 620);
-    const bei620 = await diffSeite.leistenmass(page);
-    expect(bei620.zeilen, `ab 620 px eine Zeile (${JSON.stringify(bei620)})`).toBe(1);
-    expect(bei620.ueberlauf, `kein waagerechter Überlauf bei 620 px (${JSON.stringify(bei620)})`).toBeLessThanOrEqual(0);
-    expect(bei620.knopfAusserhalb, `Menüknopf im Diff-Bereich bei 620 px (${JSON.stringify(bei620)})`).toBe(0);
+    // Suchfeld unter 3rem — R00057 Kriterium 1 und damit ein Messfall, der nicht verhandelbar ist). 610 px ist die
+    // entschiedene Grenze; 600 px liegt darunter und muss höchstens zwei Zeilen hoch sein — so ist die Spanne zwischen
+    // 606 und 620 px geprüft und nicht ausgelassen.
+    await diffSeite.setzeDiffBreite(page, 610);
+    const bei610 = await diffSeite.leistenmass(page);
+    expect(bei610.zeilen, `ab 610 px eine Zeile (${JSON.stringify(bei610)})`).toBe(1);
+    expect(bei610.ueberlauf, `kein waagerechter Überlauf bei 610 px (${JSON.stringify(bei610)})`).toBeLessThanOrEqual(0);
+    expect(bei610.knopfAusserhalb, `Menüknopf im Diff-Bereich bei 610 px (${JSON.stringify(bei610)})`).toBe(0);
+
+    await diffSeite.setzeDiffBreite(page, 600);
+    const bei600 = await diffSeite.leistenmass(page);
+    expect(bei600.zeilen, `bei 600 px höchstens zwei Zeilen (${JSON.stringify(bei600)})`).toBeLessThanOrEqual(2);
 
     await diffSeite.setzeDiffBreite(page, 400);
     const bei400 = await diffSeite.leistenmass(page);
@@ -36,7 +41,7 @@ test.describe('Leiste mit fester Höhe (R00039, B3802)', () => {
     await diff.starten({ vorbereitung: 'Repo Z', modus: 'zusammen' });
     await diff.dateiAnsehen('src/a.txt');
     const bei1280 = await diffSeite.leistenmass(page);
-    // R00057 Kriterium 5 (PO 287): bei 1280 × 800 mit offener Ergebnis-Spalte ist der Diff 588 px breit; 400–599 px sind
+    // R00057 Kriterium 5 (PO 289): bei 1280 × 800 mit offener Ergebnis-Spalte ist der Diff 588 px breit; 400–609 px sind
     // höchstens zwei Zeilen.
     expect(bei1280.zeilen, `bei 1280 px höchstens zwei Zeilen (${JSON.stringify(bei1280)})`).toBeLessThanOrEqual(2);
 
@@ -45,9 +50,9 @@ test.describe('Leiste mit fester Höhe (R00039, B3802)', () => {
     expect(bei400.zeilen, `nach dem Fensterwechsel zwei Zeilen (${JSON.stringify(bei400)})`).toBe(2);
     expect(bei400.ueberlauf, `kein waagerechter Überlauf nach dem Wechsel (${JSON.stringify(bei400)})`).toBeLessThanOrEqual(0);
 
-    await diffSeite.setzeDiffBreite(page, 620);
+    await diffSeite.setzeDiffBreite(page, 610);
     const zurueck = await diffSeite.leistenmass(page);
-    expect(zurueck.zeilen, `zurück ab 620 px eine Zeile (${JSON.stringify(zurueck)})`).toBe(1);
+    expect(zurueck.zeilen, `zurück ab 610 px eine Zeile (${JSON.stringify(zurueck)})`).toBe(1);
   });
 
   test('soll den langen Pfad in der Mitte kürzen, auch nach einer Größenänderung, und ganz im zugänglichen Namen nennen', async ({ diff, page }) => {

@@ -71,12 +71,12 @@ function erwarteZustand(m, art, kontext) {
   }
 }
 
-/** Kriterium 5: die Höhenregel der Leiste. Ohne aktive Suche ab 600 px Diff-Breite eine Zeile, bei 400–599 px höchstens
-    zwei, darunter höchstens drei; mit aktiver Suche ab 600 px höchstens zwei, darunter höchstens vier. */
+/** Kriterium 5: die Höhenregel der Leiste. Ohne aktive Suche ab 610 px Diff-Breite eine Zeile (PO 289), bei 400–609 px
+    höchstens zwei, darunter höchstens drei; mit aktiver Suche ab 600 px höchstens zwei, darunter höchstens vier. */
 function erwarteHoehenregel(m, art, kontext) {
   const ohneSuche = art === 'leer';
   const mitSuche = art === '1 von 1' || art === 'keine Treffer';
-  if (ohneSuche && m.diff.breite >= 600) {
+  if (ohneSuche && m.diff.breite >= 610) {
     expect(m.zeilen, `ohne Suche bei Diff ${m.diff.breite} px eine Zeile (${kontext})`).toBe(1);
   } else if (ohneSuche && m.diff.breite >= 400) {
     expect(m.zeilen, `ohne Suche bei Diff ${m.diff.breite} px höchstens zwei Zeilen (${kontext})`).toBeLessThanOrEqual(2);
