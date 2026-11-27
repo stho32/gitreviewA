@@ -160,7 +160,7 @@ body{background:var(--kd-bg);min-block-size:100vh}
 /* Werkzeugzeile des Diff-Kopfs (R00039): Suche und das Menü „Ansicht ▾“ — die vier Anzeigeverfahren stehen im Menü.
    Sie bricht um, statt als Ganzes zu schrumpfen (R00057): die Zeile aus Beschriftung und Feld hat eine eigene Basis,
    Zähler, Meldung und „Ansicht ▾“ rücken darunter, wenn sie nicht daneben passen. Die Basis 14rem ist ein Richtwert. */
-.diff-werkzeuge{display:flex;flex-wrap:wrap;align-items:center;gap:var(--kd-s2) var(--kd-s2);flex:1 1 13.4rem;min-width:0}
+.diff-werkzeuge{display:flex;flex-wrap:wrap;align-items:center;gap:var(--kd-s2) var(--kd-s2);flex:1 1 14rem;min-width:0}
 .ansicht-menue{position:relative;flex:none}
 /* „Datei anmerken“ und sein Grund bleiben eine Einheit; sie schrumpfen nicht mit (R00022, R00039). */
 .diff-datei-anmerken{display:flex;align-items:center;gap:4px;flex:none;min-width:0}
@@ -310,7 +310,7 @@ body{background:var(--kd-bg);min-block-size:100vh}
 @media (min-width:600px){.bild-reihe{flex-direction:row}}
 
 /* Suche im Diff (R00027): Suchfeld und Zähler im Werkzeugkasten, Treffermarke im Text (auf der Färbung, ohne sie zu brechen) */
-.suche-feld{display:inline-flex;align-items:center;gap:var(--kd-s2);flex:1 1 6.6rem;min-width:0;font-size:12.5px;color:var(--kd-text)}
+.suche-feld{display:inline-flex;align-items:center;gap:var(--kd-s2);flex:1 1 7rem;min-width:0;font-size:12.5px;color:var(--kd-text)}
 .suche-label{white-space:nowrap}
 /* Das Feld trägt keine eigene Breite und kein eigenes `flex` (R00057/R00055): die Breite kommt aus `.formularfeld`,
    den Platz gibt ihm die Zeile `.suche-feld`, die umbricht, statt das Feld zu quetschen. */
