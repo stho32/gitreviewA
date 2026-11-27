@@ -3,7 +3,8 @@ using GitReviewA.Fremdtext;
 
 namespace GitReviewA.Tests.Fremdtext;
 
-/// <summary>Klasse statt Beispiel: Steuerzeichen außer Tab, alle Formatzeichen (Richtung, Nullbreiten, BOM, Tags), Zeilen- und Absatztrenner und einzelne Surrogate.</summary>
+/// <summary>Klasse statt Beispiel: Steuerzeichen außer Tab, alle Formatzeichen (Richtung, Nullbreiten, BOM, Tags), Zeilen- und Absatztrenner,
+/// die standardmäßig unsichtbaren Zeichen außerhalb der Formatzeichen (Variationsselektoren, Hangul-Füller, reservierte Tag-Bereiche) und einzelne Surrogate.</summary>
 public class UnsichtbareZeichenTests
 {
     [TestCase(@"a\u001Bb", "a⟨U+001B⟩b")]
@@ -34,6 +35,53 @@ public class UnsichtbareZeichenTests
     [TestCase("日本語/ملف.txt")]
     public void Wenn_Text_nur_sichtbare_Zeichen_und_Tab_enthaelt_dann_bleibt_er_unveraendert(string text)
     {
+        var markiert = UnsichtbareZeichen.AlsMarken(text);
+
+        Assert.That(markiert, Is.EqualTo(text));
+    }
+
+    /// <summary>Die Bereiche außerhalb der Unicode-Kategorien, mit ihren Grenzen (R00058).</summary>
+    [TestCase(0x034F)]
+    [TestCase(0x115F)]
+    [TestCase(0x1160)]
+    [TestCase(0x17B4)]
+    [TestCase(0x17B5)]
+    [TestCase(0x180B)]
+    [TestCase(0x180D)]
+    [TestCase(0x180F)]
+    [TestCase(0x2065)]
+    [TestCase(0x2800)]
+    [TestCase(0x3164)]
+    [TestCase(0xFE00)]
+    [TestCase(0xFE0F)]
+    [TestCase(0xFFA0)]
+    [TestCase(0xFFF0)]
+    [TestCase(0xFFF8)]
+    [TestCase(0xE0000)]
+    [TestCase(0xE0002)]
+    [TestCase(0xE001F)]
+    [TestCase(0xE0080)]
+    [TestCase(0xE0FFF)]
+    public void Wenn_Text_ein_standardmaessig_unsichtbares_Zeichen_traegt_dann_steht_es_als_Marke(int codepunkt)
+    {
+        var markiert = UnsichtbareZeichen.AlsMarken($"a{char.ConvertFromUtf32(codepunkt)}b");
+
+        Assert.That(markiert, Is.EqualTo($"a⟨U+{codepunkt:X4}⟩b"));
+    }
+
+    /// <summary>Je ein Zeichen knapp neben den Bereichen bleibt sichtbar (R00058, Kriterium 2).</summary>
+    [TestCase(0x034E)]
+    [TestCase(0x1161)]
+    [TestCase(0x180A)]
+    [TestCase(0x1810)]
+    [TestCase(0x2801)]
+    [TestCase(0x3163)]
+    [TestCase(0xFE10)]
+    [TestCase(0xE1000)]
+    public void Wenn_Text_nur_ein_Nachbarzeichen_traegt_dann_bleibt_er_unveraendert(int codepunkt)
+    {
+        var text = char.ConvertFromUtf32(codepunkt);
+
         var markiert = UnsichtbareZeichen.AlsMarken(text);
 
         Assert.That(markiert, Is.EqualTo(text));
