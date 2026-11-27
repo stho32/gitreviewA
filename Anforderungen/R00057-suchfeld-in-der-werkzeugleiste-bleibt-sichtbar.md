@@ -14,7 +14,7 @@ In der Werkzeugleiste über dem Diff schrumpft das Feld „Im Diff suchen“, so
 
 Zahlt ein auf: [Vision](R00000-vision.md) — „Arbeitsplatz mit entkoppelten Bereichen“ (jeder Bereich bleibt bedienbar, ein Werkzeug verschwindet nicht, wenn der Nachbar wächst) und „Lesbare Diffs“ (Suche im Diff, R00027).
 
-**Offen, bis der product-owner entscheidet** (Frage der Karte #69): wie das Feld seinen Platz bekommt — Leiste umbrechen, Feld mit Mindestbreite oder Zähler ins Feld. Die Kriterien unten gelten für die **Empfehlung (Option 1, Leiste umbrechen)**, weil nur sie mit den Messwerten erreichbar ist; die Optionen mit Messfolge stehen unter „Optionen“.
+**Entschieden** (product-owner, `AI-Team/po-entscheidungen.md` Zeile 286): Das Feld bekommt seinen Platz, indem die Leiste umbricht — Option 1, wie empfohlen. Die Kriterien unten gelten für **Option 1 (Leiste umbrechen)**, weil nur sie mit den Messwerten erreichbar ist; die Optionen mit Messfolge stehen unter „Optionen“.
 
 ## Ausgangssituation
 
@@ -40,7 +40,7 @@ Zahlt ein auf: [Vision](R00000-vision.md) — „Arbeitsplatz mit entkoppelten B
 
 ## Ziel
 
-Gilt für Option 1 (Empfehlung); die Werte stammen aus der Messreihe „Leiste 14rem, Feld 7rem“ (unten „Optionen“):
+Gilt für Option 1 (entschieden, PO-Zeile 286); die Werte stammen aus der Messreihe „Leiste 14rem, Feld 7rem“ (unten „Optionen“):
 
 - **Das Feld bekommt seinen Platz vom Behälter**: `.diff-werkzeuge` hat eine Basisbreite (Richtwert 14rem) und bricht um (`flex-wrap:wrap`); die Zeile mit Beschriftung und Feld hat eine eigene Basis (Richtwert 7rem). Zähler, Meldung und „Ansicht ▾“ rücken unter das Feld, wenn sie nicht daneben passen. Die Richtwerte darf der Entwickler anpassen, solange die Messprobe grün bleibt.
 - **Eine Feldbreite, ein Ort** (R00055): `.diff-suche` trägt weder eine Breite noch ein eigenes `flex` oder `min-inline-size`; die Breite kommt aus `.formularfeld`, der Mindestplatz vom Behälter. Der Quelltext-Wächter aus R00055 (B5506) zählt künftig auch `flex` und `flex-basis` an Feld-Selektoren.
@@ -57,7 +57,7 @@ Messfolge: dieselbe Messung (8 Fälle × 5 Zustände, Tabelle oben) mit je einer
 | 3. Zähler ins Feld | Zähler absolut über dem rechten Feldrand, Leiste unverändert | unverändert zum Zustand „leer“: 2 / 25 / 85 / 125 / 9 / 22 / 222 / 0 je Fall; Karte (1280/offen/360): 2 | ja (außer Fehlermeldung in 3 Fällen) | reicht allein nicht, weil das Feld ohne Zähler im selben Platz bleibt; zusätzlich Text im Feld und Zähler kollidieren bei breitem Zähler (114 px) |
 | Zusatzprobe: Beschriftung „Suchen“ nur für Screenreader | `.suche-label` visuell versteckt, Leiste unverändert | kleinster Wert 3; Karte: 32 / 4 / 4 / 4 / 4 | nein in 5 von 8 Fällen | gewinnt 51 px, reicht allein nicht; mit Umbruch (Option 1) Feld 124–256 px |
 
-**Empfehlung des planers: Option 1.** Sie ist die einzige, deren Messwerte die Probe der Karte („Feldmitte = Feld, mindestens 32 px“) in allen Fällen erfüllen; 2 und 3 allein erreichen sie bei 1280 mit offener Spalte nicht (2–25 px). Option 1 ist zugleich das, was R00039 Zeile 30 schon sagt (die Suche rückt in die nächste Zeile). Kosten: Leiste höher mit aktiver Suche und bei Diff unter 400 px.
+**Entschieden (PO-Zeile 286): Option 1** (Empfehlung des planers). Sie ist die einzige, deren Messwerte die Probe der Karte („Feldmitte = Feld, mindestens 32 px“) in allen Fällen erfüllen; 2 und 3 allein erreichen sie bei 1280 mit offener Spalte nicht (2–25 px). Option 1 ist zugleich das, was R00039 Zeile 30 schon sagt (die Suche rückt in die nächste Zeile). Kosten: Leiste höher mit aktiver Suche und bei Diff unter 400 px.
 
 ## Verifikation
 
@@ -71,7 +71,7 @@ Testebene nach Projektregel: Playwright, weil Maße und Überdeckung nur im Brow
 2. **Nichts läuft über, nichts überdeckt etwas** (Playwright). Gegeben dieselben Fälle und Zustände, dann liegen die rechten Kanten von Feld, Zähler, Meldung und „Ansicht ▾“ im Diff-Bereich (≤ rechte Innenkante), `#diff` hat keinen waagerechten Bildlauf (`scrollWidth ≤ clientWidth`), und die Rechtecke von Feld, Zähler, Meldung und „Ansicht ▾“ schneiden sich nicht (Schnittfläche 0). Bestand: Überdeckung in 23 von 40 Fall × Zustand-Paaren, Leiste aus dem Bereich in 13; Option 1: 0 von 40 (Messung der Überdeckung: Abtastung mit `elementFromPoint`, Überschneidung der Rechtecke noch nicht gemessen — B5701).
 3. **Bedienbar** (Playwright). Gegeben Repo P, 1280 × 800, Ergebnis-Spalte offen, Standard-Seitenleiste (der Fall der Karte), wenn man in die Mitte des Feldes klickt, `app` tippt und Enter drückt, dann steht der Fokus im Feld, das Feld zeigt `app`, und der Zähler zeigt „1 von 1“ (gemessen, Repo P); die Taste `/` im Diff-Bereich setzt den Fokus wieder ins Feld (R00027, R00030); ein Klick auf „Ansicht ▾“ öffnet das Menü, und sein erster Eintrag ist ganz sichtbar und anklickbar.
 4. **Alle Anzeigeverfahren** (Playwright, Pflichtpunkt 2). Kriterien 1–3 gelten im Standardmodus „Zusammen“ (netto) zuerst, dann „Einzeln“, mit „Nur Änderungen“ und „Ganze Datei“, untereinander und nebeneinander, mit Umbruch an und aus. Nicht betroffen: Lücken und große Diffs (die Leiste hängt nicht vom Inhalt des Diffs ab), die Dateiansicht (eigene Leiste, R00055 B5505) und Binärdateien oder keine gewählte Datei (Leiste ohne Pfad: das Feld bleibt, es hat dann mehr Platz).
-5. **Die Leiste wächst nur bis zu einer Obergrenze** (Playwright, Pflichtpunkt 3 festes Layout). Gegeben dieselben Fälle, dann gilt: ohne aktive Suche ist die Leiste bei Diff-Bereich ≥ 600 px eine Zeile (30 px; R00039 Kriterium 5 bleibt), bei 400–599 px höchstens zwei Zeilen und darunter höchstens drei (gemessen 94 px bei 320 px); mit aktiver Suche ab 600 px höchstens zwei Zeilen (gemessen 56 px), darunter höchstens vier (gemessen 122 px); mit Fehlermeldung höchstens 170 px (gemessen 166 px, Bestand 154 px); der Rollbereich des Diffs darunter bleibt in jedem Fall mindestens 480 px hoch (gemessen ≥ 526 px bei 800 px Fenster). **Offen, bis der product-owner entscheidet**: die Lockerung gegenüber R00039 Zeile 30 („nie über zwei Zeilen“) für aktive Suche und Diff unter 400 px; entscheidet er für Option 2 oder 3 oder gegen die Lockerung, entfällt dieses Kriterium zugunsten der Messwerte der gewählten Option.
+5. **Die Leiste wächst nur bis zu einer Obergrenze** (Playwright, Pflichtpunkt 3 festes Layout). Gegeben dieselben Fälle, dann gilt: ohne aktive Suche ist die Leiste bei Diff-Bereich ≥ 600 px eine Zeile (30 px; R00039 Kriterium 5 bleibt), bei 400–599 px höchstens zwei Zeilen und darunter höchstens drei (gemessen 94 px bei 320 px); mit aktiver Suche ab 600 px höchstens zwei Zeilen (gemessen 56 px), darunter höchstens vier (gemessen 122 px); mit Fehlermeldung höchstens 170 px (gemessen 166 px, Bestand 154 px); der Rollbereich des Diffs darunter bleibt in jedem Fall mindestens 480 px hoch (gemessen ≥ 526 px bei 800 px Fenster). **Entschieden (PO-Zeile 287)**: Für die Leiste mit aktiver Suche und bei Diff unter 400 px ersetzt dieses Kriterium die Höhenregel aus R00039 Zeile 30 („nie über zwei Zeilen“, „ab 600 px eine Zeile“); R00039 selbst bleibt unverändert.
 6. **Eine Feldbreite, ein Ort** (Unit ohne Browser, Pflichtpunkt 5). Gegeben `gitreviewa.css` und `dateiansicht.css`, dann steht an Feld-Selektoren (`input`, `textarea`, `select`, Klassen der Felder) keine Breite, kein `flex`, kein `flex-basis` und kein `min-inline-size` außerhalb des Abschnitts `eine-Feldbreite`; die Mutation `.diff-suche{flex:0 0 20rem}` macht den Test rot, und der Bestand (`.diff-suche{… flex:1 1 3rem …}`) ist heute rot (negative Kontrolle gegen den heutigen Stand).
 
 Nicht betroffen: Grenzen je Eingabe und Ausgabe (Pflichtpunkt 1; keine Grenze ändert sich, der längste Zählertext, die Meldung und der lange Pfad gehen als Fälle in die Kriterien 1 und 2); NFA zum Ausführungsort (Pflichtpunkt 4; reines Browser-Layout). Zeitkriterien: keine.
@@ -86,14 +86,16 @@ Auslöser: Karte #69, Entwicklertest #65, Anmerkung A1: bei 1280 × 800 mit offe
 
 ## Offene Fragen
 
-1. **An den product-owner — wie bekommt das Suchfeld seinen Platz?** Empfehlung **Option 1 (Leiste umbrechen)**, gemessen: kleinster sichtbarer Feldbreite 56 px in allen Fällen (Optionen 2 und 3 allein: 0–25 px bei offener Spalte, siehe Tabelle „Optionen“). Bis zur Antwort gilt Option 1.
-2. **An den product-owner — Höhenregel der Leiste lockern?** R00039 Zeile 30 („ab 600 px eine Zeile, darunter höchstens zwei, nie mehr als zwei“) lässt sich mit Option 1 bei aktiver Suche und bei Diff unter 400 px nicht halten (gemessen bis 4 Zeilen bei 320 px). Empfehlung: lockern wie in Kriterium 5 (ohne Suche ab 600 px eine Zeile bleibt). Bis zur Antwort gilt Kriterium 5.
+Keine offenen. Der product-owner hat die zwei Fragen am 2026-11-27 entschieden (`AI-Team/po-entscheidungen.md` Zeilen 286–288); je Frage wurde die Empfehlung übernommen und ist oben eingearbeitet:
+
+1. **Wie bekommt das Suchfeld seinen Platz?** — **entschieden, PO-Zeile 286: Option 1 (Leiste umbrechen)** — die Leiste bricht um und gibt dem Feld Platz; kleinster sichtbarer Feldwert 56 px in allen Fällen (Optionen 2 und 3 allein: 0–25 px bei offener Spalte, siehe Tabelle „Optionen“). Verworfen: (2) Feld mit Mindestbreite, (3) Zähler ins Feld.
+2. **Höhenregel der Leiste lockern?** — **entschieden, PO-Zeile 287: ja, gelockert wie in Kriterium 5** — R00039 Zeile 30 („ab 600 px eine Zeile, darunter höchstens zwei, nie mehr als zwei“) lässt sich mit Option 1 bei aktiver Suche und bei Diff unter 400 px nicht halten (gemessen bis 4 Zeilen bei 320 px); die 600-px-Grenze und „ohne Suche ab 600 px eine Zeile“ bleiben.
 
 ## Notizen
 
 - Quelle: Karte #69, Anmerkung A1 des Entwicklertests #65 (Lauf 65-entwicklertester-1), Bestand, kein Rückschritt: auf `main` vor #65 war es genauso (Beleg der Karte); R00055 hat die Mindestbreite `2rem` des Feldes entfernt (Selektor `.diff-suche`, vorher `min-inline-size:2rem`), die Überdeckung bestand schon vorher.
 - Messlücken, die B5701 schließt: der echte Zählertext „10000 von 10000+“ (hier gesetzt, nicht gesucht; echte Suche braucht Repo Y mit `gross`), der Pfad aus 300 Zeichen, die Anzeigeverfahren außer „Zusammen“ (Kriterium 4), und die Schwankung eines Falls (1280, zu, 640, Zustand leer: 9 bzw. 51 px in zwei Läufen).
-- Nebenbefund für eine eigene Karte (Director): die Fehlermeldung der Suche macht die Leiste im Bestand bis 154 px hoch (R00039 Zeile 30, „nie über zwei Zeilen“, Pflichtpunkt 3) — Vorschlag: Meldung im Feld-Behälter begrenzen oder als Tooltip. Hier nur im Kriterium 5 als Obergrenze (170 px) erfasst, nicht behoben.
+- Nebenbefund: die Fehlermeldung der Suche macht die Leiste im Bestand bis 154 px hoch (R00039 Zeile 30, „nie über zwei Zeilen“, Pflichtpunkt 3) — entschieden: eigene Karte #71, Obergrenze 170 px hier (PO-Zeile 288); R00057 behebt die Meldung nicht (Vorschlag dort: Meldung im Feld-Behälter begrenzen oder als Tooltip).
 - Das Glossar fehlt im Projekt (kein `Dokumentation/Domaenenwissen/`); Begriffe nach R00027 und R00039 (Werkzeugleiste, Zähler, „Ansicht ▾“).
 
 ## Änderungshistorie
@@ -101,3 +103,4 @@ Auslöser: Karte #69, Entwicklertest #65, Anmerkung A1: bei 1280 × 800 mit offe
 | Datum | Änderung | Grund |
 |---|---|---|
 | 2026-11-27 | Angelegt | Karte #69, Messreihe des planers; Frage der Karte offen beim product-owner |
+| 2026-11-27 | Offene Fragen geschlossen (PO-Entscheidungen 286–288, alle Empfehlungen übernommen); Vorbehalte „offen, bis der product-owner entscheidet“ / „bis zur Antwort“ entfernt; Nebenbefund als eigene Karte #71 vermerkt | Karte #69, planer, Lauf 69-planer-2 |
