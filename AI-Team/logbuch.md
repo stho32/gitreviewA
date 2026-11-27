@@ -777,3 +777,4 @@ Eine Zeile je Auftrag an eine Rolle und je Retrospektive.
 - **Schleife:** Entwicklung → Detailplanung → Entwicklung, einmal, unter der Bremse. Kosten 2,68 $.
 - **Ehrlich gemeldet:** Die Rot-Probe mit `overflow-anchor:none` blieb grün. Der Entwickler hat das offen berichtet, statt die Probe zu verbiegen.
 - **Gate auf main:** NUnit 1883 zweimal, Playwright 1343 zweimal grün.
+| 2026-11-27 | #66 | Kennzahlen | — | — | 2 h 1 min | Läufe 11 (befund 1, bestanden 10) · Rollenzeit 1 h 51 min · Wartezeit 9 min · Nacharbeiten 0 · Kosten 2,67 $ · Durchlauf 2 h 1 min |
